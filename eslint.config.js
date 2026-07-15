@@ -4,8 +4,11 @@ import globals from "globals";
 export default [
     js.configs.recommended,
     {
+        ignores: ["src/vendor/**"]
+    },
+    {
         languageOptions: {
-            ecmaVersion: 2020,
+            ecmaVersion: 2022,
             sourceType: "module",
             globals: {
                 ...globals.browser,
@@ -18,7 +21,7 @@ export default [
             "linebreak-style": ["error", "unix"],
             "semi": ["error", "always"],
             "no-empty": ["error", { "allowEmptyCatch": true }],
-            "no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }]
+            "no-unused-vars": ["warn", { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_", "caughtErrors": "none" }]
         }
     }
 ];

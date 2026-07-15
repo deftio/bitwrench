@@ -222,7 +222,7 @@ This costs about 200 tokens. Always call it first.
 ### Step 2: Learn (Optional but Recommended)
 
 If you have not used bitwrench before, call `bitwrench_guide`. This is the
-full tutorial (about 4000 tokens). It covers TACO nesting, the three-level
+full tutorial (about 4000 tokens). It covers TACO nesting, the
 component model, events, CSS/theming, all component categories, debugging,
 bwserve, routing, and API reference tables.
 
@@ -299,7 +299,7 @@ If using live rendering:
 ```
 screenshot({})           // see what the browser shows
 screenshot({selector: '.bw_stat_card:first-child'})  // zoom in on one element
-query_dom({code: 'document.querySelectorAll(".bw_card").length'})  // count cards
+query_dom({code: 'bw.$(\'.bw_bccl_card\').length'})  // count cards
 ```
 
 Evaluate the screenshot, decide what to change, and call `render_live` again.

@@ -1,6 +1,6 @@
 # Landing Page (SunForge Analytics)
 
-A polished marketing page built entirely with BCCL component composition — no reactive state.
+A polished marketing page built entirely with BCCL component composition — no stateful components.
 
 ## What This Demonstrates
 
@@ -10,7 +10,7 @@ A polished marketing page built entirely with BCCL component composition — no 
 - `bw.makeAccordion()` for FAQ section
 - `bw.makeForm()` / `bw.makeFormGroup()` for contact form
 - `bw.makeButton()` with multiple variants and sizes
-- Level 0 — zero reactive state, pure component composition
+- Zero stateful components — pure composition
 
 ## Audience
 
@@ -37,4 +37,4 @@ Pure TACO composition — each section is a variable (`nav`, `hero`, `stats`, `f
 1. **BCCL composition**: The entire page is built from `bw.make*()` factory calls
 2. **Theme independence**: Sunset orange palette proves bitwrench isn't "always teal"
 3. **Custom CSS + BCCL**: Pricing table uses custom CSS classes alongside BCCL components
-4. **Zero state**: Level 0 architecture — if it doesn't need reactivity, don't add it
+4. **Zero state**: Static TACO architecture — if it doesn't need state, don't add it

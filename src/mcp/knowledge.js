@@ -17,7 +17,7 @@ var DOCS_DIR = resolve(__dirname, '../../docs');
 // Section name -> heading prefix mapping for bitwrench_guide
 var GUIDE_SECTIONS = {
   'taco':           'Step 2: Understand TACO',
-  'levels':         'Step 3: Three Levels',
+  'materialization': 'Step 3: From Data to DOM',
   'events':         'Step 4: Events',
   'css':            'Step 5: CSS and Theming',
   'components':     'Step 6: BCCL Components',
@@ -102,7 +102,7 @@ export var knowledgeToolDefs = [
         section: {
           type: 'string',
           description: 'Optional: return only a specific section. Omit for full guide.',
-          enum: ['taco', 'levels', 'events', 'css', 'components', 'bwserve', 'routing', 'api-reference', 'rules']
+          enum: ['taco', 'materialization', 'events', 'css', 'components', 'bwserve', 'routing', 'api-reference', 'rules']
         }
       }
     }
@@ -124,7 +124,7 @@ export var knowledgeToolDefs = [
   {
     name: 'bitwrench_server_guide',
     title: 'Server-Driven UI Guide',
-    description: 'Tutorial for building server-driven UI with bwserve. Covers: SSE streaming, replace/patch/append protocol, data-bw-action buttons, live metrics, screenshots. Call this when building real-time or server-pushed interfaces.',
+    description: 'Tutorial for building server-driven UI with bwserve. Covers: SSE streaming, mount/patch/append protocol, bw_act_* action buttons, live metrics, screenshots. Call this when building real-time or server-pushed interfaces.',
     inputSchema: { type: 'object', properties: {} }
   },
   {
@@ -169,7 +169,7 @@ var START_HERE_TEXT = [
   '- Call build_page to get a complete standalone .html file (works offline)',
   '',
   'OTHER KNOWLEDGE TOOLS (call as needed):',
-  '- bitwrench_guide: Full tutorial (TACO format, 3 levels, events, CSS,',
+  '- bitwrench_guide: Full tutorial (TACO format, materialization, events, CSS,',
   '  components, bwserve, routing, API reference)',
   '- bitwrench_components: Props reference for all 47+ make*() components',
   '- bitwrench_server_guide: bwserve tutorial (SSE streaming, live UI)',

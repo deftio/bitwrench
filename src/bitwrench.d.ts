@@ -64,16 +64,20 @@ export interface TacoOptions {
   state?: Record<string, any>;
   /** Called after element created and in DOM */
   mounted?: (el: HTMLElement, state?: Record<string, any>) => void;
-  /** Called on bw.cleanup() */
+  /** Called on bw.unmount() */
   unmount?: (el: HTMLElement, state?: Record<string, any>) => void;
-  /** Called by bw.update(); stored on el._bw_render */
+  /** Called by bw.refresh(); stored on el._bw_render */
   render?: (el: HTMLElement, state?: Record<string, any>) => void;
-  /** Methods attached to el.bw namespace */
+  /** Methods attached to el.bw namespace (e.g. handle.update dispatched by bw.update()) */
   handle?: Record<string, (el: HTMLElement, ...args: any[]) => any>;
   /** Slot selectors: auto-generates el.bw.setName()/getName() */
   slots?: Record<string, string>;
   /** Component type identifier (used internally by BCCL) */
   type?: string;
+  /** User tag for bw.message() addressing */
+  userTag?: string;
+  /** Declarative event handlers for bw.actions */
+  events?: Record<string, (data: any, el: HTMLElement) => void>;
 }
 
 /**
@@ -316,27 +320,51 @@ export interface Bitwrench {
   /** Generate complete HTML page string */
   htmlPage(opts: { title?: string; css?: string; content?: TacoContent; favicon?: string; [key: string]: any }): string;
   /** Create DOM element from TACO (browser only). SVG TACOs ({t:'svg',...}) use createElementNS. */
-  createDOM(taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | SVGElement | DocumentFragment;
-  /** Mount TACO into target, replacing contents */
-  DOM(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): void;
-  /** Mount TACO and return root element (for el.bw access) */
-  mount(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement;
+  create(taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | SVGElement | DocumentFragment;
+  /** Mount TACO into target, replacing contents. Alias for bw.mount(). Returns the first created element. */
+  DOM(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | null;
+  /** Mount TACO into target, replacing contents. Returns the first created element. */
+  mount(target: string | HTMLElement, taco: Taco | TacoContent, options?: Record<string, any>): HTMLElement | null;
   /** Mark string as pre-escaped HTML */
   raw(str: string): BwRaw;
   /** Escape HTML special characters */
   escapeHTML(str: string): string;
 
   // -- Lifecycle & State ----------------------------------------------------
-  /** Call el._bw_render to re-render element */
-  update(target: string | HTMLElement): void;
+  /** Dispatch data to el.bw.update(data) if defined */
+  update(ref: string | HTMLElement, data?: any): void;
+  /** Re-render element by calling el._bw_render */
+  refresh(ref: string | HTMLElement): void;
+  /** Set a named slot value via el.bw.setName(value) */
+  updateSlot(ref: string | HTMLElement, name: string, value: any): boolean;
+  /** Unmount element: fire unmount hooks, clean subscriptions, remove from cache */
+  unmount(element: HTMLElement): void;
+  /** Fire mounted() hooks on an element subtree */
+  mountTree(element: HTMLElement): void;
+  /** Unmount all lifecycle-managed children of element */
+  unmountChildren(element: HTMLElement): void;
+  /** Wire TACO options onto an existing DOM element (for post-creation hydration) */
+  hydrate(element: HTMLElement, taco: Taco): void;
+  /** Mark element as detach-exempt (survives parent unmount) */
+  detach(element: HTMLElement): void;
+  /** Append TACO as child of target */
+  append(target: string | HTMLElement, content: Taco | TacoContent): HTMLElement;
+  /** Replace target's content with new TACO */
+  replace(target: string | HTMLElement, content: Taco | TacoContent): HTMLElement;
+  /** Remove element from DOM with unmount */
+  remove(target: string | HTMLElement): void;
   /** Quick-patch element content or attribute */
   patch(id: string | HTMLElement, content?: TacoContent, attr?: string): HTMLElement | null;
   /** RFC 6902 JSON Patch on plain objects. Mutates and returns obj. @see bw.patch */
   jsonPatch(obj: object, ops: Array<{ op: string; path: string; value?: any; from?: string }>): object;
   /** Batch patch multiple elements */
   patchAll(patches: Record<string, TacoContent> | Array<{ id: string; content?: TacoContent; attr?: string }>): Record<string, HTMLElement>;
-  /** Clean up lifecycle hooks, subscriptions, cache */
-  cleanup(element: HTMLElement): void;
+  /** Janitor: document-level cleanup for orphaned lifecycle elements */
+  janitor(options?: { verbose?: boolean }): void;
+  /** Reconcile children of parent with new TACO list */
+  syncChildren(parent: HTMLElement, items: Taco[], options?: { key?: string }): void;
+  /** Declared dataflow: recompute fn(inputs...) on any input publish, publish result to outTopic. Returns disposer. */
+  derive(inputs: string[], fn: (...values: any[]) => any, outTopic: string, opts?: { seed?: any[]; immediate?: boolean; el?: HTMLElement }): () => void;
 
   // -- DOM Selection --------------------------------------------------------
   /** Resolve target to first matching element. Optional apply: string (textContent), function, TACO (mount), or array. @see bw.$ */
@@ -345,8 +373,8 @@ export interface Bitwrench {
   $(selector: string | HTMLElement | HTMLElement[], apply?: string | number | boolean | Function | object | any[]): HTMLElement[];
   /** Dispatch DOM event */
   emit(target: string | HTMLElement, eventName: string, detail?: any): void;
-  /** Add event listener */
-  on(target: string | HTMLElement, eventName: string, handler: (e: Event) => void): void;
+  /** Add event listener; returns unsubscribe function */
+  on(target: string | HTMLElement, eventName: string, handler: (e: Event) => void): () => void;
 
   // -- Pub/Sub --------------------------------------------------------------
   /** Publish to topic. Fires exact-match and wildcard subscribers. */
@@ -355,6 +383,8 @@ export interface Bitwrench {
   sub(topic: string, handler: (detail: any, topic?: string) => void, el?: HTMLElement): () => void;
   /** Unsubscribe handler from topic */
   unsub(topic: string, handler: Function): number;
+  /** Subscribe to topic for a single delivery; auto-unsubscribes after first fire. Returns unsub(). */
+  once(topic: string, handler: (detail: any) => void, el?: HTMLElement): () => void;
 
   // -- UUID & Identity ------------------------------------------------------
   /** Generate unique ID */
@@ -364,13 +394,27 @@ export interface Bitwrench {
   /** Read UUID from TACO or DOM element */
   getUUID(tacoOrElement: Taco | HTMLElement): string | null;
 
-  // -- Component Messages ---------------------------------------------------
+  // -- Component Messages & Wire Protocol -----------------------------------
   /** Call method on el.bw: el.bw[action](data) */
   message(target: string | HTMLElement, action: string, data?: any): any;
+  /** Extract form data from a form or container element */
+  formData(target: string | HTMLElement): Record<string, any>;
   /** Execute wire-protocol message object */
-  apply(msg: Record<string, any>): any;
+  apply(msg: Record<string, any>): boolean;
   /** Inspect DOM element and subtree, returning plain-object tree with bitwrench metadata */
   inspect(target: string | HTMLElement, depth?: number): Record<string, any> | null;
+  /** Document-level delegated action dispatcher */
+  actions: { enable(): void; disable(): void; _ensureInstalled(): void; _reset(): void };
+  /** Remote connection (set by bwclient or bw.connect) */
+  remote: { send(msg: any): void; close?(): void } | null;
+  /** Register a named remote function for bw.apply({type:'call'}) */
+  registerRemote(name: string, fn: Function): void;
+  /** Connect to a bwserve instance via SSE */
+  connect(url: string, options?: Record<string, any>): { send(msg: any): void; close(): void };
+  /** Set theme mode ('primary' or 'alternate') on matching elements */
+  setThemeMode(mode: string, scope?: string | HTMLElement): { mode: string; count: number };
+  /** Load structural CSS only (no theming) */
+  loadStructural(): void;
 
   // -- Function Registry ----------------------------------------------------
   funcRegister(fn: Function, name?: string): string;
@@ -379,16 +423,16 @@ export interface Bitwrench {
   funcUnregister(name: string): void;
   funcGetRegistry(): Record<string, Function>;
 
-  // -- Component Registry ---------------------------------------------------
-  render(element: HTMLElement, position: string, taco: Taco): string;
-  getComponent(id: string): Record<string, any> | null;
-  getAllComponents(): Map<string, any>;
+  // -- Render (convenience factory over append/replace) --------------------
+  render(target: string | HTMLElement, position: 'append' | 'prepend' | 'replace' | 'before' | 'after', taco: Taco): { el: HTMLElement | null; ok: boolean; error: string | null };
 
   // -- CSS & Styles ---------------------------------------------------------
   /** Generate CSS string from JS object */
   css(rules: Record<string, any>, options?: { scopeSelector?: string; selector?: string }): string;
   /** Inject CSS into document */
   injectCSS(css: string, options?: { id?: string; append?: boolean; scope?: string }): HTMLElement;
+  /** Merge style objects (shallow Object.assign). Use to compose inline styles. */
+  s(...objs: Record<string, string | number>[]): Record<string, string | number>;
   /** Responsive media query helper */
   responsive(selector: string, breakpoints: Record<string, Record<string, any>>): string;
   /** Generate styles from config */
@@ -401,8 +445,6 @@ export interface Bitwrench {
   loadReset(): void;
   /** Toggle between primary/alternate theme palettes on all matching elements. @see bw.applyStyles */
   toggleThemeMode(scope?: string | HTMLElement): string;
-  /** @deprecated Use bw.toggleThemeMode() instead. Alias kept for one release cycle. */
-  toggleStyles(scope?: string | HTMLElement): string;
   /** Remove injected styles */
   clearStyles(scope?: string): void;
   /** Generate type scale from base + ratio */
@@ -485,55 +527,8 @@ export interface Bitwrench {
   makeDataTable(config?: TableConfig): Taco;
   makeBarChart(config?: ComponentConfig): Taco;
 
-  // -- Corresponding create* (return DOM Element) ---------------------------
-  createCard(config?: CardConfig | string): HTMLElement;
-  createButton(config?: ButtonConfig | string): HTMLElement;
-  createContainer(config?: ComponentConfig): HTMLElement;
-  createRow(config?: ComponentConfig): HTMLElement;
-  createCol(config?: ComponentConfig): HTMLElement;
-  createStack(config?: ComponentConfig): HTMLElement;
-  createSection(config?: ComponentConfig): HTMLElement;
-  createNav(config?: NavConfig): HTMLElement;
-  createNavbar(config?: ComponentConfig): HTMLElement;
-  createBreadcrumb(config?: ComponentConfig): HTMLElement;
-  createTabs(config?: TabsConfig): HTMLElement;
-  createPagination(config?: ComponentConfig): HTMLElement;
-  createAlert(config?: AlertConfig | string): HTMLElement;
-  createBadge(config?: ComponentConfig | string): HTMLElement;
-  createProgress(config?: ComponentConfig): HTMLElement;
-  createSpinner(config?: ComponentConfig): HTMLElement;
-  createToast(config?: ComponentConfig): HTMLElement;
-  createTooltip(config?: ComponentConfig): HTMLElement;
-  createPopover(config?: ComponentConfig): HTMLElement;
-  createListGroup(config?: ComponentConfig): HTMLElement;
-  createAccordion(config?: AccordionConfig): HTMLElement;
-  createCarousel(config?: CarouselConfig): HTMLElement;
-  createTimeline(config?: ComponentConfig): HTMLElement;
-  createStepper(config?: ComponentConfig): HTMLElement;
-  createChipInput(config?: ComponentConfig): HTMLElement;
-  createModal(config?: ModalConfig): HTMLElement;
-  createDropdown(config?: ComponentConfig): HTMLElement;
-  createForm(config?: ComponentConfig): HTMLElement;
-  createFormGroup(config?: ComponentConfig): HTMLElement;
-  createInput(config?: InputConfig): HTMLElement;
-  createTextarea(config?: ComponentConfig): HTMLElement;
-  createSelect(config?: ComponentConfig): HTMLElement;
-  createCheckbox(config?: ComponentConfig): HTMLElement;
-  createRadio(config?: ComponentConfig): HTMLElement;
-  createSwitch(config?: ComponentConfig): HTMLElement;
-  createRange(config?: ComponentConfig): HTMLElement;
-  createFileUpload(config?: ComponentConfig): HTMLElement;
-  createSearchInput(config?: ComponentConfig): HTMLElement;
-  createButtonGroup(config?: ComponentConfig): HTMLElement;
-  createHero(config?: ComponentConfig): HTMLElement;
-  createFeatureGrid(config?: ComponentConfig): HTMLElement;
-  createCTA(config?: ComponentConfig): HTMLElement;
-  createCodeDemo(config?: ComponentConfig): HTMLElement;
-  createSkeleton(config?: ComponentConfig): HTMLElement;
-  createAvatar(config?: ComponentConfig): HTMLElement;
-  createStatCard(config?: ComponentConfig): HTMLElement;
-  createMediaObject(config?: ComponentConfig): HTMLElement;
-  createTable(config?: TableConfig): HTMLElement;
+  /** List available BCCL component types, or get factory for a type */
+  catalog(type?: string): Record<string, any>;
 
   // -- Array Utilities ------------------------------------------------------
   arrayUniq(arr: any[]): any[];
@@ -599,9 +594,11 @@ export interface Bitwrench {
   _unmountCallbacks: Map<string, Function>;
   _topics: Record<string, any[]>;
   _fnRegistry: Record<string, Function>;
-  _componentRegistry: Map<string, any>;
   _clientFunctions: Record<string, Function>;
-  _allowExec: boolean;
+  _clientRemotes: Record<string, Function>;
+  _wireListeners: Record<string, () => void>;
+  _mounted: Record<string, boolean>;
+  _detached: Record<string, boolean>;
 }
 
 /** The bw namespace (default export) */

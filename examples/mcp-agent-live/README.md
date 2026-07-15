@@ -123,17 +123,17 @@ Python Script              LLM (ollama etc.)        bwmcp           Browser
   |   {title, components:[...]} |                     |                |
   |                             |                     |                |
   |  tools/call render_live ----+-------------------->|                |
-  |  (status: "Planning...")    |                     |--- SSE ------->|
+  |  (ref: "#app", status)      |                     |--- SSE ------->|
   |                             |                     |                |
   |  tools/call make_stat_card -+-------------------->|                |
   |<-- TACO JSON                |                     |                |
   |  tools/call render_live ----+-------------------->|--- SSE ------->| card
-  |   (show card)               |                     |                | appears!
+  |   (ref: "#app", taco)       |                     |                | appears!
   |                             |                     |                |
   |  ... repeat for each component ...                |                |
   |                             |                     |                |
   |  tools/call render_live ----+-------------------->|--- SSE ------->| final
-  |   (final composed layout)   |                     |                | layout
+  |   (ref: "#app", final taco) |                     |                | layout
   |                             |                     |                |
   |  tools/call build_page -----+-------------------->|                |
   |<-- standalone HTML          |                     |                |

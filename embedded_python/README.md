@@ -73,7 +73,7 @@ count = 0
 
 def home(client):
     # Send initial UI
-    client.render("#app", {
+    client.mount("#app", {
         "t": "div", "c": [
             bwserve.taco("h1", "Counter"),
             bwserve.taco("div", "0", id="count"),
@@ -86,7 +86,7 @@ def home(client):
     def on_increment(data):
         global count
         count += 1
-        client.patch("count", str(count))
+        client.patch("count", text=str(count))
 
     client.on("increment", on_increment)
 
@@ -121,7 +121,7 @@ print("IP:", wlan.ifconfig()[0])
 app = bwserve.App(port=80)
 
 def home(client):
-    client.render("#app", bwserve.taco("h1", "ESP32 Ready"))
+    client.mount("#app", bwserve.taco("h1", "ESP32 Ready"))
     # After initial render, push sensor updates in a loop
     while True:
         import machine
@@ -149,7 +149,7 @@ app = bwserve.App(port=80)
 
 def home(client):
     import microcontroller
-    client.render("#app", {
+    client.mount("#app", {
         "t": "div", "c": [
             bwserve.taco("h1", "Adafruit Dashboard"),
             bwserve.taco("div", "--", id="cpu-temp"),
@@ -182,11 +182,11 @@ bwserve.taco_json("h1", "Title")                 # returns JSON string
 ### Protocol Messages
 
 ```python
-bwserve.patch("temp", "23.5")                    # update text content
-bwserve.replace("#app", taco("div", "Hi"))       # replace element
+bwserve.patch("temp", text="23.5")               # update text content
+bwserve.mount("#app", taco("div", "Hi"))         # mount TACO at ref
 bwserve.append("#log", taco("p", "Entry"))       # append child
 bwserve.remove("#old-item")                      # remove element
-bwserve.batch(patch("a", "1"), patch("b", "2"))  # atomic batch
+bwserve.batch(patch("a", text="1"), patch("b", text="2"))  # atomic batch
 bwserve.message("info", "Connected")             # notification
 ```
 
@@ -195,10 +195,10 @@ bwserve.message("info", "Connected")             # notification
 Inside a page handler, the `client` object provides:
 
 ```python
-client.render(target, node)         # replace target with TACO node
-client.patch(target, content)       # update target's text content
-client.append(target, node)         # append child node to target
-client.remove(target)               # remove target from DOM
+client.mount(ref, taco)            # mount TACO at ref (replaces content)
+client.patch(ref, text=, attrs=)   # patch ref's text or attributes
+client.append(ref, taco)           # append child TACO to ref
+client.remove(ref)                 # remove ref element from DOM
 client.batch(op1, op2, ...)         # send multiple ops atomically
 client.message(level, text)         # send browser notification
 client.on(action, handler)          # register action handler from browser

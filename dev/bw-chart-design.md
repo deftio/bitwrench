@@ -1,5 +1,9 @@
 # bitwrench-chart: SVG Charting Library Design
 
+> **STALE-CHECK (2026-07):** pre-2.1 design draft, still unimplemented as a
+> separate package. Note the core has since gained `bw.makeBarChart()`; any
+> API or lifecycle references here predate v2.1 -- re-verify against `docs/`.
+
 ## Status: Design — not yet implemented
 
 ## Overview

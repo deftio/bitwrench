@@ -24,11 +24,11 @@
     var PRESETS = {
       counter: {
         label: 'Counter',
-        desc: 'render + patch — basic state update',
+        desc: 'mount + patch — basic state update',
         code: [
           '// Counter: bw.makeCard() + bw.makeButton() with action()',
-          '// action(taco, name) tags a component with data-bw-action',
-          'client.render("#app", {',
+          '// action(taco, name) tags a component with a bw_act_* class for event delegation',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Hello from bwserve!" },',
           '    bw.makeCard({',
@@ -40,7 +40,7 @@
           '        ]},',
           '        { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
           '          action(bw.makeButton({ text: "Increment", variant: "primary" }), "increment"),',
-          '          action(bw.makeButton({ text: "Reset", variant: "outline-secondary" }), "reset")',
+          '          action(bw.makeButton({ text: "Reset", variant: "outline_secondary" }), "reset")',
           '        ]}',
           '      ]}',
           '    })',
@@ -51,11 +51,11 @@
           'var count = 0;',
           'onAction("increment", function() {',
           '  count++;',
-          '  client.patch("count", String(count));',
+          '  client.patch("count", { text: String(count) });',
           '});',
           'onAction("reset", function() {',
           '  count = 0;',
-          '  client.patch("count", "0");',
+          '  client.patch("count", { text: "0" });',
           '});'
         ].join('\n')
       },
@@ -66,7 +66,7 @@
           '// Todo List: append items, remove on click',
           'var nextId = 1;',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Todo List" },',
           '    bw.makeCard({ content: { t: "div", c: [',
@@ -74,7 +74,7 @@
           '        bw.makeInput({ placeholder: "What needs to be done?", id: "todo-input", style: "flex:1" }),',
           '        action(bw.makeButton({ text: "Add", variant: "primary" }), "add-todo")',
           '      ]},',
-          '      { t: "ul", a: { id: "todo-list", class: "bw-list-group" } }',
+          '      { t: "ul", a: { id: "todo-list", class: "bw_bccl_list_group" } }',
           '    ]}})',
           '  ]',
           '});',
@@ -83,16 +83,16 @@
           '  var text = data.inputValue || "Item " + nextId;',
           '  var id = "todo-" + nextId++;',
           '  client.append("#todo-list", {',
-          '    t: "li", a: { id: id, class: "bw-list-group-item", style: "display:flex;justify-content:space-between;align-items:center" },',
+          '    t: "li", a: { id: id, class: "bw_bccl_list_group_item", style: "display:flex;justify-content:space-between;align-items:center" },',
           '    c: [',
           '      { t: "span", c: text },',
-          '      action(bw.makeButton({ text: "\\u2715", variant: "outline-danger", size: "sm" }), "remove-todo", { "data-bw-id": id })',
+          '      action(bw.makeButton({ text: "\\u2715", variant: "outline_danger", size: "sm", id: id + "-rm" }), "remove-todo")',
           '    ]',
           '  });',
           '});',
           '',
           'onAction("remove-todo", function(data) {',
-          '  if (data.bwId) client.remove("#" + data.bwId);',
+          '  if (data.id) client.remove("#" + data.id.replace("-rm", ""));',
           '});'
         ].join('\n')
       },
@@ -111,7 +111,7 @@
           '  }});',
           '}',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Live Dashboard" },',
           '    bw.makeAlert({ content: "Stats update every 500ms via batch. Click Start!", variant: "info" }),',
@@ -123,7 +123,7 @@
           '    ]},',
           '    { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
           '      action(bw.makeButton({ text: "Start Updates", variant: "primary" }), "start"),',
-          '      action(bw.makeButton({ text: "Stop", variant: "outline-secondary" }), "stop")',
+          '      action(bw.makeButton({ text: "Stop", variant: "outline_secondary" }), "stop")',
           '    ]}',
           '  ]',
           '});',
@@ -133,10 +133,10 @@
           '  if (timer) return;',
           '  timer = setInterval(function() {',
           '    client.batch([',
-          '      { type: "patch", target: "users", content: String(Math.floor(Math.random() * 500) + 100) },',
-          '      { type: "patch", target: "orders", content: String(Math.floor(Math.random() * 50) + 10) },',
-          '      { type: "patch", target: "revenue", content: "$" + (Math.floor(Math.random() * 10000) + 1000) },',
-          '      { type: "patch", target: "errors", content: String(Math.floor(Math.random() * 5)) }',
+          '      { type: "patch", ref: "users", text: String(Math.floor(Math.random() * 500) + 100) },',
+          '      { type: "patch", ref: "orders", text: String(Math.floor(Math.random() * 50) + 10) },',
+          '      { type: "patch", ref: "revenue", text: "$" + (Math.floor(Math.random() * 10000) + 1000) },',
+          '      { type: "patch", ref: "errors", text: String(Math.floor(Math.random() * 5)) }',
           '    ]);',
           '  }, 500);',
           '});',
@@ -148,7 +148,7 @@
         desc: 'append — streaming content',
         code: [
           '// Chat: bw.makeCard() + bw.makeInput() + append for messages',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px;display:flex;flex-direction:column;height:100%" }, c: [',
           '    { t: "h2", c: "Chat Demo" },',
           '    bw.makeCard({ content: { t: "div", a: { style: "display:flex;flex-direction:column;height:100%" }, c: [',
@@ -170,13 +170,13 @@
           'onAction("send", function(data) {',
           '  var text = data.inputValue || "Hello!";',
           '  client.append("#messages", {',
-          '    t: "div", a: { class: "bw-alert bw-alert-primary", style: "max-width:80%;margin-left:auto;margin-bottom:8px" },',
+          '    t: "div", a: { class: "bw_bccl_alert bw_primary", style: "max-width:80%;margin-left:auto;margin-bottom:8px" },',
           '    c: text',
           '  });',
           '  setTimeout(function() {',
           '    var reply = botReplies[Math.floor(Math.random() * botReplies.length)];',
           '    client.append("#messages", {',
-          '      t: "div", a: { class: "bw-alert bw-alert-light", style: "max-width:80%;margin-bottom:8px" },',
+          '      t: "div", a: { class: "bw_bccl_alert bw_light", style: "max-width:80%;margin-bottom:8px" },',
           '      c: reply',
           '    });',
           '  }, 500 + Math.random() * 1000);',
@@ -189,10 +189,10 @@
         code: [
           '// BCCL Gallery — showcasing component helpers via bwserve',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "BCCL Component Gallery" },',
-          '    { t: "p", a: { style: "color:#888" }, c: "Every element is a BCCL component rendered via bwserve" },',
+          '    { t: "p", a: { style: "color:#888" }, c: "Every element is a BCCL component mounted via bwserve" },',
           '',
           '    bw.makeAlert({ content: "Info: This page was rendered by the server!", variant: "info" }),',
           '    bw.makeAlert({ content: "Success: All components loaded.", variant: "success" }),',
@@ -204,7 +204,7 @@
           '        bw.makeButton({ text: "Success", variant: "success" }),',
           '        bw.makeButton({ text: "Danger", variant: "danger" }),',
           '        bw.makeButton({ text: "Warning", variant: "warning" }),',
-          '        bw.makeButton({ text: "Outline", variant: "outline-primary" })',
+          '        bw.makeButton({ text: "Outline", variant: "outline_primary" })',
           '      ]',
           '    }}),',
           '',
@@ -234,7 +234,7 @@
       },
       screenshot: {
         label: 'Screenshot',
-        desc: 'register + call \u2014 capture page as image',
+        desc: 'call builtin \u2014 capture page as image',
         code: [
           '// Screenshot: the server captures what the client is displaying.',
           '// In a real bwserve app, client.screenshot() returns a Promise',
@@ -248,7 +248,7 @@
           '// in the Protocol Messages log below (C\u2192S direction), just like',
           '// the real POST-back to the server.',
           '',
-          'client.render("#app", {',
+          'client.mount("#app", {',
           '  t: "div", a: { style: "padding:24px" }, c: [',
           '    { t: "h2", c: "Screenshot Demo" },',
           '    bw.makeAlert({ content: "Click Capture to screenshot this page. The image appears in the Protocol Messages log below (C\\u2192S) \\u2014 that\\u2019s where the server receives it.", variant: "info" }),',
@@ -262,60 +262,25 @@
           '        ]},',
           '        { t: "div", a: { style: "display:flex;gap:8px" }, c: [',
           '          action(bw.makeButton({ text: "Capture Full Page", variant: "primary" }), "capture-full"),',
-          '          action(bw.makeButton({ text: "Capture Stats Only", variant: "outline-primary" }), "capture-stats")',
+          '          action(bw.makeButton({ text: "Capture Stats Only", variant: "outline_primary" }), "capture-stats")',
           '        ]}',
           '      ]',
           '    }})',
           '  ]',
           '});',
           '',
-          '// Register a capture function on the client.',
-          '// In production, client.screenshot() does this automatically.',
-          'client.register("_demo_capture", "function(opts) {"',
-          '  + "var el = document.querySelector(opts.selector || \\"body\\");"',
-          '  + "if (!el) return;"',
-          '  + "function _load(url) {"',
-          '  + "  return new Promise(function(r, j) {"',
-          '  + "    if (window.html2canvas) return r(window.html2canvas);"',
-          '  + "    var s = document.createElement(\\"script\\");"',
-          '  + "    s.src = url; s.onload = function() { r(window.html2canvas); };"',
-          '  + "    s.onerror = function() { j(new Error(\\"Failed to load html2canvas\\")); };"',
-          '  + "    document.head.appendChild(s);"',
-          '  + "  });"',
-          '  + "}"',
-          '  + "_load(opts.h2cUrl).then(function(h2c) {"',
-          '  + "  return h2c(el, { scale: opts.scale || 1, useCORS: true });"',
-          '  + "}).then(function(canvas) {"',
-          '  + "  var out = canvas;"',
-          '  + "  var mw = opts.maxWidth; var mh = opts.maxHeight;"',
-          '  + "  if ((mw && canvas.width > mw) || (mh && canvas.height > mh)) {"',
-          '  + "    var sw = mw ? mw / canvas.width : 1;"',
-          '  + "    var sh = mh ? mh / canvas.height : 1;"',
-          '  + "    var sc = Math.min(sw, sh);"',
-          '  + "    out = document.createElement(\\"canvas\\");"',
-          '  + "    out.width = Math.round(canvas.width * sc);"',
-          '  + "    out.height = Math.round(canvas.height * sc);"',
-          '  + "    out.getContext(\\"2d\\").drawImage(canvas, 0, 0, out.width, out.height);"',
-          '  + "  }"',
-          '  + "  window.parent.postMessage({"',
-          '  + "    _bwScreenshot: true,"',
-          '  + "    data: out.toDataURL(\\"image/png\\"),"',
-          '  + "    width: out.width, height: out.height, format: \\"png\\""',
-          '  + "  }, \\"*\\");"',
-          '  + "}).catch(function(e) {"',
-          '  + "  window.parent.postMessage({ _bwScreenshot: true, error: e.message }, \\"*\\");"',
-          '  + "});"',
-          '  + "}"',
-          ');',
+          '// Use the _bw_screenshot builtin to capture the page.',
+          '// _bw_screenshot is pre-registered on the client \u2014 no need to send',
+          '// code over the wire.',
           '',
           'onAction("capture-full", function() {',
-          '  client.call("_demo_capture", { selector: "body", h2cUrl: "' + new URL('../src/vendor/html2canvas.min.js', location.href.replace(/[^/]*$/, '')).href + '" });',
+          '  client.call("_bw_screenshot", { selector: "#app" });',
           '});',
           '',
           'onAction("capture-stats", function() {',
           '  // maxWidth resizes the image before sending to the server.',
           '  // Useful for reducing payload size on real deployments.',
-          '  client.call("_demo_capture", { selector: "#stats-grid", maxWidth: 400, h2cUrl: "' + new URL('../src/vendor/html2canvas.min.js', location.href.replace(/[^/]*$/, '')).href + '" });',
+          '  client.call("_bw_screenshot", { selector: "#stats-grid", maxWidth: 400 });',
           '});'
         ].join('\n')
       },
@@ -326,38 +291,41 @@
           '// Raw Protocol: send JSON messages directly',
           '// Edit the messages below and click Run to see them applied',
           '',
-          '// Step 1: render initial UI',
+          '// Step 1: mount initial UI',
           'send({',
-          '  type: "replace",',
-          '  target: "#app",',
-          '  node: {',
+          '  v: 1,',
+          '  type: "mount",',
+          '  ref: "#app",',
+          '  taco: {',
           '    t: "div", a: { style: "padding:24px" }, c: [',
           '      { t: "h2", c: "Raw Protocol Demo" },',
-          '      { t: "p", a: { id: "msg", class: "bw-alert bw-alert-info" }, c: "This text can be patched." },',
-          '      { t: "ul", a: { id: "list", class: "bw-list-group" }, c: [',
-          '        { t: "li", a: { class: "bw-list-group-item" }, c: "Item 1" },',
-          '        { t: "li", a: { class: "bw-list-group-item" }, c: "Item 2" }',
+          '      { t: "p", a: { id: "msg", class: "bw_bccl_alert bw_info" }, c: "This text can be patched." },',
+          '      { t: "ul", a: { id: "list", class: "bw_bccl_list_group" }, c: [',
+          '        { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Item 1" },',
+          '        { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Item 2" }',
           '      ]}',
           '    ]',
           '  }',
           '});',
           '',
           '// Step 2: patch the paragraph',
-          'send({ type: "patch", target: "msg", content: "Patched at " + new Date().toLocaleTimeString() });',
+          'send({ v: 1, type: "patch", ref: "msg", text: "Patched at " + new Date().toLocaleTimeString() });',
           '',
           '// Step 3: append to the list',
           'send({',
+          '  v: 1,',
           '  type: "append",',
-          '  target: "#list",',
-          '  node: { t: "li", a: { class: "bw-list-group-item", style: "color:green" }, c: "Appended item!" }',
+          '  ref: "#list",',
+          '  taco: { t: "li", a: { class: "bw_bccl_list_group_item", style: "color:green" }, c: "Appended item!" }',
           '});',
           '',
           '// Step 4: batch multiple ops',
           'send({',
+          '  v: 1,',
           '  type: "batch",',
           '  ops: [',
-          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw-list-group-item" }, c: "Batch item A" } },',
-          '    { type: "append", target: "#list", node: { t: "li", a: { class: "bw-list-group-item" }, c: "Batch item B" } }',
+          '    { type: "append", ref: "#list", taco: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item A" } },',
+          '    { type: "append", ref: "#list", taco: { t: "li", a: { class: "bw_bccl_list_group_item" }, c: "Batch item B" } }',
           '  ]',
           '});'
         ].join('\n')
@@ -410,7 +378,7 @@
       var time = new Date(entry.ts);
       var timeStr = time.toLocaleTimeString() + '.' + String(time.getMilliseconds()).padStart(3, '0');
 
-      var div = bw.createDOM({
+      var div = bw.create({
         t: 'div', a: {
           class: 'log-entry',
           style: 'border-left:3px solid ' + borderColor + ';background:' + bgColor +
@@ -448,7 +416,7 @@
       function fmt(bytes) { return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB'; }
       function avg(total, count) { return count === 0 ? '0 B' : fmt(Math.round(total / count)); }
       el.innerHTML = '';
-      el.appendChild(bw.createDOM({
+      el.appendChild(bw.create({
         t: 'span', c: [
           { t: 'span', a: { style: 'color:#1a7a6e;font-weight:600' }, c: 'S\u2192C: ' },
           logStats.serverMsgs + ' msgs, ' + fmt(logStats.serverBytes) + ', avg ' + avg(logStats.serverBytes, logStats.serverMsgs) + '/msg',
@@ -465,7 +433,7 @@
       var logEl = bw.$('#protocol-log')[0];
       if (logEl) {
         logEl.innerHTML = '';
-        logEl.appendChild(bw.createDOM({
+        logEl.appendChild(bw.create({
           t: 'div', a: { class: 'log-placeholder', style: 'color:#666;font-size:0.8rem' },
           c: '// Protocol messages will appear here after you click Run...'
         }));
@@ -486,7 +454,7 @@
       });
       var blob = new Blob([lines.join('\n') + '\n'], { type: 'application/x-ndjson' });
       var url = URL.createObjectURL(blob);
-      var a = bw.createDOM({ t: 'a', a: { href: url, download: 'bwserve-protocol-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.jsonl' } });
+      var a = bw.create({ t: 'a', a: { href: url, download: 'bwserve-protocol-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.jsonl' } });
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -508,30 +476,29 @@
         }
       }
 
-      client.render = function(target, taco) {
-        send({ type: 'replace', target: target, node: taco });
+      client.mount = function(target, taco) {
+        send({ v: 1, type: 'mount', ref: target, taco: taco });
       };
-      client.patch = function(id, content, attr) {
-        send({ type: 'patch', target: id, content: content, attr: attr || null });
+      client.patch = function(id, fields) {
+        var msg = { v: 1, type: 'patch', ref: id };
+        if (fields) { for (var k in fields) msg[k] = fields[k]; }
+        send(msg);
       };
       client.append = function(target, taco) {
-        send({ type: 'append', target: target, node: taco });
+        send({ v: 1, type: 'append', ref: target, taco: taco });
       };
       client.remove = function(target) {
-        send({ type: 'remove', target: target });
+        send({ v: 1, type: 'remove', ref: target });
       };
       client.batch = function(ops) {
-        send({ type: 'batch', ops: ops });
+        send({ v: 1, type: 'batch', ops: ops });
       };
       client.message = function(target, action, data) {
-        send({ type: 'message', target: target, action: action, data: data });
-      };
-      client.register = function(name, body) {
-        send({ type: 'register', name: name, body: body });
+        send({ v: 1, type: 'message', ref: target, action: action, data: data });
       };
       client.call = function(name) {
         var args = Array.prototype.slice.call(arguments, 1);
-        send({ type: 'call', name: name, args: args });
+        send({ v: 1, type: 'call', name: name, args: args });
       };
 
       // Also expose raw send for the "Raw Protocol" preset
@@ -546,32 +513,32 @@
       var doc = win.document;
       if (!doc) return;
 
-      if (msg.type === 'replace') {
-        var target = doc.querySelector(msg.target);
+      if (msg.type === 'mount') {
+        var target = doc.querySelector(msg.ref);
         if (target && win.bw) {
-          var el = win.bw.createDOM(msg.node);
+          var el = win.bw.create(msg.taco);
           target.innerHTML = '';
           target.appendChild(el);
         }
       } else if (msg.type === 'patch') {
-        var el2 = doc.getElementById(msg.target) || doc.querySelector(msg.target);
+        var el2 = doc.getElementById(msg.ref) || doc.querySelector(msg.ref);
         if (el2) {
-          if (msg.content !== undefined && msg.content !== null) el2.textContent = msg.content;
-          if (msg.attr) {
-            for (var k in msg.attr) {
-              if (msg.attr[k] === null) el2.removeAttribute(k);
-              else el2.setAttribute(k, msg.attr[k]);
+          if (msg.text !== undefined && msg.text !== null) el2.textContent = msg.text;
+          if (msg.attrs) {
+            for (var k in msg.attrs) {
+              if (msg.attrs[k] === null) el2.removeAttribute(k);
+              else el2.setAttribute(k, msg.attrs[k]);
             }
           }
         }
       } else if (msg.type === 'append') {
-        var parent = doc.querySelector(msg.target);
+        var parent = doc.querySelector(msg.ref);
         if (parent && win.bw) {
-          var child = win.bw.createDOM(msg.node);
+          var child = win.bw.create(msg.taco);
           parent.appendChild(child);
         }
       } else if (msg.type === 'remove') {
-        var toRemove = doc.querySelector(msg.target);
+        var toRemove = doc.querySelector(msg.ref);
         if (toRemove) toRemove.remove();
       } else if (msg.type === 'batch' && msg.ops) {
         msg.ops.forEach(function(op) { applyFallback(win, op); });
@@ -600,13 +567,15 @@
       'bw.loadStyles();',
       'bw.loadStyles({ primary: "#006666", secondary: "#333333" });',
       'window._bwReady = true;',
-      // Wire up data-bw-action click delegation
+      // Wire up bw_act_* click delegation
       'document.addEventListener("click", function(e) {',
-      '  var el = e.target.closest("[data-bw-action]");',
+      '  var el = e.target.closest("[class*=bw_act_]");',
       '  if (!el) return;',
       '  e.preventDefault();',
-      '  var actionData = { action: el.getAttribute("data-bw-action") };',
-      '  if (el.getAttribute("data-bw-id")) actionData.bwId = el.getAttribute("data-bw-id");',
+      '  var match = el.className.match(/bw_act_(\\S+)/);',
+      '  if (!match) return;',
+      '  var actionData = { action: match[1] };',
+      '  if (el.id) actionData.id = el.id;',
       '  var form = el.closest("div") || document;',
       '  var inp = form.querySelector("input[type=text],input:not([type])");',
       '  if (inp) { actionData.inputValue = inp.value; inp.value = ""; }',
@@ -615,9 +584,11 @@
       'document.addEventListener("keydown", function(e) {',
       '  if (e.key === "Enter" && e.target.tagName === "INPUT") {',
       '    var form = e.target.closest("div") || document;',
-      '    var actionBtn = form.querySelector("[data-bw-action]");',
+      '    var actionBtn = form.querySelector("[class*=bw_act_]");',
       '    if (actionBtn) {',
-      '      var actionData = { action: actionBtn.getAttribute("data-bw-action"), inputValue: e.target.value };',
+      '      var match = actionBtn.className.match(/bw_act_(\\S+)/);',
+      '      if (!match) return;',
+      '      var actionData = { action: match[1], inputValue: e.target.value };',
       '      e.target.value = "";',
       '      window.parent.postMessage(actionData, "*");',
       '    }',
@@ -688,10 +659,10 @@
         window.addEventListener('message', window._bwSandboxMsgHandler);
 
         try {
-          // action(taco, name, extra) — adds data-bw-action attr to a BCCL component TACO
+          // action(taco, name, extra) — adds bw_act_<name> class to a BCCL component TACO
           function actionHelper(taco, actionName, extraAttrs) {
             if (taco && taco.a) {
-              taco.a['data-bw-action'] = actionName;
+              taco.a['class'] = (taco.a['class'] || '') + ' bw_act_' + actionName;
               if (extraAttrs) { for (var k in extraAttrs) taco.a[k] = extraAttrs[k]; }
             }
             return taco;
@@ -838,7 +809,7 @@
                                 height: '100%',
                                 onChange: function() {}
                               });
-                              var dom = bw.createDOM(editor);
+                              var dom = bw.create(editor);
                               el.innerHTML = '';
                               el.appendChild(dom);
                               // The inner .bw_ce mounted hook sets _bwCodeEdit via rAF.
@@ -953,22 +924,21 @@
                   t: 'div', a: { style: 'margin-top:16px' }, c: [
                     { t: 'h4', a: { style: 'margin-bottom:8px' }, c: 'Available API' },
                     {
-                      t: 'table', a: { class: 'bw_table bw_table_striped' }, c: [
+                      t: 'table', a: { class: 'bw_bccl_table bw_bccl_table_striped' }, c: [
                         { t: 'thead', c: { t: 'tr', c: [
                           { t: 'th', c: 'Function' },
                           { t: 'th', c: 'Description' }
                         ]}},
                         { t: 'tbody', c: [
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.render(target, taco)' } }, { t: 'td', c: 'Replace target contents with TACO' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.patch(id, content, attr)' } }, { t: 'td', c: 'Update text/attributes of element by id' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.mount(target, taco)' } }, { t: 'td', c: 'Mount TACO into target, replacing contents' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.patch(ref, { text, attrs })' } }, { t: 'td', c: 'Update text/attributes of element by ref' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.append(target, taco)' } }, { t: 'td', c: 'Append a TACO child to target' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.remove(target)' } }, { t: 'td', c: 'Remove element from DOM' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.batch(ops)' } }, { t: 'td', c: 'Send multiple operations at once' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.register(name, body)' } }, { t: 'td', c: 'Register a named function on the client' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } }, { t: 'td', c: 'Call a registered function on the client' }] },
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'client.call(name, ...args)' } }, { t: 'td', c: 'Call a builtin function on the client' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'onAction(name, handler)' } }, { t: 'td', c: 'Handle actions from client (button clicks etc.)' }] },
                           { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'send(msg)' } }, { t: 'td', c: 'Send raw protocol JSON message' }] },
-                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'action(taco, name, extra)' } }, { t: 'td', c: 'Add data-bw-action attribute to a BCCL component TACO' }] }
+                          { t: 'tr', c: [{ t: 'td', c: { t: 'code', c: 'action(taco, name, extra)' } }, { t: 'td', c: 'Add bw_act_<name> class to a BCCL component TACO' }] }
                         ]}
                       ]
                     }

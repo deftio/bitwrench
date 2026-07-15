@@ -334,7 +334,7 @@ bw.makeButton({
   text: 'Click Me',
   variant: 'primary',       // 'primary' | 'secondary' | 'success' | 'danger' |
                              // 'warning' | 'info' | 'light' | 'dark' |
-                             // 'outline-primary' | 'outline-secondary' | ...
+                             // 'outline_primary' | 'outline_secondary' | ...
   size: '',                  // 'sm' or 'lg'
   disabled: false,
   onclick: function() {},
@@ -1049,7 +1049,7 @@ Build your own with `o.handle` and `o.slots`:
 }
 ```
 
-See [State Management -- Level 1.5](state-management.md#level-15-component-handles) for the full guide.
+See [State Management -- Component Handles](state-management.md#component-handles) for the full guide.
 
 ---
 
@@ -1068,7 +1068,7 @@ Most components accept a `variant` prop. The available variants are:
 | `light` | Light background |
 | `dark` | Dark background |
 
-Buttons also support outline variants: `outline-primary`, `outline-secondary`, etc.
+Buttons also support outline variants: `outline_primary`, `outline_secondary`, etc.
 
 ## Composition
 
@@ -1078,7 +1078,7 @@ Because every factory returns a TACO object, you compose components with standar
 // Functions as component factories
 function userRow(user) {
   return {
-    t: 'div', a: { class: 'bw-card' }, c: [
+    t: 'div', a: { class: 'bw_bccl_card' }, c: [
       bw.makeAvatar({ initials: user.name[0], size: 'sm' }),
       { t: 'span', c: user.name },
       bw.makeBadge({ text: user.role, variant: 'info' })

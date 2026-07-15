@@ -1,7 +1,7 @@
 # Component Cheat Sheet
 
 > **Before you write custom TACO for a common UI pattern, check this list.**
-> Bitwrench ships ready-made `make*()` factories. Each returns a Level 0 TACO object.
+> Bitwrench ships ready-made `make*()` factories. Each returns a plain TACO object.
 
 ## Full Component Table
 
@@ -92,7 +92,7 @@ bw.message('#my-carousel', 'goToSlide', 2);
 bw.message('.bw_uuid_abc123', 'next');
 ```
 
-See [State Management -- Level 1.5](state-management.md#level-15-component-handles) for the full handle/slots guide.
+See [State Management -- Component Handles](state-management.md#component-handles) for the full handle/slots guide.
 
 ## How to Use Slots
 

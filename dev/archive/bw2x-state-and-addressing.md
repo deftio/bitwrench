@@ -1,5 +1,13 @@
 # Bitwrench 2.x: State Management & Mutable Addressing
 
+> **ARCHIVED (2026-06-09).** Everything designed here shipped in 2.0.x
+> (o.render, update, patch, emit/on, pub/sub) — but the addressing model
+> described (bw-minted `id` attributes, `data-bw-id`) was REVERSED:
+> identity is now `bw_uuid_*` classes, ids are user-owned, no data-*.
+> The §4.2 consistency invariant was lifted into the 2.1 spec tests.
+> Spec of record: `bitwrench-lifecycle-cleanup-2026-06-09.md`.
+
+
 **Date**: March 2026
 **Status**: Design (pre-implementation)
 **Depends on**: `bw.uuid(prefix)`, `bw.DOM()` state preservation, `o.state` / `el._bw_state`

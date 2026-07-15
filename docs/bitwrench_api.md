@@ -4,28 +4,28 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.0.31 |
-| Generated | 2026-04-12 |
-| Total APIs | 105 |
+| Version | 2.1.0 |
+| Generated | 2026-07-15 |
+| Total APIs | 112 |
 | Categories | 14 |
-| bitwrench.js | 4100 lines |
-| bitwrench-bccl.js | 3793 lines |
+| bitwrench.js | 5106 lines |
+| bitwrench-bccl.js | 3954 lines |
 
 ## Table of Contents
 
-- [Core](#core) (5)
-- [DOM Generation](#dom-generation) (10)
+- [Core](#core) (3)
+- [DOM Generation](#dom-generation) (17)
 - [DOM Selection](#dom-selection) (1)
 - [Identifiers](#identifiers) (4)
 - [State Management](#state-management) (3)
 - [Events (DOM)](#events-dom-) (2)
-- [Pub/Sub](#pub-sub) (4)
-- [CSS & Styling](#css-styling) (10)
+- [Pub/Sub](#pub-sub) (5)
+- [CSS & Styling](#css-styling) (12)
 - [Component Builders](#component-builders) (50)
 - [Browser Utilities](#browser-utilities) (4)
 - [Utilities](#utilities) (1)
 - [Function Registry](#function-registry) (5)
-- [Component](#component) (5)
+- [Component](#component) (4)
 - [Data Utilities](#data-utilities) (1)
 
 ---
@@ -59,24 +59,6 @@ Parse a bwserve protocol message string, supporting both strict JSON and r-prefi
 
 ---
 
-### `bw.apply(msg)`
-
-Apply a bwserve protocol message to the DOM. Dispatches one of 9 message types: replace  — bw.DOM(target, node) append   — target.appendChild(bw.createDOM(node)) remove   — bw.cleanup(target); target.remove() patch    — bw.patch(target, content, attr) batch    — iterate ops, call bw.apply for each message  — bw.message(target, action, data) register — store a named function for later call() call     — invoke a registered function exec     — execute arbitrary JS (requires allowExec) Target resolution: Starts with '#' or '.' → CSS selector (querySelector) Otherwise → getElementById, then bw._el fallback
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `msg` | `Object` | - Protocol message |
-
-**Returns:** `boolean` — if the message was applied successfully
-
----
-
-### `bw.colorInterp(x, in0, in1, colors, stretch)`
-
----
-
 ### `bw.makeDataTable(config)`
 
 Create a ready-to-use data table with title and responsive wrapper. Convenience wrapper around `bw.makeTable()` that adds a title heading, responsive horizontal scroll container, and defaults to striped + hover. Use this for the common case; use `bw.makeTable()` when you need a bare table element with no wrapper.
@@ -107,7 +89,7 @@ const table = bw.makeDataTable({ title: "Users", data: [{ name: "Alice", role: "
 
 ### `bw.raw(str)`
 
-Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM(). By default, bitwrench escapes all text content to prevent XSS. Use bw.raw() when you need to embed pre-sanitized HTML, entities, or inline markup.
+Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create(). By default, bitwrench escapes all text content to prevent XSS. Use bw.raw() when you need to embed pre-sanitized HTML, entities, or inline markup.
 
 **Parameters:**
 
@@ -115,7 +97,7 @@ Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM
 |------|------|-------------|
 | `str` | `string` | - HTML string to mark as raw |
 
-**Returns:** `Object` — object recognized by bw.html() and bw.createDOM()
+**Returns:** `Object` — object recognized by bw.html() and bw.create()
 
 **Example:**
 ```javascript
@@ -173,9 +155,9 @@ bw.htmlPage({ title: 'My App', body: { t: 'h1', c: 'Hello World' }, runtime: 'sh
 
 ---
 
-### `bw.createDOM(taco, options = {})`
+### `bw.create(taco, options)`
 
-Create a live DOM element from a TACO object (browser only). Unlike `bw.html()` which returns a string, this creates real DOM elements with event handlers, lifecycle hooks (mounted/unmount), and state. Used internally by `bw.DOM()`. Throws in Node.js — use `bw.html()` instead.
+Create a hydrated, detached DOM element from a TACO object (browser only). v2.1 Phase verb: the element is fully wired (state, handles, slots, events, unmount closure) but NOT registered and mounted() is NOT fired. Registration happens in mountTree(); mounted fires there too.
 
 **Parameters:**
 
@@ -184,114 +166,192 @@ Create a live DOM element from a TACO object (browser only). Unlike `bw.html()` 
 | `taco` | `Object` | - TACO object with {t, a, c, o} |
 | `options` | `Object` | - Creation options |
 
-**Returns:** `Element|Text` — element or text node
-
-**Example:**
-```javascript
-var el = bw.createDOM({ t: 'button', a: { class: 'bw_btn', onclick: () => alert('clicked') }, c: 'Click Me' }); document.body.appendChild(el);
-```
+**Returns:** `Element|Text|DocumentFragment` — element, text node, or fragment
 
 ---
 
-### `bw.DOM(target, taco, options = {})`
+### `bw.hydrate(el, taco)`
 
-Mount a TACO object into a DOM element, replacing its contents (browser only). This is the primary way to render bitwrench UI to the page. It cleans up any existing children (calling unmount hooks), then renders the TACO into the target. The target element itself is preserved — only its children change.
+Wire lifecycle from taco.o onto an existing DOM node. Idempotent. Used for Path S adoption: html() output → mountTree → hydrate adds behavior.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `el` | `Element` | - Existing DOM element |
+| `taco` | `Object` | - TACO object whose o.* to wire |
+
+---
+
+### `bw.mountTree(el)`
+
+Walk a subtree, register every addressable node, fire mounted() hooks. Idempotent: already-registered nodes (same element) are skipped silently. Mounted fires synchronously, parent before children.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `el` | `Element` | - Root of subtree to mount |
+
+---
+
+### `bw.unmount(el)`
+
+Unmount an element and its entire subtree. Fire unmount hooks self-first, then descendants in document order. Strip ALL bitwrench properties. Deregister from _nodeMap.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `el` | `Element` | - Element to unmount |
+
+---
+
+### `bw.unmountChildren(el)`
+
+Unmount descendants only; the element's own state/subs/registration are untouched.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `el` | `Element` | - Parent element whose children to unmount |
+
+---
+
+### `bw.remove(ref)`
+
+Remove an element from the DOM and clean it up. Convenience compound: unmount(el) + el.remove().
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element` | - Element reference |
+
+---
+
+### `bw.detach(el)`
+
+Detach an element from the DOM but keep it registered (keep-alive). The element stays addressable and its subscriptions keep delivering. Janitor will not reap detach-exempt elements.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `el` | `Element` | - Element to detach |
+
+---
+
+### `bw.mount(target, taco, options)`
+
+Mount a TACO into a target element. Returns the root element (single root), first node (array), or null. This is the primary compound verb for putting UI on the page. Composes atomics: unmountChildren(target) → clear → create(content) → insert → mountTree(target).
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
 | `target` | `string|Element` | - CSS selector or DOM element to mount into |
+| `taco` | `Object|Array` | - TACO object or array to render |
+| `options` | `Object` | - Creation options |
+
+**Returns:** `Element|null` — root element, or null
+
+---
+
+### `bw.append(target, content, opts)`
+
+Append content to a target. create → insert (respecting opts.before) → mountTree. Returns the new child element.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | `string|Element` | - Container |
+| `content` | `Object` | - TACO to append |
+| `opts` | `Object` | - {before: Element|number} for positioning |
+
+**Returns:** `Element|null` — appended element
+
+---
+
+### `bw.replace(ref, taco)`
+
+Replace an existing element with new content. unmount(old) → create(taco) → insert at position → mountTree. Returns new element. null taco = remove.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `Element` | - Element to replace |
+| `taco` | `Object|null` | - Replacement TACO, or null to just remove |
+
+**Returns:** `Element|null` — new element, or null
+
+---
+
+### `bw.refresh(ref)`
+
+Refresh a component: unmountChildren → re-render → mountTree. Render throw propagates. Emits bw:refresh.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element` | - Component to refresh |
+
+**Returns:** `Element|null` — element
+
+---
+
+### `bw.updateSlot(ref, name, value)`
+
+Update a specific slot on a component by reference.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element` | - Component reference |
+| `name` | `string` | - Slot name |
+| `value` | `*` | - Value to set |
+
+**Returns:** `boolean` — if slot was updated
+
+---
+
+### `bw.syncChildren(parentEl, items, opts)`
+
+Keyed reconciliation: match existing children by `el._bw_key`, move/add/remove to match `items` order. Moved nodes are the SAME DOM nodes (state/focus survives).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `parentEl` | `Element` | - Container element |
+| `items` | `Array` | - Data array for desired children |
+| `opts` | `Object` | - {key: fn(item)→string, create: fn(item)→TACO, update: fn(el, item)} |
+
+---
+
+### `bw.render(target, position, taco)`
+
+Render a TACO into the DOM at a specific position relative to a target. Thin convenience factory over `bw.append()` / `bw.replace()`. Every code path goes through the v2.1 lifecycle pipeline (create → insert → mountTree), so mounted/unmount hooks, state, handles, and the janitor all work automatically.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | `Element|string` | - Target element or CSS selector |
+| `position` | `string` | - 'append', 'prepend', 'replace', 'before', 'after' |
 | `taco` | `Object` | - TACO object to render |
-| `options` | `Object` | - Mount options |
 
-**Returns:** `Element` — element
-
-**Example:**
-```javascript
-bw.DOM('#app', { t: 'div', a: { class: 'card' }, c: [ { t: 'h2', c: 'Hello' }, { t: 'p', c: 'Built with bitwrench.' } ] });
-```
-
----
-
-### `bw.mount(target, taco, options)`
-
-Mount a TACO into a target element and return the created root element. Like bw.DOM() but returns the root element of the TACO (not the container), giving direct access to el.bw handle methods.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `target` | `string|Element` | - CSS selector or DOM element |
-| `taco` | `Object` | - TACO to render |
-| `options` | `Object` | - Mount options |
-
-**Returns:** `Element` — created root element
+**Returns:** `{ el: Element|null, ok: boolean, error: string|null }`
 
 **Example:**
 ```javascript
-var el = bw.mount('#app', bw.makeCarousel({ items: slides })); el.bw.goToSlide(2); el.bw.next();
+var r = bw.render('#app', 'append', { t: 'button', a: { class: 'bw_btn' }, c: 'Click Me', o: { state: { clicks: 0 } } }); if (r.ok) r.el.bw.myMethod();   // use component handle
 ```
-
----
-
-### `bw.cleanup(element)`
-
-Clean up a DOM element and all its children by calling unmount callbacks, removing pub/sub subscriptions, and clearing state/render references. Called automatically by `bw.DOM()` before re-rendering. Call manually when removing elements to prevent memory leaks from orphaned callbacks.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `element` | `Element` | - DOM element to clean up |
-
-**Example:**
-```javascript
-var el = document.querySelector('#my-widget'); bw.cleanup(el);   // runs unmount hooks, clears _bw_state, _bw_render el.remove();       // safe to remove from DOM now
-```
-
----
-
-### `bw.render(element, position, taco)`
-
-Render a TACO object into the DOM at a specific position, returning a component handle. The handle provides full lifecycle control: state management, re-rendering, class manipulation, show/hide, event binding, and destroy. Components are tracked in a registry for later retrieval via `bw.getComponent()`.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `element` | `Element|string` | - Target element or CSS selector |
-| `position` | `string` | - Position: 'replace', 'prepend', 'append', 'before', 'after' |
-| `taco` | `Object` | - TACO object to render |
-
-**Returns:** `Object` — handle with element, setState, update, destroy, etc.
-
-**Example:**
-```javascript
-var handle = bw.render('#app', 'append', { t: 'button', a: { class: 'bw_btn' }, c: 'Click Me', o: { state: { clicks: 0 } } }); handle.setState({ clicks: 1 }); handle.destroy();
-```
-
----
-
-### `bw.getComponent(id)`
-
-Get a component handle by its ID from the component registry.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `id` | `string` | - Component ID (from bw.render) |
-
-**Returns:** `Object|null` — handle or null if not found
-
----
-
-### `bw.getAllComponents()`
-
-Get all registered component handles as a Map.
-
-**Returns:** `Map` — of componentId → component handle
 
 ---
 
@@ -299,7 +359,7 @@ Get all registered component handles as a Map.
 
 ### `bw.el(target, apply)`
 
-Look up a single DOM element by ID, CSS selector, UUID, or element ref. Optionally apply content or a function to the resolved element. Resolution order for string targets: 1. Check `bw._nodeMap[id]` cache (O(1), stale entries auto-pruned) 2. `document.getElementById(id)` 3. `document.querySelector(id)` for selectors starting with # or . 4. Class-based lookup for `bw_uuid_*` tokens With one argument, returns the element (or null). With two arguments, applies the second argument to the element and returns the element: - string/number: sets `el.textContent` - function: calls `apply(el)`, returns el - TACO object: clears children, mounts TACO via `bw.createDOM()` - array: clears children, appends each item (string -> text node, TACO -> element)
+Look up a single DOM element by ID, CSS selector, UUID, or element ref. Optionally apply content or a function to the resolved element. Resolution order for string targets: 1. Check `bw._nodeMap[id]` cache (O(1), stale entries auto-pruned) 2. `document.getElementById(id)` 3. `document.querySelector(id)` for selectors starting with # or . 4. Class-based lookup for `bw_uuid_*` tokens With one argument, returns the element (or null). With two arguments, applies the second argument to the element and returns the element: - string/number: sets `el.textContent` - function: calls `apply(el)`, returns el - TACO object: clears children, mounts TACO via `bw.create()` - array: clears children, appends each item (string -> text node, TACO -> element)
 
 **Parameters:**
 
@@ -398,28 +458,24 @@ bw.escapeHTML('<b>Hello</b> & "world"') // => '&lt;b&gt;Hello&lt;&#x2F;b&gt; &am
 
 ## State Management
 
-### `bw.update(target)`
+### `bw.update(ref, data)`
 
-Trigger re-render of a component by calling its stored `o.render` function. This is the recommended way to update a component after changing its state. Calls `el._bw_render(el, state)` and emits `bw:statechange` so other components can react without tight coupling.
+Update a component by dispatching to el.bw.update(data) if defined. Emits bw:statechange. If no update handle, emits specific diag warning. NEVER falls back to refresh.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or DOM element |
+| `ref` | `string|Element` | - Component to update |
+| `data` | `*` | - Data to pass to el.bw.update |
 
-**Returns:** `Element|null` — element, or null if not found / no render function
-
-**Example:**
-```javascript
-// Given a counter element with o.render el._bw_state.count++; bw.update(el);  // re-renders, emits bw:statechange
-```
+**Returns:** `Element|null` — element
 
 ---
 
 ### `bw.patch(id, content, attr)`
 
-Targeted DOM update by element ID — change one element's content or attribute without rebuilding the entire component tree. Use `bw.patch()` for lightweight value updates (scores, labels, counters) and `bw.update()` for full structural re-renders.
+Targeted DOM update by element ID — change one element's content or attribute without rebuilding the entire component tree. Use `bw.patch()` for lightweight value updates (scores, labels, counters) and `bw.refresh()` for full structural re-renders.
 
 **Parameters:**
 
@@ -523,7 +579,7 @@ bw.pub('score:updated', { player: 'X', score: 10 }); // Wildcard subscribers mat
 
 ### `bw.sub(topic, handler, el)`
 
-Subscribe to a topic. Returns an unsub() function. Supports wildcard patterns: a topic ending in `*` matches any published topic that starts with the prefix before the `*`. For example, `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. The handler receives `(detail, topic)` so it can distinguish which topic fired. Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.cleanup()` is called on that element, the subscription is automatically removed, preventing memory leaks.
+Subscribe to a topic. Returns an unsub() function. Supports wildcard patterns: a topic ending in `*` matches any published topic that starts with the prefix before the `*`. For example, `'agui:*'` matches `'agui:ready'`, `'agui:error'`, etc. The handler receives `(detail, topic)` so it can distinguish which topic fired. Optional third argument ties the subscription to a DOM element's lifecycle -- when `bw.unmount()` is called on that element, the subscription is automatically removed, preventing memory leaks.
 
 **Parameters:**
 
@@ -575,6 +631,23 @@ Subscribe to a topic for a single event only. The subscription is automatically 
 ```javascript
 bw.once('data:loaded', function(detail) { console.log('Received:', detail); // No need to unsubscribe -- already done automatically }); // Cancel before it fires: var cancel = bw.once('timeout', handler); cancel(); // handler will never be called
 ```
+
+---
+
+### `bw.derive(inputs, fn, outTopic, opts)`
+
+Declared dataflow: recompute fn(inputs...) on any input publish. Returns a disposer function. Optionally ties to an element lifecycle.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `inputs` | `Array<string>` | - Topic names to subscribe to |
+| `fn` | `Function` | - Combiner: fn(...latestValues) → result |
+| `outTopic` | `string` | - Topic to publish result on |
+| `opts` | `Object` | - {seed: [], immediate: bool, el: Element} |
+
+**Returns:** `Function`
 
 ---
 
@@ -726,6 +799,14 @@ bw.loadStyles();                                          // defaults, global bw
 
 ---
 
+### `bw.loadStructural()`
+
+Inject structural (theme-independent) CSS only. Idempotent.
+
+**Returns:** `Element|null` — `<style>` element, or null in Node.js
+
+---
+
 ### `bw.loadReset()`
 
 Inject the CSS reset (box-sizing, html/body font, reduced-motion). Idempotent — if already injected, returns the existing `<style>` element.
@@ -739,9 +820,24 @@ bw.loadReset();  // inject once, safe to call multiple times
 
 ---
 
+### `bw.setThemeMode(mode, scope)`
+
+Set the theme mode on all matching elements.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `mode` | `string` | - 'primary' or 'alternate' |
+| `scope` | `string` | - Selector. Omit for global (<html>). |
+
+**Returns:** `Object` — mode, count } — the mode set and number of elements affected
+
+---
+
 ### `bw.toggleThemeMode(scope)`
 
-Toggle between primary and alternate theme palettes. Adds/removes the `bw_theme_alt` class on the scoping element(s). Without a scope, toggles on `<html>` (global). With a scope, toggles on ALL matching elements.
+Toggle between primary and alternate theme palettes. Determines current mode from first matched element, then sets inverse on all.
 
 **Parameters:**
 
@@ -750,11 +846,6 @@ Toggle between primary and alternate theme palettes. Adds/removes the `bw_theme_
 | `scope` | `string|Element` | - Selector or element. Omit for global. |
 
 **Returns:** `string` — mode after toggle: 'primary' or 'alternate' (based on first element)
-
-**Example:**
-```javascript
-bw.toggleThemeMode();                   // global toggle on <html> bw.toggleThemeMode('#my-dashboard');    // scoped toggle bw.toggleThemeMode('.panel');           // toggle on ALL .panel elements
-```
 
 ---
 
@@ -1427,7 +1518,7 @@ Create a hero section for landing pages and headers Supports gradient background
 
 **Example:**
 ```javascript
-const hero = makeHero({ title: "Welcome to Bitwrench", subtitle: "Build UIs with pure JavaScript", variant: "dark", actions: [ makeButton({ text: "Get Started", variant: "primary", size: "lg" }), makeButton({ text: "Learn More", variant: "outline-light", size: "lg" }) ] });
+const hero = makeHero({ title: "Welcome to Bitwrench", subtitle: "Build UIs with pure JavaScript", variant: "dark", actions: [ makeButton({ text: "Get Started", variant: "primary", size: "lg" }), makeButton({ text: "Learn More", variant: "outline_light", size: "lg" }) ] });
 ```
 
 ---
@@ -2229,12 +2320,6 @@ Get a shallow copy of the function registry for inspection.
 ---
 
 ## Component
-
-### `bw.flush()`
-
-No-op flush (ComponentHandle removed in v2.0.19). Kept as no-op for backward compatibility.
-
----
 
 ### `bw.message(target, action, data)`
 

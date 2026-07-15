@@ -220,7 +220,7 @@ def api_gpio(request: Request, pin: str):
 @server.route("/dist/bitwrench.umd.min.js", GET)
 def serve_bitwrench(request: Request):
     """Serve pre-gzipped bitwrench.js with Content-Encoding: gzip.
-    The browser transparently decompresses it. ~40KB transfer vs ~130KB."""
+    The browser transparently decompresses it. ~45KB transfer vs ~165KB."""
     return FileResponse(
         request,
         filename="bitwrench.umd.min.js.gz",

@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, extname, basename, dirname } from 'node:path';
 import quikdown from '../vendor/quikdown.js';
 import bw from '../bitwrench.js';
-import { getAllStyles, THEME_PRESETS } from '../bitwrench-styles.js';
+import { THEME_PRESETS } from '../bitwrench-styles.js';
 import { getInjectionHead, getInjectionBodyEnd } from './inject.js';
 import { makePageLayout } from './layout-default.js';
 
@@ -110,7 +110,7 @@ export function convertFile(inputPath, flags = {}) {
     const raw = readFileSync(absInput, 'utf8');
     const ext = extname(absInput).toLowerCase();
 
-    let bodyHTML = '';
+    let bodyHTML;
     let autoTitle = null;
 
     // Process based on file extension

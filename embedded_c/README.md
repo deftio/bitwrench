@@ -1,19 +1,37 @@
 # bitwrench embedded C/C++
 
-C/C++ headers for building bwserve-compatible servers on embedded systems (ESP32, STM32, etc).
+C/C++ headers for building bwserve-compatible servers on embedded systems (ESP32, STM32, RP2040, etc).
 
 ## Files
 
 | File | Description |
 |------|-------------|
 | `bitwrench.h` | TACO format helpers — macros for composing UI node JSON strings |
-| `bwserve.h` | bwserve protocol — replace, patch, append, remove, batch, SSE frame helpers |
+| `bwserve.h` | bwserve protocol — mount, patch, append, remove, batch, SSE frame helpers |
 
 ## Install
 
-### Arduino IDE
+### From a registry (recommended)
 
-Copy both header files into your sketch folder:
+- **Arduino IDE** — Library Manager: search for **bitwrench** and install.
+- **PlatformIO** — add to `platformio.ini`:
+
+```ini
+lib_deps = deftio/bitwrench
+```
+
+- **ESP-IDF** — add from the ESP Component Registry:
+
+```bash
+idf.py add-dependency "deftio/bitwrench"
+```
+
+### Copy the headers (always works)
+
+Both files are header-only with no dependencies — copying them is a
+perfectly good install method.
+
+**Arduino IDE** — copy both header files into your sketch folder:
 
 ```
 my_project/
@@ -22,9 +40,7 @@ my_project/
   bwserve.h
 ```
 
-### PlatformIO
-
-Copy headers into a library folder:
+**PlatformIO** — copy headers into a library folder:
 
 ```
 lib/
@@ -33,10 +49,8 @@ lib/
     bwserve.h
 ```
 
-### CMake / esp-idf
+**CMake / esp-idf** — add the `embedded_c/` directory to your include path:
 
-Add the `embedded_c/` directory to your include path:
- ``
 ```cmake
 target_include_directories(my_app PRIVATE path/to/embedded_c)
 ```
@@ -92,19 +106,20 @@ void setup() {
     char taco[256];
     BW_TACO_ID(taco, "div", "counter", "0");
 
-    // Build a button: <button data-bw-action="increment">+1</button>
+    // Build a button: <button class="bw_btn bw_primary bw_act_increment">+1</button>
+    // (the bw_act_* class marks it as a server action named "increment")
     char btn[256];
     BW_TACO_ATTR(btn, "button",
-      "'data-bw-action':'increment','class':'bw-btn'", "+1");
+      "'class':'bw_btn bw_primary bw_act_increment'", "+1");
 
     // Build array of both nodes
     char content[512];
     snprintf(content, sizeof(content), "[%s,%s]", taco, btn);
 
-    // Send replace message to put content in #app
+    // Send mount message to put content in #app
     char msg[600];
     snprintf(msg, sizeof(msg),
-      "r{'type':'replace','target':'#app','node':{'t':'div','c':%s}}",
+      "r{'v':1,'type':'mount','ref':'#app','taco':{'t':'div','c':%s}}",
       content);
 
     char frame[700];
@@ -143,7 +158,7 @@ void loop() {
 
 **What happens:**
 1. ESP32 serves `BW_BOOTSTRAP_HTML` — a tiny page that loads bitwrench and connects to `/events`
-2. On SSE connect, the server sends a `replace` message with a counter div and button
+2. On SSE connect, the server sends a `mount` message with a counter div and button
 3. When the user clicks "+1", the browser POSTs an action to `/api/command`
 4. The server increments the count and sends a `patch` message to update the display
 
@@ -153,11 +168,11 @@ All macros produce r-prefixed relaxed JSON so you avoid escaping double quotes:
 
 ```c
 // Without r-prefix (painful):
-const char* msg = "{\"type\":\"patch\",\"target\":\"temp\",\"content\":\"23.5\"}";
+const char* msg = "{\"v\":1,\"type\":\"patch\",\"ref\":\"temp\",\"text\":\"23.5\"}";
 
 // With r-prefix (readable):
 BW_PATCH(buf, "temp", "23.5");
-// → r{'type':'patch','target':'temp','content':'23.5'}
+// -> r{'v':1,'type':'patch','ref':'temp','text':'23.5'}
 ```
 
 The browser's `bw.parseJSONFlex()` normalizes to strict JSON before processing.
@@ -189,7 +204,7 @@ When compiled as C++, you get a cleaner namespace-based API:
 #include "bwserve.h"
 
 auto node = bw::taco("h1", "Hello");
-auto msg  = bwserve::replace("#app", node);
+auto msg  = bwserve::mount("#app", node);
 auto frame = bwserve::sse_frame(msg);
 
 auto update = bwserve::batch({
@@ -214,12 +229,12 @@ auto update = bwserve::batch({
 
 | Macro | Description |
 |-------|-------------|
-| `BW_REPLACE(buf, target, taco)` | Replace target content with TACO node |
-| `BW_PATCH(buf, target, content)` | Update target's text content |
-| `BW_PATCH_NUM(buf, target, value)` | Patch with a numeric value |
-| `BW_PATCH_ATTR(buf, target, content, attrs)` | Patch text + attributes |
-| `BW_APPEND(buf, target, taco)` | Append child to target |
-| `BW_REMOVE(buf, target)` | Remove target from DOM |
+| `BW_MOUNT(buf, ref, taco)` | Mount TACO node into target element |
+| `BW_PATCH(buf, ref, text)` | Update target's text content |
+| `BW_PATCH_NUM(buf, ref, value)` | Patch with a numeric value |
+| `BW_PATCH_ATTR(buf, ref, text, attrs)` | Patch text + attributes |
+| `BW_APPEND(buf, ref, taco)` | Append child to target |
+| `BW_REMOVE(buf, ref)` | Remove target from DOM |
 | `BW_BATCH(buf, ops)` | Wrap ops in a batch |
 | `BW_MESSAGE(buf, level, text)` | Send a notification |
 | `BW_SSE_FRAME(buf, data)` | Wrap as SSE `data:` frame |

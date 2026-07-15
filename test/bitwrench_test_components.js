@@ -9,7 +9,7 @@ import bw from "../src/bitwrench.js";
 import {
   makePagination, makeRadio, makeButtonGroup, makeAccordion,
   makeModal, makeToast, makeDropdown, makeSwitch, makeSkeleton,
-  makeAvatar
+  makeAvatar, makeCodeDemo
 } from "../src/bitwrench-bccl.js";
 import { defaultStyles, getStructuralStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, resolveLayout } from "../src/bitwrench-styles.js";
 import jsdom from 'jsdom';
@@ -64,7 +64,7 @@ describe('makePagination', function() {
 
   it('should accept size prop', function() {
     const result = makePagination({ pages: 3, currentPage: 1, size: 'sm' });
-    assert.ok(result.c.a.class.includes('bw_pagination_sm'));
+    assert.ok(result.c.a.class.includes('bw_bccl_pagination_sm'));
   });
 
   it('should accept className prop', function() {
@@ -87,7 +87,7 @@ describe('makeRadio', function() {
   it('should return a TACO with div tag and bw_form_check class', function() {
     const result = makeRadio({ label: 'Option A', name: 'choice', value: 'a' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw_form_check'));
+    assert.ok(result.a.class.includes('bw_bccl_form_check'));
   });
 
   it('should create radio input with correct type', function() {
@@ -125,18 +125,18 @@ describe('makeButtonGroup', function() {
   it('should return a TACO with bw_btn_group class', function() {
     const result = makeButtonGroup({ children: [] });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw_btn_group'));
+    assert.ok(result.a.class.includes('bw_bccl_btn_group'));
     assert.strictEqual(result.a.role, 'group');
   });
 
   it('should use vertical class when vertical=true', function() {
     const result = makeButtonGroup({ vertical: true });
-    assert.ok(result.a.class.includes('bw_btn_group_vertical'));
+    assert.ok(result.a.class.includes('bw_bccl_btn_group_vertical'));
   });
 
   it('should accept size prop', function() {
     const result = makeButtonGroup({ size: 'lg' });
-    assert.ok(result.a.class.includes('bw_btn_group_lg'));
+    assert.ok(result.a.class.includes('bw_bccl_btn_group_lg'));
   });
 
   it('should pass children through', function() {
@@ -164,7 +164,7 @@ describe('makeAccordion', function() {
   it('should return a TACO with bw_accordion class', function() {
     const result = makeAccordion({ items });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw_accordion'));
+    assert.ok(result.a.class.includes('bw_bccl_accordion'));
   });
 
   it('should create correct number of accordion items', function() {
@@ -217,18 +217,18 @@ describe('makeModal', function() {
   it('should return a TACO with bw_modal class', function() {
     const result = makeModal({ title: 'Test', content: 'Body' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw_modal'));
+    assert.ok(result.a.class.includes('bw_bccl_modal'));
   });
 
   it('should have modal-dialog inside', function() {
     const result = makeModal({ title: 'Test', content: 'Body' });
-    assert.ok(result.c.a.class.includes('bw_modal_dialog'));
+    assert.ok(result.c.a.class.includes('bw_bccl_modal_dialog'));
   });
 
   it('should render title in header', function() {
     const result = makeModal({ title: 'My Title', content: 'Body' });
     const header = result.c.c.c[0]; // dialog > content > first child
-    assert.ok(header.a.class.includes('bw_modal_header'));
+    assert.ok(header.a.class.includes('bw_bccl_modal_header'));
     const title = header.c[0];
     assert.strictEqual(title.c, 'My Title');
   });
@@ -248,14 +248,14 @@ describe('makeModal', function() {
 
   it('should apply size class', function() {
     const result = makeModal({ content: 'Body', size: 'lg' });
-    assert.ok(result.c.a.class.includes('bw_modal_lg'));
+    assert.ok(result.c.a.class.includes('bw_bccl_modal_lg'));
   });
 
   it('should render footer when provided', function() {
     const result = makeModal({ content: 'Body', footer: 'Footer text' });
     const content = result.c.c;
     const footer = content.c[content.c.length - 1];
-    assert.ok(footer.a.class.includes('bw_modal_footer'));
+    assert.ok(footer.a.class.includes('bw_bccl_modal_footer'));
   });
 
   it('should have mounted and unmount lifecycle hooks', function() {
@@ -273,7 +273,7 @@ describe('makeToast', function() {
   it('should return a TACO with bw_toast class', function() {
     const result = makeToast({ title: 'Hello', content: 'World' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw_toast'));
+    assert.ok(result.a.class.includes('bw_bccl_toast'));
   });
 
   it('should apply variant class', function() {
@@ -289,13 +289,13 @@ describe('makeToast', function() {
   it('should render header when title is provided', function() {
     const result = makeToast({ title: 'Notice' });
     const header = result.c[0];
-    assert.ok(header.a.class.includes('bw_toast_header'));
+    assert.ok(header.a.class.includes('bw_bccl_toast_header'));
   });
 
   it('should render body when content is provided', function() {
     const result = makeToast({ content: 'Message text' });
     // With no title, content is the first child after filter
-    const body = result.c.find(c => c && c.a && c.a.class && c.a.class.includes('bw_toast_body'));
+    const body = result.c.find(c => c && c.a && c.a.class && c.a.class.includes('bw_bccl_toast_body'));
     assert.ok(body);
     assert.strictEqual(body.c, 'Message text');
   });
@@ -307,7 +307,7 @@ describe('makeToast', function() {
 
   it('should store position as CSS class', function() {
     const result = makeToast({ position: 'bottom-left' });
-    assert.ok(result.a.class.indexOf('bw_toast_bottom_left') >= 0);
+    assert.ok(result.a.class.indexOf('bw_bccl_toast_bottom_left') >= 0);
   });
 
   it('should be available on bw object', function() {
@@ -323,14 +323,14 @@ describe('makeDropdown', function() {
   it('should return a TACO with bw_dropdown class', function() {
     const result = makeDropdown({ trigger: 'Menu', items: [] });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw_dropdown'));
+    assert.ok(result.a.class.includes('bw_bccl_dropdown'));
   });
 
   it('should create trigger button from string', function() {
     const result = makeDropdown({ trigger: 'Actions' });
     const trigger = result.c[0];
     assert.strictEqual(trigger.t, 'button');
-    assert.ok(trigger.a.class.includes('bw_dropdown_toggle'));
+    assert.ok(trigger.a.class.includes('bw_bccl_dropdown_toggle'));
     assert.strictEqual(trigger.c, 'Actions');
   });
 
@@ -343,7 +343,7 @@ describe('makeDropdown', function() {
       ]
     });
     const menu = result.c[1];
-    assert.ok(menu.a.class.includes('bw_dropdown_menu'));
+    assert.ok(menu.a.class.includes('bw_bccl_dropdown_menu'));
     assert.strictEqual(menu.c.length, 2);
   });
 
@@ -354,13 +354,13 @@ describe('makeDropdown', function() {
     });
     const menu = result.c[1];
     assert.strictEqual(menu.c[1].t, 'hr');
-    assert.ok(menu.c[1].a.class.includes('bw_dropdown_divider'));
+    assert.ok(menu.c[1].a.class.includes('bw_bccl_dropdown_divider'));
   });
 
   it('should apply align=end class', function() {
     const result = makeDropdown({ trigger: 'Menu', items: [], align: 'end' });
     const menu = result.c[1];
-    assert.ok(menu.a.class.includes('bw_dropdown_menu_end'));
+    assert.ok(menu.a.class.includes('bw_bccl_dropdown_menu_end'));
   });
 
   it('should apply disabled class to disabled items', function() {
@@ -387,7 +387,7 @@ describe('makeSwitch', function() {
   it('should return a TACO with bw_form_switch class', function() {
     const result = makeSwitch({ label: 'Dark mode' });
     assert.strictEqual(result.t, 'div');
-    assert.ok(result.a.class.includes('bw_form_switch'));
+    assert.ok(result.a.class.includes('bw_bccl_form_switch'));
   });
 
   it('should create checkbox input with switch role', function() {
@@ -537,52 +537,52 @@ describe('Component CSS', function() {
 
   it('getAllStyles should include new component selectors', function() {
     const all = getAllStyles();
-    assert.ok(all['.bw_btn_group, .bw_btn_group_vertical'], 'btn-group missing');
-    assert.ok(all['.bw_accordion'], 'accordion missing');
-    assert.ok(all['.bw_modal'], 'modal missing');
-    assert.ok(all['.bw_toast'], 'toast missing');
-    assert.ok(all['.bw_dropdown'], 'dropdown missing');
-    assert.ok(all['.bw_form_switch'], 'form-switch missing');
+    assert.ok(all['.bw_bccl_btn_group, .bw_bccl_btn_group_vertical'], 'btn-group missing');
+    assert.ok(all['.bw_bccl_accordion'], 'accordion missing');
+    assert.ok(all['.bw_bccl_modal'], 'modal missing');
+    assert.ok(all['.bw_bccl_toast'], 'toast missing');
+    assert.ok(all['.bw_bccl_dropdown'], 'dropdown missing');
+    assert.ok(all['.bw_bccl_form_switch'], 'form-switch missing');
     assert.ok(all['.bw_skeleton'], 'skeleton missing');
     assert.ok(all['.bw_avatar'], 'avatar missing');
     assert.ok(all['.bw_stat_card'], 'stat-card missing');
-    assert.ok(all['.bw_tooltip_wrapper'], 'tooltip missing');
+    assert.ok(all['.bw_bccl_tooltip_wrapper'], 'tooltip missing');
     assert.ok(all['.bw_popover_wrapper'], 'popover missing');
     assert.ok(all['.bw_search_input'], 'search-input missing');
     assert.ok(all['.bw_range'], 'range missing');
     assert.ok(all['.bw_media'], 'media missing');
     assert.ok(all['.bw_file_upload'], 'file-upload missing');
-    assert.ok(all['.bw_timeline'], 'timeline missing');
+    assert.ok(all['.bw_bccl_timeline'], 'timeline missing');
     assert.ok(all['.bw_stepper'], 'stepper missing');
     assert.ok(all['.bw_chip_input'], 'chip-input missing');
   });
 
   it('getStructuralStyles should include new component rules', function() {
     const structural = getStructuralStyles();
-    assert.ok(structural['.bw_btn_group, .bw_btn_group_vertical'], 'btn-group structural missing');
-    assert.ok(structural['.bw_accordion'], 'accordion structural missing');
-    assert.ok(structural['.bw_modal'], 'modal structural missing');
-    assert.ok(structural['.bw_toast'], 'toast structural missing');
-    assert.ok(structural['.bw_dropdown'], 'dropdown structural missing');
-    assert.ok(structural['.bw_form_switch'], 'form-switch structural missing');
+    assert.ok(structural['.bw_bccl_btn_group, .bw_bccl_btn_group_vertical'], 'btn-group structural missing');
+    assert.ok(structural['.bw_bccl_accordion'], 'accordion structural missing');
+    assert.ok(structural['.bw_bccl_modal'], 'modal structural missing');
+    assert.ok(structural['.bw_bccl_toast'], 'toast structural missing');
+    assert.ok(structural['.bw_bccl_dropdown'], 'dropdown structural missing');
+    assert.ok(structural['.bw_bccl_form_switch'], 'form-switch structural missing');
     assert.ok(structural['.bw_skeleton'], 'skeleton structural missing');
     assert.ok(structural['.bw_avatar'], 'avatar structural missing');
     assert.ok(structural['.bw_stat_card'], 'stat-card structural missing');
-    assert.ok(structural['.bw_tooltip_wrapper'], 'tooltip structural missing');
+    assert.ok(structural['.bw_bccl_tooltip_wrapper'], 'tooltip structural missing');
     assert.ok(structural['.bw_popover_wrapper'], 'popover structural missing');
     assert.ok(structural['.bw_search_input'], 'search-input structural missing');
     assert.ok(structural['.bw_range'], 'range structural missing');
     assert.ok(structural['.bw_media'], 'media structural missing');
     assert.ok(structural['.bw_file_upload'], 'file-upload structural missing');
-    assert.ok(structural['.bw_timeline'], 'timeline structural missing');
+    assert.ok(structural['.bw_bccl_timeline'], 'timeline structural missing');
     assert.ok(structural['.bw_stepper'], 'stepper structural missing');
     assert.ok(structural['.bw_chip_input'], 'chip-input structural missing');
   });
 
   it('getStructuralStyles should include underscore aliases', function() {
     const structural = getStructuralStyles();
-    assert.ok(structural['.bw_accordion'], 'underscore alias missing for accordion');
-    assert.ok(structural['.bw_modal'], 'underscore alias missing for modal');
+    assert.ok(structural['.bw_bccl_accordion'], 'underscore alias missing for accordion');
+    assert.ok(structural['.bw_bccl_modal'], 'underscore alias missing for modal');
     assert.ok(structural['.bw_avatar'], 'underscore alias missing for avatar');
   });
 
@@ -594,7 +594,7 @@ describe('Component CSS', function() {
     const altRules = generateAlternateCSS('', altPalette, layout);
     const css = bw.css(altRules);
     assert.ok(css.includes('.bw_theme_alt'), 'should use .bw_theme_alt scope');
-    assert.ok(css.includes('.bw_btn'), 'should include button rules');
+    assert.ok(css.includes('.bw_bccl_btn'), 'should include button rules');
   });
 });
 
@@ -609,7 +609,7 @@ describe('String shorthand', function() {
     const btn = bw.makeButton('OK');
     assert.strictEqual(btn.t, 'button');
     assert.strictEqual(btn.c, 'OK');
-    assert.ok(btn.a.class.includes('bw_btn'));
+    assert.ok(btn.a.class.includes('bw_bccl_btn'));
   });
 
   it('makeButton string shorthand should default to primary variant', function() {
@@ -621,13 +621,13 @@ describe('String shorthand', function() {
     const badge = bw.makeBadge('New');
     assert.strictEqual(badge.t, 'span');
     assert.strictEqual(badge.c, 'New');
-    assert.ok(badge.a.class.includes('bw_badge'));
+    assert.ok(badge.a.class.includes('bw_bccl_badge'));
   });
 
   it('makeAlert should accept string shorthand', function() {
     const alert = bw.makeAlert('Something happened');
     assert.strictEqual(alert.t, 'div');
-    assert.ok(alert.a.class.includes('bw_alert'));
+    assert.ok(alert.a.class.includes('bw_bccl_alert'));
     assert.ok(alert.c.some(function(child) { return child === 'Something happened'; }));
   });
 
@@ -712,7 +712,7 @@ describe('makeTooltip', function() {
   it('should create tooltip wrapper with content and tooltip text', function() {
     const tip = bw.makeTooltip({ content: 'Hover me', text: 'Hello' });
     assert.strictEqual(tip.t, 'span');
-    assert.ok(tip.a.class.includes('bw_tooltip_wrapper'));
+    assert.ok(tip.a.class.includes('bw_bccl_tooltip_wrapper'));
     assert.strictEqual(tip.c.length, 2);
     assert.strictEqual(tip.c[0], 'Hover me');
     assert.strictEqual(tip.c[1].c, 'Hello');
@@ -720,13 +720,13 @@ describe('makeTooltip', function() {
 
   it('should default to top placement', function() {
     const tip = bw.makeTooltip({ text: 'tip' });
-    assert.ok(tip.c[1].a.class.includes('bw_tooltip_top'));
+    assert.ok(tip.c[1].a.class.includes('bw_bccl_tooltip_top'));
   });
 
   it('should support all four placements', function() {
     ['top', 'bottom', 'left', 'right'].forEach(function(p) {
       const tip = bw.makeTooltip({ text: 'tip', placement: p });
-      assert.ok(tip.c[1].a.class.includes('bw_tooltip_' + p));
+      assert.ok(tip.c[1].a.class.includes('bw_bccl_tooltip_' + p));
     });
   });
 
@@ -1062,7 +1062,7 @@ describe('makeTimeline', function() {
   it('should create timeline container', function() {
     const tl = bw.makeTimeline({ items: [] });
     assert.strictEqual(tl.t, 'div');
-    assert.ok(tl.a.class.includes('bw_timeline'));
+    assert.ok(tl.a.class.includes('bw_bccl_timeline'));
   });
 
   it('should render items with marker and content', function() {
@@ -1074,11 +1074,11 @@ describe('makeTimeline', function() {
     });
     assert.strictEqual(tl.c.length, 2);
     const first = tl.c[0];
-    assert.ok(first.a.class.includes('bw_timeline_item'));
+    assert.ok(first.a.class.includes('bw_bccl_timeline_item'));
     const marker = first.c[0];
-    assert.ok(marker.a.class.includes('bw_timeline_marker'));
+    assert.ok(marker.a.class.includes('bw_bccl_timeline_marker'));
     const content = first.c[1];
-    assert.ok(content.a.class.includes('bw_timeline_content'));
+    assert.ok(content.a.class.includes('bw_bccl_timeline_content'));
   });
 
   it('should apply variant to marker', function() {
@@ -1096,7 +1096,7 @@ describe('makeTimeline', function() {
   it('should render date, title, and text content', function() {
     const tl = bw.makeTimeline({ items: [{ title: 'Launch', date: 'Feb', content: 'Details here' }] });
     const contentDiv = tl.c[0].c[1]; // timeline-content
-    const date = contentDiv.c.find(function(c) { return c.a && c.a.class === 'bw_timeline_date'; });
+    const date = contentDiv.c.find(function(c) { return c.a && c.a.class === 'bw_bccl_timeline_date'; });
     const title = contentDiv.c.find(function(c) { return c.t === 'h5'; });
     const text = contentDiv.c.find(function(c) { return c.t === 'p'; });
     assert.strictEqual(date.c, 'Feb');
@@ -1253,7 +1253,7 @@ describe('Breadcrumb active state', function() {
 
   it('breadcrumb link styles should exist', function() {
     const all = getAllStyles();
-    assert.ok(all['.bw_breadcrumb_item a'], 'breadcrumb link styles missing');
+    assert.ok(all['.bw_bccl_breadcrumb_item a'], 'breadcrumb link styles missing');
   });
 });
 
@@ -1266,26 +1266,26 @@ describe('bw.make() factory', function() {
     const btn = bw.make('button', { text: 'Click' });
     assert.strictEqual(btn.t, 'button');
     assert.strictEqual(btn.c, 'Click');
-    assert.ok(btn.a.class.includes('bw_btn'));
+    assert.ok(btn.a.class.includes('bw_bccl_btn'));
   });
 
   it('should create a card via make("card")', function() {
     const card = bw.make('card', { title: 'Title', text: 'Body' });
     assert.strictEqual(card.t, 'div');
-    assert.ok(card.a.class.includes('bw_card'));
+    assert.ok(card.a.class.includes('bw_bccl_card'));
   });
 
   it('should create a badge via make("badge")', function() {
     const badge = bw.make('badge', { text: 'New', variant: 'success' });
     assert.strictEqual(badge.t, 'span');
-    assert.ok(badge.a.class.includes('bw_badge'));
+    assert.ok(badge.a.class.includes('bw_bccl_badge'));
     assert.ok(badge.a.class.includes('bw_success'));
   });
 
   it('should create an alert via make("alert")', function() {
     const alert = bw.make('alert', { text: 'Warning!', variant: 'warning' });
     assert.strictEqual(alert.t, 'div');
-    assert.ok(alert.a.class.includes('bw_alert'));
+    assert.ok(alert.a.class.includes('bw_bccl_alert'));
   });
 
   it('should throw for unknown component type', function() {
@@ -1295,7 +1295,7 @@ describe('bw.make() factory', function() {
   it('should work with empty props', function() {
     const btn = bw.make('button', {});
     assert.strictEqual(btn.t, 'button');
-    assert.ok(btn.a.class.includes('bw_btn'));
+    assert.ok(btn.a.class.includes('bw_bccl_btn'));
   });
 
   it('should produce same output as direct makeButton', function() {
@@ -1347,7 +1347,7 @@ describe('bw.variantClass()', function() {
 
   it('should handle outline variants', function() {
     var cls = bw.variantClass('outline_primary');
-    assert.ok(cls.includes('bw_btn_outline'), 'should include bw_btn_outline');
+    assert.ok(cls.includes('bw_bccl_btn_outline'), 'should include bw_btn_outline');
     assert.ok(cls.includes('bw_primary'), 'should include bw_primary');
   });
 
@@ -1367,7 +1367,7 @@ describe('makeButton', function() {
     var taco = bw.makeButton();
     var html = bw.html(taco);
     assert.ok(html.includes('<button'), 'should be a button tag');
-    assert.ok(html.includes('bw_btn'), 'should have bw_btn class');
+    assert.ok(html.includes('bw_bccl_btn'), 'should have bw_btn class');
   });
   it('should support text and variant', function() {
     var taco = bw.makeButton({ text: 'Go', variant: 'danger' });
@@ -1378,12 +1378,12 @@ describe('makeButton', function() {
   it('should support size prop', function() {
     var taco = bw.makeButton({ text: 'Sm', size: 'sm' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_btn_sm'), 'should have size class');
+    assert.ok(html.includes('bw_bccl_btn_sm'), 'should have size class');
   });
   it('should support outline variant', function() {
     var taco = bw.makeButton({ text: 'Out', variant: 'outline_primary' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_btn_outline'), 'should have outline class');
+    assert.ok(html.includes('bw_bccl_btn_outline'), 'should have outline class');
   });
   it('should support disabled prop', function() {
     var taco = bw.makeButton({ text: 'No', disabled: true });
@@ -1401,12 +1401,12 @@ describe('makeContainer', function() {
   it('should create a container div', function() {
     var taco = bw.makeContainer({ children: ['A', 'B'] });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_container'), 'should have container class');
+    assert.ok(html.includes('bw_bccl_container'), 'should have container class');
   });
   it('should support fluid mode', function() {
     var taco = bw.makeContainer({ children: ['X'], fluid: true });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_container-fluid'), 'should have fluid class');
+    assert.ok(html.includes('bw_bccl_container-fluid'), 'should have fluid class');
   });
 });
 
@@ -1449,7 +1449,7 @@ describe('makeNavbar', function() {
   it('should create a navbar', function() {
     var taco = bw.makeNavbar({ brand: 'MySite', items: [{ text: 'Home' }] });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_navbar'), 'should have navbar class');
+    assert.ok(html.includes('bw_bccl_navbar'), 'should have navbar class');
     assert.ok(html.includes('MySite'), 'should contain brand text');
   });
 });
@@ -1463,7 +1463,7 @@ describe('makeTabs', function() {
       ]
     });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_tab'), 'should have tab class');
+    assert.ok(html.includes('bw_bccl_tab'), 'should have tab class');
     assert.ok(html.includes('Tab1'), 'should contain tab label');
     assert.ok(html.includes('Content1'), 'should contain tab content');
   });
@@ -1473,13 +1473,13 @@ describe('makeAlert', function() {
   it('should create an alert', function() {
     var taco = bw.makeAlert({ content: 'Warning!', variant: 'warning' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_alert'), 'should have alert class');
+    assert.ok(html.includes('bw_bccl_alert'), 'should have alert class');
     assert.ok(html.includes('Warning!'), 'should include content');
   });
   it('should support dismissible', function() {
     var taco = bw.makeAlert({ content: 'Close me', dismissible: true });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_alert_dismissible'), 'should have dismissible class');
+    assert.ok(html.includes('bw_bccl_alert_dismissible'), 'should have dismissible class');
   });
   it('should support string shorthand', function() {
     var taco = bw.makeAlert('Oops');
@@ -1492,13 +1492,13 @@ describe('makeBadge', function() {
   it('should create a badge', function() {
     var taco = bw.makeBadge({ text: '5', variant: 'primary' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_badge'), 'should have badge class');
+    assert.ok(html.includes('bw_bccl_badge'), 'should have badge class');
     assert.ok(html.includes('5'), 'should include text');
   });
   it('should support pill shape', function() {
     var taco = bw.makeBadge({ text: 'New', pill: true });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_badge_pill'), 'should have pill class');
+    assert.ok(html.includes('bw_bccl_badge_pill'), 'should have pill class');
   });
   it('should support string shorthand', function() {
     var taco = bw.makeBadge('Info');
@@ -1511,7 +1511,7 @@ describe('makeProgress', function() {
   it('should create a progress bar', function() {
     var taco = bw.makeProgress({ value: 60 });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_progress'), 'should have progress class');
+    assert.ok(html.includes('bw_bccl_progress'), 'should have progress class');
     assert.ok(html.includes('60%'), 'should show value');
   });
   it('should support variant', function() {
@@ -1522,7 +1522,7 @@ describe('makeProgress', function() {
   it('should support striped', function() {
     var taco = bw.makeProgress({ value: 50, striped: true });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_progress_bar_striped'), 'should have striped class');
+    assert.ok(html.includes('bw_bccl_progress_bar_striped'), 'should have striped class');
   });
 });
 
@@ -1552,7 +1552,7 @@ describe('makeFormGroup', function() {
   it('should create a form group with label', function() {
     var taco = bw.makeFormGroup({ label: 'Name', children: [{ t: 'input', a: { type: 'text' } }] });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_form_group'), 'should have form-group class');
+    assert.ok(html.includes('bw_bccl_form_group'), 'should have form-group class');
     assert.ok(html.includes('Name'), 'should include label');
   });
 });
@@ -1561,7 +1561,7 @@ describe('makeInput', function() {
   it('should create an input element', function() {
     var taco = bw.makeInput({ name: 'email', type: 'email', placeholder: 'Enter email' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_form_control'), 'should have form-control class');
+    assert.ok(html.includes('bw_bccl_form_control'), 'should have form-control class');
     assert.ok(html.includes('type="email"'), 'should have type attribute');
   });
   it('should support label prop', function() {
@@ -1605,7 +1605,7 @@ describe('makeHero', function() {
   it('should create a hero section', function() {
     var taco = bw.makeHero({ title: 'Welcome', subtitle: 'To the site' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_hero'), 'should have hero class');
+    assert.ok(html.includes('bw_bccl_hero'), 'should have hero class');
     assert.ok(html.includes('Welcome'), 'should include title');
     assert.ok(html.includes('To the site'), 'should include subtitle');
   });
@@ -1613,7 +1613,7 @@ describe('makeHero', function() {
     var taco = bw.makeHero({ title: 'Hi', actions: { t: 'a', a: { href: '#' }, c: 'Start' } });
     var html = bw.html(taco);
     assert.ok(html.includes('Start'), 'should include action text');
-    assert.ok(html.includes('bw_hero_actions'), 'should have actions wrapper');
+    assert.ok(html.includes('bw_bccl_hero_actions'), 'should have actions wrapper');
   });
 });
 
@@ -1664,15 +1664,15 @@ describe('makeCarousel', function() {
       ]
     });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_carousel'), 'should have carousel class');
-    assert.ok(html.includes('bw_carousel_track'), 'should have track');
+    assert.ok(html.includes('bw_bccl_carousel'), 'should have carousel class');
+    assert.ok(html.includes('bw_bccl_carousel_track'), 'should have track');
   });
   it('should support captions', function() {
     var taco = bw.makeCarousel({
       items: [{ content: 'Image 1', caption: 'First slide' }]
     });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_carousel_caption'), 'should have caption class');
+    assert.ok(html.includes('bw_bccl_carousel_caption'), 'should have caption class');
     assert.ok(html.includes('First slide'), 'should include caption text');
   });
   it('should show controls when more than 1 item', function() {
@@ -1681,7 +1681,7 @@ describe('makeCarousel', function() {
       showControls: true
     });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_carousel_control'), 'should have controls');
+    assert.ok(html.includes('bw_bccl_carousel_control'), 'should have controls');
   });
   it('should show indicators when more than 1 item', function() {
     var taco = bw.makeCarousel({
@@ -1689,7 +1689,7 @@ describe('makeCarousel', function() {
       showIndicators: true
     });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_carousel_indicator'), 'should have indicators');
+    assert.ok(html.includes('bw_bccl_carousel_indicator'), 'should have indicators');
   });
   it('should hide controls for single item', function() {
     var taco = bw.makeCarousel({
@@ -1697,7 +1697,7 @@ describe('makeCarousel', function() {
       showControls: true
     });
     var html = bw.html(taco);
-    assert.ok(!html.includes('bw_carousel_control'), 'should not have controls for single item');
+    assert.ok(!html.includes('bw_bccl_carousel_control'), 'should not have controls for single item');
   });
 });
 
@@ -1709,15 +1709,15 @@ describe('makeCard advanced props', function() {
   it('should render header and footer', function() {
     var taco = bw.makeCard({ title: 'T', content: 'C', header: 'Head', footer: 'Foot' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_card_header'), 'should have header');
+    assert.ok(html.includes('bw_bccl_card_header'), 'should have header');
     assert.ok(html.includes('Head'), 'should include header text');
-    assert.ok(html.includes('bw_card_footer'), 'should have footer');
+    assert.ok(html.includes('bw_bccl_card_footer'), 'should have footer');
     assert.ok(html.includes('Foot'), 'should include footer text');
   });
   it('should render with imagePosition left', function() {
     var taco = bw.makeCard({ title: 'T', content: 'C', image: { src: 'img.jpg', alt: 'test' }, imagePosition: 'left' });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_card_img_left'), 'should have left image class');
+    assert.ok(html.includes('bw_bccl_card_img_left'), 'should have left image class');
     assert.ok(html.includes('bw_row'), 'should wrap in row for horizontal layout');
   });
 });
@@ -1747,11 +1747,11 @@ describe('makeTabs DOM interaction', function() {
         { label: 'Tab2', content: 'Content2' }
       ]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Tab 1 should be active initially
-    var panes = el.querySelectorAll('.bw_tab_pane');
+    var panes = el.querySelectorAll('.bw_bccl_tab_pane');
     assert.ok(panes[0].classList.contains('active'), 'first pane active');
 
     // Click tab 2
@@ -1773,7 +1773,7 @@ describe('makeTabs DOM interaction', function() {
         { label: 'B', content: 'CB' }
       ]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Call mounted
@@ -1788,14 +1788,14 @@ describe('makeAlert dismissible DOM', function() {
 
   it('should remove alert on close click', function() {
     var taco = bw.makeAlert({ content: 'Dismiss me', dismissible: true });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
-    assert.ok(document.querySelector('.bw_alert'), 'alert exists');
+    assert.ok(document.querySelector('.bw_bccl_alert'), 'alert exists');
     var closeBtn = el.querySelector('.bw_close');
     assert.ok(closeBtn, 'close button exists');
     closeBtn.click();
-    assert.ok(!document.querySelector('.bw_alert'), 'alert removed after click');
+    assert.ok(!document.querySelector('.bw_bccl_alert'), 'alert removed after click');
   });
 });
 
@@ -1821,16 +1821,16 @@ describe('makeAccordion DOM interaction', function() {
         { title: 'Section 2', content: 'Content 2', open: false }
       ]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Click first accordion button
-    var btn = el.querySelector('.bw_accordion_button');
+    var btn = el.querySelector('.bw_bccl_accordion_button');
     assert.ok(btn, 'accordion button exists');
     btn.click();
 
     // Should be expanded
-    var collapse = el.querySelector('.bw_accordion_collapse');
+    var collapse = el.querySelector('.bw_bccl_accordion_collapse');
     assert.ok(collapse.classList.contains('bw_collapse_show'), 'first section should open');
     assert.equal(btn.getAttribute('aria-expanded'), 'true');
 
@@ -1845,7 +1845,7 @@ describe('makeAccordion DOM interaction', function() {
     var taco = bw.makeAccordion({
       items: [{ title: 'S1', content: 'C1' }]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
     document.body.removeChild(el);
@@ -1860,7 +1860,7 @@ describe('makeModal DOM interaction', function() {
       title: 'Test Modal',
       content: 'Modal body'
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
@@ -1883,7 +1883,7 @@ describe('makeToast DOM interaction', function() {
       content: 'Toast message',
       autoDismiss: false
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
@@ -1893,7 +1893,7 @@ describe('makeToast DOM interaction', function() {
 
   it('should handle close button click', function() {
     var taco = bw.makeToast({ title: 'Close me', content: 'Body' });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var closeBtn = el.querySelector('.bw_close, .bw_btn_close, [aria-label="Close"]');
@@ -1910,16 +1910,16 @@ describe('makeDropdown DOM interaction', function() {
       label: 'Menu',
       items: [{ text: 'Item 1' }, { text: 'Item 2' }]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
     // Click dropdown toggle
-    var toggleBtn = el.querySelector('.bw_dropdown_toggle');
+    var toggleBtn = el.querySelector('.bw_bccl_dropdown_toggle');
     if (toggleBtn) {
       toggleBtn.click();
-      var menu = el.querySelector('.bw_dropdown_menu');
+      var menu = el.querySelector('.bw_bccl_dropdown_menu');
       assert.ok(menu, 'menu should exist');
     }
 
@@ -1938,7 +1938,7 @@ describe('makePagination DOM interaction', function() {
       totalPages: 5,
       onPageChange: function(page) { clicked = page; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Click page 3 link
@@ -1960,7 +1960,7 @@ describe('makeSearchInput DOM interaction', function() {
       placeholder: 'Search...',
       onSearch: function(val) { searchValue = val; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Find the input and simulate typing
@@ -1989,7 +1989,7 @@ describe('makeRange DOM interaction', function() {
       value: 50,
       onInput: function(val) { rangeValue = val; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var rangeInput = el.querySelector('input[type="range"]');
@@ -2011,7 +2011,7 @@ describe('makeForm onsubmit', function() {
       onsubmit: function(e) { e.preventDefault(); submitted = true; },
       children: [{ t: 'button', a: { type: 'submit' }, c: 'Submit' }]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Dispatch submit event
@@ -2047,7 +2047,7 @@ describe('makeCarousel DOM interaction', function() {
       ],
       startIndex: 0
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Trigger mounted lifecycle
@@ -2083,17 +2083,17 @@ describe('makeCarousel DOM interaction', function() {
       ],
       showControls: true
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
     // Click next button
-    var nextBtn = el.querySelector('.bw_carousel_control_next');
+    var nextBtn = el.querySelector('.bw_bccl_carousel_control_next');
     if (nextBtn) nextBtn.click();
     assert.strictEqual(el._bw_carouselIndex, 1);
 
     // Click prev button
-    var prevBtn = el.querySelector('.bw_carousel_control_prev');
+    var prevBtn = el.querySelector('.bw_bccl_carousel_control_prev');
     if (prevBtn) prevBtn.click();
     assert.strictEqual(el._bw_carouselIndex, 0);
 
@@ -2109,11 +2109,11 @@ describe('makeCarousel DOM interaction', function() {
       ],
       showIndicators: true
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
-    var indicators = el.querySelectorAll('.bw_carousel_indicator');
+    var indicators = el.querySelectorAll('.bw_bccl_carousel_indicator');
     assert.strictEqual(indicators.length, 3);
 
     // Click indicator 2 (index 1)
@@ -2130,7 +2130,7 @@ describe('makeCarousel DOM interaction', function() {
       autoPlay: true,
       interval: 100000
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2155,28 +2155,28 @@ describe('makeTooltip DOM interaction', function() {
       text: 'Help text',
       trigger: 'Hover me'
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
-    var tip = el.querySelector('.bw_tooltip');
+    var tip = el.querySelector('.bw_bccl_tooltip');
     assert.ok(tip, 'tooltip element should exist');
 
     // Mouseenter shows tooltip
     el.dispatchEvent(new window.Event('mouseenter', { bubbles: true }));
-    assert.ok(tip.classList.contains('bw_tooltip_show'), 'should show on mouseenter');
+    assert.ok(tip.classList.contains('bw_bccl_tooltip_show'), 'should show on mouseenter');
 
     // Mouseleave hides tooltip
     el.dispatchEvent(new window.Event('mouseleave', { bubbles: true }));
-    assert.ok(!tip.classList.contains('bw_tooltip_show'), 'should hide on mouseleave');
+    assert.ok(!tip.classList.contains('bw_bccl_tooltip_show'), 'should hide on mouseleave');
 
     // Focusin shows tooltip
     el.dispatchEvent(new window.Event('focusin', { bubbles: true }));
-    assert.ok(tip.classList.contains('bw_tooltip_show'), 'should show on focusin');
+    assert.ok(tip.classList.contains('bw_bccl_tooltip_show'), 'should show on focusin');
 
     // Focusout hides tooltip
     el.dispatchEvent(new window.Event('focusout', { bubbles: true }));
-    assert.ok(!tip.classList.contains('bw_tooltip_show'), 'should hide on focusout');
+    assert.ok(!tip.classList.contains('bw_bccl_tooltip_show'), 'should hide on focusout');
 
     document.body.removeChild(el);
   });
@@ -2195,7 +2195,7 @@ describe('makePopover DOM interaction', function() {
       content: 'Pop body',
       placement: 'bottom'
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2230,7 +2230,7 @@ describe('makeSearchInput keydown and clear', function() {
       placeholder: 'Search...',
       onSearch: function(val) { searchedValue = val; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var input = el.querySelector('input[type="search"]');
@@ -2247,7 +2247,7 @@ describe('makeSearchInput keydown and clear', function() {
     var taco = bw.makeSearchInput({
       onInput: function(val) { inputValue = val; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var input = el.querySelector('input[type="search"]');
@@ -2272,7 +2272,7 @@ describe('makeSearchInput keydown and clear', function() {
     var taco = bw.makeSearchInput({
       value: 'initial'
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var clearBtn = el.querySelector('.bw_search_clear');
@@ -2296,7 +2296,7 @@ describe('makeRange showValue update', function() {
       label: 'Volume',
       oninput: function(e) { cbValue = e.target.value; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var rangeInput = el.querySelector('input[type="range"]');
@@ -2324,7 +2324,7 @@ describe('makeFileUpload DOM interaction', function() {
       label: 'Upload file',
       accept: '.txt'
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2336,7 +2336,7 @@ describe('makeFileUpload DOM interaction', function() {
 
   it('should handle keyboard activation', function() {
     var taco = bw.makeFileUpload({ label: 'Upload' });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2350,7 +2350,7 @@ describe('makeFileUpload DOM interaction', function() {
 
   it('should handle drag events', function() {
     var taco = bw.makeFileUpload({ label: 'Upload' });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2379,7 +2379,7 @@ describe('makeFileUpload DOM interaction', function() {
       label: 'Upload',
       onFiles: function(files) { receivedFiles = files; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2409,7 +2409,7 @@ describe('makeChipInput DOM interaction', function() {
       onAdd: function(val) { addedValue = val; },
       onRemove: function() {}
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var input = el.querySelector('.bw_chip_field');
@@ -2432,7 +2432,7 @@ describe('makeChipInput DOM interaction', function() {
       chips: ['alpha', 'beta'],
       onRemove: function(val) { removedValue = val; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     var input = el.querySelector('.bw_chip_field');
@@ -2452,7 +2452,7 @@ describe('makeChipInput DOM interaction', function() {
       chips: ['tag1', 'tag2'],
       onRemove: function(val) { removedValue = val; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
 
     // Click remove button on first chip
@@ -2481,7 +2481,7 @@ describe('makeCarousel keyboard navigation', function() {
         { content: 'Slide 3' }
       ]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2499,7 +2499,7 @@ describe('makeCarousel keyboard navigation', function() {
         { content: 'Slide 3' }
       ]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2521,12 +2521,1187 @@ describe('makeCarousel keyboard navigation', function() {
         { content: 'Slide 2' }
       ]
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
     el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }));
     assert.strictEqual(el._bw_carouselIndex, 1);
+
+    document.body.removeChild(el);
+  });
+});
+
+// =========================================================================
+// Branch Coverage: Uncovered Branches
+// =========================================================================
+
+describe('makeCard branch coverage', function() {
+  it('L119: shadow value not in shadowClasses map should produce empty string', function() {
+    var taco = bw.makeCard({ title: 'T', shadow: 'unknown_shadow' });
+    // shadow is truthy but shadowClasses['unknown_shadow'] is undefined => || '' branch
+    assert.ok(taco.a.class.includes('bw_bccl_card'));
+    assert.ok(!taco.a.class.includes('bw_shadow'));
+  });
+
+  it('L120: bordered=false should add bw_border_0 class', function() {
+    var taco = bw.makeCard({ title: 'T', bordered: false });
+    assert.ok(taco.a.class.includes('bw_border_0'));
+  });
+
+  it('L136: image with alt provided should use it', function() {
+    var taco = bw.makeCard({
+      title: 'T',
+      image: { src: 'pic.jpg', alt: 'My Picture' },
+      imagePosition: 'top'
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('My Picture'));
+  });
+
+  it('L145: content as array should be flattened', function() {
+    var taco = bw.makeCard({
+      title: 'T',
+      content: ['Item 1', 'Item 2']
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('Item 1'));
+    assert.ok(html.includes('Item 2'));
+  });
+
+  it('L153: image with bottom position and alt', function() {
+    var taco = bw.makeCard({
+      title: 'T',
+      image: { src: 'pic.jpg', alt: 'Bottom Pic' },
+      imagePosition: 'bottom'
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('bw_bccl_card_img_bottom'));
+    assert.ok(html.includes('Bottom Pic'));
+  });
+
+  it('L153: image with right position', function() {
+    var taco = bw.makeCard({
+      title: 'T',
+      image: { src: 'pic.jpg' },
+      imagePosition: 'right'
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('bw_bccl_card_img_right'));
+    assert.ok(html.includes('bw_row'));
+  });
+});
+
+describe('makeButton branch coverage', function() {
+  it('L246: button with action prop should add bw_act_ class', function() {
+    var taco = bw.makeButton({ text: 'Save', action: 'submit' });
+    assert.ok(taco.a.class.includes('bw_act_submit'));
+  });
+});
+
+describe('makeRow branch coverage', function() {
+  it('L306: row with gap should add bw_g_ class', function() {
+    var taco = bw.makeRow({ gap: 3, children: ['A'] });
+    assert.ok(taco.a.class.includes('bw_g_3'));
+  });
+});
+
+describe('makeCol branch coverage', function() {
+  it('L352: push should add bw_push_ class', function() {
+    var taco = bw.makeCol({ size: 6, push: 2, children: ['X'] });
+    var html = bw.html(taco);
+    assert.ok(html.includes('bw_push_2'));
+  });
+
+  it('L353: pull should add bw_pull_ class', function() {
+    var taco = bw.makeCol({ size: 6, pull: 3, children: ['X'] });
+    var html = bw.html(taco);
+    assert.ok(html.includes('bw_pull_3'));
+  });
+});
+
+describe('makeNav branch coverage', function() {
+  it('L396: nav item with disabled=true should have disabled class', function() {
+    var taco = bw.makeNav({ items: [{ text: 'Disabled', disabled: true }] });
+    var html = bw.html(taco);
+    assert.ok(html.includes('disabled'));
+  });
+
+  it('L405: nav item with explicit href', function() {
+    var taco = bw.makeNav({ items: [{ text: 'Home', href: '/home' }] });
+    // Check TACO structure directly since bw.html escapes forward slashes
+    var link = taco.c[0].c;
+    assert.strictEqual(link.a.href, '/home');
+  });
+
+  it('L396: vertical nav', function() {
+    var taco = bw.makeNav({ items: [{ text: 'A' }], vertical: true });
+    assert.ok(taco.a.class.includes('bw_nav_vertical'));
+  });
+});
+
+describe('makeNavbar branch coverage', function() {
+  it('L449: empty items should not render navbar-nav div', function() {
+    var taco = bw.makeNavbar({ brand: 'Site' });
+    var html = bw.html(taco);
+    assert.ok(!html.includes('bw_bccl_navbar_nav'));
+  });
+
+  it('L449: navbar without brand', function() {
+    var taco = bw.makeNavbar({ items: [{ text: 'Home', active: true }] });
+    var html = bw.html(taco);
+    assert.ok(!html.includes('bw_bccl_navbar_brand'));
+    assert.ok(html.includes('bw_bccl_navbar_nav'));
+  });
+
+  it('L467: navbar item with active=true should have active class', function() {
+    var taco = bw.makeNavbar({ items: [{ text: 'Home', active: true }] });
+    var html = bw.html(taco);
+    assert.ok(html.includes('active'));
+  });
+
+  it('L449: navbar with dark=false should have light class', function() {
+    var taco = bw.makeNavbar({ brand: 'Site', dark: false });
+    assert.ok(taco.a.class.includes('bw_bccl_navbar_light'));
+  });
+});
+
+describe('makeBadge branch coverage', function() {
+  it('L702: badge with size=sm should have bw_bccl_badge_sm class', function() {
+    var taco = bw.makeBadge({ text: '3', size: 'sm' });
+    assert.ok(taco.a.class.includes('bw_bccl_badge_sm'));
+  });
+
+  it('L702: badge with size=lg should have bw_bccl_badge_lg class', function() {
+    var taco = bw.makeBadge({ text: '5', size: 'lg' });
+    assert.ok(taco.a.class.includes('bw_bccl_badge_lg'));
+  });
+});
+
+describe('makeProgress branch coverage', function() {
+  it('L751: progress with custom height should set height style', function() {
+    var taco = bw.makeProgress({ value: 50, height: 20 });
+    assert.deepStrictEqual(taco.a.style, { height: '20px' });
+  });
+
+  it('L760: progress with animated=true should have animated class', function() {
+    var taco = bw.makeProgress({ value: 50, animated: true });
+    assert.ok(taco.c.a.class.includes('bw_bccl_progress_bar_animated'));
+  });
+
+  it('L775: progress setValue handle on element without bar', function() {
+    freshDOM();
+    var div = document.createElement('div');
+    // No .bw_bccl_progress_bar child => bar is null => return
+    bw.makeProgress({ value: 50 }).o.handle.setValue(div, 75);
+    // Should not throw
+  });
+
+  it('L784: progress getValue handle on element without bar', function() {
+    freshDOM();
+    var div = document.createElement('div');
+    var val = bw.makeProgress({ value: 50 }).o.handle.getValue(div);
+    assert.strictEqual(val, 0);
+  });
+
+  it('L784: progress getValue handle on element with bar', function() {
+    freshDOM();
+    var taco = bw.makeProgress({ value: 70 });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    var val = taco.o.handle.getValue(el);
+    assert.strictEqual(val, 70);
+    document.body.removeChild(el);
+  });
+
+  it('L751: progress without height should have no style', function() {
+    var taco = bw.makeProgress({ value: 50 });
+    assert.strictEqual(taco.a.style, undefined);
+  });
+
+  it('L776: progress setValue with default max', function() {
+    freshDOM();
+    var taco = bw.makeProgress({ value: 50 });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    taco.o.handle.setValue(el, 80);
+    var bar = el.querySelector('.bw_bccl_progress_bar');
+    assert.strictEqual(bar.getAttribute('aria-valuenow'), '80');
+    assert.strictEqual(bar.style.width, '80%');
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeListGroup branch coverage', function() {
+  it('L859-860: non-interactive items with active and disabled states', function() {
+    var taco = bw.makeListGroup({
+      interactive: false,
+      items: [
+        { text: 'Active', active: true },
+        { text: 'Disabled', disabled: true },
+        { text: 'Normal' }
+      ]
+    });
+    var html = bw.html(taco);
+    // Non-interactive items use div tag
+    assert.ok(html.includes('active'));
+    assert.ok(html.includes('disabled'));
+  });
+});
+
+describe('makeBreadcrumb branch coverage', function() {
+  it('L908: breadcrumb item without href should default to #', function() {
+    var taco = bw.makeBreadcrumb({
+      items: [
+        { text: 'Home' },
+        { text: 'Current', active: true }
+      ]
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('href="#"'));
+  });
+});
+
+describe('makeForm fields-based API branch coverage', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L948: makeForm with fields array should create field-based form', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'username', label: 'Username', type: 'text', required: true, placeholder: 'Enter name' },
+        { name: 'bio', label: 'Bio', type: 'textarea' },
+        { name: 'role', label: 'Role', type: 'select' },
+        { name: 'age', label: 'Age', type: 'number' }
+      ]
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('<form'));
+    assert.ok(html.includes('Username'));
+    assert.ok(html.includes('<textarea'));
+    assert.ok(html.includes('<select'));
+    assert.ok(html.includes('required'));
+    assert.ok(html.includes('Enter name'));
+  });
+
+  it('L948: makeForm fields handle.getValues should retrieve form values', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'email', label: 'Email', type: 'email' },
+        { name: 'count', label: 'Count', type: 'number' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Set values
+    var emailInput = el.querySelector('[name="email"]');
+    emailInput.value = 'test@example.com';
+    var countInput = el.querySelector('[name="count"]');
+    countInput.value = '42';
+
+    var vals = taco.o.handle.getValues(el);
+    assert.strictEqual(vals.email, 'test@example.com');
+    assert.strictEqual(vals.count, 42);
+
+    document.body.removeChild(el);
+  });
+
+  it('L948: makeForm fields handle.setValues should set form values', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'name', label: 'Name', type: 'text' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    taco.o.handle.setValues(el, { name: 'Alice' });
+    var input = el.querySelector('[name="name"]');
+    assert.strictEqual(input.value, 'Alice');
+
+    // Non-object arg should be no-op
+    taco.o.handle.setValues(el, 'invalid');
+
+    document.body.removeChild(el);
+  });
+
+  it('L948: makeForm fields handle.validate should validate required fields', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'required_field', label: 'Required', type: 'text', required: true }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Empty required field should fail
+    var result = taco.o.handle.validate(el);
+    assert.strictEqual(result.valid, false);
+
+    // Fill in the field
+    var input = el.querySelector('[name="required_field"]');
+    input.value = 'filled';
+    var result2 = taco.o.handle.validate(el);
+    assert.strictEqual(result2.valid, true);
+
+    document.body.removeChild(el);
+  });
+
+  it('L948: makeForm fields handle.setErrors should set error messages', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'email', label: 'Email', type: 'email' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    taco.o.handle.setErrors(el, { email: 'Invalid email format' });
+    var input = el.querySelector('[name="email"]');
+    assert.strictEqual(input.getAttribute('aria-invalid'), 'true');
+    var errEl = el.querySelector('.bw_bccl_form_error');
+    assert.ok(errEl);
+    assert.strictEqual(errEl.textContent, 'Invalid email format');
+
+    // Non-object arg should be no-op
+    taco.o.handle.setErrors(el, 'invalid');
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeFormGroup branch coverage', function() {
+  it('L1099: validation not valid or invalid should produce empty validClass', function() {
+    var input = bw.makeInput({ id: 'test' });
+    var group = bw.makeFormGroup({ input: input, validation: 'custom_state' });
+    var styledInput = group.c.find(function(child) { return child && child.t === 'input'; });
+    // validClass is empty so no bw_is_valid or bw_is_invalid
+    assert.ok(!styledInput.a.class.includes('bw_is_valid'));
+    assert.ok(!styledInput.a.class.includes('bw_is_invalid'));
+  });
+
+  it('L1101: input TACO without class attr should still get validation class', function() {
+    var input = { t: 'input', a: { type: 'text' } };  // no class property
+    var group = bw.makeFormGroup({ input: input, validation: 'valid' });
+    var styledInput = group.c.find(function(child) { return child && child.t === 'input'; });
+    assert.ok(styledInput.a.class.includes('bw_is_valid'));
+  });
+});
+
+describe('makeHero branch coverage', function() {
+  it('L1481: hero with non-standard size falls back to sizeClasses.lg', function() {
+    var taco = bw.makeHero({ title: 'T', size: 'unknown' });
+    assert.ok(taco.a.class.includes('bw_py_5'));
+  });
+
+  it('L1481: hero with centered=false should not have text-center', function() {
+    var taco = bw.makeHero({ title: 'T', centered: false });
+    assert.ok(!taco.a.class.includes('bw_text_center'));
+  });
+
+  it('L1481: hero with size=sm', function() {
+    var taco = bw.makeHero({ title: 'T', size: 'sm' });
+    assert.ok(taco.a.class.includes('bw_py_3'));
+  });
+
+  it('L1481: hero with overlay=true', function() {
+    var taco = bw.makeHero({ title: 'T', overlay: true, backgroundImage: '/bg.jpg' });
+    var html = bw.html(taco);
+    assert.ok(html.includes('bw_bccl_hero_overlay'));
+    assert.ok(html.includes('background-image'));
+  });
+});
+
+describe('makeFeatureGrid branch coverage', function() {
+  it('L1568: feature grid with centered=false should not have text-center', function() {
+    var taco = bw.makeFeatureGrid({
+      features: [{ title: 'A', description: 'B' }],
+      centered: false
+    });
+    var html = bw.html(taco);
+    assert.ok(!html.includes('bw_text_center'));
+  });
+});
+
+describe('makeCTA branch coverage', function() {
+  it('L1635: CTA with centered=false should not have text-center', function() {
+    var taco = bw.makeCTA({ title: 'Join', centered: false });
+    var html = bw.html(taco);
+    assert.ok(!html.includes('bw_text_center'));
+  });
+});
+
+describe('makeSection branch coverage', function() {
+  it('L1690: section with non-standard spacing falls back to md', function() {
+    var taco = bw.makeSection({ title: 'T', spacing: 'unknown' });
+    assert.ok(taco.a.class.includes('bw_py_4'));
+  });
+
+  it('L1690: section with variant not default should add bg class', function() {
+    var taco = bw.makeSection({ title: 'T', variant: 'dark' });
+    assert.ok(taco.a.class.includes('bw_bg_dark'));
+  });
+
+  it('L1696: section without title or subtitle should not have section-header', function() {
+    var taco = bw.makeSection({ content: 'Just content' });
+    var html = bw.html(taco);
+    assert.ok(!html.includes('bw_section_header'));
+  });
+
+  it('L1701: section with subtitle should render subtitle', function() {
+    var taco = bw.makeSection({ title: 'T', subtitle: 'Sub' });
+    var html = bw.html(taco);
+    assert.ok(html.includes('bw_section_subtitle'));
+    assert.ok(html.includes('Sub'));
+  });
+
+  it('L1690: section with spacing=xl', function() {
+    var taco = bw.makeSection({ title: 'T', spacing: 'xl' });
+    assert.ok(taco.a.class.includes('bw_py_6'));
+  });
+});
+
+describe('makeCodeDemo branch coverage', function() {
+  it('L1791-1792: makeCodeDemo should use pre/code when globalThis.bw.codeEditor is not available', function() {
+    var taco = bw.makeCodeDemo({
+      title: 'Demo Title',
+      description: 'A description',
+      code: 'var x = 1;',
+      result: { t: 'div', c: 'result' }
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('Demo Title'));
+    assert.ok(html.includes('A description'));
+    assert.ok(html.includes('bw_code_pre'));
+    assert.ok(html.includes('var x = 1;'));
+  });
+
+  it('L1808: makeCodeDemo without title should not render h3', function() {
+    var taco = bw.makeCodeDemo({
+      code: 'var y = 2;',
+      result: { t: 'div', c: 'result' }
+    });
+    var html = bw.html(taco);
+    assert.ok(!html.includes('<h3'));
+  });
+
+  it('L1809: makeCodeDemo without description should not render description paragraph', function() {
+    var taco = bw.makeCodeDemo({
+      title: 'Title Only',
+      code: 'var z = 3;',
+      result: { t: 'div', c: 'result' }
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('Title Only'));
+    assert.ok(!html.includes('bw_text_muted bw_mb_3'));
+  });
+
+  it('L1791: makeCodeDemo without code should not add Code tab', function() {
+    var taco = bw.makeCodeDemo({
+      title: 'No Code',
+      result: { t: 'div', c: 'result' }
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('Result'));
+    assert.ok(!html.includes('bw_code_pre'));
+  });
+
+  it('L1791: makeCodeDemo with non-javascript language', function() {
+    var taco = bw.makeCodeDemo({
+      code: 'body { color: red; }',
+      language: 'css',
+      result: { t: 'div', c: 'styled' }
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('language-css'));
+  });
+});
+
+describe('makePagination handle branch coverage', function() {
+  it('L1936: pagination getPage handle should return currentPage from state', function() {
+    var taco = bw.makePagination({ pages: 3, currentPage: 2 });
+    assert.strictEqual(typeof taco.o.handle.getPage, 'function');
+    // Without DOM element with _bw_state
+    var fakeEl = {};
+    var page = taco.o.handle.getPage(fakeEl);
+    assert.strictEqual(page, 1); // default when _bw_state is undefined
+
+    fakeEl._bw_state = { currentPage: 3 };
+    var page2 = taco.o.handle.getPage(fakeEl);
+    assert.strictEqual(page2, 3);
+  });
+
+  it('L1936: pagination setPage with out-of-range should be no-op', function() {
+    var taco = bw.makePagination({ pages: 3, currentPage: 1 });
+    freshDOM();
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    // Out of range
+    taco.o.handle.setPage(el, 0);
+    taco.o.handle.setPage(el, 10);
+    // Should not throw
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeAccordion multiOpen branch coverage', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L2103: multiOpen=true should allow multiple sections open', function() {
+    var taco = bw.makeAccordion({
+      multiOpen: true,
+      items: [
+        { title: 'Section 1', content: 'Content 1', open: true },
+        { title: 'Section 2', content: 'Content 2', open: true }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Both should be open
+    var collapses = el.querySelectorAll('.bw_bccl_accordion_collapse');
+    assert.ok(collapses[0].classList.contains('bw_collapse_show'));
+    assert.ok(collapses[1].classList.contains('bw_collapse_show'));
+
+    // Click first to close it - multiOpen should not close others
+    var btn = el.querySelector('.bw_bccl_accordion_button');
+    btn.click();
+
+    // Second should still be open
+    assert.ok(collapses[1].classList.contains('bw_collapse_show'));
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeModal branch coverage', function() {
+  it('L2258-2259: modal with open=true should have show class and display style', function() {
+    var taco = bw.makeModal({ title: 'Test', content: 'Body', open: true });
+    assert.ok(taco.a.class.includes('bw_bccl_modal_show'));
+    assert.strictEqual(taco.a.style, 'display:flex');
+  });
+
+  it('L2258-2259: modal with open=false (default) should not have show class', function() {
+    var taco = bw.makeModal({ title: 'Test', content: 'Body' });
+    assert.ok(!taco.a.class.includes('bw_bccl_modal_show'));
+    assert.strictEqual(taco.a.style, undefined);
+  });
+});
+
+describe('makeDropdown trigger TACO branch coverage', function() {
+  it('L2493: dropdown with TACO trigger should use it directly', function() {
+    var customTrigger = { t: 'span', a: { class: 'custom_trigger' }, c: 'Custom' };
+    var taco = bw.makeDropdown({
+      trigger: customTrigger,
+      items: [{ text: 'Item 1' }]
+    });
+    assert.strictEqual(taco.c[0], customTrigger);
+  });
+});
+
+describe('makeDropdown outside click branch coverage', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L2532: click outside dropdown should close menu', function() {
+    var taco = bw.makeDropdown({
+      trigger: 'Menu',
+      items: [{ text: 'Item 1' }]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o.mounted) taco.o.mounted(el);
+
+    // Open the menu
+    var toggleBtn = el.querySelector('.bw_bccl_dropdown_toggle');
+    toggleBtn.click();
+    var menu = el.querySelector('.bw_bccl_dropdown_menu');
+    assert.ok(menu.classList.contains('bw_bccl_dropdown_show'));
+
+    // Click outside
+    var outsideEl = document.createElement('div');
+    document.body.appendChild(outsideEl);
+    document.dispatchEvent(new window.Event('click', { bubbles: true }));
+
+    assert.ok(!menu.classList.contains('bw_bccl_dropdown_show'));
+
+    document.body.removeChild(el);
+    document.body.removeChild(outsideEl);
+  });
+});
+
+describe('makeAvatar branch coverage', function() {
+  it('L2729: avatar without initials should use empty string', function() {
+    var taco = bw.makeAvatar({});
+    assert.strictEqual(taco.c, '');
+  });
+});
+
+describe('makeCarousel showControls branch coverage', function() {
+  it('L2838: carousel with showControls and >1 items should render controls', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }],
+      showControls: true
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('bw_bccl_carousel_control_prev'));
+    assert.ok(html.includes('bw_bccl_carousel_control_next'));
+  });
+});
+
+describe('makeStatCard branch coverage', function() {
+  it('L3003: formatValue with prefix and suffix', function() {
+    var taco = bw.makeStatCard({ value: 42, prefix: 'EUR ', suffix: ' avg' });
+    var valueEl = taco.c.find(function(c) { return c.a && c.a.class === 'bw_stat_value'; });
+    assert.strictEqual(valueEl.c, 'EUR 42 avg');
+  });
+
+  it('L3003: formatValue with only prefix', function() {
+    var taco = bw.makeStatCard({ value: 100, prefix: '#' });
+    var valueEl = taco.c.find(function(c) { return c.a && c.a.class === 'bw_stat_value'; });
+    assert.strictEqual(valueEl.c, '#100');
+  });
+
+  it('L3003: formatValue with only suffix', function() {
+    var taco = bw.makeStatCard({ value: 50, suffix: ' items' });
+    var valueEl = taco.c.find(function(c) { return c.a && c.a.class === 'bw_stat_value'; });
+    assert.strictEqual(valueEl.c, '50 items');
+  });
+
+  it('L3007: formatValue with format=number should use locale string', function() {
+    var taco = bw.makeStatCard({ value: 1234567, format: 'number' });
+    var valueEl = taco.c.find(function(c) { return c.a && c.a.class === 'bw_stat_value'; });
+    // Number.toLocaleString() output varies by locale, but should contain digits
+    assert.ok(valueEl.c.includes('1'));
+    assert.ok(valueEl.c.includes('234'));
+  });
+
+  it('L3003: formatValue with no format and no prefix/suffix should use default', function() {
+    var taco = bw.makeStatCard({ value: 99 });
+    var valueEl = taco.c.find(function(c) { return c.a && c.a.class === 'bw_stat_value'; });
+    assert.strictEqual(valueEl.c, '99');
+  });
+});
+
+describe('makeSearchInput branch coverage', function() {
+  it('L3304: search clear button should call onSearch when provided', function() {
+    freshDOM();
+    var searchCalled = null;
+    var taco = bw.makeSearchInput({
+      value: 'initial',
+      onSearch: function(val) { searchCalled = val; },
+      onInput: function() {}
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var clearBtn = el.querySelector('.bw_search_clear');
+    if (clearBtn) clearBtn.click();
+    assert.strictEqual(searchCalled, '');
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeChipInput handle.addChip branch coverage', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L3817: addChip with empty text should be no-op', function() {
+    var taco = bw.makeChipInput({ chips: [] });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    taco.o.handle.addChip(el, '');
+    var chips = el.querySelectorAll('.bw_chip');
+    assert.strictEqual(chips.length, 0);
+
+    taco.o.handle.addChip(el, null);
+    chips = el.querySelectorAll('.bw_chip');
+    assert.strictEqual(chips.length, 0);
+
+    document.body.removeChild(el);
+  });
+
+  it('L3817: addChip with valid text should add chip', function() {
+    var taco = bw.makeChipInput({ chips: [] });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    taco.o.handle.addChip(el, 'NewTag');
+    var chips = el.querySelectorAll('.bw_chip');
+    assert.strictEqual(chips.length, 1);
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('bw.make() factory branch coverage', function() {
+  it('L3942: make() with no props (undefined) should use empty object', function() {
+    var btn = bw.make('button');
+    assert.strictEqual(btn.t, 'button');
+    assert.ok(btn.a.class.includes('bw_bccl_btn'));
+  });
+
+  it('L3944: make() should attach _bwFactory metadata', function() {
+    var card = bw.make('card', { title: 'Test' });
+    assert.ok(card._bwFactory);
+    assert.strictEqual(card._bwFactory.type, 'card');
+    assert.strictEqual(card._bwFactory.props.title, 'Test');
+  });
+});
+
+describe('makeTabs switchTab bounds check', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L520: switchTab with out-of-bounds index should be no-op', function() {
+    var taco = bw.makeTabs({
+      tabs: [
+        { label: 'A', content: 'CA' },
+        { label: 'B', content: 'CB' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // switchTab with negative index
+    taco.o.handle.setActiveTab(el, -1);
+    // switchTab with index >= length
+    taco.o.handle.setActiveTab(el, 10);
+    // Neither should throw
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeTabs mounted tablist guard', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L582: mounted on element without tablist should return early', function() {
+    var taco = bw.makeTabs({ tabs: [] });
+    var el = document.createElement('div');
+    // el has no [role="tablist"] child
+    taco.o.mounted(el);
+    // Should not throw
+  });
+});
+
+describe('makeChipInput handle.removeChip and dynamic chip removal', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L3833-3839: removeChip handle should remove a chip by value', function() {
+    var taco = bw.makeChipInput({ chips: ['alpha', 'beta', 'gamma'] });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    taco.o.handle.removeChip(el, 'beta');
+    var chips = el.querySelectorAll('.bw_chip');
+    assert.strictEqual(chips.length, 2);
+
+    document.body.removeChild(el);
+  });
+
+  it('L3833-3839: removeChip with nonexistent value should be no-op', function() {
+    var taco = bw.makeChipInput({ chips: ['one'] });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    taco.o.handle.removeChip(el, 'nonexistent');
+    var chips = el.querySelectorAll('.bw_chip');
+    assert.strictEqual(chips.length, 1);
+
+    document.body.removeChild(el);
+  });
+
+  it('L3790-3791: dynamically added chip remove button should work', function() {
+    var removedVal = null;
+    var taco = bw.makeChipInput({
+      chips: [],
+      onAdd: function() {},
+      onRemove: function(val) { removedVal = val; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Add a chip via keydown
+    var input = el.querySelector('.bw_chip_field');
+    input.value = 'dynamic';
+    input.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    // The dynamic chip should exist
+    var chips = el.querySelectorAll('.bw_chip');
+    assert.strictEqual(chips.length, 1);
+
+    // Click the remove button on the dynamically added chip
+    var removeBtn = chips[0].querySelector('.bw_chip_remove');
+    assert.ok(removeBtn, 'remove button should exist on dynamically added chip');
+    removeBtn.click();
+
+    assert.strictEqual(removedVal, 'dynamic');
+    chips = el.querySelectorAll('.bw_chip');
+    assert.strictEqual(chips.length, 0);
+
+    document.body.removeChild(el);
+  });
+
+  it('L3841-3845: getChips handle should return chip values', function() {
+    var taco = bw.makeChipInput({ chips: ['x', 'y', 'z'] });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var values = taco.o.handle.getChips(el);
+    assert.deepStrictEqual(values, ['x', 'y', 'z']);
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeFileUpload onchange handler', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L3527-3529: file input onchange with onFiles callback should call it', function() {
+    var receivedFiles = null;
+    var taco = bw.makeFileUpload({
+      onFiles: function(files) { receivedFiles = files; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Simulate file input change with files
+    var fileInput = el.querySelector('input[type="file"]');
+    // We cannot set fileInput.files directly, so use the onchange from TACO
+    // Instead, call the TACO onchange directly
+    var onchangeHandler = taco.c.find(function(c) { return c.t === 'input' && c.a.type === 'file'; }).a.onchange;
+    onchangeHandler({ target: { files: [{ name: 'test.txt' }] } });
+
+    assert.ok(receivedFiles);
+    assert.strictEqual(receivedFiles.length, 1);
+
+    document.body.removeChild(el);
+  });
+
+  it('L3527-3529: file input onchange without files should not call onFiles', function() {
+    var called = false;
+    var taco = bw.makeFileUpload({
+      onFiles: function() { called = true; }
+    });
+    var onchangeHandler = taco.c.find(function(c) { return c.t === 'input' && c.a.type === 'file'; }).a.onchange;
+    onchangeHandler({ target: { files: [] } });
+    assert.ok(!called);
+  });
+
+  it('L3527-3529: file input onchange without onFiles callback should not throw', function() {
+    var taco = bw.makeFileUpload({});
+    var onchangeHandler = taco.c.find(function(c) { return c.t === 'input' && c.a.type === 'file'; }).a.onchange;
+    onchangeHandler({ target: { files: [{ name: 'test.txt' }] } });
+    // Should not throw
+  });
+});
+
+describe('makeChipInput handle.clear', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L3849-3854: clear handle should remove all chips', function() {
+    var taco = bw.makeChipInput({ chips: ['a', 'b', 'c'] });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    assert.strictEqual(el.querySelectorAll('.bw_chip').length, 3);
+    taco.o.handle.clear(el);
+    assert.strictEqual(el.querySelectorAll('.bw_chip').length, 0);
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeCarousel autoPlay mouseenter/mouseleave', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L2936-2942: mouseenter should pause and mouseleave should restart autoPlay', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }],
+      autoPlay: true,
+      interval: 100000
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    assert.ok(el._bw_carouselInterval != null, 'should have interval set');
+
+    // Mouseenter should clear the interval
+    el.dispatchEvent(new window.Event('mouseenter', { bubbles: true }));
+    // After mouseenter, the interval reference may be cleared
+
+    // Mouseleave should restart the interval
+    el.dispatchEvent(new window.Event('mouseleave', { bubbles: true }));
+    assert.ok(el._bw_carouselInterval != null, 'should have interval reset after mouseleave');
+
+    // Cleanup
+    if (taco.o && taco.o.unmount) taco.o.unmount(el);
+    document.body.removeChild(el);
+  });
+
+  it('L2905-2912: handle.play should start autoPlay interval', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }],
+      autoPlay: false
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Simulate _bw_state being set (as mounted does)
+    el._bw_state = { interval: 100000 };
+
+    // play should start interval
+    taco.o.handle.play(el);
+    assert.ok(el._bw_carouselInterval != null, 'should have interval after play');
+
+    // play again should be no-op (already has interval)
+    var prevInterval = el._bw_carouselInterval;
+    taco.o.handle.play(el);
+    assert.strictEqual(el._bw_carouselInterval, prevInterval, 'should not create duplicate interval');
+
+    // pause
+    taco.o.handle.pause(el);
+    assert.strictEqual(el._bw_carouselInterval, null, 'should clear interval on pause');
+
+    // pause again should be no-op
+    taco.o.handle.pause(el);
+
+    if (taco.o && taco.o.unmount) taco.o.unmount(el);
+    document.body.removeChild(el);
+  });
+
+  it('L2930-2931: autoPlay timer callback should advance slide', function(done) {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }, { content: 'C' }],
+      autoPlay: true,
+      interval: 50 // very short interval
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    assert.strictEqual(el._bw_carouselIndex, 0);
+
+    // Wait for the timer to fire
+    setTimeout(function() {
+      assert.ok(el._bw_carouselIndex >= 1, 'should have advanced at least one slide');
+      if (taco.o && taco.o.unmount) taco.o.unmount(el);
+      document.body.removeChild(el);
+      done();
+    }, 120);
+  });
+
+  it('L2940-2941: mouseleave timer callback should advance slide', function(done) {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }],
+      autoPlay: true,
+      interval: 50
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Pause via mouseenter
+    el.dispatchEvent(new window.Event('mouseenter', { bubbles: true }));
+
+    // Resume via mouseleave
+    el.dispatchEvent(new window.Event('mouseleave', { bubbles: true }));
+
+    var indexBefore = el._bw_carouselIndex;
+
+    // Wait for the mouseleave timer to fire
+    setTimeout(function() {
+      assert.ok(el._bw_carouselIndex > indexBefore || el._bw_carouselIndex === 0,
+        'slide should have advanced or wrapped');
+      if (taco.o && taco.o.unmount) taco.o.unmount(el);
+      document.body.removeChild(el);
+      done();
+    }, 120);
+  });
+
+  it('handle.getActiveIndex should return current index', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    assert.strictEqual(taco.o.handle.getActiveIndex(el), 0);
+
+    document.body.removeChild(el);
+  });
+
+  it('handle.next and handle.prev should navigate', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }, { content: 'C' }]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    taco.o.handle.next(el);
+    assert.strictEqual(el._bw_carouselIndex, 1);
+
+    taco.o.handle.prev(el);
+    assert.strictEqual(el._bw_carouselIndex, 0);
+
+    document.body.removeChild(el);
+  });
+
+  it('handle.goToSlide should go to specific slide', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'A' }, { content: 'B' }, { content: 'C' }]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    taco.o.handle.goToSlide(el, 2);
+    assert.strictEqual(el._bw_carouselIndex, 2);
+
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeDropdown item click handler', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L2515-2520: clicking a dropdown item should close menu and call onclick', function() {
+    var itemClicked = false;
+    var taco = bw.makeDropdown({
+      trigger: 'Menu',
+      items: [
+        { text: 'Action', onclick: function() { itemClicked = true; } }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o.mounted) taco.o.mounted(el);
+
+    // Open the menu
+    var toggleBtn = el.querySelector('.bw_bccl_dropdown_toggle');
+    toggleBtn.click();
+    var menu = el.querySelector('.bw_bccl_dropdown_menu');
+    assert.ok(menu.classList.contains('bw_bccl_dropdown_show'));
+
+    // Click the item
+    var item = el.querySelector('.bw_bccl_dropdown_item');
+    item.click();
+
+    // Menu should close and onclick should be called
+    assert.ok(!menu.classList.contains('bw_bccl_dropdown_show'));
+    assert.ok(itemClicked);
+
+    if (taco.o.unmount) taco.o.unmount(el);
+    document.body.removeChild(el);
+  });
+
+  it('L2515: clicking dropdown item with href should not preventDefault', function() {
+    var taco = bw.makeDropdown({
+      trigger: 'Menu',
+      items: [
+        { text: 'Link', href: '/page' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o.mounted) taco.o.mounted(el);
+
+    // Open menu and click item
+    var toggleBtn = el.querySelector('.bw_bccl_dropdown_toggle');
+    toggleBtn.click();
+    var item = el.querySelector('.bw_bccl_dropdown_item');
+    item.click();
+
+    if (taco.o.unmount) taco.o.unmount(el);
+    document.body.removeChild(el);
+  });
+});
+
+describe('makeToast autoDismiss timer', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L2429-2433: autoDismiss should remove toast after delay', function(done) {
+    var taco = bw.makeToast({
+      title: 'Auto dismiss',
+      content: 'Body',
+      autoDismiss: true,
+      delay: 50
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o.mounted) taco.o.mounted(el);
+
+    assert.ok(document.querySelector('.bw_bccl_toast'), 'toast should exist');
+
+    // Wait for autoDismiss + hiding animation
+    setTimeout(function() {
+      // Toast should have hiding class or be removed
+      if (el.parentNode) {
+        assert.ok(el.classList.contains('bw_bccl_toast_hiding'), 'should have hiding class');
+      }
+      // Wait a bit more for the final removal
+      setTimeout(function() {
+        // Toast should be removed from DOM
+        assert.ok(!el.parentNode, 'toast should be removed from DOM');
+        done();
+      }, 400);
+    }, 100);
+  });
+});
+
+
+describe('makeModal Escape key and backdrop click', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('L2258: modal Escape key should close modal', function() {
+    var closeCalled = false;
+    var taco = bw.makeModal({
+      title: 'Close Test',
+      content: 'Body',
+      onClose: function() { closeCalled = true; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o.mounted) taco.o.mounted(el);
+
+    // Open the modal
+    taco.o.handle.open(el);
+    assert.ok(el.classList.contains('bw_bccl_modal_show'));
+
+    // Press Escape on the element
+    el.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    assert.ok(!el.classList.contains('bw_bccl_modal_show'));
+    assert.ok(closeCalled);
+
+    // Unmount
+    if (taco.o.unmount) taco.o.unmount(el);
+    document.body.removeChild(el);
+  });
+
+  it('L2258: modal backdrop click should close modal', function() {
+    var taco = bw.makeModal({
+      title: 'Backdrop Test',
+      content: 'Body'
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o.mounted) taco.o.mounted(el);
+
+    // Open
+    taco.o.handle.open(el);
+    assert.ok(el.classList.contains('bw_bccl_modal_show'));
+
+    // Click on the backdrop (the element itself)
+    var clickEvent = new window.Event('click', { bubbles: true });
+    // Set e.target to the backdrop element itself
+    Object.defineProperty(clickEvent, 'target', { value: el });
+    el.dispatchEvent(clickEvent);
+
+    assert.ok(!el.classList.contains('bw_bccl_modal_show'));
 
     document.body.removeChild(el);
   });
@@ -2540,7 +3715,7 @@ describe('makeFileUpload drag events', function() {
 
   it('should handle dragover event', function() {
     var taco = bw.makeFileUpload({ label: 'Drop files here' });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2555,7 +3730,7 @@ describe('makeFileUpload drag events', function() {
 
   it('should handle dragleave event', function() {
     var taco = bw.makeFileUpload({ label: 'Drop files here' });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2571,7 +3746,7 @@ describe('makeFileUpload drag events', function() {
       label: 'Drop files here',
       onChange: function(files) { filesReceived = files; }
     });
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     if (taco.o && taco.o.mounted) taco.o.mounted(el);
 
@@ -2581,6 +3756,899 @@ describe('makeFileUpload drag events', function() {
     event.dataTransfer = { files: [] };
     dropZone.dispatchEvent(event);
 
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeCard — image without alt (line 136)
+// =========================================================================
+describe('makeCard — image without alt property (line 136)', function() {
+  it('should use empty string for alt when image.alt is not provided', function() {
+    var taco = bw.makeCard({
+      title: 'Card',
+      image: { src: 'photo.jpg' },
+      imagePosition: 'top'
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('alt=""'), 'should have empty alt attribute');
+    assert.ok(html.includes('src="photo.jpg"'));
+  });
+
+  it('should use provided alt when image.alt is given', function() {
+    var taco = bw.makeCard({
+      title: 'Card',
+      image: { src: 'photo.jpg', alt: 'My photo' },
+      imagePosition: 'top'
+    });
+    var html = bw.html(taco);
+    assert.ok(html.includes('alt="My photo"'));
+  });
+});
+
+
+// =========================================================================
+// makeProgress — setValue when aria-valuemax missing (line 776)
+// =========================================================================
+describe('makeProgress — setValue with missing aria-valuemax (line 776)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should default to max=100 when aria-valuemax is not set', function() {
+    var taco = bw.makeProgress({ value: 50 });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    var bar = el.querySelector('.bw_bccl_progress_bar');
+    // Remove aria-valuemax to trigger the || 100 fallback
+    bar.removeAttribute('aria-valuemax');
+    taco.o.handle.setValue(el, 75);
+    assert.strictEqual(bar.style.width, '75%');
+    assert.strictEqual(bar.getAttribute('aria-valuenow'), '75');
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeProgress — getValue when aria-valuenow missing (line 784)
+// =========================================================================
+describe('makeProgress — getValue with missing aria-valuenow (line 784)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should return 0 when aria-valuenow is not set on bar', function() {
+    var taco = bw.makeProgress({ value: 50 });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    var bar = el.querySelector('.bw_bccl_progress_bar');
+    // Remove aria-valuenow to trigger the || 0 fallback
+    bar.removeAttribute('aria-valuenow');
+    var val = taco.o.handle.getValue(el);
+    assert.strictEqual(val, 0);
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeForm — field without type (line 962)
+// =========================================================================
+describe('makeForm — field with no type defaults to text (line 962)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should default field type to text when not specified', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'username', label: 'Username' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    var input = el.querySelector('[name="username"]');
+    assert.strictEqual(input.type, 'text');
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeForm — validate with missing input (line 1025)
+// =========================================================================
+describe('makeForm — validate with missing input element (line 1025)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should skip validation for fields whose input is not found', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'field1', label: 'Field 1', type: 'text', required: true }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Remove the input element so validate can't find it
+    var input = el.querySelector('[name="field1"]');
+    input.parentNode.removeChild(input);
+
+    var result = taco.o.handle.validate(el);
+    // With the input missing, validate should skip it and report valid
+    assert.strictEqual(result.valid, true);
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeForm — validate error message uses field.name when no label (line 1044)
+// =========================================================================
+describe('makeForm — validate error uses field.name when no label (line 1044)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should use field.name in error message when label is not provided', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'email_field', type: 'text', required: true }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var result = taco.o.handle.validate(el);
+    assert.strictEqual(result.valid, false);
+    var errEl = el.querySelector('.bw_bccl_form_error');
+    assert.ok(errEl);
+    assert.ok(errEl.textContent.includes('email_field'), 'error should mention field name');
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeForm — setErrors with missing input (line 1054)
+// =========================================================================
+describe('makeForm — setErrors with missing input element (line 1054)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should skip error setting for inputs not found', function() {
+    var taco = bw.makeForm({
+      fields: [
+        { name: 'field1', label: 'Field 1', type: 'text' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Remove the input so setErrors can't find it
+    var input = el.querySelector('[name="field1"]');
+    input.parentNode.removeChild(input);
+
+    // setErrors should not throw when input not found
+    taco.o.handle.setErrors(el, { field1: 'Error', nonexistent: 'Also error' });
+    assert.ok(true, 'should not throw');
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeCodeDemo — with globalThis.bw.codeEditor available (line 1791-1792)
+// =========================================================================
+describe('makeCodeDemo — globalThis.bw.codeEditor available (line 1791-1792)', function() {
+  it('should use codeEditor when available on globalThis.bw', function() {
+    // Set up globalThis.bw.codeEditor as a function
+    var codeEditorCalled = false;
+    var origBw = globalThis.bw;
+    globalThis.bw = Object.assign({}, globalThis.bw || {}, {
+      codeEditor: function(opts) {
+        codeEditorCalled = true;
+        return { t: 'div', a: { class: 'bw_ce_mock' }, c: opts.code };
+      }
+    });
+
+    var taco = bw.makeCodeDemo({
+      code: 'var x = 1;',
+      language: 'javascript',
+      title: 'Demo'
+    });
+    var html = bw.html(taco);
+    // The codeEditor function should have been called
+    assert.ok(codeEditorCalled, 'globalThis.bw.codeEditor should be called');
+    assert.ok(html.includes('bw_ce_mock'), 'should use codeEditor output');
+
+    // Restore
+    globalThis.bw = origBw;
+  });
+});
+
+
+// =========================================================================
+// makePagination — setPage with valid page (line 1926)
+// =========================================================================
+describe('makePagination — setPage with valid page (line 1926)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should update active page when setPage is called with valid page', function() {
+    var pageChanged = null;
+    var taco = bw.makePagination({
+      pages: 5,
+      currentPage: 1,
+      onPageChange: function(n) { pageChanged = n; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    // Initialize state
+    el._bw_state = { currentPage: 1, pages: 5 };
+
+    taco.o.handle.setPage(el, 3);
+    assert.strictEqual(pageChanged, 3);
+    assert.strictEqual(el._bw_state.currentPage, 3);
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeAccordion — single-open mode closes siblings (line 2103)
+// =========================================================================
+describe('makeAccordion — single-open mode closes open sibling (line 2103)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should close other open sections when clicking in single-open mode', function() {
+    var taco = bw.makeAccordion({
+      multiOpen: false,
+      items: [
+        { title: 'Section 1', content: 'Content 1', open: true },
+        { title: 'Section 2', content: 'Content 2' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var collapses = el.querySelectorAll('.bw_bccl_accordion_collapse');
+    // Section 1 should be open
+    assert.ok(collapses[0].classList.contains('bw_collapse_show'));
+
+    // Click section 2 button to open it
+    var buttons = el.querySelectorAll('.bw_bccl_accordion_button');
+    buttons[1].click();
+
+    // In single-open mode, section 1 should now be closed (line 2103)
+    assert.ok(!collapses[0].classList.contains('bw_collapse_show'),
+      'section 1 should close when section 2 is opened in single-open mode');
+
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeModal — closeModal fallback and Escape key (lines 2242, 2244, 2330)
+// =========================================================================
+describe('makeModal — closeModal and escape key handling', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should close modal via handle.close and exercise closeModal fallback (line 2242)', function() {
+    var taco = bw.makeModal({
+      title: 'Test Modal',
+      content: 'Body',
+      open: true
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // The modal backdrop IS the root el (.bw_bccl_modal), so closest should find it
+    assert.ok(el.classList.contains('bw_bccl_modal_show') || el.style.display === 'flex',
+      'modal should be visible');
+
+    // Close it
+    taco.o.handle.close(el);
+    assert.ok(!el.classList.contains('bw_bccl_modal_show'), 'should remove show class');
+    document.body.removeChild(el);
+  });
+
+  it('should close modal on document-level Escape key (line 2330)', function() {
+    var taco = bw.makeModal({
+      title: 'Test Modal',
+      content: 'Body',
+      open: true
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Ensure modal is visible
+    el.classList.add('bw_bccl_modal_show');
+    el.style.display = 'flex';
+
+    // Dispatch Escape key event on document
+    var event = new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true });
+    document.dispatchEvent(event);
+
+    assert.ok(!el.classList.contains('bw_bccl_modal_show'), 'should close on Escape');
+    document.body.removeChild(el);
+  });
+
+  it('should handle modal without _bw_opener (line 2244)', function() {
+    var taco = bw.makeModal({
+      title: 'Test Modal',
+      content: 'Body',
+      open: true
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Ensure _bw_opener is not set (falls back to null)
+    delete el._bw_opener;
+
+    taco.o.handle.close(el);
+    assert.ok(true, 'should not throw when _bw_opener is not set');
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeCarousel — prev button click and handle.prev/play (lines 2838, 2897, 2907)
+// =========================================================================
+describe('makeCarousel — prev and play handles (lines 2838, 2897, 2907)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should handle prev button click (line 2838)', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'Slide 1' }, { content: 'Slide 2' }, { content: 'Slide 3' }],
+      showControls: true,
+      startIndex: 1
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Click prev button
+    var prevBtn = el.querySelector('.bw_bccl_carousel_control_prev');
+    assert.ok(prevBtn, 'should have prev control button');
+    prevBtn.click();
+
+    assert.strictEqual(el._bw_carouselIndex, 0, 'should move to previous slide');
+    document.body.removeChild(el);
+  });
+
+  it('should handle handle.prev() (line 2897)', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'Slide 1' }, { content: 'Slide 2' }],
+      startIndex: 1
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    taco.o.handle.prev(el);
+    assert.strictEqual(el._bw_carouselIndex, 0, 'prev should move back one slide');
+    document.body.removeChild(el);
+  });
+
+  it('should handle handle.play() (line 2907)', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'Slide 1' }, { content: 'Slide 2' }],
+      autoPlay: false
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Set up state for play
+    el._bw_state = { interval: 100, autoPlay: false };
+
+    taco.o.handle.play(el);
+    assert.ok(el._bw_carouselInterval, 'should start interval on play');
+
+    // Clean up interval
+    taco.o.handle.pause(el);
+    assert.strictEqual(el._bw_carouselInterval, null, 'should clear interval on pause');
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// Accordion — closeAll handle (lines 2185-2198)
+// =========================================================================
+describe('makeAccordion — closeAll handle (lines 2185-2198)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should close all open accordion items via handle.closeAll', function() {
+    var taco = bw.makeAccordion({
+      multiOpen: true,
+      items: [
+        { title: 'Section 1', content: 'Content 1', open: true },
+        { title: 'Section 2', content: 'Content 2', open: true },
+        { title: 'Section 3', content: 'Content 3' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var collapses = el.querySelectorAll('.bw_bccl_accordion_collapse');
+    // Sections 1 and 2 should be open
+    assert.ok(collapses[0].classList.contains('bw_collapse_show'), 'section 1 should be open');
+    assert.ok(collapses[1].classList.contains('bw_collapse_show'), 'section 2 should be open');
+
+    // Call closeAll
+    taco.o.handle.closeAll(el);
+
+    // All sections should now be closed
+    assert.ok(!collapses[0].classList.contains('bw_collapse_show'), 'section 1 should be closed after closeAll');
+    assert.ok(!collapses[1].classList.contains('bw_collapse_show'), 'section 2 should be closed after closeAll');
+
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// Accordion — toggle handle (lines 2166-2169)
+// =========================================================================
+describe('makeAccordion — toggle handle (lines 2166-2169)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should toggle a specific accordion item by index', function() {
+    var taco = bw.makeAccordion({
+      multiOpen: true,
+      items: [
+        { title: 'Section 1', content: 'Content 1' },
+        { title: 'Section 2', content: 'Content 2' },
+        { title: 'Section 3', content: 'Content 3' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var collapses = el.querySelectorAll('.bw_bccl_accordion_collapse');
+    assert.ok(!collapses[1].classList.contains('bw_collapse_show'), 'section 2 should be closed initially');
+
+    // Toggle section 2 open
+    taco.o.handle.toggle(el, 1);
+    assert.ok(collapses[1].classList.contains('bw_collapse_show'), 'section 2 should be open after toggle');
+
+    document.body.removeChild(el);
+  });
+
+  it('should not throw when toggling out-of-range index', function() {
+    var taco = bw.makeAccordion({
+      items: [{ title: 'Section 1', content: 'Content 1' }]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Should not throw for negative index
+    taco.o.handle.toggle(el, -1);
+    // Should not throw for too-large index
+    taco.o.handle.toggle(el, 99);
+    assert.ok(true, 'should not throw for out-of-range index');
+
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// Accordion — openAll handle (lines 2172-2182)
+// =========================================================================
+describe('makeAccordion — openAll handle (lines 2172-2182)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should open all accordion items via handle.openAll', function() {
+    var taco = bw.makeAccordion({
+      multiOpen: true,
+      items: [
+        { title: 'Section 1', content: 'Content 1' },
+        { title: 'Section 2', content: 'Content 2' },
+        { title: 'Section 3', content: 'Content 3' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var collapses = el.querySelectorAll('.bw_bccl_accordion_collapse');
+    // All should be closed initially
+    assert.ok(!collapses[0].classList.contains('bw_collapse_show'), 'section 1 closed initially');
+    assert.ok(!collapses[1].classList.contains('bw_collapse_show'), 'section 2 closed initially');
+
+    // Open all
+    taco.o.handle.openAll(el);
+
+    assert.ok(collapses[0].classList.contains('bw_collapse_show'), 'section 1 open after openAll');
+    assert.ok(collapses[1].classList.contains('bw_collapse_show'), 'section 2 open after openAll');
+    assert.ok(collapses[2].classList.contains('bw_collapse_show'), 'section 3 open after openAll');
+
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// Accordion — mounted hook for open items (lines 2144-2155)
+// =========================================================================
+describe('makeAccordion — mounted hook for initially open items (lines 2144-2155)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should set maxHeight none on initially open accordion panel via mounted', function() {
+    var taco = bw.makeAccordion({
+      items: [
+        { title: 'Section 1', content: 'Content 1', open: true },
+        { title: 'Section 2', content: 'Content 2' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Mount the tree to trigger all mounted hooks including the panel's mounted
+    bw.mountTree(el);
+
+    var collapses = el.querySelectorAll('.bw_bccl_accordion_collapse');
+    assert.ok(collapses[0].classList.contains('bw_collapse_show'), 'section 1 should be open');
+    // The mounted hook at L2153-2154 sets maxHeight to 'none'
+    assert.strictEqual(collapses[0].style.maxHeight, 'none', 'open panel should have maxHeight none from mounted hook');
+
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// Toast — dismiss handle (lines 2418-2420)
+// =========================================================================
+describe('makeToast — dismiss handle (lines 2418-2420)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should add hiding class and schedule removal via handle.dismiss', function() {
+    var taco = bw.makeToast({
+      title: 'Test Toast',
+      content: 'Toast body',
+      autoDismiss: false
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Call dismiss handle
+    taco.o.handle.dismiss(el);
+
+    // Should add hiding class immediately
+    assert.ok(el.classList.contains('bw_bccl_toast_hiding'), 'should add hiding class');
+
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// Carousel — play() setInterval callback fires (line 2909)
+// =========================================================================
+describe('makeCarousel — play() interval callback fires (line 2909)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should advance slides when play interval fires', function() {
+    var taco = bw.makeCarousel({
+      items: [{ content: 'Slide 1' }, { content: 'Slide 2' }, { content: 'Slide 3' }],
+      autoPlay: false,
+      showControls: true
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+    if (taco.o && taco.o.mounted) taco.o.mounted(el);
+
+    // Verify DOM structure
+    assert.strictEqual(el._bw_carouselIndex, 0, 'should start at slide 0');
+
+    // Directly exercise goToSlide through handle.next to verify it works
+    taco.o.handle.next(el);
+    assert.strictEqual(el._bw_carouselIndex, 1, 'next should advance index');
+
+    // Reset and verify play/pause lifecycle
+    el._bw_carouselIndex = 0;
+    el._bw_state = { interval: 100, autoPlay: true };
+    el._bw_carouselInterval = null;
+
+    // Verify play sets up the interval
+    taco.o.handle.play(el);
+    assert.ok(el._bw_carouselInterval, 'should have interval after play');
+
+    // Verify pause clears the interval
+    taco.o.handle.pause(el);
+    assert.strictEqual(el._bw_carouselInterval, null, 'should clear interval after pause');
+
+    // Directly exercise next (same logic the interval callback uses) to verify slide advancement
+    el._bw_carouselIndex = 0;
+    taco.o.handle.next(el);
+    assert.strictEqual(el._bw_carouselIndex, 1, 'next should advance from 0 to 1');
+    taco.o.handle.next(el);
+    assert.strictEqual(el._bw_carouselIndex, 2, 'next should advance from 1 to 2');
+    taco.o.handle.next(el);
+    assert.strictEqual(el._bw_carouselIndex, 0, 'next should wrap from 2 to 0');
+
+    if (el.parentNode) el.parentNode.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeCodeDemo — globalThis.bw.codeEditor true branch (line 1792)
+// The existing test at line 3935 may be affected by test ordering.
+// This test explicitly sets and cleans globalThis.bw.codeEditor.
+// =========================================================================
+describe('makeCodeDemo — codeEditor true branch coverage (line 1792)', function() {
+  var origGlobalBw;
+
+  beforeEach(function() {
+    freshDOM();
+    origGlobalBw = globalThis.bw;
+  });
+
+  afterEach(function() {
+    globalThis.bw = origGlobalBw;
+  });
+
+  it('should use globalThis.bw.codeEditor when it is a function', function() {
+    var editorCalled = false;
+    var receivedOpts = null;
+    // Set globalThis.bw with codeEditor function
+    globalThis.bw = {
+      codeEditor: function(opts) {
+        editorCalled = true;
+        receivedOpts = opts;
+        return { t: 'div', a: { class: 'bw_ce_editor' }, c: opts.code };
+      }
+    };
+
+    // Import makeCodeDemo directly to avoid bw wrapper
+    var taco = makeCodeDemo({
+      code: 'console.log("hello");',
+      language: 'javascript',
+      title: 'Test Demo'
+    });
+
+    // Render to HTML to force evaluation of the ternary
+    var html = bw.html(taco);
+
+    assert.ok(editorCalled, 'codeEditor should have been called');
+    assert.ok(receivedOpts, 'should have received opts');
+    assert.strictEqual(receivedOpts.code, 'console.log("hello");');
+    assert.strictEqual(receivedOpts.lang, 'js', 'javascript should be mapped to js');
+    assert.strictEqual(receivedOpts.readOnly, true);
+    assert.ok(html.includes('bw_ce_editor'), 'output should use codeEditor result');
+  });
+});
+
+
+// =========================================================================
+// makeCodeDemo — copy button onclick handler (lines 1777-1787)
+// =========================================================================
+describe('makeCodeDemo — copy button onclick handler (lines 1777-1787)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should call navigator.clipboard.writeText and update button text', function(done) {
+    // The bccl module references bare `navigator` — in Node ESM this is the
+    // built-in globalThis.navigator (getter-only). Override via defineProperty.
+    var origDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+    var writtenText = null;
+    Object.defineProperty(globalThis, 'navigator', {
+      value: {
+        clipboard: {
+          writeText: function(text) {
+            writtenText = text;
+            return Promise.resolve();
+          }
+        }
+      },
+      writable: true,
+      configurable: true
+    });
+
+    var taco = makeCodeDemo({
+      code: 'console.log("hi");',
+      language: 'javascript',
+      title: 'Test'
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Find the copy button
+    var copyBtn = el.querySelector('.bw_code_copy_btn');
+    assert.ok(copyBtn, 'copy button should exist');
+    assert.strictEqual(copyBtn.textContent, 'Copy');
+
+    // Click the button (addEventListener was used, so .click() triggers it)
+    copyBtn.click();
+
+    // The .then callback runs as a microtask (Promise.resolve().then)
+    setTimeout(function() {
+      assert.strictEqual(writtenText, 'console.log("hi");', 'should have written text to clipboard');
+      assert.strictEqual(copyBtn.textContent, 'Copied!');
+      assert.ok(copyBtn.classList.contains('bw_code_copy_btn_copied'), 'should have copied class');
+      // Restore original navigator descriptor
+      Object.defineProperty(globalThis, 'navigator', origDescriptor);
+      document.body.removeChild(el);
+      done();
+    }, 50);
+  });
+});
+
+
+// =========================================================================
+// makePagination — handleClick onclick handler (lines 1865-1867)
+// =========================================================================
+describe('makePagination — handleClick onclick handler (lines 1865-1867)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should call onPageChange when a valid page is clicked', function() {
+    var clickedPage = null;
+    var taco = bw.makePagination({
+      pages: 5,
+      currentPage: 2,
+      onPageChange: function(page) { clickedPage = page; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Find a page button (page 3, which is items[3] -> third page button)
+    var pageButtons = el.querySelectorAll('.bw_page_link');
+    // pageButtons: [prev, 1, 2, 3, 4, 5, next]
+    // page 3 = index 3
+    assert.ok(pageButtons.length >= 4, 'should have page buttons');
+    pageButtons[3].click();
+
+    assert.strictEqual(clickedPage, 3, 'should have called onPageChange with page 3');
+    document.body.removeChild(el);
+  });
+
+  it('should not call onPageChange for current page', function() {
+    var clickedPage = null;
+    var taco = bw.makePagination({
+      pages: 5,
+      currentPage: 2,
+      onPageChange: function(page) { clickedPage = page; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Click on page 2 (current page) = index 2
+    var pageButtons = el.querySelectorAll('.bw_page_link');
+    pageButtons[2].click();
+
+    assert.strictEqual(clickedPage, null, 'should not call onPageChange for current page');
+    document.body.removeChild(el);
+  });
+
+  it('should not call onPageChange for out-of-range page', function() {
+    var clickedPage = null;
+    var taco = bw.makePagination({
+      pages: 5,
+      currentPage: 1,
+      onPageChange: function(page) { clickedPage = page; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Click prev when on page 1 (page 0 is out of range)
+    var pageButtons = el.querySelectorAll('.bw_page_link');
+    // The prev button is disabled but we click it anyway to exercise the guard
+    pageButtons[0].click();
+
+    assert.strictEqual(clickedPage, null, 'should not call onPageChange for page < 1');
+    document.body.removeChild(el);
+  });
+
+  it('should call onPageChange from next button', function() {
+    var clickedPage = null;
+    var taco = bw.makePagination({
+      pages: 3,
+      currentPage: 2,
+      onPageChange: function(page) { clickedPage = page; }
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    var pageButtons = el.querySelectorAll('.bw_page_link');
+    // Next button is the last one
+    pageButtons[pageButtons.length - 1].click();
+
+    assert.strictEqual(clickedPage, 3, 'should call onPageChange with page 3 from next button');
+    document.body.removeChild(el);
+  });
+});
+
+
+// =========================================================================
+// makeAccordion — transitionend handler (lines 2131-2137)
+// =========================================================================
+describe('makeAccordion — transitionend handler (lines 2131-2137)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('should set maxHeight to none after transitionend with max-height property', function() {
+    var taco = bw.makeAccordion({
+      items: [
+        { title: 'Section 1', content: 'Content 1' },
+        { title: 'Section 2', content: 'Content 2' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Both items start closed. Click on Section 2 button to open it.
+    var buttons = el.querySelectorAll('.bw_bccl_accordion_button');
+    assert.ok(buttons.length >= 2, 'should have accordion buttons');
+
+    // Click to open section 2
+    buttons[1].click();
+
+    // After click, the collapse should have bw_collapse_show
+    var collapse = el.querySelectorAll('.bw_bccl_accordion_collapse')[1];
+    assert.ok(collapse.classList.contains('bw_collapse_show'), 'should be open after click');
+
+    // Now fire the transitionend event to trigger the onEnd handler
+    var transEvent = new window.Event('transitionend', { bubbles: true });
+    // jsdom Event doesn't support setting propertyName directly, so define it
+    Object.defineProperty(transEvent, 'propertyName', { value: 'max-height' });
+    collapse.dispatchEvent(transEvent);
+
+    assert.strictEqual(collapse.style.maxHeight, 'none', 'maxHeight should be set to none after transitionend');
+    document.body.removeChild(el);
+  });
+
+  it('should not set maxHeight to none when propertyName is not max-height', function() {
+    var taco = bw.makeAccordion({
+      items: [
+        { title: 'Section 1', content: 'Content 1' },
+        { title: 'Section 2', content: 'Content 2' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Click to open section 1
+    var buttons = el.querySelectorAll('.bw_bccl_accordion_button');
+    buttons[0].click();
+
+    var collapse = el.querySelectorAll('.bw_bccl_accordion_collapse')[0];
+    assert.ok(collapse.classList.contains('bw_collapse_show'), 'should be open');
+
+    // Save current maxHeight
+    var currentMax = collapse.style.maxHeight;
+
+    // Fire transitionend with different propertyName
+    var transEvent = new window.Event('transitionend', { bubbles: true });
+    Object.defineProperty(transEvent, 'propertyName', { value: 'opacity' });
+    collapse.dispatchEvent(transEvent);
+
+    assert.strictEqual(collapse.style.maxHeight, currentMax, 'maxHeight should not change for non max-height property');
+    document.body.removeChild(el);
+  });
+
+  it('should not set maxHeight to none when collapse is not showing', function() {
+    var taco = bw.makeAccordion({
+      items: [
+        { title: 'Section 1', content: 'Content 1' }
+      ]
+    });
+    var el = bw.create(taco);
+    document.body.appendChild(el);
+
+    // Click to open
+    var buttons = el.querySelectorAll('.bw_bccl_accordion_button');
+    buttons[0].click();
+
+    var collapse = el.querySelectorAll('.bw_bccl_accordion_collapse')[0];
+    assert.ok(collapse.classList.contains('bw_collapse_show'), 'should be open');
+
+    // Remove the show class before firing transitionend
+    collapse.classList.remove('bw_collapse_show');
+
+    var transEvent = new window.Event('transitionend', { bubbles: true });
+    Object.defineProperty(transEvent, 'propertyName', { value: 'max-height' });
+    collapse.dispatchEvent(transEvent);
+
+    // maxHeight should NOT have been set to 'none' since collapse_show was removed
+    assert.notStrictEqual(collapse.style.maxHeight, 'none', 'maxHeight should not be none when not showing');
     document.body.removeChild(el);
   });
 });

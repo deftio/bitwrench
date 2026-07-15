@@ -1,5 +1,9 @@
 # Array Shorthand for TACO
 
+> **STALE-CHECK (2026-07):** pre-2.1 design discussion. Still unimplemented.
+> Any API names or lifecycle semantics referenced here predate the v2.1
+> cleanup -- re-verify against `docs/` before acting on this document.
+
 **Status**: Design discussion (not yet implemented)
 **Author**: M. Chatterjee / deftio
 **Date**: March 2026

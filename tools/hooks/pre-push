@@ -1,0 +1,19 @@
+#!/bin/sh
+# Guard against accidental pushes to main.
+# Only the release script (which sets BW_RELEASE_PUSH=1) is allowed to push main.
+# Install: cp tools/hooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+#   or:    npm run prepare  (does this automatically)
+
+while read local_ref local_sha remote_ref remote_sha; do
+  if echo "$remote_ref" | grep -qE 'refs/heads/(main|master)$'; then
+    if [ "$BW_RELEASE_PUSH" != "1" ]; then
+      echo ""
+      echo "BLOCKED: Direct push to main is not allowed."
+      echo "Use 'npm run release' to build, test, and push via the release pipeline."
+      echo ""
+      exit 1
+    fi
+  fi
+done
+
+exit 0

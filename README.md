@@ -1,67 +1,32 @@
 # bitwrench.js
 
-[![License](https://img.shields.io/badge/License-BSD%202--Clause-blue.svg)](https://opensource.org/licenses/BSD-2-Clause)
-[![NPM version](https://img.shields.io/npm/v/bitwrench.svg?style=flat-square)](https://www.npmjs.com/package/bitwrench)
-[![CI](https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg)](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-97.5%25-brightgreen.svg)](https://github.com/deftio/bitwrench)
+[<img class="quikdown-img" src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License" data-qd-alt="License" data-qd-src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" data-qd="!">](https://opensource.org/licenses/BSD-2-Clause)
+[<img class="quikdown-img" src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version" data-qd-alt="NPM version" data-qd-src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" data-qd="!">](https://www.npmjs.com/package/bitwrench)
+[<img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI" data-qd-alt="CI" data-qd-src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" data-qd="!">](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
+[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-99.1%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-99.1%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
 
-[![bitwrench](./images/bitwrench-logo-med.png)](https://deftio.github.io/bitwrench/pages/)
+[<img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench" data-qd-alt="bitwrench" data-qd-src="./images/bitwrench-logo-med.png" data-qd="!">](https://deftio.github.io/bitwrench/pages/)
 
-Bitwrench builds UI from plain JavaScript objects -- one format for components, styling, state, and server rendering, with no build step and zero dependencies.
+Bitwrench is a UI library that builds interfaces from plain JavaScript objects -- one format for components, styling, state, and server rendering, with no build step and zero dependencies.
 
 ```javascript
-// Describe UI as a JavaScript object (a "TACO")
+// A "TACO" -- Tag, Attributes, Content, Options
 var page = {
   t: 'div', a: { class: 'card' },
   c: [
     { t: 'h2', c: 'Hello' },
     { t: 'p',  c: 'UI as native JavaScript objects.' },
-    bw.makeButton({ text: 'Click me', variant: 'primary', onclick: fn })
+    { t: 'button', a: { onclick: function() { alert('clicked'); } }, c: 'Click me' }
   ]
 };
 
-bw.DOM('#app', page);          // -> live DOM
+bw.mount('#app', page);        // -> live DOM
 bw.html(page);                 // -> HTML string (Node.js, emails, SSR)
 ```
 
-Each object has four keys: **t** (tag), **a** (attributes), **c** (content), **o** (options for state/lifecycle). Nest them, loop them, compose them -- it's just JavaScript.
+Each object has four keys: **t** (tag), **a** (attributes, including event handlers like `onclick`), **c** (content -- a string, array, or nested TACO), and **o** (options for state and lifecycle). Nest them, loop them, build them with functions -- they are ordinary JavaScript values.
 
-### Why bitwrench?
-
-**One file, everywhere.** At ~40KB gzipped with zero dependencies, bitwrench runs on anything with a browser -- phones, tablets, Raspberry Pi, even ESP32 microcontrollers. The device serves a single HTML page and pushes data as JSON; bitwrench handles all rendering, styling, and state on the client. No Node.js, no build step, no internet connection required.
-
-Structure, styling, state, and server rendering are all handled as JavaScript objects:
-
-- **No build toolchain** -- works with a `<script>` tag
-- **Ready-made components** -- buttons, tables, modals, forms, charts, toasts -- one `make*()` call each, returns a composable TACO
-- **CSS from JavaScript** -- `bw.css()` generates stylesheets, `bw.s()` composes inline styles, `bw.loadStyles()` derives a complete design system from 2 seed colors
-- **Reactive state** -- `o.state` + `o.render` + `bw.update()` for stateful components; `bw.pub()`/`bw.sub()` for cross-component messaging
-- **Dual rendering** -- same object renders to live DOM (`bw.DOM()`) or HTML string (`bw.html()`) for SSR, emails, or static sites
-- **Server-driven UI** -- push UI updates from any backend (Python, C, Rust, Go) over SSE via the biwrench bwserve protocol; `client.screenshot()` captures the page back as PNG/JPEG
-- **CLI** -- `bwcli` converts Markdown, HTML, and JSON to styled standalone pages
-- **Debug tools** -- live client and server debugging with remote incremental inspect, screenshots, and state updates
-- **TypeScript** -- full type declarations ship with the package (`dist/bitwrench.d.ts`); see the [TypeScript Usage Guide](docs/bitwrench_typescript_usage.md)
-- **Utilities** -- color interpolation, random data, lorem ipsum, cookies, URL params, file I/O
-
-
-
-### Coming from other Frameworks
-
-Bitwrench uses JavaScript equivalents for most forms of front-end development. Here is a quick mapping (see the [docs](docs/README.md) and [Thinking in Bitwrench](docs/thinking-in-bitwrench.md) for more details).
-
-| You're using | For | Bitwrench equivalent |
-|---|---|---|
-| React / Vue / Svelte | Components + reactivity | `{t, a, c, o}` objects + `o.state` + `o.render` |
-| JSX / templates | Markup-in-JS | Native JS objects -- no compiler |
-| Tailwind / CSS-in-JS | Styling | `bw.css()`, `bw.s()` style composition |
-| Sass / PostCSS | CSS generation | `bw.css()` from JS objects (supports @media, @keyframes) |
-| ThemeProvider / CSS vars | Theming | `bw.loadStyles()` / `bw.makeStyles()` from 2 seed colors |
-| Streamlit / Gradio | Server-driven UI | bwserve SSE -- from any language (Python, Go, C, Rust) |
-| Redux / Zustand / Pinia | State management | `o.state` + `bw.update()` + `bw.pub()/sub()` |
-| Vite / webpack / Babel | Build tooling | Not needed -- open the HTML file |
-| DefinitelyTyped / @types | Type declarations | Ships `dist/bitwrench.d.ts` -- nothing extra to install |
-
-See the [Framework Translation Table](docs/framework-translation-table.md) for side-by-side code comparisons across 22 operations.
+A TACO is already a JavaScript object, so there is nothing to compile or transform. This makes bitwrench a good fit for situations where a build pipeline costs more than it buys: dashboards, internal tools, embedded device UIs, server-driven pages, or anything you want to ship as a single HTML file.
 
 ## Installation
 
@@ -85,6 +50,8 @@ Or include directly in a page:
 
 ## Getting Started
 
+A complete page -- no build step, no imports, everything is a plain object:
+
 ```html
 <!DOCTYPE html>
 <html lang="en">
@@ -94,21 +61,16 @@ Or include directly in a page:
 <body>
   <div id="app"></div>
   <script>
-    bw.loadStyles();
+    bw.loadStyles();   // structural CSS + design tokens
 
-    bw.DOM('#app', {
-      t: 'div', a: { class: 'bw-container' },
+    bw.mount('#app', {
+      t: 'div', a: { class: 'bw_container' },
       c: [
         { t: 'h1', c: 'My App' },
-        bw.makeCard({
-          title: 'Welcome',
-          content: 'Built with plain JavaScript objects.'
-        }),
-        bw.makeButton({
-          text: 'Click me',
-          variant: 'primary',
-          onclick: function() { alert('Hello!'); }
-        })
+        { t: 'p',  c: 'Built from plain JavaScript objects.' },
+        { t: 'button',
+          a: { class: 'bw_btn bw_primary', onclick: function() { alert('Hello!'); } },
+          c: 'Click me' }
       ]
     });
   </script>
@@ -116,23 +78,43 @@ Or include directly in a page:
 </html>
 ```
 
-## Adding State
+## Components
 
-Add `o.state` and `o.render` to any TACO to make it stateful. The render function is called with the DOM element, and state lives on `el._bw_state`. Call `bw.update(el)` to re-render:
+A component is a function that returns a TACO. Bitwrench ships ~50 factory functions (`bw.makeCard()`, `bw.makeTable()`, `bw.makeTabs()`, etc. -- see the [Component Cheat Sheet](docs/component-cheatsheet.md)). Each is a regular function that returns the same `{t, a, c, o}` object you could write by hand. Log the return value and look at it.
+
+Your own components work the same way:
+
+```javascript
+function statusChip(label, ok) {
+  return { t: 'span', a: { class: 'bw_badge ' + (ok ? 'bw_success' : 'bw_warning') }, c: label };
+}
+
+// Built-in and custom components compose identically
+bw.mount('#app', {
+  t: 'div', a: { class: 'bw_container' },
+  c: [
+    bw.makeCard({ title: 'Server', content: 'Build 2.1.0' }),
+    statusChip('online', true)
+  ]
+});
+```
+
+## State and Updates
+
+Add `o.state` and `o.render` to any TACO to make it stateful. The render function receives `(el, state)`, and you call `bw.refresh(el)` when you want it to re-run:
 
 ```javascript
 var counter = {
   t: 'div',
   o: {
     state: { count: 0 },
-    render: function(el) {
-      var s = el._bw_state;
-      bw.DOM(el, {
+    render: function(el, state) {
+      bw.mount(el, {
         t: 'div', c: [
-          { t: 'h3', c: 'Count: ' + s.count },
+          { t: 'h3', c: 'Count: ' + state.count },
           bw.makeButton({ text: '+1', onclick: function() {
-            s.count++;
-            bw.update(el);
+            state.count++;
+            bw.refresh(el);
           }})
         ]
       });
@@ -140,32 +122,90 @@ var counter = {
   }
 };
 
-bw.DOM('#app', counter);
+bw.mount('#app', counter);
 ```
 
-> **Important: event handlers go in `a: { onclick: fn }`, not in `o.mounted`.** Handlers attached via `addEventListener` in `o.mounted` are silently lost when a component re-renders. Always use `onclick`/`onchange`/etc. inside `a:` -- bitwrench re-attaches them on every render automatically.
+State is also available as `el._bw_state` from outside the render function -- useful for debugging or direct access from event handlers.
 
-See the [State Management guide](docs/state-management.md) for the full three-level component model.
+> Event handlers go in `a: { onclick: fn }`, not in `o.mounted`. Handlers attached via `addEventListener` in `o.mounted` are lost when a component re-renders. Place them in `a:` and bitwrench re-attaches them on every render.
 
-For communication between components, use pub/sub:
+Bitwrench has no reactivity system. Mutating state does not trigger anything -- the DOM changes only when you call an update function. This is a deliberate trade: you give up automatic re-renders, and in exchange every DOM mutation is a function call you wrote, with a cost you chose.
+
+The update functions form a cost ladder:
+
+| Update verb | Cost | What happens |
+| --- | --- | --- |
+| `el.bw.method()` / slot setters | Surgical | Component updates its own DOM directly |
+| `bw.update(ref, data)` | Dispatch | Calls `el.bw.update(data)` -- never rebuilds |
+| `bw.message(ref, action, data)` | Dispatch | Calls `el.bw[action]()` by selector or UUID |
+| `bw.patch(id, content)` | Targeted | Replaces one element's content |
+| `bw.refresh(ref)` | Full rebuild | Re-runs `o.render`; children are unmounted and rebuilt |
+
+Choosing where you sit on this ladder is the programming model. The full `bw.refresh()` re-render shown above is the simplest but most expensive option. The next section introduces slots and handles, which sit at the top of the ladder.
+
+## Component API
+
+After mounting, the DOM element is the component. The TACO is consumed at mount time -- there is no virtual DOM and no retained tree. State lives on the element (`el._bw_state`), and so does its public API (`el.bw`).
+
+**Slots** map CSS selectors to setter/getter pairs. **Handles** define named methods. Both are attached to `el.bw` at mount time:
 
 ```javascript
-bw.sub('item-added', function(detail) {
-  console.log('New item:', detail.name);
+var card = bw.mount('#stats', {
+  t: 'div', a: { class: 'stats-card' },
+  c: [
+    { t: 'h3', a: { class: 'card-title' }, c: 'Revenue' },
+    { t: 'span', a: { class: 'card-value' }, c: '$50,000' }
+  ],
+  o: {
+    slots: { title: '.card-title', value: '.card-value' },
+    handle: {
+      update: function(el, data) { el.bw.setValue('$' + data.value.toLocaleString()); }
+    }
+  }
 });
 
-bw.pub('item-added', { name: 'Widget' });
-
-// Wildcard: listen to a group of related topics
-bw.sub('item:*', function(detail, topic) {
-  console.log(topic, detail);  // e.g. 'item:added', 'item:removed'
-});
+card.bw.setTitle('Profit');          // slot setter -- updates one text node
+card.bw.update({ value: 120000 });   // handle method -- runs your logic
+bw.update(card, { value: 99000 });   // same call, dispatched by element or UUID
 ```
 
+`slots: { title: '.card-title' }` generates `el.bw.setTitle()` and `el.bw.getTitle()` automatically. `handle` methods are attached as-is to `el.bw`. Neither causes a re-render -- they update the DOM directly.
+
+Because everything lives on the element, debugging needs no extension: select a component in the browser's Elements panel and type `$0._bw_state` or `$0.bw`.
+
+A component's lifecycle is four explicit calls:
+
+| Phase | You call | Opt-in hook |
+| --- | --- | --- |
+| Define | a function that returns a TACO | -- |
+| Mount | bw.mount('#app', taco) | o.mounted(el) |
+| Update | el.bw.method() / bw.refresh(el) | -- |
+| Unmount | bw.remove(el) | o.unmount(el) |
+
+The [Component Lifecycle Walkthrough](docs/component-lifecycle.md) takes one card through all four phases. The [State Management guide](docs/state-management.md) covers the full component model.
+
+## Cross-Component Communication
+
+Components communicate through pub/sub. `bw.sub()` returns an unsubscribe function. Wildcard topics match any suffix after the colon:
+
+```javascript
+bw.sub('item-added', function(detail) { console.log('New:', detail.name); });
+bw.pub('item-added', { name: 'Widget' });
+bw.sub('item:*', function(detail, topic) { /* matches item:added, item:removed, etc. */ });
+```
+
+Pass an element as the third argument to tie the subscription's lifetime to that element -- when the element is removed from the DOM, the subscription is automatically cleaned up:
+
+```javascript
+bw.sub('cart:updated', function(data) {
+  el._bw_state.count = data.count;
+  bw.refresh(el);
+}, el);
+```
 
 ## CSS from JavaScript
 
-`bw.css()` generates CSS from objects. `bw.s()` composes inline styles from reusable utility objects:
+`bw.css()` generates CSS strings from objects. `bw.injectCSS()` inserts a CSS string into the document as a `<style>` tag. `bw.s()` composes inline styles. `bw.responsive()` generates `@media` rules from a breakpoint map. These are generation functions -- they return strings, so you can use them anywhere:
 
 ```javascript
 // Generate and inject a stylesheet
@@ -173,7 +213,7 @@ bw.injectCSS(bw.css({
   '.my-card': { padding: '1rem', borderRadius: '8px' }
 }));
 
-// Compose inline styles from objects
+// Compose inline styles from reusable objects
 { t: 'div', a: { style: bw.s({ display: 'flex' }, { gap: '1rem' }, { padding: '1rem' }) } }
 
 // Responsive breakpoints
@@ -183,9 +223,11 @@ bw.responsive('.hero', {
 });
 ```
 
+Bitwrench does not own your CSS. You can use external stylesheets, Tailwind, or plain CSS alongside any of the above.
+
 ## Theming
 
-`bw.loadStyles()` derives a complete design system -- buttons, alerts, badges, cards, forms, tables, hover states, focus rings -- from two seed colors. Styles can be scoped to DOM subtrees, so different sections of a page can use different themes. `bw.toggleStyles()` switches between primary and alternate palettes:
+`bw.loadStyles()` derives a complete design system -- buttons, alerts, badges, cards, forms, tables, hover states, focus rings -- from two seed colors. Call it with no arguments for structural CSS only, or pass a config to generate a full theme. `bw.toggleThemeMode()` switches between primary and alternate palettes:
 
 ```javascript
 bw.loadStyles({
@@ -193,40 +235,33 @@ bw.loadStyles({
   secondary: '#cc6633'
 });
 
-bw.toggleStyles();  // switch between primary and alternate palettes
+bw.toggleThemeMode();  // switch to alternate palette
 ```
 
+Styles can be scoped to DOM subtrees, so different parts of a page can use different themes. See the [Theming guide](docs/theming.md) for presets, palette structure, and scoping.
 
-## Core API
+## Server-Driven UI
 
-| Function | Description |
-|---|---|
-| `bw.html(obj)` | Convert a TACO to an HTML string |
-| `bw.DOM(selector, obj)` | Mount a TACO to a DOM element |
-| `bw.mount(selector, obj)` | Like `bw.DOM()` but returns the root element for `el.bw` access |
-| `bw.raw(str)` | Mark a string as pre-escaped HTML (no double-escaping) |
-| `bw.css(rules)` | Generate CSS from a JS object |
-| `bw.s(...objs)` | Compose inline style objects into a style string |
-| `bw.responsive(sel, breakpoints)` | Generate `@media` CSS rules from JS |
-| `bw.loadStyles(config?)` | Load structural CSS (no args) or generate + apply a theme from seed colors |
-| `bw.makeStyles(config)` | Generate a theme from seed colors (returns styles object) |
-| `bw.applyStyles(styles)` | Inject a generated styles object's CSS into the document |
-| `bw.toggleStyles()` | Switch between primary and alternate palettes |
-| `bw.clearStyles()` | Remove injected theme styles |
-| `bw.patch(id, content)` | Update a specific element by id or UUID |
-| `bw.update(el)` | Re-render via the element's `o.render` function |
-| `bw.message(target, action, data)` | Dispatch a method call to a component's `el.bw` handle |
-| `bw.pub(topic, detail)` | Publish to subscribers (exact + wildcard matches) |
-| `bw.sub(topic, handler, el?)` | Subscribe to topic (supports wildcard `'ns:*'`); returns unsub function |
-| `bw.once(topic, handler, el?)` | One-shot subscribe; auto-unsub after first fire |
-| `bw.inspect(target, depth)` | Introspect a DOM subtree with bitwrench metadata (state, handles, type) |
-| `bw.apply(msg)` | Apply a bwserve protocol message to the DOM |
+Because TACOs are plain objects, they serialize as JSON. This means a backend in any language can push UI updates to the browser.
 
-See the full [API Reference](https://deftio.github.io/bitwrench/pages/08-api-reference.html) for all functions.
+Bitwrench includes bwserve, a protocol that sends TACO objects and patches over SSE. Button clicks come back as actions, `client.inspect()` reads DOM state, and `client.screenshot()` captures the live page as a PNG. The browser becomes a display and input device; the application logic lives wherever you want it.
+
+Here is a C program on an ESP32 pushing a sensor reading to the browser:
+
+```c
+char msg[96], frame[128];
+BW_PATCH(msg, "office-temp", "23.5");
+BW_SSE_FRAME(frame, msg);
+events.send(frame, NULL, millis());    // the browser updates
+```
+
+The same protocol works from Python, Go, Rust, or a shell script with `curl`. See the [bwserve docs](docs/bwserve.md) for the full protocol, and the [ESP32 tutorial](docs/tutorial-embedded.md) for a complete embedded walkthrough.
+
+The library is ~165KB on disk (~45KB gzipped). A lean build without the component library (BCCL) is ~128KB (~35KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
 
 ## CLI
 
-Convert Markdown, HTML, or JSON files to styled standalone pages:
+`bwcli` converts files to styled standalone pages:
 
 ```bash
 # Convert Markdown to a self-contained HTML page
@@ -247,17 +282,66 @@ Flags: `--output/-o`, `--standalone/-s`, `--cdn`, `--theme/-t`, `--css/-c`, `--t
 
 ```bash
 bwcli serve --port 8080 --input-port 9000
-curl -X POST http://localhost:9000 -d '{"type":"patch","target":"temp","content":"23.5 C"}'
+curl -X POST http://localhost:9000 -d '{"type":"patch","ref":"temp","content":"23.5 C"}'
 ```
+
+## Coming from Other Frameworks
+
+| You're using | For | Bitwrench equivalent |
+| --- | --- | --- |
+| React / Vue / Svelte | Components | {t, a, c, o} objects + o.state + o.render |
+| JSX / templates | Markup-in-JS | Native JS objects -- no compiler |
+| Tailwind / CSS-in-JS | Styling | bw.css(), bw.s() |
+| Sass / PostCSS | CSS generation | bw.css() from JS objects (supports @media, @keyframes) |
+| ThemeProvider / CSS vars | Theming | bw.loadStyles() / bw.makeStyles() from seed colors |
+| Streamlit / Gradio | Server-driven UI | bwserve SSE -- from any language |
+| Redux / Zustand / Pinia | State management | o.state + bw.refresh() + bw.pub()/sub() |
+| Vite / webpack / Babel | Build tooling | Not needed -- open the HTML file |
+| DefinitelyTyped / @types | Type declarations | Ships dist/bitwrench.d.ts |
+
+See the [Framework Translation Table](docs/framework-translation-table.md) for side-by-side code comparisons across 22 operations.
+
+## Core API
+
+| Function | Description |
+| --- | --- |
+| bw.html(obj) | Convert a TACO to an HTML string |
+| bw.mount(selector, obj) | Mount a TACO into a DOM element; returns the root element |
+| bw.DOM(selector, obj) | Alias of bw.mount() |
+| bw.create(taco) | Create a detached DOM element from a TACO (not inserted into the page) |
+| bw.el(selector, apply?) | Find an element; optionally apply text, TACO, or function to it |
+| bw.$(selector) | querySelectorAll as an array |
+| bw.raw(str) | Mark a string as pre-escaped HTML (no double-escaping) |
+| bw.css(rules) | Generate CSS from a JS object |
+| bw.injectCSS(css, opts?) | Insert a CSS string into the document as a style tag |
+| bw.s(...objs) | Compose inline style objects into a style string |
+| bw.responsive(sel, breakpoints) | Generate @media CSS rules from a breakpoint map |
+| bw.loadStyles(config?) | Structural CSS (no args) or generate + apply a theme from seed colors |
+| bw.makeStyles(config) | Generate a theme from seed colors (returns styles object) |
+| bw.applyStyles(styles) | Inject a generated styles object into the document |
+| bw.toggleThemeMode(scope?) | Switch between primary and alternate palettes |
+| bw.clearStyles() | Remove injected theme styles |
+| bw.patch(id, content) | Update a specific element by id or UUID |
+| bw.refresh(el) | Re-render a stateful component via its o.render function |
+| bw.update(el, data) | Dispatch to el.bw.update(data) |
+| bw.message(target, action, data) | Dispatch to el.bw[action]() by selector or UUID |
+| bw.pub(topic, detail) | Publish to subscribers (exact + wildcard matches) |
+| bw.sub(topic, handler, el?) | Subscribe to a topic (supports wildcard 'ns:*'); returns unsub function |
+| bw.once(topic, handler, el?) | One-shot subscribe; auto-unsub after first fire |
+| bw.remove(el) | Unmount a component (fires o.unmount hook) |
+| bw.inspect(target, depth) | Introspect a DOM subtree with bitwrench metadata |
+| bw.apply(msg) | Apply a bwserve protocol message to the DOM |
+
+The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form a cost ladder -- see [State and Updates](#state-and-updates). Full [API Reference](https://deftio.github.io/bitwrench/pages/08-api-reference.html).
 
 ## Build Formats
 
 | Format | File | Use case |
-|--------|------|----------|
-| UMD | `bitwrench.umd.min.js` | Browsers and Node.js |
-| ESM | `bitwrench.esm.min.js` | Modern bundlers (Vite, webpack, etc.) |
-| CJS | `bitwrench.cjs.min.js` | Node.js `require()` |
-| ES5 | `bitwrench.es5.min.js` | Legacy browsers (IE11) |
+| --- | --- | --- |
+| UMD | bitwrench.umd.min.js | Browsers and Node.js |
+| ESM | bitwrench.esm.min.js | Modern bundlers (Vite, webpack, etc.) |
+| CJS | bitwrench.cjs.min.js | Node.js require() |
+| ES5 | bitwrench.es5.min.js | Legacy browsers (IE11) |
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.
 
@@ -265,13 +349,14 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **Start here:**
 
-- **[Thinking in Bitwrench](docs/thinking-in-bitwrench.md)** -- the complete guide. Covers TACO, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, events, the three-level component model, bwserve, and common patterns
-- **[LLM Guide](docs/llm-bitwrench-guide.md)** -- compact single-file reference with all APIs, patterns, and rules. Designed for AI-assisted development but works as a cheat sheet for anyone
+- **[Thinking in Bitwrench](docs/thinking-in-bitwrench.md)** -- the complete guide: TACO format, styling, composition, events, the component model, bwserve, and common patterns
+- **[LLM Guide](docs/llm-bitwrench-guide.md)** -- compact single-file reference with all APIs, patterns, and rules
 
 **Reference guides** (in `docs/`):
 
 - [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format
-- [State Management](docs/state-management.md) -- three-level component model, stateful TACO, reactive state
+- [Component Lifecycle Walkthrough](docs/component-lifecycle.md) -- one stats card through all four phases
+- [State Management](docs/state-management.md) -- component model, explicit updates, cross-component communication
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) -- palette-driven theme generation, presets, design tokens
 - [CLI](docs/cli.md) -- the `bwcli` command for file conversion and pipe server
@@ -296,7 +381,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 **Example apps** (in `examples/`):
 
 - [Ember & Oak Coffee Co.](examples/ember-and-oak/) -- full landing page: theme, cart, search, charts, accordion, timeline
-- [SunForge Landing Page](examples/landing-page/) -- polished marketing page with zero reactive state, pure BCCL composition
+- [SunForge Landing Page](examples/landing-page/) -- marketing page with zero reactive state, pure BCCL composition
 - [Todo App](examples/todo-app/) -- stateful TACO with pub/sub
 - [Metrics Dashboard](examples/dashboard/) -- live stat cards, bar chart, pub/sub, responsive layout
 - [Signup Wizard](examples/wizard/) -- multi-step form, state transitions, bw.raw()
@@ -307,19 +392,19 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 ## FAQ
 
-**Is this a framework?** -- No. Bitwrench is a library (~40KB gzipped). No lifecycle to learn, no project structure to follow. Import it, call functions, done.
+**Is this a framework?** -- No. It is a library (165KB on disk, 45KB gzipped). No lifecycle ceremony, no project structure. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
 
-**How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine -- use whichever fits the job.
+**How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine.
 
-**How does CSS work?** -- Bitwrench doesn't own your CSS. Use any external stylesheet, Tailwind, or CSS file you want -- bitwrench doesn't interfere. On top of that, `bw.css()` generates CSS from JS objects (with `@media`, `@keyframes`, pseudo-classes), `bw.s()` composes inline style objects, and `bw.loadStyles()` derives a complete design system from 2 seed colors. You can use all three together or none at all.
+**How does CSS work?** -- Bitwrench does not own your CSS. Use any external stylesheet, Tailwind, or CSS file you want. On top of that, `bw.css()` generates CSS from JS objects (with `@media`, `@keyframes`, pseudo-classes), `bw.s()` composes inline style objects, and `bw.loadStyles()` derives a complete design system from seed colors. Use all three or none.
 
-**What's the difference between `bw.DOM()` and `bw.html()`?** -- Same TACO input, two outputs. `bw.DOM('#app', taco)` mounts live DOM elements in a browser. `bw.html(taco)` returns an HTML string -- use it in Node.js scripts, email generators, static site builds, or anywhere you need markup without a browser. One object format, two rendering modes.
+**What's the difference between `bw.mount()` and `bw.html()`?** -- Same TACO input, two outputs. `bw.mount('#app', taco)` mounts live DOM elements in a browser. `bw.html(taco)` returns an HTML string for Node.js scripts, email generators, static site builds, or anywhere you need markup without a browser. (`bw.DOM()` is an alias for `bw.mount()`.)
 
-**What is bwserve?** -- bwserve lets any server push UI updates to a browser over SSE. The server sends TACO objects as JSON; the browser renders them. It's language-agnostic -- the server can be Python, Go, Rust, C, or a shell script. Anything that can write JSON to an HTTP response can drive a bitwrench UI. See the [bwserve docs](docs/bwserve.md).
+**What is bwserve?** -- A protocol that turns the browser into a display and input device for a program running anywhere. The server pushes TACO objects and patches over SSE; button clicks come back as actions; `client.inspect()` returns DOM state; `client.screenshot()` returns a PNG. Language-agnostic: Python, Go, Rust, C, or a shell script with `curl`. See the [bwserve docs](docs/bwserve.md).
 
-**Can I use bitwrench on embedded devices?** -- Yes -- this is a primary use case. An ESP32 or Raspberry Pi serves one HTML page with bitwrench loaded, then pushes sensor data as JSON patches over SSE. The device never generates HTML. See the [ESP32 tutorial](docs/tutorial-embedded.md).
+**Can I use bitwrench on embedded devices?** -- Yes. The device serves one HTML page plus the library from flash, no CDN required. Build the UI as TACOs in whatever language the device speaks (C, C++, MicroPython), push updates over SSE, and get button presses back the same way. C macros ship in `embedded_c/`. See the [ESP32 tutorial](docs/tutorial-embedded.md) and the [Pico W example](examples/embedded-pico-w/).
 
-**Can I use it with TypeScript?** -- Yes. Type declarations ship with the package (`dist/bitwrench.d.ts`). TACO objects are plain JSON-compatible objects that TypeScript infers naturally. See the [TypeScript Usage Guide](docs/bitwrench_typescript_usage.md) for import patterns, typed configs, and examples.
+**Can I use it with TypeScript?** -- Yes. Type declarations ship with the package (`dist/bitwrench.d.ts`). See the [TypeScript Usage Guide](docs/bitwrench_typescript_usage.md).
 
 **What about accessibility?** -- BCCL components emit semantic HTML with ARIA attributes where applicable. You can add any `aria-*` attribute via `a: { 'aria-label': '...' }`.
 
@@ -337,4 +422,4 @@ npm run cleanbuild   # full production build with SRI hashes
 
 ## License
 
-[BSD-2-Clause](./LICENSE.txt) -- (c) M. A. Chatterjee / [deftio](https://github.com/deftio)
+[BSD-2-Clause](./LICENSE.txt) -- (c) M. A. Chatterjee / [deftio](https://github.com/deftio) -- use it in your own projects or commercially.

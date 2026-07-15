@@ -268,7 +268,7 @@ def build_dashboard(client, theme='ocean', live=False, screenshot_path=None):
     if live:
         print('\n=== Phase 7: Render Live in Browser ===')
         render_result = client.call_tool('render_live', {
-            'target': '#app',
+            'ref': '#app',
             'taco': layout,
             'action': 'replace'
         })
@@ -281,7 +281,7 @@ def build_dashboard(client, theme='ocean', live=False, screenshot_path=None):
             time.sleep(5)
             # Re-render after browser connects
             render_result = client.call_tool('render_live', {
-                'target': '#app',
+                'ref': '#app',
                 'taco': layout,
                 'action': 'replace'
             })
@@ -306,28 +306,6 @@ def build_dashboard(client, theme='ocean', live=False, screenshot_path=None):
                     print(f'  Screenshot returned text: {content["text"][:100]}')
             except Exception as e:
                 print(f'  Screenshot failed: {e}')
-
-            print('\n=== Phase 9: Inspect DOM ===')
-            try:
-                # Count stat cards
-                count_result = client.call_tool('query_dom', {
-                    'code': 'document.querySelectorAll(".bw-stat-card, .bw_stat_card").length'
-                })
-                print(f'  Stat cards in DOM: {count_result["content"][0]["text"]}')
-
-                # Get page title
-                title_result = client.call_tool('query_dom', {
-                    'code': 'document.querySelector("h1") ? document.querySelector("h1").textContent : "none"'
-                })
-                print(f'  Page title: {title_result["content"][0]["text"]}')
-
-                # Count table rows
-                rows_result = client.call_tool('query_dom', {
-                    'code': 'document.querySelectorAll("tbody tr").length'
-                })
-                print(f'  Table rows: {rows_result["content"][0]["text"]}')
-            except Exception as e:
-                print(f'  DOM query failed: {e}')
 
     print('\n=== Done ===')
 

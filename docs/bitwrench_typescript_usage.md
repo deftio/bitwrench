@@ -153,11 +153,11 @@ const counter: Taco = {
     handle: {
       increment: (el: HTMLElement) => {
         el._bw_state.count++;
-        bw.update(el);
+        bw.refresh(el);
       },
       reset: (el: HTMLElement) => {
         el._bw_state.count = 0;
-        bw.update(el);
+        bw.refresh(el);
       }
     },
     slots: {
@@ -248,8 +248,8 @@ const primaryBase: string = p.primary.base;       // '#2563eb'
 const primaryHover: string = p.primary.hover;     // derived shade
 const bg: string = p.background;                  // plain string (NOT an object)
 
-// Toggle dark/light
-bw.toggleStyles();
+// Toggle between primary and alternate palettes (one-class toggle):
+const mode: string = bw.toggleThemeMode();          // 'primary' | 'alternate'
 
 // Shorthand: generate + apply in one call
 bw.loadStyles({ primary: '#dc2626' });
@@ -419,7 +419,7 @@ dynamic and don't have specific types:
 - **`el.bw.*` methods** -- populated at runtime from `o.handle`/`o.slots`.
   Cast `el.bw` to a custom interface for your components.
 - **`bw.apply()` wire protocol messages** -- typed as `Record<string, any>`.
-  The bwserve protocol is documented in `dev/bw-client-server.md`.
+  The bwserve protocol is documented in [docs/bwserve.md](bwserve.md).
 - **Less common `make*()` configs** -- typed as `ComponentConfig` (open
   object). The most-used components (Card, Button, Tabs, Accordion, Modal,
   Alert, Nav, Input, Carousel, Table) have specific config types.

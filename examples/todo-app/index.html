@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Todo App - Bitwrench Reactive UI</title>
+  <title>Todo App - Bitwrench Stateful UI</title>
   <script src="../../dist/bitwrench.umd.min.js"></script>
 </head>
 <body>
@@ -11,13 +11,13 @@
 
   <script>
     // =====================================================================
-    // Reactive Todo App — o.state + o.render pattern
+    // Stateful Todo App — pub/sub + re-render pattern
     //
     // Demonstrates:
-    //   - o.state + o.render for reactive components
-    //   - el._bw_state for state access, bw.update(el) for re-render
+    //   - bw.pub() / bw.sub() for state events (todos:changed)
+    //   - Manual re-render via bw.DOM() on topic change
     //   - bw.pub() / bw.sub() for cross-component communication
-    //   - Composing multiple reactive components on one page
+    //   - Composing multiple stateful components on one page
     //   - No direct DOM manipulation anywhere
     //
     // No build step. No framework. Just bitwrench.
@@ -267,7 +267,7 @@
     // -- Seed some demo todos ---------------------------------------------
     addTodo('Learn TACO format');
     addTodo('Build a todo app with bitwrench');
-    addTodo('Try o.state + o.render reactive pattern');
+    addTodo('Try pub/sub + re-render pattern');
     toggleTodo(1);  // mark first as done
 
     // -- Mount the page structure -----------------------------------------
@@ -276,7 +276,7 @@
       c: [
         { t: 'div', a: { class: 'todo-header' }, c: [
           { t: 'h1', c: 'Todo App' },
-          { t: 'p', c: 'Built with bitwrench \u2014 reactive UI, zero dependencies' }
+          { t: 'p', c: 'Built with bitwrench \u2014 stateful UI, zero dependencies' }
         ]},
         todoInput,
         { t: 'div', a: { id: 'todo-filters' } },

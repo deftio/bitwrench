@@ -34,8 +34,8 @@ app.page('/', function(client) {
   var streaming = false;
   var msgCounter = 0;
 
-  // Render initial UI
-  client.render('#app', {
+  // Mount initial UI
+  client.mount('#app', {
     t: 'div', a: { style: 'max-width: 700px; margin: 0 auto; height: 100vh; display: flex; flex-direction: column;' },
     c: [
       // Header
@@ -80,7 +80,7 @@ app.page('/', function(client) {
           {
             t: 'button',
             a: {
-              'data-bw-action': 'send',
+              class: 'bw_act_send',
               style: 'padding: 0.6rem 1.25rem; background: #2563eb; color: #fff; border: none; border-radius: 0.5rem; font-size: 1rem; cursor: pointer;'
             },
             c: 'Send'
@@ -99,7 +99,7 @@ app.page('/', function(client) {
 
     // Clear the placeholder on first message
     if (messages.length === 0) {
-      client.render('#messages', { t: 'span' });
+      client.mount('#messages', { t: 'span' });
     }
 
     // Add user message
@@ -109,23 +109,23 @@ app.page('/', function(client) {
     // Add assistant placeholder
     var assistantId = 'msg-' + (++msgCounter);
     client.append('#messages', messageBubble('assistant', 'Thinking...', assistantId));
-    client.call('scrollTo', { target: '#messages', behavior: 'smooth' });
+    client.call('scrollTo', { ref: '#messages', behavior: 'smooth' });
 
     // Stream from LLM
     streaming = true;
     streamLLM(messages, function(token, done, fullText) {
       if (done) {
         messages.push({ role: 'assistant', content: fullText });
-        client.patch(assistantId, fullText);
-        client.call('scrollTo', { target: '#messages', behavior: 'smooth' });
+        client.patch(assistantId, { text: fullText });
+        client.call('scrollTo', { ref: '#messages', behavior: 'smooth' });
         streaming = false;
       } else {
-        client.patch(assistantId, token);
+        client.patch(assistantId, { text: token });
         // Scroll every few tokens
-        client.call('scrollTo', { target: '#messages', behavior: 'smooth' });
+        client.call('scrollTo', { ref: '#messages', behavior: 'smooth' });
       }
     }, function(err) {
-      client.patch(assistantId, 'Error: ' + err);
+      client.patch(assistantId, { text: 'Error: ' + err });
       streaming = false;
     });
   });
@@ -133,7 +133,7 @@ app.page('/', function(client) {
   // Clear chat
   client.on('clear', function() {
     messages = [];
-    client.render('#messages', {
+    client.mount('#messages', {
       t: 'div', a: { style: 'color: #94a3b8; text-align: center; margin-top: 2rem;' },
       c: 'Type a message to start chatting.'
     });

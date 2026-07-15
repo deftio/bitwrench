@@ -120,38 +120,6 @@ describe("Array Functions", function() {
   });
 });
 
-describe("Color Functions", function() {
-  describe("#colorParse()", function() {
-    it("should parse hex colors", function() {
-      const result = bw.colorParse("#FF0000");
-      assert.deepEqual(result, [255, 0, 0, 255, "rgb"]);
-    });
-
-    it("should parse rgb colors", function() {
-      const result = bw.colorParse("rgb(255, 0, 0)");
-      assert.deepEqual(result, [255, 0, 0, 255, "rgb"]);
-    });
-  });
-
-  describe("#colorRgbToHsl()", function() {
-    it("should convert RGB to HSL", function() {
-      const result = bw.colorRgbToHsl(255, 0, 0);
-      assert.equal(result[0], 0); // Hue
-      assert.equal(result[1], 100); // Saturation
-      assert.equal(result[2], 50); // Lightness
-    });
-  });
-
-  describe("#colorHslToRgb()", function() {
-    it("should convert HSL to RGB", function() {
-      const result = bw.colorHslToRgb(0, 100, 50);
-      assert.equal(result[0], 255); // Red
-      assert.equal(result[1], 0); // Green
-      assert.equal(result[2], 0); // Blue
-    });
-  });
-});
-
 describe("Browser Functions", function() {
   describe("#setCookie() and #getCookie()", function() {
     it("should have cookie functions defined", function() {
@@ -195,10 +163,10 @@ describe("TACO and HTML Generation", function() {
     });
   });
 
-  describe("#createDOM()", function() {
+  describe("#create()", function() {
     it("should create DOM elements from TACO", function() {
       const taco = { t: "div", a: { id: "test" }, c: "Hello" };
-      const element = bw.createDOM(taco);
+      const element = bw.create(taco);
       assert.equal(element.tagName, "DIV");
       assert.equal(element.id, "test");
       assert.equal(element.textContent, "Hello");
@@ -227,26 +195,26 @@ describe("CSS Functions", function() {
 });
 
 describe("Component Functions", function() {
-  describe("#renderComponent() deprecation", function() {
-    it("should throw Error for removed renderComponent", function() {
-      assert.throws(function() { bw.renderComponent(); }, /removed/i);
+  describe("#renderComponent() removal", function() {
+    it("should be undefined for removed renderComponent", function() {
+      assert.strictEqual(bw.renderComponent, undefined);
     });
   });
 });
 
 describe("Styles API", function() {
-  describe("#toggleStyles()", function() {
-    it("toggleStyles should return mode string", function() {
-      var mode = bw.toggleStyles();
+  describe("#toggleThemeMode()", function() {
+    it("toggleThemeMode should return mode string", function() {
+      var mode = bw.toggleThemeMode();
       assert.ok(mode === 'primary' || mode === 'alternate');
     });
 
-    it("toggleStyles should flip between primary and alternate", function() {
+    it("toggleThemeMode should flip between primary and alternate", function() {
       // Ensure clean state
       document.documentElement.classList.remove('bw_theme_alt');
-      var result = bw.toggleStyles();
+      var result = bw.toggleThemeMode();
       assert.equal(result, 'alternate');
-      result = bw.toggleStyles();
+      result = bw.toggleThemeMode();
       assert.equal(result, 'primary');
     });
   });
@@ -267,10 +235,10 @@ describe("CSS Class Handling", function() {
     });
   });
 
-  describe("createDOM() class handling", function() {
+  describe("create() class handling", function() {
     it("should handle underscore classes in DOM", function() {
       const taco = { t: "div", a: { class: "bw_card" }, c: "test" };
-      const el = bw.createDOM(taco);
+      const el = bw.create(taco);
       assert.equal(el.className, "bw_card");
     });
   });

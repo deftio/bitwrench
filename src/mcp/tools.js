@@ -18,7 +18,6 @@ var BOOL = { type: 'boolean' };
 var OBJ = { type: 'object' };
 var NUM = { type: 'number' };
 var STR_OR_OBJ = { oneOf: [{ type: 'string' }, { type: 'object' }] };
-var STR_OR_ARRAY = { oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'object' } }] };
 var VARIANT_ENUM = {
   type: 'string',
   enum: ['primary', 'secondary', 'success', 'danger', 'warning', 'info'],

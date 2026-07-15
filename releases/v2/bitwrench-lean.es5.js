@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.0.32 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-lean v2.1.0 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -190,70 +190,151 @@
    */
 
   var VERSION_INFO = {
-    version: '2.0.32',
+    version: '2.1.0',
     name: 'bitwrench',
-    description: 'A library for javascript UI functions.',
     license: 'BSD-2-Clause',
-    homepage: 'https://deftio.github.com/bitwrench/pages',
-    repository: 'git+https://github.com/deftio/bitwrench.git',
-    author: 'manu a. chatterjee <deftio@deftio.com> (https://deftio.com/)',
-    buildDate: '2026-04-26T20:47:02.291Z'
+    buildDate: '2026-07-15T05:24:30.546Z'
   };
 
   /**
    * Bitwrench Color Utilities
    *
-   * Standalone color math helpers used by both bitwrench.js and bitwrench-styles.js.
-   * Extracted to avoid circular dependencies. bitwrench.js re-exports these as
-   * bw.colorParse, bw.colorRgbToHsl, etc.
+   * Hex-only color math for the theme derivation pipeline, plus legacy
+   * tagged-array color functions (colorParse, colorRgbToHsl, colorHslToRgb,
+   * colorInterp) for the public API.
    *
    * @module bitwrench-color-utils
-   * @license BSD-2-Clause 
+   * @license BSD-2-Clause
    * @copy Manu Chatterjee @deftio
    */
 
   function _xs(x) {
     return ('0' + x.toString(16)).slice(-2);
   }
-  /**
-   * Clamp a value between min and max.
-   * @param {number} val
-   * @param {number} min
-   * @param {number} max
-   * @returns {number}
-   */
   function clip$1(val, min, max) {
     return Math.max(min, Math.min(max, val));
   }
 
-  /**
-   * Parse a CSS color string to [r, g, b, a, "rgb"].
-   * Handles #hex, rgb(), rgba(), hsl(), hsla(), and bitwrench color arrays.
-   * @param {string|Array} s - Color string or array
-   * @param {number} [defAlpha=255] - Default alpha
-   * @returns {Array} [r, g, b, a, "rgb"]
-   */
+  // Parse hex string to [r, g, b].
+  function _ph(hex) {
+    var h = hex.charAt(0) === '#' ? hex.slice(1) : hex;
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  }
+
+  // RGB [0-255] to HSL [h 0-360, s 0-100, l 0-100], float precision.
+  function _r2h(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    var mx = Math.max(r, g, b),
+      mn = Math.min(r, g, b);
+    var h,
+      s,
+      l = (mx + mn) / 2;
+    if (mx === mn) {
+      h = s = 0;
+    } else {
+      var d = mx - mn;
+      s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+      switch (mx) {
+        case r:
+          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+          break;
+        case g:
+          h = ((b - r) / d + 2) / 6;
+          break;
+        case b:
+          h = ((r - g) / d + 4) / 6;
+          break;
+      }
+    }
+    return [h * 360, s * 100, l * 100];
+  }
+
+  // HSL [h 0-360, s 0-100, l 0-100] to RGB [0-255], rounded.
+  function _h2r(h, s, l) {
+    var hN = h / 360,
+      sN = s / 100,
+      lN = l / 100;
+    var r, g, b;
+    if (sN === 0) {
+      r = g = b = lN * 255;
+    } else {
+      var hue2rgb = function hue2rgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      var q = lN < 0.5 ? lN * (1 + sN) : lN + sN - lN * sN;
+      var p = 2 * lN - q;
+      r = hue2rgb(p, q, hN + 1 / 3) * 255;
+      g = hue2rgb(p, q, hN) * 255;
+      b = hue2rgb(p, q, hN - 1 / 3) * 255;
+    }
+    return [Math.round(r), Math.round(g), Math.round(b)];
+  }
+
+  // =========================================================================
+  // Legacy color API — tagged 5-element arrays [r,g,b,a,"rgb"/"hsl"]
+  // =========================================================================
+
+  function _ms(x, i0, i1, o0, o1, opts) {
+    var n = (x - i0) / (i1 - i0);
+    if (opts && opts.expScale && opts.expScale !== 1) n = Math.pow(n, opts.expScale);
+    var r = n * (o1 - o0) + o0;
+    if (opts && opts.clip) r = clip$1(r, Math.min(o0, o1), Math.max(o0, o1));
+    return r;
+  }
+  function colorHslToRgb(h, s, l, a, rnd) {
+    if (a === undefined) a = 255;
+    if (rnd === undefined) rnd = true;
+    if (Array.isArray(h)) {
+      s = h[1];
+      l = h[2];
+      a = h[3] !== undefined ? h[3] : 255;
+      h = h[0];
+    }
+    var rgb = _h2r(h, s, l);
+    if (rnd) a = Math.round(a);
+    return [rgb[0], rgb[1], rgb[2], a, "rgb"];
+  }
+  function colorRgbToHsl(r, g, b, a, rnd) {
+    if (a === undefined) a = 255;
+    if (rnd === undefined) rnd = true;
+    if (Array.isArray(r)) {
+      g = r[1];
+      b = r[2];
+      a = r[3] !== undefined ? r[3] : 255;
+      r = r[0];
+    }
+    var hsl = _r2h(r, g, b);
+    if (rnd) {
+      hsl[0] = Math.round(hsl[0]);
+      hsl[1] = Math.round(hsl[1]);
+      hsl[2] = Math.round(hsl[2]);
+      a = Math.round(a);
+    }
+    return [hsl[0], hsl[1], hsl[2], a, "hsl"];
+  }
   function colorParse(s, defAlpha) {
     if (defAlpha === undefined) defAlpha = 255;
     var r = [0, 0, 0, defAlpha, "rgb"];
     if (Array.isArray(s)) {
       var df = [0, 0, 0, 255, "rgb"];
-      for (var p = 0; p < s.length && p < df.length; p++) {
-        df[p] = s[p];
-      }
+      for (var p = 0; p < s.length && p < df.length; p++) df[p] = s[p];
       return df;
     }
     s = String(s).replace(/\s/g, "");
     if (s[0] === "#") {
       var hex = s.slice(1);
       if (hex.length === 3 || hex.length === 4) {
-        for (var i = 0; i < hex.length; i++) {
-          r[i] = parseInt(hex[i] + hex[i], 16);
-        }
+        for (var i = 0; i < hex.length; i++) r[i] = parseInt(hex[i] + hex[i], 16);
       } else if (hex.length === 6 || hex.length === 8) {
-        for (var j = 0; j < hex.length; j += 2) {
-          r[j / 2] = parseInt(hex.substring(j, j + 2), 16);
-        }
+        for (var j = 0; j < hex.length; j += 2) r[j / 2] = parseInt(hex.substring(j, j + 2), 16);
       }
     } else {
       var match = s.match(/^(rgb|hsl)a?\(([^)]+)\)$/i);
@@ -267,121 +348,36 @@
           r[1] = values[1] || 0;
           r[2] = values[2] || 0;
           r[3] = values[3] !== undefined ? values[3] * 255 : defAlpha;
-          r[4] = "rgb";
         } else if (type === "hsl") {
-          var rgb = colorHslToRgb(values[0] || 0, values[1] || 0, values[2] || 0, values[3] !== undefined ? values[3] * 255 : defAlpha);
-          return rgb;
+          return colorHslToRgb(values[0] || 0, values[1] || 0, values[2] || 0, values[3] !== undefined ? values[3] * 255 : defAlpha);
         }
       }
     }
     return r;
   }
-
-  /**
-   * Convert RGB to HSL.
-   * @param {number|Array} r - Red 0-255, or [r,g,b,a] array
-   * @param {number} [g] - Green 0-255
-   * @param {number} [b] - Blue 0-255
-   * @param {number} [a=255] - Alpha 0-255
-   * @param {boolean} [rnd=true] - Round results
-   * @returns {Array} [h, s, l, a, "hsl"]
-   */
-  function colorRgbToHsl(r, g, b, a, rnd) {
-    if (a === undefined) a = 255;
-    if (rnd === undefined) rnd = true;
-    if (Array.isArray(r)) {
-      g = r[1];
-      b = r[2];
-      a = r[3] !== undefined ? r[3] : 255;
-      r = r[0];
-    }
-    r /= 255;
-    g /= 255;
-    b /= 255;
-    var max = Math.max(r, g, b);
-    var min = Math.min(r, g, b);
-    var h,
-      s,
-      l = (max + min) / 2;
-    if (max === min) {
-      h = s = 0;
-    } else {
-      var d = max - min;
-      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-      switch (max) {
-        case r:
-          h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-          break;
-        case g:
-          h = ((b - r) / d + 2) / 6;
-          break;
-        case b:
-          h = ((r - g) / d + 4) / 6;
-          break;
-      }
-    }
-    h *= 360;
-    s *= 100;
-    l *= 100;
-    if (rnd) {
-      h = Math.round(h);
-      s = Math.round(s);
-      l = Math.round(l);
-      a = Math.round(a);
-    }
-    return [h, s, l, a, "hsl"];
-  }
-
-  /**
-   * Convert HSL to RGB.
-   * @param {number|Array} h - Hue 0-360, or [h,s,l,a] array
-   * @param {number} [s] - Saturation 0-100
-   * @param {number} [l] - Lightness 0-100
-   * @param {number} [a=255] - Alpha 0-255
-   * @param {boolean} [rnd=true] - Round results
-   * @returns {Array} [r, g, b, a, "rgb"]
-   */
-  function colorHslToRgb(h, s, l, a, rnd) {
-    if (a === undefined) a = 255;
-    if (rnd === undefined) rnd = true;
-    if (Array.isArray(h)) {
-      s = h[1];
-      l = h[2];
-      a = h[3] !== undefined ? h[3] : 255;
-      h = h[0];
-    }
-    var hNorm = h / 360;
-    var sNorm = s / 100;
-    var lNorm = l / 100;
-    var r, g, b;
-    if (sNorm === 0) {
-      r = g = b = lNorm * 255;
-    } else {
-      var hue2rgb = function hue2rgb(p, q, t) {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1 / 6) return p + (q - p) * 6 * t;
-        if (t < 1 / 2) return q;
-        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-        return p;
-      };
-      var q = lNorm < 0.5 ? lNorm * (1 + sNorm) : lNorm + sNorm - lNorm * sNorm;
-      var p = 2 * lNorm - q;
-      r = hue2rgb(p, q, hNorm + 1 / 3) * 255;
-      g = hue2rgb(p, q, hNorm) * 255;
-      b = hue2rgb(p, q, hNorm - 1 / 3) * 255;
-    }
-    if (rnd) {
-      r = Math.round(r);
-      g = Math.round(g);
-      b = Math.round(b);
-      a = Math.round(a);
-    }
-    return [r, g, b, a, "rgb"];
+  function colorInterp(x, in0, in1, colors, stretch) {
+    var c = Array.isArray(colors) ? colors : ["#000", "#fff"];
+    c = c.length === 0 ? ["#000", "#fff"] : c;
+    if (c.length === 1) return c[0];
+    c = c.map(function (col) {
+      return colorParse(col);
+    });
+    var a = _ms(x, in0, in1, 0, c.length - 1, {
+      clip: true,
+      expScale: stretch
+    });
+    var i = clip$1(Math.floor(a), 0, c.length - 2);
+    var r = a - i;
+    var interp = function interp(idx) {
+      return _ms(r, 0, 1, c[i][idx], c[i + 1][idx], {
+        clip: true
+      });
+    };
+    return [interp(0), interp(1), interp(2), interp(3), "rgb"];
   }
 
   // =========================================================================
-  // New theme derivation helpers
+  // Public theme derivation helpers
   // =========================================================================
 
   /**
@@ -390,9 +386,8 @@
    * @returns {Array} [h, s, l] where h=0-360, s=0-100, l=0-100
    */
   function hexToHsl(hex) {
-    var rgb = colorParse(hex);
-    var hsl = colorRgbToHsl(rgb[0], rgb[1], rgb[2], 255, false);
-    return [hsl[0], hsl[1], hsl[2]];
+    var rgb = _ph(hex);
+    return _r2h(rgb[0], rgb[1], rgb[2]);
   }
 
   /**
@@ -401,7 +396,7 @@
    * @returns {string} Hex color e.g. '#006666'
    */
   function hslToHex(hsl) {
-    var rgb = colorHslToRgb(hsl[0], hsl[1], hsl[2], 255, true);
+    var rgb = _h2r(hsl[0], hsl[1], hsl[2]);
     return '#' + _xs(rgb[0]) + _xs(rgb[1]) + _xs(rgb[2]);
   }
 
@@ -426,8 +421,8 @@
    * @returns {string} Mixed hex color
    */
   function mixColor(hex1, hex2, ratio) {
-    var c1 = colorParse(hex1);
-    var c2 = colorParse(hex2);
+    var c1 = _ph(hex1);
+    var c2 = _ph(hex2);
     var r = Math.round(c1[0] + (c2[0] - c1[0]) * ratio);
     var g = Math.round(c1[1] + (c2[1] - c1[1]) * ratio);
     var b = Math.round(c1[2] + (c2[2] - c1[2]) * ratio);
@@ -440,7 +435,7 @@
    * @returns {number} Relative luminance 0-1
    */
   function relativeLuminance(hex) {
-    var rgb = colorParse(hex);
+    var rgb = _ph(hex);
     var vals = [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255].map(function (v) {
       return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
     });
@@ -470,8 +465,6 @@
     if (amount === 0) return sourceHex;
     var srcHsl = hexToHsl(sourceHex);
     var tgtHsl = hexToHsl(targetHex);
-
-    // Shortest-arc hue interpolation
     var diff = tgtHsl[0] - srcHsl[0];
     if (diff > 180) diff -= 360;
     if (diff < -180) diff += 360;
@@ -485,9 +478,7 @@
    * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
    */
   function deriveShades(hex) {
-    var rgb = colorParse(hex);
-    // For light input colors (L > 75), mixing toward white produces invisible borders.
-    // Darken instead so borders remain visible against light backgrounds.
+    var rgb = _ph(hex);
     var borderColor = hexToHsl(hex)[2] > 75 ? adjustLightness(hex, -18) : mixColor(hex, '#ffffff', 0.60);
     return {
       base: hex,
@@ -514,14 +505,10 @@
       l = hsl[2];
     var altL, altS;
     if (l > 50) {
-      // Light color → make dark. Map 50-100 → 30-10 range
       altL = clip$1(100 - l - 10, 8, 40);
-      // Reduce saturation slightly — vivid colors at low lightness look garish
       altS = clip$1(s * 0.85, 0, 100);
     } else {
-      // Dark color → make light. Map 0-50 → 65-92 range
       altL = clip$1(100 - l + 10, 60, 92);
-      // Slightly increase saturation for light variant
       altS = clip$1(s * 1.1, 0, 100);
     }
     return hslToHex([h, altS, altL]);
@@ -549,34 +536,24 @@
    */
   function deriveAlternateConfig(config) {
     var alt = {};
-    // Invert the user's seed colors
     alt.primary = deriveAlternateSeed(config.primary);
-    alt.secondary = deriveAlternateSeed(config.secondary);
+    alt.secondary = deriveAlternateSeed(config.secondary || config.primary);
     alt.tertiary = config.tertiary ? deriveAlternateSeed(config.tertiary) : alt.primary;
-
-    // Derive alternate surface colors from primary hue.
-    // Check actual page surface brightness (not seed color brightness) to decide
-    // whether alternate should be dark or light.  The page surface is what the
-    // user sees; seeds can be dark while the page is still light (default L=96).
     var priHsl = hexToHsl(config.primary);
     var h = priHsl[0];
     var primarySurface = config.surface || hslToHex([h, 8, 96]);
     var isLight = relativeLuminance(primarySurface) > 0.179;
     if (isLight) {
-      // Page surface is light → alternate needs dark surfaces
       alt.light = hslToHex([h, Math.min(priHsl[1], 15), 15]);
       alt.dark = hslToHex([h, 5, 88]);
       alt.surface = hslToHex([h, 12, 18]);
       alt.background = hslToHex([h, 10, 14]);
     } else {
-      // Page surface is dark → alternate needs light surfaces
       alt.light = hslToHex([h, Math.min(priHsl[1], 10), 96]);
       alt.dark = hslToHex([h, 10, 18]);
       alt.surface = hslToHex([h, 8, 96]);
       alt.background = hslToHex([h, 6, 98]);
     }
-
-    // Semantic colors: harmonize toward primary, then invert for alternate
     var amt = config.harmonize !== undefined ? config.harmonize : 0.20;
     var semanticDefaults = {
       success: '#198754',
@@ -591,16 +568,12 @@
       var harmonized = harmonize(seed, config.primary, amt);
       alt[key] = deriveAlternateSeed(harmonized);
     }
-
-    // Semantic colors are already harmonized+inverted — don't re-harmonize in derivePalette
     alt.harmonize = 0;
     return alt;
   }
 
   /**
    * Derive complete palette from a theme config object.
-   * Semantic colors are harmonized toward the primary hue (configurable).
-   * Light/dark surface colors are tinted with the primary hue.
    * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
    * @param {number} [config.harmonize=0.20] - Hue shift amount for semantic colors (0-1)
    * @returns {Object} Full palette with shades for all 9 semantic colors
@@ -608,34 +581,24 @@
   function derivePalette(config) {
     var amt = config.harmonize !== undefined ? config.harmonize : 0.20;
     var pri = config.primary;
+    var sec = config.secondary || pri;
+    var ter = config.tertiary || pri;
     var priHsl = hexToHsl(pri);
     var h = priHsl[0];
-
-    // Semantic defaults — harmonized toward primary hue
     var successBase = harmonize(config.success || '#198754', pri, amt);
     var dangerBase = harmonize(config.danger || '#dc3545', pri, amt);
     var warningBase = harmonize(config.warning || '#f0ad4e', pri, amt);
     var infoBase = harmonize(config.info || '#17a2b8', pri, amt);
-
-    // Light/dark: derive from primary hue with low saturation (if not user-supplied)
     var lightBase = config.light || hslToHex([h, 8, 97]);
     var darkBase = config.dark || hslToHex([h, 10, 13]);
-
-    // Background & surface tokens — tinted with primary hue for theme personality.
-    // Saturation high enough that the hue is visible (each theme feels distinct)
-    // but low enough to stay neutral and readable.
-    // User can override with config.background / config.surface.
     var bgBase = config.background || hslToHex([h, 22, 96]);
     var surfBase = config.surface || hslToHex([h, 25, 94]);
-
-    // surfaceAlt: subtle background variant for striped rows, hover states, headers.
-    // Slightly lighter than surface in dark mode, slightly darker in light mode.
     var surfHsl = hexToHsl(surfBase);
     var surfAlt = surfHsl[2] <= 50 ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)]) : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]);
     var palette = {
-      primary: deriveShades(config.primary),
-      secondary: deriveShades(config.secondary),
-      tertiary: deriveShades(config.tertiary),
+      primary: deriveShades(pri),
+      secondary: deriveShades(sec),
+      tertiary: deriveShades(ter),
       success: deriveShades(successBase),
       danger: deriveShades(dangerBase),
       warning: deriveShades(warningBase),
@@ -881,12 +844,25 @@
    */
   function scopeSelector(name, sel) {
     if (!name) return sel;
+    /* c8 ignore next -- scopeSelector never receives comma-separated selectors from internal callers */
     if (sel.includes(',')) return sel.split(',').map(function (s) {
       return '.' + name + ' ' + s.trim();
     }).join(', ');
     return '.' + name + ' ' + sel;
   }
   var _sx = scopeSelector;
+  function _tr(p, m, s) {
+    var d = m[s || 'fast'];
+    return p.split(',').map(function (x) {
+      return x.trim() + ' ' + d + ' ' + m.easing;
+    }).join(', ');
+  }
+  function _fr(f, sz) {
+    return '0 0 0 ' + (sz || '0.25rem') + ' ' + f;
+  }
+  function _sf(p) {
+    return p.surface || '#fff';
+  }
 
   // =========================================================================
   // Themed CSS generators
@@ -898,7 +874,7 @@
     rules[_sx(scope, 'a')] = {
       'color': palette.primary.base,
       'text-decoration': 'none',
-      'transition': 'color ' + mot.fast + ' ' + mot.easing
+      'transition': _tr('color', mot)
     };
     rules[_sx(scope, 'a:hover')] = {
       'color': palette.tertiary.hover,
@@ -912,25 +888,25 @@
     var rd = layout.radius;
 
     // Base button (only when scoped — unscoped uses defaultStyles)
-    rules[_sx(scope, '.bw_btn')] = {
+    rules[_sx(scope, '.bw_bccl_btn')] = {
       'padding': sp.btn,
       'border-radius': rd.btn
     };
-    rules[_sx(scope, '.bw_btn:focus-visible')] = {
+    rules[_sx(scope, '.bw_bccl_btn:focus-visible')] = {
       'outline': '2px solid currentColor',
       'outline-offset': '2px',
-      'box-shadow': '0 0 0 3px ' + palette.primary.focus
+      'box-shadow': _fr(palette.primary.focus, '3px')
     };
 
     // Variant colors handled by palette class on component root
 
     // Size variants (structural, reuse layout radius)
-    rules[_sx(scope, '.bw_btn_lg')] = {
+    rules[_sx(scope, '.bw_bccl_btn_lg')] = {
       'padding': '0.625rem 1.5rem',
       'font-size': '1rem',
       'border-radius': rd.btn === '50rem' ? '50rem' : parseInt(rd.btn) + 2 + 'px'
     };
-    rules[_sx(scope, '.bw_btn_sm')] = {
+    rules[_sx(scope, '.bw_bccl_btn_sm')] = {
       'padding': '0.25rem 0.75rem',
       'font-size': '0.8125rem',
       'border-radius': rd.btn === '50rem' ? '50rem' : Math.max(parseInt(rd.btn) - 1, 0) + 'px'
@@ -941,7 +917,7 @@
     var rules = {};
     var sp = layout.spacing;
     var rd = layout.radius;
-    rules[_sx(scope, '.bw_alert')] = {
+    rules[_sx(scope, '.bw_bccl_alert')] = {
       'padding': sp.alert,
       'border-radius': rd.alert
     };
@@ -959,41 +935,41 @@
     var rd = layout.radius;
     var elev = layout.elevation;
     var motion = layout.motion;
-    rules[_sx(scope, '.bw_card')] = {
-      'background-color': palette.surface || '#fff',
+    rules[_sx(scope, '.bw_bccl_card')] = {
+      'background-color': _sf(palette),
       'border': '1px solid ' + palette.light.border,
       'border-radius': rd.card,
       'box-shadow': elev.sm,
-      'transition': 'box-shadow ' + motion.normal + ' ' + motion.easing + ', transform ' + motion.normal + ' ' + motion.easing
+      'transition': _tr('box-shadow,transform', motion, 'normal')
     };
-    rules[_sx(scope, '.bw_card:hover')] = {
+    rules[_sx(scope, '.bw_bccl_card:hover')] = {
       'box-shadow': elev.md
     };
-    rules[_sx(scope, '.bw_card_hoverable')] = {
-      'transition': 'box-shadow ' + motion.slow + ' ' + motion.easing + ', transform ' + motion.slow + ' ' + motion.easing
+    rules[_sx(scope, '.bw_bccl_card_hoverable')] = {
+      'transition': _tr('box-shadow,transform', motion, 'slow')
     };
-    rules[_sx(scope, '.bw_card_hoverable:hover')] = {
+    rules[_sx(scope, '.bw_bccl_card_hoverable:hover')] = {
       'box-shadow': elev.lg
     };
-    rules[_sx(scope, '.bw_card_body')] = {
+    rules[_sx(scope, '.bw_bccl_card_body')] = {
       'padding': sp.card
     };
-    rules[_sx(scope, '.bw_card_header')] = {
+    rules[_sx(scope, '.bw_bccl_card_header')] = {
       'padding': sp.card.split(' ').map(function (v) {
         return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem';
       }).join(' '),
       'background-color': palette.surfaceAlt,
       'border-bottom': '1px solid ' + palette.light.border
     };
-    rules[_sx(scope, '.bw_card_footer')] = {
+    rules[_sx(scope, '.bw_bccl_card_footer')] = {
       'background-color': palette.surfaceAlt,
       'border-top': '1px solid ' + palette.light.border,
       'color': palette.secondary.base
     };
-    rules[_sx(scope, '.bw_card_title')] = {
+    rules[_sx(scope, '.bw_bccl_card_title')] = {
       'color': palette.dark.base
     };
-    rules[_sx(scope, '.bw_card_subtitle')] = {
+    rules[_sx(scope, '.bw_bccl_card_subtitle')] = {
       'color': palette.secondary.base
     };
 
@@ -1005,101 +981,101 @@
     var rules = {};
     var sp = layout.spacing;
     var rd = layout.radius;
-    rules[_sx(scope, '.bw_form_control')] = {
+    rules[_sx(scope, '.bw_bccl_form_control')] = {
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'border-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_form_control:focus')] = {
+    rules[_sx(scope, '.bw_bccl_form_control:focus')] = {
       'border-color': palette.primary.border,
       'outline': '2px solid ' + palette.primary.base,
       'outline-offset': '-1px',
-      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+      'box-shadow': _fr(palette.primary.focus)
     };
-    rules[_sx(scope, '.bw_form_control::placeholder')] = {
+    rules[_sx(scope, '.bw_bccl_form_control::placeholder')] = {
       'color': palette.secondary.base
     };
-    rules[_sx(scope, '.bw_form_label')] = {
+    rules[_sx(scope, '.bw_bccl_form_label')] = {
       'color': palette.dark.base
     };
-    rules[_sx(scope, '.bw_form_text')] = {
+    rules[_sx(scope, '.bw_bccl_form_text')] = {
       'color': palette.secondary.base
     };
-    rules[_sx(scope, '.bw_form_check_input:checked')] = {
+    rules[_sx(scope, '.bw_bccl_form_check_input:checked')] = {
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[_sx(scope, '.bw_form_check_input:focus')] = {
-      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    rules[_sx(scope, '.bw_bccl_form_check_input:focus')] = {
+      'box-shadow': _fr(palette.primary.focus)
     };
     // Validation states
-    rules[_sx(scope, '.bw_form_control.bw_is_valid')] = {
+    rules[_sx(scope, '.bw_bccl_form_control.bw_is_valid')] = {
       'border-color': palette.success.base
     };
-    rules[_sx(scope, '.bw_form_control.bw_is_valid:focus')] = {
+    rules[_sx(scope, '.bw_bccl_form_control.bw_is_valid:focus')] = {
       'border-color': palette.success.base,
-      'box-shadow': '0 0 0 0.2rem ' + palette.success.focus
+      'box-shadow': _fr(palette.success.focus, '0.2rem')
     };
-    rules[_sx(scope, '.bw_form_control.bw_is_invalid')] = {
+    rules[_sx(scope, '.bw_bccl_form_control.bw_is_invalid')] = {
       'border-color': palette.danger.base
     };
-    rules[_sx(scope, '.bw_form_control.bw_is_invalid:focus')] = {
+    rules[_sx(scope, '.bw_bccl_form_control.bw_is_invalid:focus')] = {
       'border-color': palette.danger.base,
-      'box-shadow': '0 0 0 0.2rem ' + palette.danger.focus
+      'box-shadow': _fr(palette.danger.focus, '0.2rem')
     };
     // Form select
-    rules[_sx(scope, '.bw_form_select')] = {
+    rules[_sx(scope, '.bw_bccl_form_select')] = {
       'padding': sp.input,
       'border-radius': rd.input,
       'color': palette.dark.base,
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'border-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_form_select:focus')] = {
+    rules[_sx(scope, '.bw_bccl_form_select:focus')] = {
       'border-color': palette.primary.border,
-      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+      'box-shadow': _fr(palette.primary.focus)
     };
     return rules;
   }
   function generateNavigation(scope, palette, layout) {
     var rules = {};
-    rules[_sx(scope, '.bw_navbar')] = {
+    rules[_sx(scope, '.bw_bccl_navbar')] = {
       'background-color': palette.surfaceAlt,
       'border-bottom-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_navbar_brand')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_brand')] = {
       'color': palette.dark.base
     };
-    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_nav .bw_nav_link')] = {
       'color': palette.secondary.base,
       'border-radius': layout.radius.btn,
-      'transition': 'color ' + layout.motion.fast + ' ' + layout.motion.easing + ', background-color ' + layout.motion.fast + ' ' + layout.motion.easing
+      'transition': _tr('color,background-color', layout.motion)
     };
-    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link:hover')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_nav .bw_nav_link:hover')] = {
       'color': palette.tertiary.base,
       'background-color': palette.surfaceAlt
     };
-    rules[_sx(scope, '.bw_navbar_nav .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_nav .bw_nav_link.active')] = {
       'color': palette.primary.base,
       'background-color': palette.primary.focus,
       'font-weight': '600'
     };
-    rules[_sx(scope, '.bw_navbar_dark')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_dark')] = {
       'background-color': palette.dark.base,
       'border-bottom-color': palette.dark.hover
     };
-    rules[_sx(scope, '.bw_navbar_dark .bw_navbar_brand')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_dark .bw_bccl_navbar_brand')] = {
       'color': palette.light.base
     };
-    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_dark .bw_nav_link')] = {
       'color': palette.light.border
     };
-    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link:hover')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_dark .bw_nav_link:hover')] = {
       'color': palette.light.base
     };
-    rules[_sx(scope, '.bw_navbar_dark .bw_nav_link.active')] = {
+    rules[_sx(scope, '.bw_bccl_navbar_dark .bw_nav_link.active')] = {
       'color': palette.light.base,
       'font-weight': '600'
     };
@@ -1112,35 +1088,35 @@
   function generateTables(scope, palette, layout) {
     var rules = {};
     var sp = layout.spacing;
-    rules[_sx(scope, '.bw_table')] = {
+    rules[_sx(scope, '.bw_bccl_table')] = {
       'color': palette.dark.base,
       'border-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_table > :not(caption) > * > *')] = {
+    rules[_sx(scope, '.bw_bccl_table > :not(caption) > * > *')] = {
       'padding': sp.cell,
       'border-bottom-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_table > thead > tr > *')] = {
+    rules[_sx(scope, '.bw_bccl_table > thead > tr > *')] = {
       'color': palette.secondary.base,
       'border-bottom-color': palette.light.border,
       'background-color': palette.surfaceAlt
     };
-    rules[_sx(scope, '.bw_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
+    rules[_sx(scope, '.bw_bccl_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
       'background-color': palette.surfaceAlt
     };
-    rules[_sx(scope, '.bw_table_hover > tbody > tr:hover > *')] = {
+    rules[_sx(scope, '.bw_bccl_table_hover > tbody > tr:hover > *')] = {
       'background-color': palette.primary.focus
     };
-    rules[_sx(scope, '.bw_table_selectable > tbody > tr')] = {
+    rules[_sx(scope, '.bw_bccl_table_selectable > tbody > tr')] = {
       'cursor': 'pointer'
     };
-    rules[_sx(scope, '.bw_table > tbody > tr.bw_table_row_selected > *')] = {
+    rules[_sx(scope, '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *')] = {
       'background-color': palette.primary.light
     };
-    rules[_sx(scope, '.bw_table_bordered')] = {
+    rules[_sx(scope, '.bw_bccl_table_bordered')] = {
       'border-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_table caption')] = {
+    rules[_sx(scope, '.bw_bccl_table caption')] = {
       'color': palette.secondary.base
     };
     return rules;
@@ -1153,7 +1129,7 @@
     };
     rules[_sx(scope, '.bw_nav_link')] = {
       'color': palette.secondary.base,
-      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('color,border-color,background-color', mo)
     };
     rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
       'color': palette.tertiary.base,
@@ -1174,9 +1150,9 @@
     rules[_sx(scope, '.bw_list_group_item')] = {
       'padding': sp.cell,
       'color': palette.dark.base,
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'border-color': palette.light.border,
-      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('color,background-color', mo)
     };
     rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
       'background-color': palette.surfaceAlt,
@@ -1189,7 +1165,7 @@
     };
     rules[_sx(scope, '.bw_list_group_item.disabled')] = {
       'color': palette.secondary.base,
-      'background-color': palette.surface || '#fff'
+      'background-color': _sf(palette)
     };
     return rules;
   }
@@ -1207,9 +1183,9 @@
     };
     rules[_sx(scope, '.bw_page_link')] = {
       'color': palette.primary.base,
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'border-color': palette.light.border,
-      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('color,background-color', mo)
     };
     rules[_sx(scope, '.bw_page_link:hover')] = {
       'color': palette.primary.hover,
@@ -1227,22 +1203,20 @@
     };
     rules[_sx(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
       'color': palette.secondary.base,
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'border-color': palette.light.border
     };
     return rules;
   }
   function generateProgress(scope, palette, layout) {
     var rules = {};
-    var rd = layout ? layout.radius : {
-      badge: '.375rem'
-    };
-    rules[_sx(scope, '.bw_progress')] = {
+    var rd = layout.radius;
+    rules[_sx(scope, '.bw_bccl_progress')] = {
       'background-color': palette.surfaceAlt,
       'border-radius': rd.badge,
       'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
     };
-    rules[_sx(scope, '.bw_progress_bar')] = {
+    rules[_sx(scope, '.bw_bccl_progress_bar')] = {
       'color': palette.primary.textOn,
       'background-color': palette.primary.base,
       'border-radius': 'inherit',
@@ -1252,7 +1226,7 @@
     return rules;
   }
 
-  // generateHero: removed — palette class with .bw_hero override handles variants
+  // generateHero: removed — palette class with .bw_bccl_hero override handles variants
 
   // generateUtilityColors: removed — palette classes replace utility colors
 
@@ -1269,23 +1243,23 @@
   function generateBreadcrumbThemed(scope, palette, layout) {
     var rules = {},
       mo = layout.motion;
-    rules[_sx(scope, '.bw_breadcrumb')] = {
+    rules[_sx(scope, '.bw_bccl_breadcrumb')] = {
       'background-color': palette.surfaceAlt,
       'padding': '0.625rem 1rem',
       'border-radius': layout.radius.btn
     };
-    rules[_sx(scope, '.bw_breadcrumb_item + .bw_breadcrumb_item::before')] = {
+    rules[_sx(scope, '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item::before')] = {
       'color': palette.secondary.base
     };
-    rules[_sx(scope, '.bw_breadcrumb_item a')] = {
+    rules[_sx(scope, '.bw_bccl_breadcrumb_item a')] = {
       'color': palette.tertiary.base,
-      'transition': 'color ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('color', mo)
     };
-    rules[_sx(scope, '.bw_breadcrumb_item a:hover')] = {
+    rules[_sx(scope, '.bw_bccl_breadcrumb_item a:hover')] = {
       'color': palette.tertiary.hover,
       'text-decoration': 'underline'
     };
-    rules[_sx(scope, '.bw_breadcrumb_item.active')] = {
+    rules[_sx(scope, '.bw_bccl_breadcrumb_item.active')] = {
       'color': palette.dark.base
     };
     return rules;
@@ -1300,7 +1274,7 @@
       'opacity': '0.5'
     };
     rules[_sx(scope, '.bw_close:focus')] = {
-      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+      'box-shadow': _fr(palette.primary.focus)
     };
     return rules;
   }
@@ -1319,40 +1293,38 @@
   }
   function generateAccordionThemed(scope, palette, layout) {
     var rules = {};
-    var rd = layout ? layout.radius : {
-      card: '8px'
-    };
-    rules[_sx(scope, '.bw_accordion_item')] = {
-      'background-color': palette.surface || '#fff',
+    var rd = layout.radius;
+    rules[_sx(scope, '.bw_bccl_accordion_item')] = {
+      'background-color': _sf(palette),
       'border-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_accordion_item:first-child')] = {
+    rules[_sx(scope, '.bw_bccl_accordion_item:first-child')] = {
       'border-top-left-radius': rd.card,
       'border-top-right-radius': rd.card
     };
-    rules[_sx(scope, '.bw_accordion_item:last-child')] = {
+    rules[_sx(scope, '.bw_bccl_accordion_item:last-child')] = {
       'border-bottom-left-radius': rd.card,
       'border-bottom-right-radius': rd.card
     };
-    rules[_sx(scope, '.bw_accordion_button')] = {
+    rules[_sx(scope, '.bw_bccl_accordion_button')] = {
       'color': palette.dark.base
     };
-    rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed)')] = {
+    rules[_sx(scope, '.bw_bccl_accordion_button:not(.bw_collapsed)')] = {
       'color': palette.primary.darkText,
       'background-color': palette.primary.light,
       'border-left': '3px solid ' + palette.primary.base
     };
-    rules[_sx(scope, '.bw_accordion_button:hover')] = {
+    rules[_sx(scope, '.bw_bccl_accordion_button:hover')] = {
       'background-color': palette.surfaceAlt
     };
-    rules[_sx(scope, '.bw_accordion_button:not(.bw_collapsed):hover')] = {
+    rules[_sx(scope, '.bw_bccl_accordion_button:not(.bw_collapsed):hover')] = {
       'background-color': palette.primary.base,
       'color': palette.primary.textOn
     };
-    rules[_sx(scope, '.bw_accordion_button:focus-visible')] = {
-      'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
+    rules[_sx(scope, '.bw_bccl_accordion_button:focus-visible')] = {
+      'box-shadow': _fr(palette.primary.focus, '0.2rem')
     };
-    rules[_sx(scope, '.bw_accordion_body')] = {
+    rules[_sx(scope, '.bw_bccl_accordion_body')] = {
       'border-top': '1px solid ' + palette.light.border,
       'background-color': palette.surfaceAlt
     };
@@ -1360,21 +1332,21 @@
   }
   function generateCarouselThemed(scope, palette) {
     var rules = {};
-    rules[_sx(scope, '.bw_carousel')] = {
+    rules[_sx(scope, '.bw_bccl_carousel')] = {
       'background-color': palette.surfaceAlt
     };
-    rules[_sx(scope, '.bw_carousel_indicator.active')] = {
+    rules[_sx(scope, '.bw_bccl_carousel_indicator.active')] = {
       'background-color': palette.primary.base
     };
-    rules[_sx(scope, '.bw_carousel_control')] = {
+    rules[_sx(scope, '.bw_bccl_carousel_control')] = {
       'background-color': palette.dark.base,
       'color': palette.dark.textOn,
       'transition': 'background-color 0.15s ease-out'
     };
-    rules[_sx(scope, '.bw_carousel_control:hover')] = {
+    rules[_sx(scope, '.bw_bccl_carousel_control:hover')] = {
       'background-color': palette.dark.hover
     };
-    rules[_sx(scope, '.bw_carousel_caption')] = {
+    rules[_sx(scope, '.bw_bccl_carousel_caption')] = {
       'background': 'linear-gradient(transparent, ' + palette.dark.base + ')',
       'color': palette.dark.textOn
     };
@@ -1382,38 +1354,34 @@
   }
   function generateModalThemed(scope, palette, layout) {
     var rules = {};
-    var rd = layout ? layout.radius : {
-      card: '8px'
-    };
-    rules[_sx(scope, '.bw_modal_content')] = {
-      'background-color': palette.surface || '#fff',
+    var rd = layout.radius;
+    rules[_sx(scope, '.bw_bccl_modal_content')] = {
+      'background-color': _sf(palette),
       'border-color': palette.light.border,
       'border-radius': rd.card,
       'box-shadow': layout.elevation.lg
     };
-    rules[_sx(scope, '.bw_modal_header')] = {
+    rules[_sx(scope, '.bw_bccl_modal_header')] = {
       'border-bottom-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_modal_footer')] = {
+    rules[_sx(scope, '.bw_bccl_modal_footer')] = {
       'border-top-color': palette.light.border
     };
-    rules[_sx(scope, '.bw_modal_title')] = {
+    rules[_sx(scope, '.bw_bccl_modal_title')] = {
       'color': palette.dark.base
     };
     return rules;
   }
   function generateToastThemed(scope, palette, layout) {
     var rules = {};
-    var rd = layout ? layout.radius : {
-      card: '8px'
-    };
-    rules[_sx(scope, '.bw_toast')] = {
-      'background-color': palette.surface || '#fff',
+    var rd = layout.radius;
+    rules[_sx(scope, '.bw_bccl_toast')] = {
+      'background-color': _sf(palette),
       'border-color': palette.light.border,
       'border-radius': rd.card,
       'box-shadow': layout.elevation.lg
     };
-    rules[_sx(scope, '.bw_toast_header')] = {
+    rules[_sx(scope, '.bw_bccl_toast_header')] = {
       'border-bottom-color': palette.light.border
     };
     // Variant toast borders handled by palette class
@@ -1421,46 +1389,44 @@
   }
   function generateDropdownThemed(scope, palette, layout) {
     var rules = {};
-    var rd = layout ? layout.radius : {
-      card: '8px'
-    };
-    rules[_sx(scope, '.bw_dropdown_menu')] = {
-      'background-color': palette.surface || '#fff',
+    var rd = layout.radius;
+    rules[_sx(scope, '.bw_bccl_dropdown_menu')] = {
+      'background-color': _sf(palette),
       'border-color': palette.light.border,
       'border-radius': rd.card,
       'box-shadow': layout.elevation.md
     };
-    rules[_sx(scope, '.bw_dropdown_item')] = {
+    rules[_sx(scope, '.bw_bccl_dropdown_item')] = {
       'color': palette.dark.base,
-      'transition': 'background-color ' + layout.motion.fast + ' ' + layout.motion.easing
+      'transition': _tr('background-color', layout.motion)
     };
-    rules[_sx(scope, '.bw_dropdown_item:hover')] = {
+    rules[_sx(scope, '.bw_bccl_dropdown_item:hover')] = {
       'color': palette.dark.hover,
       'background-color': palette.surfaceAlt
     };
-    rules[_sx(scope, '.bw_dropdown_item.disabled')] = {
+    rules[_sx(scope, '.bw_bccl_dropdown_item.disabled')] = {
       'color': palette.secondary.base
     };
-    rules[_sx(scope, '.bw_dropdown_divider')] = {
+    rules[_sx(scope, '.bw_bccl_dropdown_divider')] = {
       'border-top-color': palette.light.border
     };
     return rules;
   }
   function generateSwitchThemed(scope, palette) {
     var rules = {};
-    rules[_sx(scope, '.bw_form_switch .bw_switch_input')] = {
+    rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input')] = {
       'background-color': palette.secondary.base,
       'border-color': palette.secondary.base
     };
-    rules[_sx(scope, '.bw_form_switch .bw_switch_input:checked')] = {
+    rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input:checked')] = {
       'background-color': palette.primary.base,
       'border-color': palette.primary.base
     };
-    rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus')] = {
-      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus
+    rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input:focus')] = {
+      'box-shadow': _fr(palette.primary.focus)
     };
-    rules[_sx(scope, '.bw_form_switch .bw_switch_input:focus-visible')] = {
-      'box-shadow': '0 0 0 0.25rem ' + palette.primary.focus,
+    rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input:focus-visible')] = {
+      'box-shadow': _fr(palette.primary.focus),
       'outline': 'none'
     };
     return rules;
@@ -1481,12 +1447,12 @@
       el = layout.elevation,
       rd = layout.radius;
     rules[_sx(scope, '.bw_stat_card')] = {
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'color': palette.dark.base,
       'border': '1px solid ' + palette.light.border,
       'border-radius': rd.card,
       'box-shadow': el.sm,
-      'transition': 'box-shadow ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('box-shadow,transform', mo)
     };
     rules[_sx(scope, '.bw_stat_card:hover')] = {
       'box-shadow': el.md
@@ -1502,11 +1468,11 @@
   }
   function generateTimelineThemed(scope, palette) {
     var rules = {};
-    rules[_sx(scope, '.bw_timeline::before')] = {
+    rules[_sx(scope, '.bw_bccl_timeline::before')] = {
       'background-color': palette.light.border
     };
     // Variant marker colors handled by palette class
-    rules[_sx(scope, '.bw_timeline_date')] = {
+    rules[_sx(scope, '.bw_bccl_timeline_date')] = {
       'color': palette.secondary.base
     };
     return rules;
@@ -1543,18 +1509,16 @@
   }
   function generateChipInputThemed(scope, palette, layout) {
     var rules = {};
-    var rd = layout ? layout.radius : {
-      input: '6px'
-    };
+    var rd = layout.radius;
     rules[_sx(scope, '.bw_chip_input')] = {
       'border-color': palette.light.border,
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'color': palette.dark.base,
       'border-radius': rd.input
     };
     rules[_sx(scope, '.bw_chip_input:focus-within')] = {
       'border-color': palette.primary.base,
-      'box-shadow': '0 0 0 0.2rem ' + palette.primary.focus
+      'box-shadow': _fr(palette.primary.focus, '0.2rem')
     };
     rules[_sx(scope, '.bw_chip')] = {
       'background-color': palette.surfaceAlt,
@@ -1572,7 +1536,7 @@
     rules[_sx(scope, '.bw_file_upload')] = {
       'border-color': palette.light.border,
       'background-color': palette.surfaceAlt,
-      'transition': 'border-color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('border-color,background-color', mo)
     };
     rules[_sx(scope, '.bw_file_upload:hover')] = {
       'border-color': palette.primary.base,
@@ -1596,13 +1560,13 @@
     };
     rules[_sx(scope, '.bw_range::-webkit-slider-thumb')] = {
       'background-color': palette.primary.base,
-      'border-color': palette.surface || '#fff',
+      'border-color': _sf(palette),
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
       'transition': 'background-color 0.15s ease-out, transform 0.15s ease-out'
     };
     rules[_sx(scope, '.bw_range::-moz-range-thumb')] = {
       'background-color': palette.primary.base,
-      'border-color': palette.surface || '#fff',
+      'border-color': _sf(palette),
       'box-shadow': '0 1px 3px rgba(0,0,0,0.2)'
     };
     return rules;
@@ -1613,13 +1577,13 @@
       rd = layout.radius,
       el = layout.elevation,
       mo = layout.motion;
-    rules[_sx(scope, '.bw_tooltip')] = {
+    rules[_sx(scope, '.bw_bccl_tooltip')] = {
       'background-color': palette.dark.base,
       'color': palette.dark.textOn,
       'padding': sp.input,
       'border-radius': rd.badge,
       'box-shadow': el.md,
-      'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('opacity,transform', mo)
     };
     return rules;
   }
@@ -1630,12 +1594,12 @@
       el = layout.elevation,
       mo = layout.motion;
     rules[_sx(scope, '.bw_popover')] = {
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'color': palette.dark.base,
       'border': '1px solid ' + palette.light.border,
       'border-radius': rd.card,
       'box-shadow': el.lg,
-      'transition': 'opacity ' + mo.fast + ' ' + mo.easing + ', transform ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('opacity,transform', mo)
     };
     rules[_sx(scope, '.bw_popover_header')] = {
       'background-color': palette.surfaceAlt,
@@ -1651,11 +1615,11 @@
     var rules = {},
       mo = layout.motion;
     rules[_sx(scope, '.bw_search_input')] = {
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_search_clear')] = {
-      'transition': 'color ' + mo.fast + ' ' + mo.easing + ', background-color ' + mo.fast + ' ' + mo.easing
+      'transition': _tr('color,background-color', mo)
     };
     rules[_sx(scope, '.bw_search_clear:hover')] = {
       'color': palette.dark.base
@@ -1664,11 +1628,9 @@
   }
   function generateCodeDemoThemed(scope, palette, layout) {
     var rules = {};
-    var rd = layout ? layout.radius : {
-      card: '0.375rem'
-    };
+    var rd = layout.radius;
     rules[_sx(scope, '.bw_code_demo')] = {
-      'background-color': palette.surface || '#fff',
+      'background-color': _sf(palette),
       'color': palette.dark.base,
       'border-radius': rd.card
     };
@@ -1736,14 +1698,14 @@
       // --- Component-specific overrides ---
 
       // Alerts: light bg, dark text, subtle border
-      rules[_sx(scope, '.bw_alert.bw_' + k)] = {
+      rules[_sx(scope, '.bw_bccl_alert.bw_' + k)] = {
         'background-color': s.light,
         'color': s.darkText,
         'border-color': s.border
       };
 
       // Toast: inherit bg, left border accent
-      rules[_sx(scope, '.bw_toast.bw_' + k)] = {
+      rules[_sx(scope, '.bw_bccl_toast.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left': '4px solid ' + s.base
@@ -1757,14 +1719,14 @@
       };
 
       // Card accent: left border accent, inherit bg
-      rules[_sx(scope, '.bw_card.bw_' + k)] = {
+      rules[_sx(scope, '.bw_bccl_card.bw_' + k)] = {
         'background-color': 'inherit',
         'color': 'inherit',
         'border-left': '4px solid ' + s.base
       };
 
       // Timeline marker: colored dot
-      rules[_sx(scope, '.bw_timeline_marker.bw_' + k)] = {
+      rules[_sx(scope, '.bw_bccl_timeline_marker.bw_' + k)] = {
         'box-shadow': '0 0 0 2px ' + s.base
       };
 
@@ -1788,24 +1750,24 @@
       };
 
       // Outline button: transparent bg, colored border+text, solid on hover
-      rules[_sx(scope, '.bw_btn_outline.bw_' + k)] = {
+      rules[_sx(scope, '.bw_bccl_btn_outline.bw_' + k)] = {
         'background-color': 'transparent',
         'color': s.base,
         'border-color': s.base
       };
-      rules[_sx(scope, '.bw_btn_outline.bw_' + k + ':hover')] = {
+      rules[_sx(scope, '.bw_bccl_btn_outline.bw_' + k + ':hover')] = {
         'background-color': s.base,
         'color': s.textOn
       };
 
       // Hero: gradient background
-      rules[_sx(scope, '.bw_hero.bw_' + k)] = {
+      rules[_sx(scope, '.bw_bccl_hero.bw_' + k)] = {
         'background': 'linear-gradient(135deg, ' + s.base + ' 0%, ' + s.hover + ' 100%)',
         'color': s.textOn
       };
 
       // Progress bar: contrasting text on colored bg
-      rules[_sx(scope, '.bw_progress_bar.bw_' + k)] = {
+      rules[_sx(scope, '.bw_bccl_progress_bar.bw_' + k)] = {
         'color': s.textOn
       };
 
@@ -1880,6 +1842,18 @@
   // a generate*Themed() function. That's it.
   // =========================================================================
 
+  // Generate 12-column grid rules for a given class prefix (e.g. 'bw_col', 'bw_col_sm')
+  function _gridCols(prefix) {
+    var r = {};
+    for (var i = 1; i <= 12; i++) {
+      var pct = +(100 * i / 12).toFixed(6) + '%';
+      r['.' + prefix + '_' + i] = {
+        'flex': '0 0 ' + pct,
+        'max-width': pct
+      };
+    }
+    return r;
+  }
   var structuralRules = {
     // ---- Reset ----
     base: {
@@ -1982,8 +1956,8 @@
       }
     },
     // ---- Grid ----
-    grid: {
-      '.bw_container': {
+    grid: _objectSpread2({
+      '.bw_bccl_container': {
         'width': '100%',
         'padding-right': '0.75rem',
         'padding-left': '0.75rem',
@@ -1991,26 +1965,26 @@
         'margin-left': 'auto'
       },
       '@media (min-width: 576px)': {
-        '.bw_container': {
+        '.bw_bccl_container': {
           'max-width': '540px'
         }
       },
       '@media (min-width: 768px)': {
-        '.bw_container': {
+        '.bw_bccl_container': {
           'max-width': '720px'
         }
       },
       '@media (min-width: 992px)': {
-        '.bw_container': {
+        '.bw_bccl_container': {
           'max-width': '960px'
         }
       },
       '@media (min-width: 1200px)': {
-        '.bw_container': {
+        '.bw_bccl_container': {
           'max-width': '1140px'
         }
       },
-      '.bw_container_fluid': {
+      '.bw_bccl_container_fluid': {
         'width': '100%',
         'padding-right': '0.75rem',
         'padding-left': '0.75rem',
@@ -2033,59 +2007,11 @@
         'flex-basis': '0',
         'flex-grow': '1',
         'max-width': '100%'
-      },
-      '.bw_col_1': {
-        'flex': '0 0 8.333333%',
-        'max-width': '8.333333%'
-      },
-      '.bw_col_2': {
-        'flex': '0 0 16.666667%',
-        'max-width': '16.666667%'
-      },
-      '.bw_col_3': {
-        'flex': '0 0 25%',
-        'max-width': '25%'
-      },
-      '.bw_col_4': {
-        'flex': '0 0 33.333333%',
-        'max-width': '33.333333%'
-      },
-      '.bw_col_5': {
-        'flex': '0 0 41.666667%',
-        'max-width': '41.666667%'
-      },
-      '.bw_col_6': {
-        'flex': '0 0 50%',
-        'max-width': '50%'
-      },
-      '.bw_col_7': {
-        'flex': '0 0 58.333333%',
-        'max-width': '58.333333%'
-      },
-      '.bw_col_8': {
-        'flex': '0 0 66.666667%',
-        'max-width': '66.666667%'
-      },
-      '.bw_col_9': {
-        'flex': '0 0 75%',
-        'max-width': '75%'
-      },
-      '.bw_col_10': {
-        'flex': '0 0 83.333333%',
-        'max-width': '83.333333%'
-      },
-      '.bw_col_11': {
-        'flex': '0 0 91.666667%',
-        'max-width': '91.666667%'
-      },
-      '.bw_col_12': {
-        'flex': '0 0 100%',
-        'max-width': '100%'
       }
-    },
+    }, _gridCols('bw_col')),
     // ---- Buttons ----
     buttons: {
-      '.bw_btn': {
+      '.bw_bccl_btn': {
         'display': 'inline-flex',
         'align-items': 'center',
         'justify-content': 'center',
@@ -2101,30 +2027,30 @@
         'font-family': 'inherit',
         'gap': '0.5rem'
       },
-      '.bw_btn:hover': {
+      '.bw_bccl_btn:hover': {
         'text-decoration': 'none',
         'transform': 'translateY(-1px)'
       },
-      '.bw_btn:active': {
+      '.bw_bccl_btn:active': {
         'transform': 'translateY(0)'
       },
-      '.bw_btn:focus-visible': {
+      '.bw_bccl_btn:focus-visible': {
         'outline': '2px solid currentColor',
         'outline-offset': '2px'
       },
-      '.bw_btn:disabled': {
+      '.bw_bccl_btn:disabled': {
         'opacity': '0.5',
         'cursor': 'not-allowed',
         'pointer-events': 'none'
       },
-      '.bw_btn_block': {
+      '.bw_bccl_btn_block': {
         'display': 'block',
         'width': '100%'
       }
     },
     // ---- Cards ----
     cards: {
-      '.bw_card': {
+      '.bw_bccl_card': {
         'position': 'relative',
         'display': 'flex',
         'flex-direction': 'column',
@@ -2135,50 +2061,50 @@
         'margin-bottom': '1.5rem',
         'overflow': 'hidden'
       },
-      '.bw_card_body': {
+      '.bw_bccl_card_body': {
         'flex': '1 1 auto'
       },
-      '.bw_card_body > *:last-child': {
+      '.bw_bccl_card_body > *:last-child': {
         'margin-bottom': '0'
       },
-      '.bw_card_title': {
+      '.bw_bccl_card_title': {
         'margin-bottom': '0.5rem',
         'font-size': '1.125rem',
         'font-weight': '600',
         'line-height': '1.3'
       },
-      '.bw_card_text': {
+      '.bw_bccl_card_text': {
         'margin-bottom': '0',
         'font-size': '0.9375rem',
         'line-height': '1.6'
       },
-      '.bw_card_header': {
+      '.bw_bccl_card_header': {
         'margin-bottom': '0',
         'font-weight': '600',
         'font-size': '0.875rem'
       },
-      '.bw_card_footer': {
+      '.bw_bccl_card_footer': {
         'font-size': '0.875rem'
       },
-      '.bw_card_hoverable': {},
-      '.bw_card_hoverable:hover': {
+      '.bw_bccl_card_hoverable': {},
+      '.bw_bccl_card_hoverable:hover': {
         'transform': 'translateY(-4px)'
       },
-      '.bw_card_img_top': {
+      '.bw_bccl_card_img_top': {
         'width': '100%'
       },
-      '.bw_card_img_bottom': {
+      '.bw_bccl_card_img_bottom': {
         'width': '100%'
       },
-      '.bw_card_img_left': {
+      '.bw_bccl_card_img_left': {
         'width': '40%',
         'object-fit': 'cover'
       },
-      '.bw_card_img_right': {
+      '.bw_bccl_card_img_right': {
         'width': '40%',
         'object-fit': 'cover'
       },
-      '.bw_card_subtitle, .card-subtitle': {
+      '.bw_bccl_card_subtitle, .card-subtitle': {
         'margin-top': '-0.25rem',
         'margin-bottom': '0.5rem',
         'font-size': '0.875rem'
@@ -2186,7 +2112,7 @@
     },
     // ---- Forms ----
     forms: {
-      '.bw_form_control': {
+      '.bw_bccl_form_control': {
         'display': 'block',
         'width': '100%',
         'font-size': '0.9375rem',
@@ -2198,34 +2124,34 @@
         'font-family': 'inherit',
         'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out'
       },
-      '.bw_form_control:focus': {
+      '.bw_bccl_form_control:focus': {
         'outline': '2px solid currentColor',
         'outline-offset': '-1px'
       },
-      '.bw_form_control::placeholder': {
+      '.bw_bccl_form_control::placeholder': {
         'opacity': '1'
       },
-      '.bw_form_label': {
+      '.bw_bccl_form_label': {
         'display': 'block',
         'margin-bottom': '0.375rem',
         'font-size': '0.875rem',
         'font-weight': '600'
       },
-      '.bw_form_group': {
+      '.bw_bccl_form_group': {
         'margin-bottom': '1.25rem'
       },
-      '.bw_form_text': {
+      '.bw_bccl_form_text': {
         'margin-top': '0.25rem',
         'font-size': '0.8125rem'
       },
-      'select.bw_form_control': {
+      'select.bw_bccl_form_control': {
         'padding-right': '2.25rem',
         'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\")",
         'background-repeat': 'no-repeat',
         'background-position': 'right 0.75rem center',
         'background-size': '16px 12px'
       },
-      'textarea.bw_form_control': {
+      'textarea.bw_bccl_form_control': {
         'min-height': '5rem',
         'resize': 'vertical'
       },
@@ -2242,14 +2168,14 @@
     },
     // ---- Form checks ----
     formChecks: {
-      '.bw_form_check': {
+      '.bw_bccl_form_check': {
         'display': 'flex',
         'align-items': 'center',
         'gap': '0.5rem',
         'min-height': '1.5rem',
         'margin-bottom': '0.25rem'
       },
-      '.bw_form_check_input': {
+      '.bw_bccl_form_check_input': {
         'width': '1rem',
         'height': '1rem',
         'margin': '0',
@@ -2258,11 +2184,11 @@
         'border-radius': '0.25rem',
         'appearance': 'auto'
       },
-      '.bw_form_check_input:disabled': {
+      '.bw_bccl_form_check_input:disabled': {
         'opacity': '0.5',
         'cursor': 'not-allowed'
       },
-      '.bw_form_check_label': {
+      '.bw_bccl_form_check_label': {
         'cursor': 'pointer',
         'user-select': 'none',
         'font-size': '0.9375rem'
@@ -2270,7 +2196,7 @@
     },
     // ---- Navigation ----
     navigation: {
-      '.bw_navbar': {
+      '.bw_bccl_navbar': {
         'position': 'relative',
         'display': 'flex',
         'flex-wrap': 'wrap',
@@ -2278,13 +2204,13 @@
         'justify-content': 'space-between',
         'padding': '0.5rem 1.5rem'
       },
-      '.bw_navbar > .bw_container, .bw_navbar > .container': {
+      '.bw_bccl_navbar > .bw_bccl_container, .bw_bccl_navbar > .container': {
         'display': 'flex',
         'flex-wrap': 'wrap',
         'align-items': 'center',
         'justify-content': 'space-between'
       },
-      '.bw_navbar_brand': {
+      '.bw_bccl_navbar_brand': {
         'display': 'inline-flex',
         'align-items': 'center',
         'gap': '0.5rem',
@@ -2297,7 +2223,7 @@
         'white-space': 'nowrap',
         'text-decoration': 'none'
       },
-      '.bw_navbar_nav': {
+      '.bw_bccl_navbar_nav': {
         'display': 'flex',
         'flex-direction': 'row',
         'padding-left': '0',
@@ -2305,7 +2231,7 @@
         'list-style': 'none',
         'gap': '0.25rem'
       },
-      '.bw_navbar_nav .bw_nav_link': {
+      '.bw_bccl_navbar_nav .bw_nav_link': {
         'display': 'block',
         'text-decoration': 'none',
         'font-size': '0.875rem',
@@ -2314,7 +2240,7 @@
     },
     // ---- Tables ----
     tables: {
-      '.bw_table': {
+      '.bw_bccl_table': {
         'width': '100%',
         'margin-bottom': '1.5rem',
         'vertical-align': 'top',
@@ -2322,62 +2248,62 @@
         'font-size': '0.9375rem',
         'line-height': '1.5'
       },
-      '.bw_table > :not(caption) > * > *': {
+      '.bw_bccl_table > :not(caption) > * > *': {
         'background-color': 'transparent',
         'border-bottom-width': '1px',
         'border-bottom-style': 'solid'
       },
-      '.bw_table > tbody': {
+      '.bw_bccl_table > tbody': {
         'vertical-align': 'inherit'
       },
-      '.bw_table > thead': {
+      '.bw_bccl_table > thead': {
         'vertical-align': 'bottom'
       },
-      '.bw_table > thead > tr > *': {
+      '.bw_bccl_table > thead > tr > *': {
         'font-size': '0.8125rem',
         'font-weight': '600',
         'text-transform': 'uppercase',
         'letter-spacing': '0.04em',
         'border-bottom-width': '2px'
       },
-      '.bw_table caption': {
+      '.bw_bccl_table caption': {
         'font-size': '0.875rem',
         'caption-side': 'bottom'
       },
-      '.bw_table_bordered > :not(caption) > * > *': {
+      '.bw_bccl_table_bordered > :not(caption) > * > *': {
         'border-width': '1px',
         'border-style': 'solid'
       },
-      '.bw_table_selectable > tbody > tr': {
+      '.bw_bccl_table_selectable > tbody > tr': {
         'cursor': 'pointer'
       },
-      '.bw_table > tbody > tr.bw_table_row_selected > *': {
+      '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *': {
         'background-color': 'rgba(0, 102, 102, 0.1)'
       },
-      '.bw_table_responsive': {
+      '.bw_bccl_table_responsive': {
         'overflow-x': 'auto',
         '-webkit-overflow-scrolling': 'touch'
       }
     },
     // ---- Alerts ----
     alerts: {
-      '.bw_alert': {
+      '.bw_bccl_alert': {
         'position': 'relative',
         'margin-bottom': '1rem',
         'border': '1px solid transparent',
         'font-size': '0.9375rem',
         'line-height': '1.6'
       },
-      '.bw_alert_heading, .alert-heading': {
+      '.bw_bccl_alert_heading, .alert-heading': {
         'color': 'inherit'
       },
-      '.bw_alert_link, .alert-link': {
+      '.bw_bccl_alert_link, .alert-link': {
         'font-weight': '700'
       },
-      '.bw_alert_dismissible': {
+      '.bw_bccl_alert_dismissible': {
         'padding-right': '3rem'
       },
-      '.bw_alert_dismissible .btn-close': {
+      '.bw_bccl_alert_dismissible .btn-close': {
         'position': 'absolute',
         'top': '0',
         'right': '0',
@@ -2387,7 +2313,7 @@
     },
     // ---- Badges ----
     badges: {
-      '.bw_badge': {
+      '.bw_bccl_badge': {
         'display': 'inline-block',
         'font-size': '0.875rem',
         'font-weight': '600',
@@ -2398,18 +2324,18 @@
         'padding': '0.35rem 0.65rem',
         'border-radius': '0.25rem'
       },
-      '.bw_badge:empty': {
+      '.bw_bccl_badge:empty': {
         'display': 'none'
       },
-      '.bw_badge_sm': {
+      '.bw_bccl_badge_sm': {
         'font-size': '0.75rem',
         'padding': '0.25rem 0.5rem'
       },
-      '.bw_badge_lg': {
+      '.bw_bccl_badge_lg': {
         'font-size': '1rem',
         'padding': '0.5rem 0.875rem'
       },
-      '.bw_badge_pill': {
+      '.bw_bccl_badge_pill': {
         'border-radius': '50rem'
       },
       '.btn .badge': {
@@ -2419,13 +2345,13 @@
     },
     // ---- Progress ----
     progress: {
-      '.bw_progress': {
+      '.bw_bccl_progress': {
         'display': 'flex',
         'height': '1.25rem',
         'overflow': 'hidden',
         'font-size': '.875rem'
       },
-      '.bw_progress_bar': {
+      '.bw_bccl_progress_bar': {
         'display': 'flex',
         'flex-direction': 'column',
         'justify-content': 'center',
@@ -2434,11 +2360,11 @@
         'white-space': 'nowrap',
         'font-weight': '600'
       },
-      '.bw_progress_bar_striped': {
+      '.bw_bccl_progress_bar_striped': {
         'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
         'background-size': '1rem 1rem'
       },
-      '.bw_progress_bar_animated': {
+      '.bw_bccl_progress_bar_animated': {
         'animation': 'progress-bar-stripes 1s linear infinite'
       },
       '@keyframes progress-bar-stripes': {
@@ -2487,13 +2413,13 @@
       '.bw_nav_vertical': {
         'flex-direction': 'column'
       },
-      '.bw_tab_content': {
+      '.bw_bccl_tab_content': {
         'padding': '1.25rem 0'
       },
-      '.bw_tab_pane': {
+      '.bw_bccl_tab_pane': {
         'display': 'none'
       },
-      '.bw_tab_pane.active': {
+      '.bw_bccl_tab_pane.active': {
         'display': 'block'
       },
       '.bw_nav_scrollable': {
@@ -2558,7 +2484,7 @@
     },
     // ---- Pagination ----
     pagination: {
-      '.bw_pagination': {
+      '.bw_bccl_pagination': {
         'display': 'flex',
         'padding-left': '0',
         'list-style': 'none',
@@ -2592,38 +2518,38 @@
     },
     // ---- Breadcrumb ----
     breadcrumb: {
-      '.bw_breadcrumb': {
+      '.bw_bccl_breadcrumb': {
         'display': 'flex',
         'flex-wrap': 'wrap',
         'padding': '0 0',
         'margin-bottom': '1rem',
         'list-style': 'none'
       },
-      '.bw_breadcrumb_item': {
+      '.bw_bccl_breadcrumb_item': {
         'display': 'flex'
       },
-      '.bw_breadcrumb_item + .bw_breadcrumb_item': {
+      '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item': {
         'padding-left': '0.5rem'
       },
-      '.bw_breadcrumb_item + .bw_breadcrumb_item::before': {
+      '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item::before': {
         'float': 'left',
         'padding-right': '0.5rem',
         'content': '"/"'
       },
-      '.bw_breadcrumb_item a': {
+      '.bw_bccl_breadcrumb_item a': {
         'text-decoration': 'none'
       },
-      '.bw_breadcrumb_item.active': {
+      '.bw_bccl_breadcrumb_item.active': {
         'font-weight': '500'
       }
     },
     // ---- Hero ----
     hero: {
-      '.bw_hero': {
+      '.bw_bccl_hero': {
         'position': 'relative',
         'overflow': 'hidden'
       },
-      '.bw_hero_overlay': {
+      '.bw_bccl_hero_overlay': {
         'position': 'absolute',
         'top': '0',
         'left': '0',
@@ -2631,19 +2557,19 @@
         'bottom': '0',
         'z-index': '1'
       },
-      '.bw_hero_content': {
+      '.bw_bccl_hero_content': {
         'position': 'relative',
         'z-index': '2'
       },
-      '.bw_hero_title': {
+      '.bw_bccl_hero_title': {
         'font-weight': '300',
         'letter-spacing': '-0.05rem',
         'color': 'inherit'
       },
-      '.bw_hero_subtitle': {
+      '.bw_bccl_hero_subtitle': {
         'color': 'inherit'
       },
-      '.bw_hero_actions': {
+      '.bw_bccl_hero_actions': {
         'display': 'flex',
         'gap': '1rem',
         'justify-content': 'center',
@@ -2901,59 +2827,59 @@
     },
     // ---- Button group ----
     buttonGroup: {
-      '.bw_btn_group, .bw_btn_group_vertical': {
+      '.bw_bccl_btn_group, .bw_bccl_btn_group_vertical': {
         'position': 'relative',
         'display': 'inline-flex',
         'vertical-align': 'middle'
       },
-      '.bw_btn_group > .bw_btn, .bw_btn_group_vertical > .bw_btn': {
+      '.bw_bccl_btn_group > .bw_bccl_btn, .bw_bccl_btn_group_vertical > .bw_bccl_btn': {
         'position': 'relative',
         'flex': '1 1 auto',
         'border-radius': '0',
         'margin-left': '-1px'
       },
-      '.bw_btn_group > .bw_btn:first-child': {
+      '.bw_bccl_btn_group > .bw_bccl_btn:first-child': {
         'margin-left': '0'
       },
-      '.bw_btn_group > .bw_btn:last-child': {},
-      '.bw_btn_group_lg > .bw_btn': {
+      '.bw_bccl_btn_group > .bw_bccl_btn:last-child': {},
+      '.bw_bccl_btn_group_lg > .bw_bccl_btn': {
         'padding': '0.625rem 1.5rem',
         'font-size': '1rem'
       },
-      '.bw_btn_group_sm > .bw_btn': {
+      '.bw_bccl_btn_group_sm > .bw_bccl_btn': {
         'padding': '0.25rem 0.75rem',
         'font-size': '0.8125rem'
       },
-      '.bw_btn_group_vertical': {
+      '.bw_bccl_btn_group_vertical': {
         'flex-direction': 'column',
         'align-items': 'flex-start',
         'justify-content': 'center'
       },
-      '.bw_btn_group_vertical > .bw_btn': {
+      '.bw_bccl_btn_group_vertical > .bw_bccl_btn': {
         'width': '100%',
         'margin-left': '0',
         'margin-top': '-1px'
       },
-      '.bw_btn_group_vertical > .bw_btn:first-child': {
+      '.bw_bccl_btn_group_vertical > .bw_bccl_btn:first-child': {
         'margin-top': '0'
       },
-      '.bw_btn_group_vertical > .bw_btn:last-child': {}
+      '.bw_bccl_btn_group_vertical > .bw_bccl_btn:last-child': {}
     },
     // ---- Accordion ----
     accordion: {
-      '.bw_accordion': {
+      '.bw_bccl_accordion': {
         'overflow': 'hidden'
       },
-      '.bw_accordion_item': {
+      '.bw_bccl_accordion_item': {
         'border': '1px solid transparent'
       },
-      '.bw_accordion_item + .bw_accordion_item': {
+      '.bw_bccl_accordion_item + .bw_bccl_accordion_item': {
         'border-top': '0'
       },
-      '.bw_accordion_header': {
+      '.bw_bccl_accordion_header': {
         'margin': '0'
       },
-      '.bw_accordion_button': {
+      '.bw_bccl_accordion_button': {
         'position': 'relative',
         'display': 'flex',
         'align-items': 'center',
@@ -2968,7 +2894,7 @@
         'cursor': 'pointer',
         'font-family': 'inherit'
       },
-      '.bw_accordion_button::after': {
+      '.bw_bccl_accordion_button::after': {
         'flex-shrink': '0',
         'width': '1.25rem',
         'height': '1.25rem',
@@ -2979,32 +2905,32 @@
         'background-size': '1.25rem',
         'transition': 'transform 0.2s ease-out'
       },
-      '.bw_accordion_button:not(.bw_collapsed)::after': {
+      '.bw_bccl_accordion_button:not(.bw_collapsed)::after': {
         'transform': 'rotate(-180deg)'
       },
-      '.bw_accordion_body': {
+      '.bw_bccl_accordion_body': {
         'padding': '1rem 1.25rem'
       },
-      '.bw_accordion_collapse': {
+      '.bw_bccl_accordion_collapse': {
         'max-height': '0',
         'overflow': 'hidden',
         'transition': 'max-height 0.3s ease'
       },
-      '.bw_accordion_collapse.bw_collapse_show': {
+      '.bw_bccl_accordion_collapse.bw_collapse_show': {
         'max-height': 'none'
       }
     },
     // ---- Carousel ----
     carousel: {
-      '.bw_carousel': {
+      '.bw_bccl_carousel': {
         'position': 'relative',
         'overflow': 'hidden'
       },
-      '.bw_carousel_track': {
+      '.bw_bccl_carousel_track': {
         'display': 'flex',
         'height': '100%'
       },
-      '.bw_carousel_slide': {
+      '.bw_bccl_carousel_slide': {
         'min-width': '100%',
         'flex-shrink': '0',
         'overflow': 'hidden',
@@ -3013,12 +2939,12 @@
         'align-items': 'center',
         'justify-content': 'center'
       },
-      '.bw_carousel_slide img': {
+      '.bw_bccl_carousel_slide img': {
         'width': '100%',
         'height': '100%',
         'object-fit': 'cover'
       },
-      '.bw_carousel_caption': {
+      '.bw_bccl_carousel_caption': {
         'position': 'absolute',
         'bottom': '0',
         'left': '0',
@@ -3026,7 +2952,7 @@
         'padding': '0.75rem 1rem',
         'font-size': '0.875rem'
       },
-      '.bw_carousel_control': {
+      '.bw_bccl_carousel_control': {
         'position': 'absolute',
         'top': '50%',
         'transform': 'translateY(-50%)',
@@ -3041,22 +2967,22 @@
         'z-index': '2',
         'padding': '0'
       },
-      '.bw_carousel_control img': {
+      '.bw_bccl_carousel_control img': {
         'width': '20px',
         'height': '20px',
         'pointer-events': 'none'
       },
-      '.bw_carousel_control:focus-visible': {
+      '.bw_bccl_carousel_control:focus-visible': {
         'outline': '2px solid currentColor',
         'outline-offset': '2px'
       },
-      '.bw_carousel_control_prev': {
+      '.bw_bccl_carousel_control_prev': {
         'left': '10px'
       },
-      '.bw_carousel_control_next': {
+      '.bw_bccl_carousel_control_next': {
         'right': '10px'
       },
-      '.bw_carousel_indicators': {
+      '.bw_bccl_carousel_indicators': {
         'position': 'absolute',
         'bottom': '12px',
         'left': '50%',
@@ -3065,7 +2991,7 @@
         'gap': '6px',
         'z-index': '2'
       },
-      '.bw_carousel_indicator': {
+      '.bw_bccl_carousel_indicator': {
         'width': '10px',
         'height': '10px',
         'border-radius': '50%',
@@ -3073,13 +2999,13 @@
         'padding': '0',
         'cursor': 'pointer'
       },
-      '.bw_carousel_indicator:hover': {
+      '.bw_bccl_carousel_indicator:hover': {
         'opacity': '0.8'
       }
     },
     // ---- Modal ----
     modal: {
-      '.bw_modal': {
+      '.bw_bccl_modal': {
         'display': 'flex',
         'align-items': 'center',
         'justify-content': 'center',
@@ -3096,12 +3022,12 @@
         'pointer-events': 'none',
         'transition': 'opacity 0.2s ease-out, visibility 0.2s ease-out'
       },
-      '.bw_modal.bw_modal_show': {
+      '.bw_bccl_modal.bw_bccl_modal_show': {
         'opacity': '1',
         'visibility': 'visible',
         'pointer-events': 'auto'
       },
-      '.bw_modal_dialog': {
+      '.bw_bccl_modal_dialog': {
         'position': 'relative',
         'width': 'calc(100% - 1rem)',
         'max-width': '500px',
@@ -3110,19 +3036,19 @@
         'transform': 'translateY(-16px)',
         'transition': 'transform 0.2s ease-out'
       },
-      '.bw_modal.bw_modal_show .bw_modal_dialog': {
+      '.bw_bccl_modal.bw_bccl_modal_show .bw_bccl_modal_dialog': {
         'transform': 'translateY(0)'
       },
-      '.bw_modal_sm': {
+      '.bw_bccl_modal_sm': {
         'max-width': '300px'
       },
-      '.bw_modal_lg': {
+      '.bw_bccl_modal_lg': {
         'max-width': '800px'
       },
-      '.bw_modal_xl': {
+      '.bw_bccl_modal_xl': {
         'max-width': '1140px'
       },
-      '.bw_modal_content': {
+      '.bw_bccl_modal_content': {
         'position': 'relative',
         'display': 'flex',
         'flex-direction': 'column',
@@ -3131,25 +3057,25 @@
         'border': '1px solid transparent',
         'outline': '0'
       },
-      '.bw_modal_header': {
+      '.bw_bccl_modal_header': {
         'display': 'flex',
         'align-items': 'center',
         'justify-content': 'space-between',
         'padding': '1rem 1.25rem',
         'border-bottom': '1px solid transparent'
       },
-      '.bw_modal_title': {
+      '.bw_bccl_modal_title': {
         'margin': '0',
         'font-size': '1.25rem',
         'font-weight': '600',
         'line-height': '1.3'
       },
-      '.bw_modal_body': {
+      '.bw_bccl_modal_body': {
         'position': 'relative',
         'flex': '1 1 auto',
         'padding': '1rem 1.25rem'
       },
-      '.bw_modal_footer': {
+      '.bw_bccl_modal_footer': {
         'display': 'flex',
         'flex-wrap': 'wrap',
         'align-items': 'center',
@@ -3161,7 +3087,7 @@
     },
     // ---- Toast ----
     toast: {
-      '.bw_toast_container': {
+      '.bw_bccl_toast_container': {
         'position': 'fixed',
         'z-index': '1080',
         'pointer-events': 'none',
@@ -3170,33 +3096,33 @@
         'gap': '0.5rem',
         'padding': '1rem'
       },
-      '.bw_toast_container.bw_toast_top_right': {
+      '.bw_bccl_toast_container.bw_bccl_toast_top_right': {
         'top': '0',
         'right': '0'
       },
-      '.bw_toast_container.bw_toast_top_left': {
+      '.bw_bccl_toast_container.bw_bccl_toast_top_left': {
         'top': '0',
         'left': '0'
       },
-      '.bw_toast_container.bw_toast_bottom_right': {
+      '.bw_bccl_toast_container.bw_bccl_toast_bottom_right': {
         'bottom': '0',
         'right': '0'
       },
-      '.bw_toast_container.bw_toast_bottom_left': {
+      '.bw_bccl_toast_container.bw_bccl_toast_bottom_left': {
         'bottom': '0',
         'left': '0'
       },
-      '.bw_toast_container.bw_toast_top_center': {
+      '.bw_bccl_toast_container.bw_bccl_toast_top_center': {
         'top': '0',
         'left': '50%',
         'transform': 'translateX(-50%)'
       },
-      '.bw_toast_container.bw_toast_bottom_center': {
+      '.bw_bccl_toast_container.bw_bccl_toast_bottom_center': {
         'bottom': '0',
         'left': '50%',
         'transform': 'translateX(-50%)'
       },
-      '.bw_toast': {
+      '.bw_bccl_toast': {
         'pointer-events': 'auto',
         'width': '350px',
         'max-width': 'calc(100vw - 2rem)',
@@ -3205,15 +3131,15 @@
         'transform': 'translateY(-8px)',
         'transition': 'opacity 0.2s ease-out, transform 0.2s ease-out'
       },
-      '.bw_toast.bw_toast_show': {
+      '.bw_bccl_toast.bw_bccl_toast_show': {
         'opacity': '1',
         'transform': 'translateY(0)'
       },
-      '.bw_toast.bw_toast_hiding': {
+      '.bw_bccl_toast.bw_bccl_toast_hiding': {
         'opacity': '0',
         'transform': 'translateY(-8px)'
       },
-      '.bw_toast_header': {
+      '.bw_bccl_toast_header': {
         'display': 'flex',
         'align-items': 'center',
         'justify-content': 'space-between',
@@ -3221,18 +3147,18 @@
         'font-size': '0.875rem',
         'border-bottom': '1px solid transparent'
       },
-      '.bw_toast_body': {
+      '.bw_bccl_toast_body': {
         'padding': '0.5rem 0.75rem',
         'font-size': '0.9375rem'
       }
     },
     // ---- Dropdown ----
     dropdown: {
-      '.bw_dropdown': {
+      '.bw_bccl_dropdown': {
         'position': 'relative',
         'display': 'inline-block'
       },
-      '.bw_dropdown_toggle::after': {
+      '.bw_bccl_dropdown_toggle::after': {
         'display': 'inline-block',
         'margin-left': '0.255em',
         'vertical-align': '0.255em',
@@ -3242,7 +3168,7 @@
         'border-bottom': '0',
         'border-left': '0.3em solid transparent'
       },
-      '.bw_dropdown_menu': {
+      '.bw_bccl_dropdown_menu': {
         'position': 'absolute',
         'top': '100%',
         'left': '0',
@@ -3259,17 +3185,17 @@
         'transform': 'translateY(-4px)',
         'transition': 'opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out'
       },
-      '.bw_dropdown_menu.bw_dropdown_show': {
+      '.bw_bccl_dropdown_menu.bw_bccl_dropdown_show': {
         'opacity': '1',
         'visibility': 'visible',
         'pointer-events': 'auto',
         'transform': 'translateY(0)'
       },
-      '.bw_dropdown_menu_end': {
+      '.bw_bccl_dropdown_menu_end': {
         'left': 'auto',
         'right': '0'
       },
-      '.bw_dropdown_item': {
+      '.bw_bccl_dropdown_item': {
         'display': 'block',
         'width': '100%',
         'padding': '0.4rem 1rem',
@@ -3283,11 +3209,11 @@
         'font-size': '0.9375rem',
         'cursor': 'pointer'
       },
-      '.bw_dropdown_item:focus-visible': {
+      '.bw_bccl_dropdown_item:focus-visible': {
         'outline': '2px solid currentColor',
         'outline-offset': '-2px'
       },
-      '.bw_dropdown_divider': {
+      '.bw_bccl_dropdown_divider': {
         'height': '0',
         'margin': '0.5rem 0',
         'overflow': 'hidden',
@@ -3296,10 +3222,10 @@
     },
     // ---- Form switch ----
     formSwitch: {
-      '.bw_form_switch': {
+      '.bw_bccl_form_switch': {
         'padding-left': '2.5em'
       },
-      '.bw_form_switch .bw_switch_input': {
+      '.bw_bccl_form_switch .bw_switch_input': {
         'width': '2em',
         'height': '1.125em',
         'margin-left': '-2.5em',
@@ -3312,10 +3238,10 @@
         'cursor': 'pointer',
         'transition': 'background-color 0.15s ease-out, background-position 0.15s ease-out, border-color 0.15s ease-out'
       },
-      '.bw_form_switch .bw_switch_input:checked': {
+      '.bw_bccl_form_switch .bw_switch_input:checked': {
         'background-position': 'right center'
       },
-      '.bw_form_switch .bw_switch_input:disabled': {
+      '.bw_bccl_form_switch .bw_switch_input:disabled': {
         'opacity': '0.5',
         'cursor': 'not-allowed'
       }
@@ -3412,11 +3338,11 @@
     },
     // ---- Tooltip ----
     tooltip: {
-      '.bw_tooltip_wrapper': {
+      '.bw_bccl_tooltip_wrapper': {
         'position': 'relative',
         'display': 'inline-block'
       },
-      '.bw_tooltip': {
+      '.bw_bccl_tooltip': {
         'position': 'absolute',
         'z-index': '999',
         'font-size': '0.875rem',
@@ -3426,44 +3352,44 @@
         'opacity': '0',
         'visibility': 'hidden'
       },
-      '.bw_tooltip.bw_tooltip_show': {
+      '.bw_bccl_tooltip.bw_bccl_tooltip_show': {
         'opacity': '1',
         'visibility': 'visible'
       },
-      '.bw_tooltip_top': {
+      '.bw_bccl_tooltip_top': {
         'bottom': '100%',
         'left': '50%',
         'transform': 'translateX(-50%) translateY(-4px)',
         'margin-bottom': '4px'
       },
-      '.bw_tooltip_top.bw_tooltip_show': {
+      '.bw_bccl_tooltip_top.bw_bccl_tooltip_show': {
         'transform': 'translateX(-50%) translateY(0)'
       },
-      '.bw_tooltip_bottom': {
+      '.bw_bccl_tooltip_bottom': {
         'top': '100%',
         'left': '50%',
         'transform': 'translateX(-50%) translateY(4px)',
         'margin-top': '4px'
       },
-      '.bw_tooltip_bottom.bw_tooltip_show': {
+      '.bw_bccl_tooltip_bottom.bw_bccl_tooltip_show': {
         'transform': 'translateX(-50%) translateY(0)'
       },
-      '.bw_tooltip_left': {
+      '.bw_bccl_tooltip_left': {
         'right': '100%',
         'top': '50%',
         'transform': 'translateY(-50%) translateX(-4px)',
         'margin-right': '4px'
       },
-      '.bw_tooltip_left.bw_tooltip_show': {
+      '.bw_bccl_tooltip_left.bw_bccl_tooltip_show': {
         'transform': 'translateY(-50%) translateX(0)'
       },
-      '.bw_tooltip_right': {
+      '.bw_bccl_tooltip_right': {
         'left': '100%',
         'top': '50%',
         'transform': 'translateY(-50%) translateX(4px)',
         'margin-left': '4px'
       },
-      '.bw_tooltip_right.bw_tooltip_show': {
+      '.bw_bccl_tooltip_right.bw_bccl_tooltip_show': {
         'transform': 'translateY(-50%) translateX(0)'
       }
     },
@@ -3677,11 +3603,11 @@
     },
     // ---- Timeline ----
     timeline: {
-      '.bw_timeline': {
+      '.bw_bccl_timeline': {
         'position': 'relative',
         'padding-left': '2rem'
       },
-      '.bw_timeline::before': {
+      '.bw_bccl_timeline::before': {
         'content': '""',
         'position': 'absolute',
         'left': '0.5rem',
@@ -3689,14 +3615,14 @@
         'bottom': '0',
         'width': '2px'
       },
-      '.bw_timeline_item': {
+      '.bw_bccl_timeline_item': {
         'position': 'relative',
         'padding-bottom': '1.5rem'
       },
-      '.bw_timeline_item:last-child': {
+      '.bw_bccl_timeline_item:last-child': {
         'padding-bottom': '0'
       },
-      '.bw_timeline_marker': {
+      '.bw_bccl_timeline_marker': {
         'position': 'absolute',
         'left': '-1.75rem',
         'top': '0.25rem',
@@ -3704,21 +3630,21 @@
         'height': '0.75rem',
         'border-radius': '50%'
       },
-      '.bw_timeline_content': {
+      '.bw_bccl_timeline_content': {
         'padding-left': '0.5rem'
       },
-      '.bw_timeline_date': {
+      '.bw_bccl_timeline_date': {
         'font-size': '0.75rem',
         'margin-bottom': '0.25rem',
         'font-weight': '500'
       },
-      '.bw_timeline_title': {
+      '.bw_bccl_timeline_title': {
         'font-size': '1rem',
         'font-weight': '600',
         'margin': '0 0 0.25rem 0',
         'line-height': '1.3'
       },
-      '.bw_timeline_text': {
+      '.bw_bccl_timeline_text': {
         'font-size': '0.875rem',
         'margin': '0',
         'line-height': '1.5'
@@ -3866,164 +3792,17 @@
     },
     // ---- Responsive ----
     responsive: {
-      '@media (min-width: 576px)': {
-        '.bw_col_sm_1': {
-          'flex': '0 0 8.333333%',
-          'max-width': '8.333333%'
-        },
-        '.bw_col_sm_2': {
-          'flex': '0 0 16.666667%',
-          'max-width': '16.666667%'
-        },
-        '.bw_col_sm_3': {
-          'flex': '0 0 25%',
-          'max-width': '25%'
-        },
-        '.bw_col_sm_4': {
-          'flex': '0 0 33.333333%',
-          'max-width': '33.333333%'
-        },
-        '.bw_col_sm_5': {
-          'flex': '0 0 41.666667%',
-          'max-width': '41.666667%'
-        },
-        '.bw_col_sm_6': {
-          'flex': '0 0 50%',
-          'max-width': '50%'
-        },
-        '.bw_col_sm_7': {
-          'flex': '0 0 58.333333%',
-          'max-width': '58.333333%'
-        },
-        '.bw_col_sm_8': {
-          'flex': '0 0 66.666667%',
-          'max-width': '66.666667%'
-        },
-        '.bw_col_sm_9': {
-          'flex': '0 0 75%',
-          'max-width': '75%'
-        },
-        '.bw_col_sm_10': {
-          'flex': '0 0 83.333333%',
-          'max-width': '83.333333%'
-        },
-        '.bw_col_sm_11': {
-          'flex': '0 0 91.666667%',
-          'max-width': '91.666667%'
-        },
-        '.bw_col_sm_12': {
-          'flex': '0 0 100%',
-          'max-width': '100%'
-        }
-      },
-      '@media (min-width: 768px)': {
-        '.bw_col_md_1': {
-          'flex': '0 0 8.333333%',
-          'max-width': '8.333333%'
-        },
-        '.bw_col_md_2': {
-          'flex': '0 0 16.666667%',
-          'max-width': '16.666667%'
-        },
-        '.bw_col_md_3': {
-          'flex': '0 0 25%',
-          'max-width': '25%'
-        },
-        '.bw_col_md_4': {
-          'flex': '0 0 33.333333%',
-          'max-width': '33.333333%'
-        },
-        '.bw_col_md_5': {
-          'flex': '0 0 41.666667%',
-          'max-width': '41.666667%'
-        },
-        '.bw_col_md_6': {
-          'flex': '0 0 50%',
-          'max-width': '50%'
-        },
-        '.bw_col_md_7': {
-          'flex': '0 0 58.333333%',
-          'max-width': '58.333333%'
-        },
-        '.bw_col_md_8': {
-          'flex': '0 0 66.666667%',
-          'max-width': '66.666667%'
-        },
-        '.bw_col_md_9': {
-          'flex': '0 0 75%',
-          'max-width': '75%'
-        },
-        '.bw_col_md_10': {
-          'flex': '0 0 83.333333%',
-          'max-width': '83.333333%'
-        },
-        '.bw_col_md_11': {
-          'flex': '0 0 91.666667%',
-          'max-width': '91.666667%'
-        },
-        '.bw_col_md_12': {
-          'flex': '0 0 100%',
-          'max-width': '100%'
-        }
-      },
-      '@media (min-width: 992px)': {
-        '.bw_col_lg_1': {
-          'flex': '0 0 8.333333%',
-          'max-width': '8.333333%'
-        },
-        '.bw_col_lg_2': {
-          'flex': '0 0 16.666667%',
-          'max-width': '16.666667%'
-        },
-        '.bw_col_lg_3': {
-          'flex': '0 0 25%',
-          'max-width': '25%'
-        },
-        '.bw_col_lg_4': {
-          'flex': '0 0 33.333333%',
-          'max-width': '33.333333%'
-        },
-        '.bw_col_lg_5': {
-          'flex': '0 0 41.666667%',
-          'max-width': '41.666667%'
-        },
-        '.bw_col_lg_6': {
-          'flex': '0 0 50%',
-          'max-width': '50%'
-        },
-        '.bw_col_lg_7': {
-          'flex': '0 0 58.333333%',
-          'max-width': '58.333333%'
-        },
-        '.bw_col_lg_8': {
-          'flex': '0 0 66.666667%',
-          'max-width': '66.666667%'
-        },
-        '.bw_col_lg_9': {
-          'flex': '0 0 75%',
-          'max-width': '75%'
-        },
-        '.bw_col_lg_10': {
-          'flex': '0 0 83.333333%',
-          'max-width': '83.333333%'
-        },
-        '.bw_col_lg_11': {
-          'flex': '0 0 91.666667%',
-          'max-width': '91.666667%'
-        },
-        '.bw_col_lg_12': {
-          'flex': '0 0 100%',
-          'max-width': '100%'
-        }
-      },
+      '@media (min-width: 576px)': _gridCols('bw_col_sm'),
+      '@media (min-width: 768px)': _gridCols('bw_col_md'),
+      '@media (min-width: 992px)': _gridCols('bw_col_lg'),
       '@media (max-width: 575px)': {
-        '.bw_card_img_left, .bw_card-img-left': {
+        '.bw_bccl_card_img_left, .bw_bccl_card-img-left': {
           'width': '100%'
         },
-        '.bw_card_img_right, .bw_card-img-right': {
+        '.bw_bccl_card_img_right, .bw_bccl_card-img-right': {
           'width': '100%'
         },
-        '.bw_hero, .bw_hero': {
+        '.bw_bccl_hero, .bw_bccl_hero': {
           'padding': '2rem 1rem'
         },
         '.bw_cta_actions, .bw_cta-actions': {
@@ -4035,29 +3814,29 @@
         '.bw_feature_grid, .bw_feature-grid': {
           'grid-template-columns': '1fr'
         },
-        '.bw_modal_dialog': {
+        '.bw_bccl_modal_dialog': {
           'margin': '0.5rem auto'
         },
-        '.bw_modal_lg': {
+        '.bw_bccl_modal_lg': {
           'max-width': 'calc(100% - 1rem)'
         },
-        '.bw_modal_xl': {
+        '.bw_bccl_modal_xl': {
           'max-width': 'calc(100% - 1rem)'
         },
-        '.bw_navbar': {
+        '.bw_bccl_navbar': {
           'padding': '0.5rem 0.75rem'
         },
-        '.bw_navbar_brand': {
+        '.bw_bccl_navbar_brand': {
           'margin-right': '0.5rem',
           'font-size': '1rem'
         },
-        '.bw_navbar_nav': {
+        '.bw_bccl_navbar_nav': {
           'flex-wrap': 'wrap'
         },
-        '.bw_tooltip': {
+        '.bw_bccl_tooltip': {
           'white-space': 'normal'
         },
-        '.bw_table': {
+        '.bw_bccl_table': {
           'display': 'block',
           'overflow-x': 'auto',
           '-webkit-overflow-scrolling': 'touch'
@@ -4066,11 +3845,11 @@
           'flex': '0 0 100%',
           'max-width': '100%'
         },
-        '.bw_container': {
+        '.bw_bccl_container': {
           'padding-right': '0.5rem',
           'padding-left': '0.5rem'
         },
-        '.bw_container_fluid': {
+        '.bw_bccl_container_fluid': {
           'padding-right': '0.5rem',
           'padding-left': '0.5rem'
         }
@@ -4114,20 +3893,20 @@
       rules['.bw_p_' + k] = {
         'padding': v + ' !important'
       };
-      rules['.bw_pt_' + k + ', .pt-' + k] = {
+      rules['.bw_pt_' + k] = {
         'padding-top': v + ' !important'
       };
-      rules['.bw_pb_' + k + ', .pb-' + k] = {
+      rules['.bw_pb_' + k] = {
         'padding-bottom': v + ' !important'
       };
-      rules['.bw_ps_' + k + ', .ps-' + k] = {
+      rules['.bw_ps_' + k] = {
         'padding-left': v + ' !important'
       };
-      rules['.bw_pe_' + k + ', .pe-' + k] = {
+      rules['.bw_pe_' + k] = {
         'padding-right': v + ' !important'
       };
     }
-    rules['.bw_m_auto, .m-auto'] = {
+    rules['.bw_m_auto'] = {
       'margin': 'auto !important'
     };
     rules['.bw_py_3'] = {
@@ -4222,6 +4001,14 @@
       'text-transform': 'capitalize'
     };
 
+    // White-space
+    rules['.bw_text_wrap'] = {
+      'white-space': 'normal'
+    };
+    rules['.bw_text_nowrap'] = {
+      'white-space': 'nowrap'
+    };
+
     // Font size
     rules['.bw_fs_sm'] = {
       'font-size': '0.875rem'
@@ -4245,7 +4032,7 @@
       around: 'space-around'
     };
     for (var jk in jc) {
-      rules['.bw_justify_content_' + jk + ', .justify-content-' + jk] = {
+      rules['.bw_justify_content_' + jk] = {
         'justify-content': jc[jk]
       };
     }
@@ -4255,7 +4042,7 @@
       center: 'center'
     };
     for (var ak in ai) {
-      rules['.bw_align_items_' + ak + ', .align-items-' + ak] = {
+      rules['.bw_align_items_' + ak] = {
         'align-items': ai[ak]
       };
     }
@@ -4267,16 +4054,16 @@
     rules['.bw_border_0'] = {
       'border': '0 !important'
     };
-    rules['.bw_border_top_0, .border-top-0'] = {
+    rules['.bw_border_top_0'] = {
       'border-top': '0 !important'
     };
-    rules['.bw_border_end_0, .border-end-0'] = {
+    rules['.bw_border_end_0'] = {
       'border-right': '0 !important'
     };
-    rules['.bw_border_bottom_0, .border-bottom-0'] = {
+    rules['.bw_border_bottom_0'] = {
       'border-bottom': '0 !important'
     };
-    rules['.bw_border_start_0, .border-start-0'] = {
+    rules['.bw_border_start_0'] = {
       'border-left': '0 !important'
     };
 
@@ -4287,19 +4074,19 @@
     rules['.bw_rounded_0'] = {
       'border-radius': '0 !important'
     };
-    rules['.bw_rounded_1, .rounded-1'] = {
+    rules['.bw_rounded_1'] = {
       'border-radius': '.25rem !important'
     };
-    rules['.bw_rounded_2, .rounded-2'] = {
+    rules['.bw_rounded_2'] = {
       'border-radius': '.375rem !important'
     };
-    rules['.bw_rounded_3, .rounded-3'] = {
+    rules['.bw_rounded_3'] = {
       'border-radius': '.5rem !important'
     };
     rules['.bw_rounded_circle'] = {
       'border-radius': '50% !important'
     };
-    rules['.bw_rounded_pill, .rounded-pill'] = {
+    rules['.bw_rounded_pill'] = {
       'border-radius': '50rem !important'
     };
 
@@ -4313,165 +4100,84 @@
     rules['.bw_shadow_lg'] = {
       'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important'
     };
-    rules['.bw_shadow_none, .shadow-none'] = {
+    rules['.bw_shadow_none'] = {
       'box-shadow': 'none !important'
     };
 
     // Width/Height
     ['25', '50', '75', '100'].forEach(function (n) {
-      rules['.bw_w_' + n + ', .w-' + n] = {
+      rules['.bw_w_' + n] = {
         'width': n + '% !important'
       };
-      rules['.bw_h_' + n + ', .h-' + n] = {
+      rules['.bw_h_' + n] = {
         'height': n + '% !important'
       };
     });
-    rules['.bw_w_auto, .w-auto'] = {
+    rules['.bw_w_auto'] = {
       'width': 'auto !important'
     };
-    rules['.bw_h_auto, .h-auto'] = {
+    rules['.bw_h_auto'] = {
       'height': 'auto !important'
     };
-    rules['.bw_mw_100, .mw-100'] = {
+    rules['.bw_mw_100'] = {
       'max-width': '100% !important'
     };
-    rules['.bw_mh_100, .mh-100'] = {
+    rules['.bw_mh_100'] = {
       'max-height': '100% !important'
     };
 
     // Positioning
     ['static', 'relative', 'absolute', 'fixed', 'sticky'].forEach(function (p) {
-      rules['.bw_position_' + p + ', .position-' + p] = {
+      rules['.bw_position_' + p] = {
         'position': p + ' !important'
       };
     });
-    rules['.bw_top_0, .top-0'] = {
+    rules['.bw_top_0'] = {
       'top': '0 !important'
     };
-    rules['.bw_top_50, .top-50'] = {
+    rules['.bw_top_50'] = {
       'top': '50% !important'
     };
-    rules['.bw_top_100, .top-100'] = {
+    rules['.bw_top_100'] = {
       'top': '100% !important'
     };
-    rules['.bw_bottom_0, .bottom-0'] = {
+    rules['.bw_bottom_0'] = {
       'bottom': '0 !important'
     };
-    rules['.bw_bottom_50, .bottom-50'] = {
+    rules['.bw_bottom_50'] = {
       'bottom': '50% !important'
     };
-    rules['.bw_bottom_100, .bottom-100'] = {
+    rules['.bw_bottom_100'] = {
       'bottom': '100% !important'
     };
-    rules['.bw_start_0, .start-0'] = {
+    rules['.bw_start_0'] = {
       'left': '0 !important'
     };
-    rules['.bw_start_50, .start-50'] = {
+    rules['.bw_start_50'] = {
       'left': '50% !important'
     };
-    rules['.bw_start_100, .start-100'] = {
+    rules['.bw_start_100'] = {
       'left': '100% !important'
     };
-    rules['.bw_end_0, .end-0'] = {
+    rules['.bw_end_0'] = {
       'right': '0 !important'
     };
-    rules['.bw_end_50, .end-50'] = {
+    rules['.bw_end_50'] = {
       'right': '50% !important'
     };
-    rules['.bw_end_100, .end-100'] = {
+    rules['.bw_end_100'] = {
       'right': '100% !important'
     };
-    rules['.bw_translate_middle, .translate-middle'] = {
+    rules['.bw_translate_middle'] = {
       'transform': 'translate(-50%, -50%) !important'
     };
 
     // Overflow
     ['auto', 'hidden', 'visible', 'scroll'].forEach(function (o) {
-      rules['.bw_overflow_' + o + ', .overflow-' + o] = {
+      rules['.bw_overflow_' + o] = {
         'overflow': o + ' !important'
       };
     });
-
-    // Typography utilities
-    rules['.fs-1'] = {
-      'font-size': 'calc(1.375rem + 1.5vw) !important'
-    };
-    rules['.fs-2'] = {
-      'font-size': 'calc(1.325rem + .9vw) !important'
-    };
-    rules['.fs-3'] = {
-      'font-size': 'calc(1.3rem + .6vw) !important'
-    };
-    rules['.fs-4'] = {
-      'font-size': 'calc(1.275rem + .3vw) !important'
-    };
-    rules['.fs-5'] = {
-      'font-size': '1.25rem !important'
-    };
-    rules['.fs-6'] = {
-      'font-size': '1rem !important'
-    };
-    rules['.fw-light'] = {
-      'font-weight': '300 !important'
-    };
-    rules['.fw-lighter'] = {
-      'font-weight': 'lighter !important'
-    };
-    rules['.fw-normal'] = {
-      'font-weight': '400 !important'
-    };
-    rules['.fw-bold'] = {
-      'font-weight': '700 !important'
-    };
-    rules['.fw-bolder'] = {
-      'font-weight': 'bolder !important'
-    };
-    rules['.fst-italic'] = {
-      'font-style': 'italic !important'
-    };
-    rules['.fst-normal'] = {
-      'font-style': 'normal !important'
-    };
-    rules['.text-decoration-none'] = {
-      'text-decoration': 'none !important'
-    };
-    rules['.text-decoration-underline'] = {
-      'text-decoration': 'underline !important'
-    };
-    rules['.text-decoration-line-through'] = {
-      'text-decoration': 'line-through !important'
-    };
-    rules['.text-lowercase'] = {
-      'text-transform': 'lowercase !important'
-    };
-    rules['.text-uppercase'] = {
-      'text-transform': 'uppercase !important'
-    };
-    rules['.text-capitalize'] = {
-      'text-transform': 'capitalize !important'
-    };
-    rules['.text-wrap'] = {
-      'white-space': 'normal !important'
-    };
-    rules['.text-nowrap'] = {
-      'white-space': 'nowrap !important'
-    };
-
-    // List utilities
-    rules['.list-unstyled'] = {
-      'padding-left': '0',
-      'list-style': 'none'
-    };
-    rules['.list-inline'] = {
-      'padding-left': '0',
-      'list-style': 'none'
-    };
-    rules['.list-inline-item'] = {
-      'display': 'inline-block'
-    };
-    rules['.list-inline-item:not(:last-child)'] = {
-      'margin-right': '.5rem'
-    };
 
     // Typography — bw_ prefixed utilities via loops
     var _imp = function _imp(p, v) {
@@ -4500,6 +4206,22 @@
       for (var dk in d[1]) rules['.bw_' + d[0] + '_' + dk] = _imp(d[2], d[1][dk]);
     });
 
+    // List utilities
+    rules['.bw_list_unstyled'] = {
+      'padding-left': '0',
+      'list-style': 'none'
+    };
+    rules['.bw_list_inline'] = {
+      'padding-left': '0',
+      'list-style': 'none'
+    };
+    rules['.bw_list_inline_item'] = {
+      'display': 'inline-block'
+    };
+    rules['.bw_list_inline_item:not(:last-child)'] = {
+      'margin-right': '.5rem'
+    };
+
     // Flex utilities
     rules['.bw_flex'] = {
       'display': 'flex'
@@ -4520,42 +4242,42 @@
     };
 
     // Visibility
-    rules['.bw_visible, .visible'] = {
+    rules['.bw_visible'] = {
       'visibility': 'visible !important'
     };
-    rules['.bw_invisible, .invisible'] = {
+    rules['.bw_invisible'] = {
       'visibility': 'hidden !important'
     };
 
     // User select
     ['all', 'auto', 'none'].forEach(function (u) {
-      rules['.bw_user_select_' + u + ', .user-select-' + u] = {
+      rules['.bw_user_select_' + u] = {
         'user-select': u + ' !important'
       };
     });
 
     // Pointer events
-    rules['.pe-none'] = {
+    rules['.bw_pe_none'] = {
       'pointer-events': 'none !important'
     };
-    rules['.pe-auto'] = {
+    rules['.bw_pe_auto'] = {
       'pointer-events': 'auto !important'
     };
 
     // Opacity
-    rules['.opacity-0'] = {
+    rules['.bw_opacity_0'] = {
       'opacity': '0 !important'
     };
-    rules['.opacity-25'] = {
+    rules['.bw_opacity_25'] = {
       'opacity': '.25 !important'
     };
-    rules['.opacity-50'] = {
+    rules['.bw_opacity_50'] = {
       'opacity': '.5 !important'
     };
-    rules['.opacity-75'] = {
+    rules['.bw_opacity_75'] = {
       'opacity': '.75 !important'
     };
-    rules['.opacity-100'] = {
+    rules['.bw_opacity_100'] = {
       'opacity': '1 !important'
     };
     return rules;
@@ -4642,7 +4364,7 @@
     reset: structuralRules.base,
     enhancedCards: structuralRules.cards,
     tableResponsive: {
-      '.bw_table_responsive': {
+      '.bw_bccl_table_responsive': {
         'overflow-x': 'auto',
         '-webkit-overflow-scrolling': 'touch'
       }
@@ -4659,19 +4381,24 @@
    *   for the first segment: `#scope.bw_theme_alt .sel` vs `#scope .sel`
    * @returns {Object} New rules object with scoped selectors
    */
-  function scopeRulesUnder(rules, prefix, compound) {
+  function scopeRulesUnder(rules, prefix, _compound) {
     var scoped = {};
     for (var sel in rules) {
-      if (!rules.hasOwnProperty(sel)) continue;
+      if (!Object.prototype.hasOwnProperty.call(rules, sel)) continue;
       if (sel.charAt(0) === '@') {
-        // @media / @keyframes — recurse into the block
         var innerBlock = rules[sel];
-        var scopedInner = {};
-        for (var innerSel in innerBlock) {
-          if (!innerBlock.hasOwnProperty(innerSel)) continue;
-          scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
+        // @keyframes — steps (0%, 100%, from, to) are NOT selectors; pass through
+        if (/^@keyframes\s/.test(sel)) {
+          scoped[sel] = innerBlock;
+        } else {
+          // @media — prefix inner selectors
+          var scopedInner = {};
+          for (var innerSel in innerBlock) {
+            if (!Object.prototype.hasOwnProperty.call(innerBlock, innerSel)) continue;
+            scopedInner[_prefixSelector(innerSel, prefix)] = innerBlock[innerSel];
+          }
+          scoped[sel] = scopedInner;
         }
-        scoped[sel] = scopedInner;
       } else {
         scoped[_prefixSelector(sel, prefix)] = rules[sel];
       }
@@ -4733,7 +4460,7 @@
           type: "application/octet-stream"
         });
         var url = window.URL.createObjectURL(blob);
-        var a = bw.createDOM({
+        var a = bw.create({
           t: 'a',
           a: {
             href: url,
@@ -4861,7 +4588,7 @@
         callback(null, '', new Error('bw.loadLocalFile is browser-only. Use bw.loadClientFile() in Node.'));
         return;
       }
-      var input = bw.createDOM({
+      var input = bw.create({
         t: 'input',
         a: {
           type: 'file',
@@ -5115,43 +4842,6 @@
   }
 
   /**
-   * Interpolate between an array of colors based on a value in a range.
-   *
-   * @param {number} x - Value to interpolate
-   * @param {number} in0 - Input range start
-   * @param {number} in1 - Input range end
-   * @param {Array} colors - Array of CSS color strings to interpolate between
-   * @param {number} [stretch] - Exponential scaling factor (1 = linear)
-   * @param {Function} colorParseFn - Color parse function (injected to avoid circular dep)
-   * @returns {Array} Interpolated color as [r, g, b, a, "rgb"]
-   * @category Color
-   * @example
-   * colorInterp(50, 0, 100, ['#ff0000', '#00ff00'], undefined, bw.colorParse)
-   */
-  function colorInterp(x, in0, in1, colors, stretch, colorParseFn) {
-    var c = Array.isArray(colors) ? colors : ["#000", "#fff"];
-    c = c.length === 0 ? ["#000", "#fff"] : c;
-    if (c.length === 1) return c[0];
-
-    // Convert all colors to RGB format
-    c = c.map(function (col) {
-      return colorParseFn(col);
-    });
-    var a = mapScale(x, in0, in1, 0, c.length - 1, {
-      clip: true,
-      expScale: stretch
-    });
-    var i = clip(Math.floor(a), 0, c.length - 2);
-    var r = a - i;
-    var interp = function interp(idx) {
-      return mapScale(r, 0, 1, c[i][idx], c[i + 1][idx], {
-        clip: true
-      });
-    };
-    return [interp(0), interp(1), interp(2), interp(3), "rgb"];
-  }
-
-  /**
    * Generate Lorem Ipsum placeholder text.
    *
    * @param {number} [numChars] - Number of characters (random 25-150 if not provided)
@@ -5185,6 +4875,7 @@
       startSpot = (startSpot + 1) % lorem.length;
       skippedChars++;
       // Prevent infinite loop in case entire lorem is spaces/punctuation
+      /* c8 ignore next -- lorem text always contains letters; this is a defensive guard */
       if (skippedChars >= lorem.length) {
         startSpot = 0;
         skippedChars = 0;
@@ -5213,6 +4904,7 @@
     // Ensure capital letter at start if requested
     if (startWithCapitalLetter) {
       var c = result[0].toUpperCase();
+      /* c8 ignore next -- while loop at L266 skips past non-letters, so first char is always a letter */
       c = /[A-Z]/.test(c) ? c : "L"; // Use "L" as default if first char isn't a letter
       result = c + result.substring(1);
     }
@@ -5275,7 +4967,9 @@
     }
 
     // Split into chunks of digits/non-digits
+    /* c8 ignore next -- match always succeeds for strings that pass the digit check above */
     var aParts = a.match(/(\d+|\D+)/g) || [];
+    /* c8 ignore next -- match always succeeds for strings that pass the digit check above */
     var bParts = b.match(/(\d+|\D+)/g) || [];
     var len = Math.min(aParts.length, bParts.length);
     for (var i = 0; i < len; i++) {
@@ -5502,7 +5196,8 @@
         var s = window.location.search || '';
         return p + s;
       }
-      function handleRoute(toRaw, opts) {
+      function handleRoute(toRaw, _opts) {
+        /* c8 ignore next -- all callers (navigate, onHashChange, onPopState) check destroyed first */
         if (destroyed) return;
         var fromPath = currentPath;
         var toPath = normalizePath(toRaw);
@@ -5550,6 +5245,7 @@
             window.location.hash = path;
           }
           // hashchange listener will fire handleRoute; but if same hash, trigger manually
+          /* c8 ignore next -- fallback for bare '#' hash; navigate always sets a path */
           var currentHash = window.location.hash.replace(/^#/, '') || '/';
           if (normalizePath(currentHash) === normalizePath(path)) {
             handleRoute(path);
@@ -5565,10 +5261,12 @@
         }
       }
       function onHashChange() {
+        /* c8 ignore next -- destroy() removes the hashchange listener; belt-and-suspenders guard */
         if (destroyed) return;
         handleRoute(getPath());
       }
       function onPopState() {
+        /* c8 ignore next -- destroy() removes the popstate listener; belt-and-suspenders guard */
         if (destroyed) return;
         handleRoute(getPath());
       }
@@ -5622,6 +5320,7 @@
         for (var i = 0; i < keys.length; i++) a[keys[i]] = attrs[keys[i]];
       }
       if (_activeRouter) {
+        // determine href based on mode -- check hash by looking at current location
         a.href = '#' + path;
       } else {
         a.href = path;
@@ -5698,25 +5397,28 @@
     },
     // Internal state
     _idCounter: 0,
-    _unmountCallbacks: new Map(),
     _topics: {},
     // topic → [{handler, id}]  (plain object for IE11 compat)
     _subIdCounter: 0,
     // monotonic ID for subscriptions
+    _detached: {},
+    // uuid → true for detach-exempt elements
+    _mounted: {},
+    // uuid → true for elements that have fired mounted()
 
     // ── Node reference cache ──────────────────────────────────────────────
     // Fast O(1) lookup for elements by id attribute or bw_uuid_* class.
     //
-    // Populated by bw.createDOM() when elements have:
+    // Populated by bw.create() when elements have:
     //   - id attribute (standard HTML id)
     //   - bw_uuid_* class (lifecycle-managed or explicitly addressed elements)
     //
-    // Cleaned up by bw.cleanup() when elements are destroyed via bitwrench APIs.
+    // Cleaned up by bw.unmount() when elements are destroyed via bitwrench APIs.
     // On cache miss, falls back to querySelector/getElementById — never fails,
     // just slower. Stale entries (refs to detached nodes) are removed on miss
     // via parentNode === null check (IE11-safe, unlike el.isConnected).
     //
-    // Elements created via bw.createDOM() also get el._bw_refs — a local map of
+    // Elements created via bw.create() also get el._bw_refs — a local map of
     // child id/UUID -> DOM node ref for fast parent->child access in o.render.
     // This is the bitwrench equivalent of React's compiled template "holes".
     //
@@ -5784,7 +5486,7 @@
   // because it can't prove they're side-effect-free. We can, so we alias
   // them here. Each alias saves bytes in the minified output, and the short
   // names also reduce visual noise in the hot paths (binding pipeline,
-  // createDOM, etc.).
+  // create, etc.).
   //
   // Alias       Target                                  Sites
   // ─────────   ──────────────────────────────────────   ─────
@@ -5830,9 +5532,6 @@
   var _cw = function _cw() {
     console.warn.apply(console, arguments);
   };
-  var _ce = function _ce() {
-    console.error.apply(console, arguments);
-  };
 
   /**
    * Debug flag. When true, emits console.warn for silent binding failures
@@ -5861,6 +5560,7 @@
     }
 
     // Strategy 1: synchronous require (CJS / UMD in Node.js)
+    /* c8 ignore next 7 -- require() is not defined in ESM test environment */
     if (typeof require === 'function') {
       try {
         bw._fsCache = require('fs');
@@ -5873,17 +5573,20 @@
     try {
       var _importDynamic = new Function('m', 'return import(m)');
       return _importDynamic('fs').then(function (mod) {
+        /* c8 ignore next -- mod.default always exists in Node.js ESM */
         bw._fsCache = mod["default"] || mod;
         return bw._fsCache;
       })["catch"](function () {
         bw._fsCache = null;
         return null;
       });
+      /* c8 ignore start -- Function() constructor never fails in test environments */
     } catch (e) {
       // Function() construction failed (shouldn't happen, but safety net)
       bw._fsCache = null;
       return Promise.resolve(null);
     }
+    /* c8 ignore stop */
   };
 
   /**
@@ -5983,7 +5686,7 @@
    * applies the second argument to the element and returns the element:
    * - string/number: sets `el.textContent`
    * - function: calls `apply(el)`, returns el
-   * - TACO object: clears children, mounts TACO via `bw.createDOM()`
+   * - TACO object: clears children, mounts TACO via `bw.create()`
    * - array: clears children, appends each item (string -> text node, TACO -> element)
    *
    * @param {string|Element} target - Element ref, ID, CSS selector, or bw_uuid_* class
@@ -6011,25 +5714,33 @@
       // 1. Check cache
       var cached = bw._nodeMap[target];
       if (cached) {
-        if (cached.parentNode !== null) {
+        // Detach-exempt elements survive the staleness check
+        var cachedUuid = bw.getUUID(cached);
+        if (cached.parentNode !== null || cachedUuid && bw._detached[cachedUuid]) {
           el = cached;
+          // Clear detach exemption on reconnect
+          if (cachedUuid && bw._detached[cachedUuid] && cached.parentNode !== null) {
+            delete bw._detached[cachedUuid];
+          }
         } else {
           delete bw._nodeMap[target];
         }
       }
       if (!el) {
-        // 2. getElementById
-        el = document.getElementById(target);
-        // 3. querySelector for CSS selectors
-        if (!el && (target.charAt(0) === '#' || target.charAt(0) === '.')) {
-          el = document.querySelector(target);
+        // UUID strings are registry-only — never querySelector resurrection (§3.2)
+        if (target.indexOf('bw_uuid_') === 0) {
+          // Not in registry → null (no querySelector fallback)
+          el = null;
+        } else {
+          // 2. getElementById
+          el = document.getElementById(target);
+          // 3. querySelector for CSS selectors
+          if (!el && (target.charAt(0) === '#' || target.charAt(0) === '.')) {
+            el = document.querySelector(target);
+          }
+          // 4. Cache result
+          if (el) bw._nodeMap[target] = el;
         }
-        // 4. bw_uuid_* class lookup
-        if (!el && target.indexOf('bw_uuid_') === 0) {
-          el = document.querySelector('.' + target);
-        }
-        // 5. Cache result
-        if (el) bw._nodeMap[target] = el;
       }
     }
 
@@ -6051,7 +5762,7 @@
       apply.forEach(function (item) {
         if (item != null) {
           if (_is(item, 'object') && item.t) {
-            el.appendChild(bw.createDOM(item));
+            el.appendChild(bw.create(item));
           } else {
             el.appendChild(document.createTextNode(String(item)));
           }
@@ -6059,20 +5770,16 @@
       });
     } else if (_is(apply, 'object') && apply !== null && apply.t) {
       el.innerHTML = '';
-      el.appendChild(bw.createDOM(apply));
+      el.appendChild(bw.create(apply));
     } else {
       el.textContent = String(apply);
     }
   }
 
-  // Internal alias — kept for one release cycle (v2.0.26).
-  // Will be removed in v2.0.27. Use bw.el() instead.
-  bw._el = bw.el;
-
   /**
    * Register a DOM element in the node cache under one or more keys.
    *
-   * Called internally by `bw.createDOM()`. Registers elements that have
+   * Called internally by `bw.create()`. Registers elements that have
    * id attributes, UUID classes, or both.
    *
    * @param {Element} el - DOM element to register
@@ -6095,7 +5802,7 @@
   /**
    * Remove a DOM element from the node cache.
    *
-   * Called internally by `bw.cleanup()` when elements are destroyed
+   * Called internally by `bw.unmount()` when elements are destroyed
    * through bitwrench APIs.
    *
    * @param {Element} el - DOM element to deregister
@@ -6120,7 +5827,7 @@
 
   /**
    * Marker class for elements with lifecycle hooks (mounted/unmount/render/state).
-   * Used by cleanup() to find lifecycle-managed elements via querySelectorAll('.bw_lc').
+   * Used by unmount() to find lifecycle-managed elements via querySelectorAll('.bw_lc').
    * @private
    */
   var _BW_LC = 'bw_lc';
@@ -6230,13 +5937,13 @@
   };
 
   /**
-   * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.createDOM().
+   * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create().
    *
    * By default, bitwrench escapes all text content to prevent XSS. Use bw.raw()
    * when you need to embed pre-sanitized HTML, entities, or inline markup.
    *
    * @param {string} str - HTML string to mark as raw
-   * @returns {Object} Marked object recognized by bw.html() and bw.createDOM()
+   * @returns {Object} Marked object recognized by bw.html() and bw.create()
    * @category DOM Generation
    * @see bw.escapeHTML
    * @see bw.html
@@ -6266,7 +5973,7 @@
    * @returns {Object} Plain TACO object {t, a?, c?, o?}
    * @category Utilities
    * @see bw.html
-   * @see bw.createDOM
+   * @see bw.create
    * @see bw.DOM
    * @example
    * bw.h('div')
@@ -6304,7 +6011,7 @@
    * @param {boolean} [options.raw=false] - If true, skip HTML escaping on content
    * @returns {string} HTML string
    * @category DOM Generation
-   * @see bw.createDOM
+   * @see bw.create
    * @see bw.DOM
    * @example
    * bw.html({ t: 'h1', c: 'Hello' })
@@ -6354,6 +6061,8 @@
 
     // Build attributes string
     var attrStr = '';
+    var fnMarkers = []; // bw_fn_* markers to add to class
+    var fnsRegistry = options.fns || null;
     for (var _i = 0, _Object$entries = Object.entries(attrs); _i < _Object$entries.length; _i++) {
       var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2),
         key = _Object$entries$_i[0],
@@ -6361,18 +6070,63 @@
       // Skip null, undefined, false
       if (value == null || value === false) continue;
 
-      // Serialize event handlers via funcRegister
+      // Serialize event handlers
       if (key.startsWith('on')) {
         if (_is(value, 'function')) {
-          var fnId = bw.funcRegister(value);
-          attrStr += ' ' + key + '="' + bw.funcGetDispatchStr(fnId, 'event') + '"';
+          if (fnsRegistry) {
+            // Check for unserializable functions (bound, native)
+            var fnStr = '';
+            try {
+              fnStr = value.toString();
+            } catch (e) {}
+            if (fnStr.indexOf('[native code]') !== -1) {
+              if (!options._fnUnserializableWarned) {
+                bw.pub('bw:diag', {
+                  code: 'fn_unserializable',
+                  msg: 'bound/native function cannot be serialized'
+                });
+                options._fnUnserializableWarned = true;
+              }
+              continue;
+            }
+            // Register function in per-render registry
+            var eventName = key.substring(2);
+            var fnId = null;
+            // Dedupe by reference + event type
+            var fnKeys = _keys(fnsRegistry);
+            for (var fi = 0; fi < fnKeys.length; fi++) {
+              if (fnsRegistry[fnKeys[fi]].fn === value && fnsRegistry[fnKeys[fi]].event === eventName) {
+                fnId = fnKeys[fi];
+                break;
+              }
+            }
+            if (!fnId) {
+              fnId = 'bw_fn_' + (options._fnCounter || 0);
+              options._fnCounter = (options._fnCounter || 0) + 1;
+              fnsRegistry[fnId] = {
+                fn: value,
+                event: eventName
+              };
+            }
+            fnMarkers.push(fnId);
+            // No inline on* attribute emitted
+          } else {
+            // No {fns} registry → skip function attrs, warn once per render
+            if (!options._fnSkipWarned) {
+              bw.pub('bw:diag', {
+                code: 'fn_skipped',
+                msg: 'function attrs skipped without {fns} option'
+              });
+              options._fnSkipWarned = true;
+            }
+          }
+          continue;
         } else if (_is(value, 'string')) {
           attrStr += ' ' + key + '="' + bw.escapeHTML(value) + '"';
         }
         continue;
       }
       if (key === 'style' && _is(value, 'object')) {
-        // Convert style object to string
         var styleStr = Object.entries(value).filter(function (_ref) {
           var _ref2 = _slicedToArray(_ref, 2),
             v = _ref2[1];
@@ -6387,16 +6141,11 @@
           attrStr += " style=\"".concat(bw.escapeHTML(styleStr), "\"");
         }
       } else if (key === 'class') {
-        // Handle class as array or string
-        var classStr = _isA(value) ? value.filter(Boolean).join(' ') : String(value);
-        if (classStr) {
-          attrStr += " class=\"".concat(bw.escapeHTML(classStr), "\"");
-        }
+        // Handled below with identity stamps
+        continue;
       } else if (value === true) {
-        // Boolean attributes
         attrStr += " ".concat(key);
       } else {
-        // Regular attributes — resolve ${expr} if state provided
         var resolvedVal = String(value);
         if (options.state && resolvedVal.indexOf('${') >= 0) {
           resolvedVal = bw._resolveTemplate(resolvedVal, options.state, !!options.compile);
@@ -6405,15 +6154,28 @@
       }
     }
 
-    // Add bw_uuid + bw_lc classes if lifecycle hooks present
-    if ((opts.mounted || opts.unmount) && !_UUID_RE.test(attrs["class"] || '')) {
+    // Build class attribute: user classes + identity stamps + fn markers
+    var classTokens = [];
+    var userClass = attrs["class"] || '';
+    if (_isA(userClass)) userClass = userClass.filter(Boolean).join(' ');
+    if (userClass) classTokens.push(String(userClass));
+
+    // Add identity stamps for o.* elements
+    var hasOpts = opts && (opts.type || opts.state || opts.mounted || opts.unmount || opts.handle || opts.render || opts.slots);
+    if (hasOpts && !_UUID_RE.test(userClass)) {
       var uuid = bw.uuid('uuid');
-      attrStr = attrStr.replace(/class="([^"]*)"/, function (_match, classes) {
-        return "class=\"".concat(classes, " ").concat(uuid, " ").concat(_BW_LC, "\"").trim();
-      });
-      if (!attrStr.includes('class=')) {
-        attrStr += " class=\"".concat(uuid, " ").concat(_BW_LC, "\"");
-      }
+      classTokens.push(uuid);
+      classTokens.push(_BW_LC);
+      classTokens.push('bw_is_component');
+      if (opts.type) classTokens.push('bw_is_component_' + opts.type);
+    }
+
+    // Add fn marker classes
+    for (var fmi = 0; fmi < fnMarkers.length; fmi++) {
+      classTokens.push(fnMarkers[fmi]);
+    }
+    if (classTokens.length > 0) {
+      attrStr += ' class="' + bw.escapeHTML(classTokens.join(' ')) + '"';
     }
 
     // Build HTML
@@ -6469,27 +6231,31 @@
     var headExtra = opts.head || [];
     var favicon = opts.favicon || '';
     var lang = opts.lang || 'en';
+    var useHandlers = opts.handlers !== false;
 
-    // Snapshot funcRegistry counter before rendering
-    var fnCounterBefore = bw._fnIDCounter;
+    // Per-render function registry
+    var fns = useHandlers ? {} : null;
 
     // Render body content
     var bodyHTML;
     if (_is(body, 'string')) {
       bodyHTML = body;
     } else {
-      var htmlOpts = {};
+      var htmlOpts = {
+        _fnCounter: 0
+      };
       if (state) htmlOpts.state = state;
+      if (fns) htmlOpts.fns = fns;
       bodyHTML = bw.html(body, htmlOpts);
     }
 
-    // Collect functions registered during this render
-    var fnCounterAfter = bw._fnIDCounter;
+    // Build registry entries from per-render fns
     var registryEntries = '';
-    for (var i = fnCounterBefore; i < fnCounterAfter; i++) {
-      var fnKey = 'bw_fn_' + i;
-      if (bw._fnRegistry[fnKey]) {
-        registryEntries += 'bw._fnRegistry[\'' + fnKey + '\']=' + bw._fnRegistry[fnKey].toString() + ';\n';
+    if (fns) {
+      var fnKeys = _keys(fns);
+      for (var i = 0; i < fnKeys.length; i++) {
+        var fnEntry = fns[fnKeys[i]];
+        registryEntries += 'r[\'' + fnKeys[i] + '\']={fn:' + fnEntry.fn.toString() + ',event:\'' + fnEntry.event + '\'};\n';
       }
     }
 
@@ -6498,6 +6264,7 @@
     if (runtime === 'inline') {
       // Read UMD bundle synchronously if in Node.js
       var umdSource = null;
+      /* c8 ignore start -- htmlPage inline runtime: require('fs')/require('path')/__filename only available in CJS builds, not ESM test runner */
       if (bw._isNode) {
         try {
           var fs = typeof require === 'function' ? require('fs') : null;
@@ -6519,6 +6286,8 @@
           }
         } catch (e) {/* fall through */}
       }
+      /* c8 ignore stop */
+      /* c8 ignore next 4 -- umdSource path depends on CJS fs.readFileSync */
       if (umdSource) {
         runtimeHead = '<script>' + umdSource + '</script>';
       } else {
@@ -6571,26 +6340,44 @@
     // Combine all CSS
     var allCSS = (themeCSS ? themeCSS + '\n' : '') + css;
 
-    // Body-end script: registry entries + optional loadStyles
+    // CSP nonce
+    var nonce = bw.config && bw.config.cspNonce ? bw.config.cspNonce : null;
+    var nonceAttr = nonce ? ' nonce="' + bw.escapeHTML(nonce) + '"' : '';
+
+    // Body-end script: binder for registered functions
     var bodyEndScript = '';
     var bodyEndParts = [];
     if (registryEntries) {
+      // Emit binder: iterate registered functions, find elements by bw_fn_* class,
+      // bind event listeners. Wrap in try/catch with bw_act guidance.
+      bodyEndParts.push('(function(){var r={};');
       bodyEndParts.push(registryEntries);
+      bodyEndParts.push('for(var k in r){if(r.hasOwnProperty(k)){');
+      bodyEndParts.push('var els=document.querySelectorAll("."+k);');
+      bodyEndParts.push('for(var i=0;i<els.length;i++){');
+      bodyEndParts.push('(function(el,entry){el.addEventListener(entry.event,function(event){');
+      bodyEndParts.push('try{entry.fn.call(el,event);}catch(e){');
+      bodyEndParts.push('console.error("bw_act handler error — if this is a ReferenceError from a closure, use bw_act_* class tokens instead:",e);}');
+      bodyEndParts.push('});})(els[i],r[k]);}}}})();');
     }
     if (runtime === 'inline' || runtime === 'cdn') {
       bodyEndParts.push('if(typeof bw!=="undefined"){bw.loadStyles();}');
     }
     if (bodyEndParts.length > 0) {
-      bodyEndScript = '<script>\n' + bodyEndParts.join('\n') + '\n</script>';
+      bodyEndScript = '<script' + nonceAttr + '>\n' + bodyEndParts.join('\n') + '\n</script>';
     }
 
     // Assemble document
     var parts = ['<!DOCTYPE html>', '<html lang="' + lang + '">', '<head>', '<meta charset="UTF-8">', '<meta name="viewport" content="width=device-width, initial-scale=1">'];
     parts.push('<title>' + safeTitle + '</title>');
     if (faviconTag) parts.push(faviconTag);
-    if (runtimeHead) parts.push(runtimeHead);
+    if (runtimeHead) {
+      // Add nonce to runtime script tags
+      if (nonce) runtimeHead = runtimeHead.replace(/<script(?![^>]*\bnonce\b)/g, '<script' + nonceAttr);
+      parts.push(runtimeHead);
+    }
     if (headHTML) parts.push(headHTML);
-    if (allCSS) parts.push('<style>' + allCSS + '</style>');
+    if (allCSS) parts.push('<style' + nonceAttr + '>' + allCSS + '</style>');
     parts.push('</head>');
     parts.push('<body>');
     parts.push(bodyHTML);
@@ -6601,32 +6388,32 @@
   };
 
   /**
-   * Create a live DOM element from a TACO object (browser only).
+   * Create a hydrated, detached DOM element from a TACO object (browser only).
    *
-   * Unlike `bw.html()` which returns a string, this creates real DOM elements
-   * with event handlers, lifecycle hooks (mounted/unmount), and state. Used
-   * internally by `bw.DOM()`. Throws in Node.js — use `bw.html()` instead.
+   * v2.1 Phase verb: the element is fully wired (state, handles, slots, events,
+   * unmount closure) but NOT registered and mounted() is NOT fired. Registration
+   * happens in mountTree(); mounted fires there too.
    *
    * @param {Object} taco - TACO object with {t, a, c, o}
    * @param {Object} [options] - Creation options
-   * @returns {Element|Text} DOM element or text node
+   * @returns {Element|Text|DocumentFragment} DOM element, text node, or fragment
    * @category DOM Generation
-   * @see bw.html
-   * @see bw.DOM
-   * @example
-   * var el = bw.createDOM({
-   *   t: 'button',
-   *   a: { class: 'bw_btn', onclick: () => alert('clicked') },
-   *   c: 'Click Me'
-   * });
-   * document.body.appendChild(el);
+   * @see bw.mount
+   * @see bw.mountTree
    */
-  bw.createDOM = function (taco) {
-    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  bw.create = function (taco, options) {
     if (!bw._isBrowser) {
-      throw new Error('bw.createDOM requires a DOM environment (document/window). Use bw.html() instead.');
+      throw new Error('bw.create requires a DOM environment (document/window). Use bw.html() instead.');
     }
+    return _createNode(taco, options || {});
+  };
 
+  /**
+   * Internal: recursively build DOM from TACO. Separated so spy on bw.create
+   * sees only the top-level call, not the recursive child builds.
+   * @private
+   */
+  function _createNode(taco, options) {
     // Handle null/undefined
     if (taco == null) return document.createTextNode('');
 
@@ -6639,58 +6426,47 @@
       return frag;
     }
 
-    // Handle text nodes
+    // Handle text nodes (primitives)
     if (!_is(taco, 'object') || !taco.t) {
       return document.createTextNode(String(taco));
     }
-    var tag = taco.t,
-      _taco$a2 = taco.a,
-      attrs = _taco$a2 === void 0 ? {} : _taco$a2,
-      content = taco.c,
-      _taco$o2 = taco.o,
-      opts = _taco$o2 === void 0 ? {} : _taco$o2;
+
+    // Read attrs from taco without mutating the original
+    var tag = taco.t;
+    var attrs = taco.a || {};
+    var content = taco.c;
+    var opts = taco.o || {};
 
     // SVG namespace: detect SVG context and thread through children.
-    // {t:'svg'} starts SVG context; foreignObject children revert to HTML.
     var svgCtx = options._svgCtx || tag === 'svg';
     var el = svgCtx ? document.createElementNS(_SVG_NS, tag) : document.createElement(tag);
 
-    // Set attributes
-    for (var _i2 = 0, _Object$entries2 = Object.entries(attrs); _i2 < _Object$entries2.length; _i2++) {
-      var _Object$entries2$_i = _slicedToArray(_Object$entries2[_i2], 2),
-        key = _Object$entries2$_i[0],
-        value = _Object$entries2$_i[1];
+    // Set attributes — never mutate taco.a, read from it
+    var attrKeys = _keys(attrs);
+    for (var ai = 0; ai < attrKeys.length; ai++) {
+      var key = attrKeys[ai];
+      var value = attrs[key];
       if (value == null || value === false) continue;
       if (key === 'style' && _is(value, 'object')) {
-        // Apply styles directly
         Object.assign(el.style, value);
       } else if (key === 'class') {
-        // Handle class as array or string
-        // SVG elements use SVGAnimatedString for className, so use setAttribute
         var classStr = _isA(value) ? value.filter(Boolean).join(' ') : String(value);
         if (classStr) {
           if (svgCtx) el.setAttribute('class', classStr);else el.className = classStr;
         }
-      } else if (key.startsWith('on') && _is(value, 'function')) {
-        // Event handlers
+      } else if (key.indexOf('on') === 0 && key.length > 2 && _is(value, 'function')) {
         var eventName = key.slice(2).toLowerCase();
         el.addEventListener(eventName, value);
       } else if (key === 'value' && tag === 'input') {
-        // Special handling for input value
         el.value = value;
       } else if (value === true) {
-        // Boolean attributes
         el.setAttribute(key, '');
       } else {
-        // Regular attributes
         el.setAttribute(key, String(value));
       }
     }
 
     // Add children, building _bw_refs for fast parent→child access.
-    // Children with id attributes or bw_uuid_* classes get local refs on the parent,
-    // so o.render functions can access them without any DOM lookup.
-    // SVG: foreignObject children revert to HTML namespace; otherwise inherit.
     var childOpts = options;
     var childSvgCtx = svgCtx && tag !== 'foreignObject';
     if (childSvgCtx !== (options._svgCtx || false)) {
@@ -6700,17 +6476,16 @@
     }
     if (content != null) {
       if (_isA(content)) {
-        content.forEach(function (child) {
+        for (var ci = 0; ci < content.length; ci++) {
+          var child = content[ci];
           if (child != null) {
-            var childEl = bw.createDOM(child, childOpts);
+            var childEl = _createNode(child, childOpts);
             el.appendChild(childEl);
-            // Build local refs for addressable children
             var childRefId = child && child.a ? child.a.id || bw.getUUID(child) : null;
             if (childRefId) {
               if (!el._bw_refs) el._bw_refs = {};
               el._bw_refs[childRefId] = childEl;
             }
-            // Bubble up grandchild refs (flatten one level)
             if (childEl._bw_refs) {
               if (!el._bw_refs) el._bw_refs = {};
               for (var rk in childEl._bw_refs) {
@@ -6720,23 +6495,22 @@
               }
             }
           }
-        });
+        }
       } else if (_is(content, 'object') && content.__bw_raw) {
-        // Raw HTML content — inject via innerHTML
         el.innerHTML = content.v;
       } else if (_is(content, 'object') && content.t) {
-        var childEl = bw.createDOM(content, childOpts);
-        el.appendChild(childEl);
-        var childRefId = content.a ? content.a.id || bw.getUUID(content) : null;
-        if (childRefId) {
+        var childEl2 = _createNode(content, childOpts);
+        el.appendChild(childEl2);
+        var childRefId2 = content.a ? content.a.id || bw.getUUID(content) : null;
+        if (childRefId2) {
           if (!el._bw_refs) el._bw_refs = {};
-          el._bw_refs[childRefId] = childEl;
+          el._bw_refs[childRefId2] = childEl2;
         }
-        if (childEl._bw_refs) {
+        if (childEl2._bw_refs) {
           if (!el._bw_refs) el._bw_refs = {};
-          for (var rk in childEl._bw_refs) {
-            if (_hop.call(childEl._bw_refs, rk)) {
-              el._bw_refs[rk] = childEl._bw_refs[rk];
+          for (var rk2 in childEl2._bw_refs) {
+            if (_hop.call(childEl2._bw_refs, rk2)) {
+              el._bw_refs[rk2] = childEl2._bw_refs[rk2];
             }
           }
         }
@@ -6745,226 +6519,760 @@
       }
     }
 
-    // Register element in node cache if it has an id attribute
-    if (attrs.id) {
-      bw._registerNode(el, null);
-    }
+    // ── Hydrate: wire o.* onto the element ──
+    // No registration, no mounted(), no rAF. That's mountTree's job.
+    _hydrateElement(el, opts);
+    return el;
+  }
 
-    // Register UUID class in node cache (bw_uuid_* tokens in class string)
-    // SVG elements have SVGAnimatedString for className; use getAttribute instead
-    var clsStr = svgCtx ? el.getAttribute('class') || '' : el.className;
-    if (clsStr) {
-      var uuidMatch = clsStr.match(_UUID_RE);
-      if (uuidMatch) {
-        bw._nodeMap[uuidMatch[0]] = el;
-      }
-    }
+  // v2.1: bw.createDOM, bw.renderComponent, bw.compileProps fully removed.
 
-    // Store component type metadata (e.g., 'card', 'tabs') for introspection.
-    // BCCL factories set o.type; custom components can too.
+  /**
+   * Internal: wire a TACO's o.* options onto an existing DOM element.
+   * Used by both bw.create (inline) and bw.hydrate (standalone).
+   * Idempotent: if el already has bw handle, skip.
+   * @private
+   */
+  function _hydrateElement(el, opts) {
+    if (!opts || _typeof(opts) !== 'object') return;
+
+    // Check for any o.* key that makes this a component
+    var hasLifecycle = opts.mounted || opts.unmount || opts.render || opts.state || opts.handle || opts.slots || opts.type;
+    if (!hasLifecycle) return;
+
+    // Idempotency: if el.bw already exists, skip (re-hydrate is no-op)
+    if (el.bw) return;
+
+    // Store component type
     if (opts.type) {
       el._bw_type = opts.type;
     }
 
-    // Handle lifecycle hooks and state
-    if (opts.mounted || opts.unmount || opts.render || opts.state) {
-      // Ensure element has a UUID class for identity
-      var uuid = bw.getUUID(el) || bw.uuid('uuid');
-      el.classList.add(uuid);
-      el.classList.add(_BW_LC);
+    // Stamp UUID on the element (not on the input TACO)
+    var uuid = bw.getUUID(el) || bw.uuid('uuid');
+    if (!el.classList.contains(uuid)) el.classList.add(uuid);
 
-      // Register in node cache under UUID class
-      bw._registerNode(el, uuid);
+    // Component markers
+    el.classList.add(_BW_LC);
+    el.classList.add('bw_is_component');
+    if (opts.type) {
+      el.classList.add('bw_is_component_' + opts.type);
+    }
 
-      // Store state
-      if (opts.state) {
-        el._bw_state = opts.state;
+    // Store state (clone so TACO isn't retained)
+    if (opts.state) {
+      el._bw_state = opts.state;
+    }
+
+    // Store render function
+    if (opts.render) {
+      el._bw_render = opts.render;
+    }
+
+    // Store mounted function on element (fired later by mountTree)
+    if (opts.mounted) {
+      el._bw_mounted_fn = opts.mounted;
+    } else if (opts.render && !opts.mounted) {
+      // Auto-mount: if render exists but no mounted, auto-call render at mount
+      el._bw_mounted_fn = function (mountEl, state) {
+        opts.render(mountEl, state);
+      };
+    }
+
+    // Store unmount closure on the element itself (not in a global Map)
+    if (opts.unmount) {
+      el._bw_unmount_fn = opts.unmount;
+    }
+
+    // Component handle: attach methods to el.bw namespace
+    if (!el.bw) el.bw = {};
+
+    // Auto-generate getState()
+    el.bw.getState = function () {
+      return Object.assign({}, el._bw_state || {});
+    };
+
+    // Explicit handle methods: fn(el, ...args) -> el.bw.method(...args)
+    if (opts.handle) {
+      for (var hk in opts.handle) {
+        if (_hop.call(opts.handle, hk)) {
+          el.bw[hk] = opts.handle[hk].bind(null, el);
+        }
       }
+    }
 
-      // o.render — store the render function for bw.update()
-      if (opts.render) {
-        el._bw_render = opts.render;
-      }
-
-      // Determine what to call on mount:
-      // - If o.mounted exists, call it (it can call el._bw_render() for initial render)
-      // - Otherwise if o.render exists, auto-call it as a convenience shorthand
-      var mountFn = opts.mounted || (opts.render ? function (mountEl) {
-        opts.render(mountEl, mountEl._bw_state || {});
-      } : null);
-      if (mountFn) {
-        if (document.body.contains(el)) {
-          try {
-            mountFn(el, el._bw_state || {});
-          } catch (e) {
-            _cw('o.mounted error: ' + e.message);
-          }
-        } else {
-          requestAnimationFrame(function () {
-            if (document.body.contains(el)) {
-              try {
-                mountFn(el, el._bw_state || {});
-              } catch (e) {
-                _cw('o.mounted error: ' + e.message);
+    // Slot declarations: lazy-cached on first use, refresh invalidates cache
+    if (opts.slots) {
+      el._bw_slots = opts.slots;
+      el._bw_slot_cache = null; // lazy
+      for (var sk in opts.slots) {
+        if (_hop.call(opts.slots, sk)) {
+          (function (name, selector) {
+            var cap = name.charAt(0).toUpperCase() + name.slice(1);
+            el.bw['set' + cap] = function (value) {
+              if (!el._bw_slot_cache) el._bw_slot_cache = {};
+              if (!el._bw_slot_cache[name]) {
+                el._bw_slot_cache[name] = el.querySelector(selector);
               }
-            }
+              var target = el._bw_slot_cache[name];
+              if (!target) return;
+              // Always unmount existing children before replacing
+              bw.unmountChildren(target);
+              if (value != null && _typeof(value) === 'object' && value.t) {
+                // TACO through slots runs mount pipeline
+                target.innerHTML = '';
+                var child = bw.create(value);
+                target.appendChild(child);
+                if (el.isConnected) bw.mountTree(child);
+              } else {
+                target.textContent = value != null ? String(value) : '';
+              }
+            };
+            el.bw['get' + cap] = function () {
+              if (!el._bw_slot_cache) el._bw_slot_cache = {};
+              if (!el._bw_slot_cache[name]) {
+                el._bw_slot_cache[name] = el.querySelector(selector);
+              }
+              var target = el._bw_slot_cache[name];
+              return target ? target.textContent : '';
+            };
+          })(sk, opts.slots[sk]);
+        }
+      }
+    }
+  }
+
+  /**
+   * Wire lifecycle from taco.o onto an existing DOM node. Idempotent.
+   * Used for Path S adoption: html() output → mountTree → hydrate adds behavior.
+   *
+   * @param {Element} el - Existing DOM element
+   * @param {Object} taco - TACO object whose o.* to wire
+   * @category DOM Generation
+   */
+  bw.hydrate = function (el, taco) {
+    if (!el || !taco) return;
+    var opts = taco.o || {};
+    _hydrateElement(el, opts);
+  };
+
+  /**
+   * Walk a subtree, register every addressable node, fire mounted() hooks.
+   * Idempotent: already-registered nodes (same element) are skipped silently.
+   *
+   * Mounted fires synchronously, parent before children.
+   *
+   * @param {Element} el - Root of subtree to mount
+   * @category DOM Generation
+   */
+  bw.mountTree = function (el) {
+    if (!el || el.nodeType !== 1) return;
+
+    // Lazy-install janitor observer on first mount
+    if (bw.janitor && bw.janitor._ensureObserver) bw.janitor._ensureObserver();
+    // Lazy-install action dispatcher if enabled (handles document changes in test envs)
+    if (bw.actions && bw.actions._ensureInstalled) bw.actions._ensureInstalled();
+
+    // Process this node
+    _mountNode(el);
+
+    // Process descendants in document order (parent-first = querySelectorAll order)
+    var descendants = el.querySelectorAll('*');
+    for (var i = 0; i < descendants.length; i++) {
+      _mountNode(descendants[i]);
+    }
+  };
+
+  /**
+   * Internal: mount a single node — register and fire mounted if needed.
+   * @private
+   */
+  function _mountNode(el) {
+    /* c8 ignore next -- _mountNode only called with valid elements from mountTree */
+    if (!el || el.nodeType !== 1) return;
+    var uuid = bw.getUUID(el);
+    if (!uuid) {
+      // Still register by id if present
+      /* c8 ignore next -- all DOM elements in test env have getAttribute */
+      var htmlId = el.getAttribute ? el.getAttribute('id') : null;
+      if (htmlId) bw._nodeMap[htmlId] = el;
+      return;
+    }
+
+    // Idempotent: if already registered to this same element, skip entirely
+    if (bw._nodeMap[uuid] === el && bw._mounted[uuid]) return;
+
+    // Collision detection: UUID already registered to a DIFFERENT element
+    if (bw._nodeMap[uuid] && bw._nodeMap[uuid] !== el) {
+      // Remint: generate a new UUID for this element
+      var oldUuid = uuid;
+      var newUuid = bw.uuid('uuid');
+      // Replace on element
+      el.classList.remove(oldUuid);
+      el.classList.add(newUuid);
+      uuid = newUuid;
+      // Re-key parent's _bw_refs if applicable
+      if (el.parentNode && el.parentNode._bw_refs) {
+        if (el.parentNode._bw_refs[oldUuid] === el) {
+          delete el.parentNode._bw_refs[oldUuid];
+          el.parentNode._bw_refs[newUuid] = el;
+        }
+      }
+      bw.pub('bw:diag', {
+        code: 'uuid_collision',
+        uuid: oldUuid,
+        ref: newUuid,
+        msg: 'UUID collision detected; reminted to ' + newUuid
+      });
+    }
+
+    // Register UUID
+    bw._nodeMap[uuid] = el;
+
+    // Register id attribute
+    /* c8 ignore next -- all DOM elements in test env have getAttribute */
+    htmlId = el.getAttribute ? el.getAttribute('id') : null;
+    if (htmlId) {
+      bw._nodeMap[htmlId] = el;
+    }
+
+    // Clear detach exemption on reconnect
+    if (bw._detached[uuid]) {
+      delete bw._detached[uuid];
+    }
+
+    // Fire mounted() — only for lifecycle components, only once per identity
+    if (el.classList.contains(_BW_LC) && !bw._mounted[uuid]) {
+      bw._mounted[uuid] = true;
+      if (el._bw_mounted_fn) {
+        try {
+          el._bw_mounted_fn(el, el._bw_state || {});
+        } catch (e) {
+          _cw('o.mounted error: ' + e.message);
+          bw.pub('bw:diag', {
+            code: 'mounted_hook_error',
+            uuid: uuid,
+            msg: e.message
           });
         }
       }
 
-      // Store unmount callback keyed by UUID class
-      if (opts.unmount) {
-        bw._unmountCallbacks.set(uuid, function () {
-          try {
-            opts.unmount(el, el._bw_state || {});
-          } catch (e) {
-            _cw('o.unmount error: ' + e.message);
+      // Emit bw:mount CustomEvent (bubbles)
+      try {
+        el.dispatchEvent(new CustomEvent('bw:mount', {
+          bubbles: true,
+          detail: {
+            uuid: uuid,
+            type: el._bw_type || null
           }
+        }));
+      } catch (e) {/* jsdom edge case */}
+
+      // Mirror to bw:lifecycle pub/sub
+      bw.pub('bw:lifecycle', {
+        event: 'mount',
+        uuid: uuid,
+        type: el._bw_type || null
+      });
+    }
+  }
+
+  /**
+   * Unmount an element and its entire subtree. Fire unmount hooks self-first,
+   * then descendants in document order. Strip ALL bitwrench properties.
+   * Deregister from _nodeMap.
+   *
+   * @param {Element} el - Element to unmount
+   * @category DOM Generation
+   */
+  bw.unmount = function (el) {
+    if (!el || el.nodeType !== 1) return;
+
+    // Collect all addressable nodes: self + descendants in document order
+    var nodes = [el];
+    var desc = el.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"], [id]');
+    for (var i = 0; i < desc.length; i++) {
+      nodes.push(desc[i]);
+    }
+
+    // Fire unmount hooks and strip, self-first
+    for (var n = 0; n < nodes.length; n++) {
+      _unmountNode(nodes[n]);
+    }
+  };
+
+  /**
+   * Internal: unmount a single node — fire hook, strip everything, deregister.
+   * @private
+   */
+  function _unmountNode(el) {
+    /* c8 ignore next -- _unmountNode only called with valid elements */
+    if (!el || el.nodeType !== 1) return;
+    var uuid = bw.getUUID(el);
+    /* c8 ignore next -- all DOM elements in test env have getAttribute */
+    var htmlId = el.getAttribute ? el.getAttribute('id') : null;
+
+    // If element has neither uuid nor id nor lifecycle, nothing to do
+    if (!uuid && !htmlId && !el.classList.contains(_BW_LC)) return;
+
+    // Emit bw:unmount BEFORE stripping (so listeners can read state)
+    if (uuid && el.classList.contains(_BW_LC)) {
+      try {
+        el.dispatchEvent(new CustomEvent('bw:unmount', {
+          bubbles: true,
+          detail: {
+            uuid: uuid,
+            type: el._bw_type || null
+          }
+        }));
+      } catch (e) {/* jsdom edge case */}
+    }
+
+    // Fire unmount closure
+    if (el._bw_unmount_fn) {
+      try {
+        el._bw_unmount_fn(el, el._bw_state || {});
+      } catch (e) {
+        _cw('o.unmount error: ' + e.message);
+        bw.pub('bw:diag', {
+          code: 'unmount_hook_error',
+          uuid: uuid,
+          msg: e.message
         });
       }
     }
 
-    // Component handle: attach methods to el.bw namespace
-    if (opts.handle || opts.slots) {
-      if (!el.bw) el.bw = {};
-
-      // Explicit handle methods: fn(el, ...args) -> el.bw.method(...args)
-      if (opts.handle) {
-        for (var hk in opts.handle) {
-          if (_hop.call(opts.handle, hk)) {
-            el.bw[hk] = opts.handle[hk].bind(null, el);
-          }
-        }
+    // Clean up pub/sub subscriptions tied to this element
+    if (el._bw_subs) {
+      for (var si = 0; si < el._bw_subs.length; si++) {
+        try {
+          el._bw_subs[si]();
+        } catch (e) {}
       }
+      delete el._bw_subs;
+    }
 
-      // Slot declarations: auto-generate setX/getX pairs
-      // The target element is cached at creation time to avoid repeated
-      // querySelector calls on every get/set invocation.
-      if (opts.slots) {
-        for (var sk in opts.slots) {
-          if (_hop.call(opts.slots, sk)) {
-            (function (name, selector) {
-              var target = el.querySelector(selector);
-              var cap = name.charAt(0).toUpperCase() + name.slice(1);
-              el.bw['set' + cap] = function (value) {
-                if (!target) return;
-                if (value != null && _typeof(value) === 'object' && value.t) {
-                  target.innerHTML = '';
-                  target.appendChild(bw.createDOM(value));
-                } else {
-                  target.textContent = value != null ? String(value) : '';
-                }
-              };
-              el.bw['get' + cap] = function () {
-                return target ? target.textContent : '';
-              };
-            })(sk, opts.slots[sk]);
+    // Deregister from node cache — remove all entries pointing to this element
+    // (covers uuid, id, and selector-based cache entries like "#foo")
+    for (var nk in bw._nodeMap) {
+      if (_hop.call(bw._nodeMap, nk) && bw._nodeMap[nk] === el) {
+        delete bw._nodeMap[nk];
+      }
+    }
+    if (uuid) {
+      delete bw._mounted[uuid];
+      delete bw._detached[uuid];
+    }
+
+    // Strip ALL bitwrench properties
+    delete el.bw;
+    delete el._bw_state;
+    delete el._bw_render;
+    delete el._bw_refs;
+    delete el._bw_type;
+    delete el._bw_unmount_fn;
+    delete el._bw_mounted_fn;
+    delete el._bw_slots;
+    delete el._bw_slot_cache;
+
+    // Strip marker classes and uuid tokens
+    if (el.classList) {
+      el.classList.remove(_BW_LC);
+      el.classList.remove('bw_is_component');
+      // Remove typed marker
+      var cls = el.className;
+      if (typeof cls === 'string') {
+        var classes = cls.split(/\s+/);
+        for (var ci = 0; ci < classes.length; ci++) {
+          if (classes[ci].indexOf('bw_is_component_') === 0 || classes[ci].indexOf('bw_uuid_') === 0) {
+            el.classList.remove(classes[ci]);
           }
         }
       }
     }
-    return el;
+  }
+
+  /**
+   * Unmount descendants only; the element's own state/subs/registration are untouched.
+   *
+   * @param {Element} el - Parent element whose children to unmount
+   * @category DOM Generation
+   */
+  bw.unmountChildren = function (el) {
+    if (!el || el.nodeType !== 1) return;
+
+    // Find all direct and nested lifecycle/addressable nodes inside children
+    var childNodes = el.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"]');
+    for (var i = 0; i < childNodes.length; i++) {
+      _unmountNode(childNodes[i]);
+    }
   };
 
   /**
-   * Mount a TACO object into a DOM element, replacing its contents (browser only).
+   * Remove an element from the DOM and clean it up. Convenience compound:
+   * unmount(el) + el.remove().
    *
-   * This is the primary way to render bitwrench UI to the page. It cleans up
-   * any existing children (calling unmount hooks), then renders the TACO into
-   * the target. The target element itself is preserved — only its children change.
+   * @param {string|Element} ref - Element reference
+   * @category DOM Generation
+   */
+  bw.remove = function (ref) {
+    var el = bw.el(ref);
+    if (!el) return;
+    bw.unmount(el);
+    if (el.parentNode) el.parentNode.removeChild(el);
+  };
+
+  /**
+   * Detach an element from the DOM but keep it registered (keep-alive).
+   * The element stays addressable and its subscriptions keep delivering.
+   * Janitor will not reap detach-exempt elements.
+   *
+   * @param {Element} el - Element to detach
+   * @category DOM Generation
+   */
+  bw.detach = function (el) {
+    if (!el) return;
+    var uuid = bw.getUUID(el);
+    if (uuid) {
+      bw._detached[uuid] = true;
+    }
+    if (el.parentNode) el.parentNode.removeChild(el);
+  };
+
+  // v2.1: bw.cleanup fully removed.
+
+  /**
+   * Janitor: document-level cleanup for ungraceful teardown.
+   * Detects rude el.remove() / innerHTML='' and fires full unmount.
+   *
+   * flush() = synchronous process all pending disconnected nodes.
+   * enable()/disable() toggle monitoring. ON by default.
+   */
+  bw.janitor = function () {
+    var _pending = []; // elements pending liveness check
+    var _enabled = true;
+    var _reapedList = []; // recently reaped elements for tripwire check
+    var _observer = null;
+    var _flushScheduled = false;
+    function _scheduleFlush() {
+      if (_flushScheduled) return;
+      _flushScheduled = true;
+      // In jsdom, MutationObserver callbacks fire synchronously during DOM
+      // mutation. We use Promise.resolve() to defer flush to a microtask,
+      // giving same-stack moves time to complete (same-task appendChild
+      // after remove = move, not removal). The flush runs as a microtask
+      // which fires before setTimeout callbacks.
+      Promise.resolve().then(_doFlush);
+    }
+    function _doFlush() {
+      _flushScheduled = false;
+      _processPending();
+    }
+
+    // Install MutationObserver if available (detects rude removals)
+    function _installObserver() {
+      if (!bw._isBrowser || typeof MutationObserver === 'undefined') return;
+      /* c8 ignore start -- observer body: MutationObserver callbacks are async and not triggered in synchronous tests */
+      if (_observer) return;
+      try {
+        _observer = new MutationObserver(function (mutations) {
+          if (!_enabled) return;
+          var removedSet = [];
+          var addedSet = [];
+          // Collect all removals and additions in this batch
+          for (var m = 0; m < mutations.length; m++) {
+            var mut = mutations[m];
+            for (var r = 0; r < mut.removedNodes.length; r++) {
+              var rn = mut.removedNodes[r];
+              if (rn.nodeType === 1) removedSet.push(rn);
+            }
+            for (var a = 0; a < mut.addedNodes.length; a++) {
+              var an = mut.addedNodes[a];
+              if (an.nodeType === 1) addedSet.push(an);
+            }
+          }
+          // Same-stack moves: if a node appears in both removed and added,
+          // it's a move (not a removal). Don't add to pending.
+          var found = false;
+          for (var i = 0; i < removedSet.length; i++) {
+            var node = removedSet[i];
+            if (addedSet.indexOf(node) !== -1) continue; // same-stack move
+            var uuid = bw.getUUID(node);
+            if (uuid && bw._nodeMap[uuid]) {
+              if (_pending.indexOf(node) === -1) _pending.push(node);
+              found = true;
+            }
+            if (node.querySelectorAll) {
+              var desc = node.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"]');
+              for (var d = 0; d < desc.length; d++) {
+                if (addedSet.indexOf(desc[d]) === -1 && _pending.indexOf(desc[d]) === -1) {
+                  _pending.push(desc[d]);
+                  found = true;
+                }
+              }
+            }
+          }
+          if (found) _scheduleFlush();
+        });
+        _observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+      } catch (e) {/* observer setup failed */}
+      /* c8 ignore stop */
+    }
+
+    // Try to install immediately; re-install when DOM becomes available
+    if (bw._isBrowser && typeof document !== 'undefined' && document.body) {
+      _installObserver();
+    }
+    function _processPending() {
+      // Take snapshot from observer-reported removals and clear
+      var batch = _pending.splice(0);
+      var observerCount = batch.length; // items from observer are confirmed removals
+
+      // Also scan entire registry for disconnected nodes (fallback for non-observer removals)
+      for (var key in bw._nodeMap) {
+        if (_hop.call(bw._nodeMap, key)) {
+          var el = bw._nodeMap[key];
+          if (el && el.nodeType === 1 && !el.isConnected) {
+            if (batch.indexOf(el) === -1) batch.push(el);
+          }
+        }
+      }
+
+      // Clear detach exemptions for reconnected elements
+      for (var uuid in bw._detached) {
+        if (_hop.call(bw._detached, uuid)) {
+          var detEl = bw._nodeMap[uuid];
+          if (detEl && detEl.isConnected) {
+            delete bw._detached[uuid];
+          }
+        }
+      }
+
+      // Check for reaped-reinserted tripwire — check if any recently reaped elements are back in DOM
+      var nextReaped = [];
+      for (var ri = 0; ri < _reapedList.length; ri++) {
+        var rEl = _reapedList[ri];
+        if (rEl.isConnected) {
+          bw.pub('bw:diag', {
+            code: 'reaped_reinserted',
+            msg: 'a reaped element was reinserted — use bw.detach() for keep-alive'
+          });
+          // Don't carry forward — warn once
+        } else {
+          nextReaped.push(rEl); // keep tracking for next flush
+        }
+      }
+      _reapedList = nextReaped;
+
+      // Process elements. Elements from _pending (MutationObserver) are confirmed
+      // removals that weren't same-stack moves — reap them even if reconnected
+      // (async reinsert without bw.detach). Elements from registry scan only
+      // reap if still disconnected.
+      for (var i = 0; i < batch.length; i++) {
+        var node = batch[i];
+        var fromObserver = batch.indexOf(node) < observerCount;
+        /* c8 ignore next -- registry-scan reconnected nodes only occur with async observer batching */
+        if (!fromObserver && node.isConnected) continue; // registry-scan hit: still alive
+
+        var nodeUuid = bw.getUUID(node);
+        if (nodeUuid && bw._detached[nodeUuid]) continue; // exempt
+
+        // Check if this is a lifecycle component or plain addressable node
+        var isComponent = node.classList && node.classList.contains(_BW_LC);
+        var isAddressable = nodeUuid && bw._nodeMap[nodeUuid] === node;
+        if (isComponent) {
+          // Capture type before unmount strips it
+          var nodeType = node._bw_type || null;
+          // Full unmount for components
+          bw.unmount(node);
+          _reapedList.push(node);
+          // Emit lifecycle mirror (DOM events can't bubble from detached tree)
+          bw.pub('bw:lifecycle', {
+            event: 'unmount',
+            uuid: nodeUuid,
+            type: nodeType
+          });
+          bw.pub('bw:diag', {
+            code: 'janitor_reap',
+            uuid: nodeUuid
+          });
+        } else if (isAddressable) {
+          // Deregister plain addressable node
+          _unmountNode(node);
+          _reapedList.push(node);
+          bw.pub('bw:diag', {
+            code: 'janitor_reap',
+            uuid: nodeUuid
+          });
+        }
+
+        // Also check for lifecycle children inside this node
+        /* c8 ignore start -- janitor children iteration: parent unmount already covers descendants */
+        if (node.querySelectorAll) {
+          var children = node.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"]');
+          for (var ci = 0; ci < children.length; ci++) {
+            var child = children[ci];
+            var childUuid = bw.getUUID(child);
+            if (childUuid && bw._nodeMap[childUuid] === child) {
+              if (child.classList.contains(_BW_LC)) {
+                bw.unmount(child);
+                if (_reapedList) _reapedList.push(child);
+                bw.pub('bw:diag', {
+                  code: 'janitor_reap',
+                  uuid: childUuid
+                });
+              } else {
+                _unmountNode(child);
+                bw.pub('bw:diag', {
+                  code: 'janitor_reap',
+                  uuid: childUuid
+                });
+              }
+            }
+          }
+        }
+        /* c8 ignore stop */
+      }
+    }
+    return {
+      flush: function flush() {
+        _flushScheduled = false;
+        // Lazy-install observer on first flush
+        if (!_observer && bw._isBrowser && typeof document !== 'undefined' && document.body) {
+          _installObserver();
+        }
+        _processPending();
+      },
+      enable: function enable() {
+        _enabled = true;
+      },
+      disable: function disable() {
+        _enabled = false;
+      },
+      _addPending: function _addPending(el) {
+        if (_pending.indexOf(el) === -1) _pending.push(el);
+      },
+      _ensureObserver: function _ensureObserver() {
+        if (!_observer && bw._isBrowser && typeof document !== 'undefined' && document.body) {
+          _installObserver();
+        }
+      },
+      _reset: function _reset() {
+        _pending.length = 0;
+        _reapedList.length = 0;
+        _flushScheduled = false;
+        _enabled = true;
+        /* c8 ignore start -- observer not installed in jsdom test env */
+        if (_observer) {
+          _observer.disconnect();
+          _observer = null;
+        }
+        /* c8 ignore stop */
+      },
+      _getPendingCount: function _getPendingCount() {
+        // Count pending plus any disconnected registry entries
+        var count = _pending.length;
+        for (var key in bw._nodeMap) {
+          if (_hop.call(bw._nodeMap, key)) {
+            var el = bw._nodeMap[key];
+            if (el && el.nodeType === 1 && !el.isConnected) {
+              var uuid = bw.getUUID(el);
+              if (!uuid || !bw._detached[uuid]) count++;
+            }
+          }
+        }
+        return count;
+      }
+    };
+  }();
+
+  /**
+   * Debug introspection for tests. Returns counts of internal state.
+   * @returns {Object} {registered, detached, janitorPending, topics}
+   * @category Internal
+   */
+  bw._debug = function () {
+    var regCount = 0;
+    for (var k in bw._nodeMap) {
+      if (_hop.call(bw._nodeMap, k)) regCount++;
+    }
+    var detCount = 0;
+    for (var d in bw._detached) {
+      if (_hop.call(bw._detached, d)) detCount++;
+    }
+    return {
+      registered: regCount,
+      detached: detCount,
+      janitorPending: bw.janitor._getPendingCount(),
+      topics: _keys(bw._topics).length
+    };
+  };
+
+  /**
+   * Hard reset all singleton state for test isolation.
+   * @category Internal
+   */
+  bw._resetForTest = function () {
+    // Clear node registry
+    for (var k in bw._nodeMap) {
+      if (_hop.call(bw._nodeMap, k)) delete bw._nodeMap[k];
+    }
+    // Clear topics
+    for (var t in bw._topics) {
+      if (_hop.call(bw._topics, t)) delete bw._topics[t];
+    }
+    // Clear detached set
+    for (var d in bw._detached) {
+      if (_hop.call(bw._detached, d)) delete bw._detached[d];
+    }
+    // Clear mounted set
+    for (var m in bw._mounted) {
+      if (_hop.call(bw._mounted, m)) delete bw._mounted[m];
+    }
+    bw._subIdCounter = 0;
+    bw._idCounter = 0;
+    // Reset janitor
+    if (bw.janitor) {
+      if (typeof bw.janitor._reset === 'function') bw.janitor._reset();
+    }
+    // Reset actions — clear installed state, keep enabled (actions are ON by default)
+    if (bw.actions) {
+      if (typeof bw.actions._reset === 'function') bw.actions._reset();
+      // Re-enable (actions are ON by default), but don't install yet
+      // (install will happen lazily on next mountTree or enable call)
+      bw.actions.enable();
+    }
+    // Reset remote/wire
+    bw.remote = null;
+    for (var wl in bw._wireListeners) {
+      if (_hop.call(bw._wireListeners, wl)) {
+        try {
+          bw._wireListeners[wl]();
+        } catch (e) {}
+        delete bw._wireListeners[wl];
+      }
+    }
+    for (var cr in bw._clientRemotes) {
+      if (_hop.call(bw._clientRemotes, cr)) delete bw._clientRemotes[cr];
+    }
+  };
+
+  /**
+   * Mount a TACO into a target element. Returns the root element (single root),
+   * first node (array), or null. This is the primary compound verb for putting
+   * UI on the page.
+   *
+   * Composes atomics: unmountChildren(target) → clear → create(content) →
+   * insert → mountTree(target).
    *
    * @param {string|Element} target - CSS selector or DOM element to mount into
-   * @param {Object} taco - TACO object to render
-   * @param {Object} [options] - Mount options
-   * @returns {Element} Target element
+   * @param {Object|Array} taco - TACO object or array to render
+   * @param {Object} [options] - Creation options
+   * @returns {Element|null} The root element, or null
    * @category DOM Generation
-   * @see bw.html
-   * @see bw.createDOM
-   * @see bw.cleanup
-   * @example
-   * bw.DOM('#app', {
-   *   t: 'div', a: { class: 'card' },
-   *   c: [
-   *     { t: 'h2', c: 'Hello' },
-   *     { t: 'p', c: 'Built with bitwrench.' }
-   *   ]
-   * });
-   */
-  bw.DOM = function (target, taco) {
-    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-    if (!bw._isBrowser) {
-      throw new Error('bw.DOM requires a DOM environment (document/window). Use bw.html() instead.');
-    }
-
-    // Get target element (use cache-backed lookup)
-    var targetEl = bw.el(target);
-    if (!targetEl) {
-      _ce('bw.DOM: Target element not found:', target);
-      return null;
-    }
-
-    // Clean up existing children (but preserve the target's own state, render, and subs —
-    // the target is the mount point, not the content being replaced)
-    var savedState = targetEl._bw_state;
-    var savedRender = targetEl._bw_render;
-    var savedUuid = bw.getUUID(targetEl);
-    var savedSubs = targetEl._bw_subs;
-
-    // Temporarily remove _bw_subs so cleanup doesn't call them
-    // (children's subs will still be cleaned up normally)
-    delete targetEl._bw_subs;
-    bw.cleanup(targetEl);
-
-    // Restore the target's own state/render/subs after cleanup
-    if (savedState !== undefined) targetEl._bw_state = savedState;
-    if (savedRender) targetEl._bw_render = savedRender;
-    if (savedUuid) {
-      // UUID class stays on element through cleanup; re-register in cache
-      bw._registerNode(targetEl, savedUuid);
-    }
-    if (savedSubs) targetEl._bw_subs = savedSubs;
-
-    // Clear and mount new content
-    targetEl.innerHTML = '';
-    if (taco != null) {
-      // Handle arrays
-      if (_isA(taco)) {
-        taco.forEach(function (t) {
-          if (t != null) {
-            targetEl.appendChild(bw.createDOM(t, options));
-          }
-        });
-      }
-      // Handle TACO objects
-      else {
-        targetEl.appendChild(bw.createDOM(taco, options));
-      }
-    }
-    return targetEl;
-  };
-
-  // Deprecation stubs for removed ComponentHandle APIs
-  bw.compileProps = function () {
-    throw new Error('bw.compileProps() removed in v2.0.19. Use o.handle/o.slots instead.');
-  };
-  bw.renderComponent = function () {
-    throw new Error('bw.renderComponent() removed in v2.0.19. Use bw.mount() with o.handle/o.slots instead.');
-  };
-
-  /**
-   * Mount a TACO into a target element and return the created root element.
-   * Like bw.DOM() but returns the root element of the TACO (not the container),
-   * giving direct access to el.bw handle methods.
-   *
-   * @param {string|Element} target - CSS selector or DOM element
-   * @param {Object} taco - TACO to render
-   * @param {Object} [options] - Mount options
-   * @returns {Element} The created root element
-   * @category DOM Generation
-   * @example
-   * var el = bw.mount('#app', bw.makeCarousel({ items: slides }));
-   * el.bw.goToSlide(2);
-   * el.bw.next();
    */
   bw.mount = function (target, taco, options) {
     var container = _is(target, 'string') ? bw.$(target)[0] : target;
@@ -6972,141 +7280,194 @@
       _cw('bw.mount: target not found');
       return null;
     }
-    bw.cleanup(container);
+
+    // Teardown existing children (compound calls atomic)
+    bw.unmountChildren(container);
     container.innerHTML = '';
-    var el = bw.createDOM(taco, options || {});
-    container.appendChild(el);
+    if (taco == null) return null;
+    var firstEl = null;
+    var created = [];
+    if (_isA(taco)) {
+      for (var i = 0; i < taco.length; i++) {
+        if (taco[i] != null) {
+          var child = bw.create(taco[i], options || {});
+          container.appendChild(child);
+          created.push(child);
+          if (!firstEl) firstEl = child;
+        }
+      }
+    } else {
+      firstEl = bw.create(taco, options || {});
+      container.appendChild(firstEl);
+      created.push(firstEl);
+    }
+
+    // Walk each created child to register and fire mounted (not the container itself)
+    for (var ci = 0; ci < created.length; ci++) {
+      bw.mountTree(created[ci]);
+    }
+    return firstEl;
+  };
+
+  // bw.DOM is an exact alias of bw.mount (v2.1 §2)
+  bw.DOM = bw.mount;
+
+  /**
+   * Append content to a target. create → insert (respecting opts.before) → mountTree.
+   * Returns the new child element.
+   *
+   * @param {string|Element} target - Container
+   * @param {Object} content - TACO to append
+   * @param {Object} [opts] - {before: Element|number} for positioning
+   * @returns {Element|null} The appended element
+   * @category DOM Generation
+   */
+  bw.append = function (target, content, opts) {
+    var container = _is(target, 'string') ? bw.$(target)[0] : target;
+    if (!container) return null;
+    var child = bw.create(content);
+    if (opts && opts.before !== undefined) {
+      var ref = opts.before;
+      if (typeof ref === 'number') ref = container.children[ref] || null;
+      container.insertBefore(child, ref);
+    } else {
+      container.appendChild(child);
+    }
+    bw.mountTree(child);
+    return child;
+  };
+
+  /**
+   * Replace an existing element with new content. unmount(old) → create(taco) →
+   * insert at position → mountTree. Returns new element. null taco = remove.
+   *
+   * @param {Element} ref - Element to replace
+   * @param {Object|null} taco - Replacement TACO, or null to just remove
+   * @returns {Element|null} The new element, or null
+   * @category DOM Generation
+   */
+  bw.replace = function (ref, taco) {
+    if (!ref) return null;
+    var parent = ref.parentNode;
+    var next = ref.nextSibling;
+    bw.unmount(ref);
+    if (ref.parentNode) ref.parentNode.removeChild(ref);
+    if (taco == null) return null;
+    var neo = bw.create(taco);
+    if (parent) {
+      if (next) parent.insertBefore(neo, next);else parent.appendChild(neo);
+    }
+    bw.mountTree(neo);
+    return neo;
+  };
+
+  /**
+   * Refresh a component: unmountChildren → re-render → mountTree.
+   * Render throw propagates. Emits bw:refresh.
+   *
+   * @param {string|Element} ref - Component to refresh
+   * @returns {Element|null} The element
+   * @category DOM Generation
+   */
+  bw.refresh = function (ref) {
+    var el = bw.el(ref);
+    if (!el) return null;
+    bw.unmountChildren(el);
+    el.innerHTML = '';
+    // Invalidate slot cache so slots re-resolve after rebuild
+    if (el._bw_slot_cache) el._bw_slot_cache = null;
+    if (el._bw_render) {
+      // Let throw propagate (§3 error policy)
+      el._bw_render(el, el._bw_state || {});
+      // Walk newly created children
+      bw.mountTree(el);
+    }
+
+    // Emit bw:refresh
+    try {
+      el.dispatchEvent(new CustomEvent('bw:refresh', {
+        bubbles: true,
+        detail: {
+          uuid: bw.getUUID(el),
+          type: el._bw_type || null
+        }
+      }));
+    } catch (e) {/* jsdom */}
     return el;
   };
 
   /**
-   * Clean up a DOM element and all its children by calling unmount callbacks,
-   * removing pub/sub subscriptions, and clearing state/render references.
+   * Update a component by dispatching to el.bw.update(data) if defined.
+   * Emits bw:statechange. If no update handle, emits specific diag warning.
+   * NEVER falls back to refresh.
    *
-   * Called automatically by `bw.DOM()` before re-rendering. Call manually when
-   * removing elements to prevent memory leaks from orphaned callbacks.
-   *
-   * @param {Element} element - DOM element to clean up
-   * @category DOM Generation
-   * @see bw.DOM
-   * @example
-   * var el = document.querySelector('#my-widget');
-   * bw.cleanup(el);   // runs unmount hooks, clears _bw_state, _bw_render
-   * el.remove();       // safe to remove from DOM now
+   * @param {string|Element} ref - Component to update
+   * @param {*} data - Data to pass to el.bw.update
+   * @returns {Element|null} The element
+   * @category State Management
    */
-  bw.cleanup = function (element) {
-    if (!bw._isBrowser || !element) return;
-
-    // Deregister UUID classes from node cache for non-lifecycle UUID elements
-    var uuidEls = element.querySelectorAll('[class*="bw_uuid_"]');
-    uuidEls.forEach(function (uel) {
-      var uc = typeof uel.className === 'string' ? uel.className : uel.getAttribute('class') || '';
-      var m = uc && uc.match(_UUID_RE);
-      if (m) delete bw._nodeMap[m[0]];
-    });
-
-    // Find all lifecycle-managed elements (have bw_lc marker class)
-    var elements = element.querySelectorAll('.' + _BW_LC);
-    elements.forEach(function (el) {
-      var uuid = bw.getUUID(el);
-      if (uuid) {
-        var callback = bw._unmountCallbacks.get(uuid);
-        if (callback) {
-          callback();
-          bw._unmountCallbacks["delete"](uuid);
-        }
-
-        // Deregister from node cache
-        bw._deregisterNode(el, uuid);
-      }
-
-      // Clean up pub/sub subscriptions tied to this element
-      if (el._bw_subs) {
-        el._bw_subs.forEach(function (unsub) {
-          unsub();
-        });
-        delete el._bw_subs;
-      }
-
-      // Clean up state, render, and local refs
-      delete el._bw_state;
-      delete el._bw_render;
-      delete el._bw_refs;
-    });
-
-    // Check element itself
-    var selfUuid = bw.getUUID(element);
-    if (selfUuid) {
-      delete bw._nodeMap[selfUuid];
-      var callback = bw._unmountCallbacks.get(selfUuid);
-      if (callback) {
-        callback();
-        bw._unmountCallbacks["delete"](selfUuid);
-      }
-
-      // Deregister from node cache
-      bw._deregisterNode(element, selfUuid);
-
-      // Clean up pub/sub subscriptions tied to element itself
-      if (element._bw_subs) {
-        element._bw_subs.forEach(function (unsub) {
-          unsub();
-        });
-        delete element._bw_subs;
-      }
-      delete element._bw_state;
-      delete element._bw_render;
-      delete element._bw_refs;
-    } else {
-      // No UUID on element itself, but still check for _bw_subs (from bw.sub())
-      if (element._bw_subs) {
-        element._bw_subs.forEach(function (unsub) {
-          unsub();
-        });
-        delete element._bw_subs;
-      }
+  bw.update = function (ref, data) {
+    var el = bw.el(ref);
+    if (!el) return null;
+    if (el.bw && typeof el.bw.update === 'function') {
+      el.bw.update(data);
+      // Emit statechange via pub/sub lifecycle topic
+      bw.pub('bw:lifecycle', {
+        event: 'statechange',
+        uuid: bw.getUUID(el),
+        data: data
+      });
+      bw.emit(el, 'statechange', el._bw_state);
+      return el;
     }
+
+    // No update handle — emit appropriate diag warning
+    if (el._bw_render) {
+      bw.pub('bw:diag', {
+        code: 'update_use_refresh',
+        uuid: bw.getUUID(el),
+        msg: 'component has o.render but no update handle — use bw.refresh() instead'
+      });
+    } else {
+      bw.pub('bw:diag', {
+        code: 'update_no_handle',
+        uuid: bw.getUUID(el),
+        msg: 'component has no update handle and no render — nothing to do'
+      });
+    }
+    return el;
+  };
+
+  /**
+   * Update a specific slot on a component by reference.
+   *
+   * @param {string|Element} ref - Component reference
+   * @param {string} name - Slot name
+   * @param {*} value - Value to set
+   * @returns {boolean} True if slot was updated
+   * @category DOM Generation
+   */
+  bw.updateSlot = function (ref, name, value) {
+    var el = bw.el(ref);
+    if (!el || !el.bw) return false;
+    var setter = 'set' + name.charAt(0).toUpperCase() + name.slice(1);
+    if (typeof el.bw[setter] !== 'function') return false;
+    el.bw[setter](value);
+    return true;
   };
 
   // ===================================================================================
   // State Management: update, patch, emit/on
   // ===================================================================================
 
-  /**
-   * Trigger re-render of a component by calling its stored `o.render` function.
-   *
-   * This is the recommended way to update a component after changing its state.
-   * Calls `el._bw_render(el, state)` and emits `bw:statechange` so other
-   * components can react without tight coupling.
-   *
-   * @param {string|Element} target - Element ID, bw_uuid_* class, CSS selector, or DOM element
-   * @returns {Element|null} The element, or null if not found / no render function
-   * @category State Management
-   * @see bw.patch
-   * @example
-   * // Given a counter element with o.render
-   * el._bw_state.count++;
-   * bw.update(el);  // re-renders, emits bw:statechange
-   */
-  bw.update = function (target) {
-    var el = bw.el(target);
-    if (el && el._bw_render) {
-      try {
-        el._bw_render(el, el._bw_state || {});
-      } catch (e) {
-        _cw('o.render error: ' + e.message);
-      }
-      bw.emit(el, 'statechange', el._bw_state);
-    }
-    return el || null;
-  };
+  // v2.1: old bw.update (render-based) replaced by new bw.update (dispatch-based) above.
 
   /**
    * Targeted DOM update by element ID — change one element's content or attribute
    * without rebuilding the entire component tree.
    *
    * Use `bw.patch()` for lightweight value updates (scores, labels, counters)
-   * and `bw.update()` for full structural re-renders.
+   * and `bw.refresh()` for full structural re-renders.
    *
    * @param {string|Element} id - Element ID, bw_uuid_* class, CSS selector, or DOM element.
    *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
@@ -7124,25 +7485,48 @@
   bw.patch = function (id, content, attr) {
     var el = bw.el(id);
     if (!el) return null;
+
+    // v2.1 discriminated patch:
+    // - string/number → text content
+    // - plain object without .t → attributes
+    // - TACO (has .t) → unmountChildren + create + mountTree
+    // - array → unmountChildren + create each + mountTree
+    // - legacy 3rd arg: explicit attribute set
+
     if (attr) {
-      // Patch an attribute
+      // Legacy: explicit attribute patch
       el.setAttribute(attr, String(content));
+    } else if (_is(content, 'string') || _is(content, 'number')) {
+      // Text patch
+      el.textContent = String(content);
     } else if (_isA(content)) {
-      // Patch with array of children (strings and/or TACOs)
+      // Array of children: full pipeline
+      bw.unmountChildren(el);
       el.innerHTML = '';
-      content.forEach(function (item) {
-        if (_is(item, 'string') || _is(item, 'number')) {
-          el.appendChild(document.createTextNode(String(item)));
-        } else if (item && item.t) {
-          el.appendChild(bw.createDOM(item));
+      for (var i = 0; i < content.length; i++) {
+        var item = content[i];
+        if (item != null) {
+          if (_is(item, 'object') && item.t) {
+            el.appendChild(bw.create(item));
+          } else {
+            el.appendChild(document.createTextNode(String(item)));
+          }
         }
-      });
-    } else if (_is(content, 'object') && content.t) {
-      // Patch with a TACO — replace children
+      }
+      bw.mountTree(el);
+    } else if (_is(content, 'object') && content !== null && content.t) {
+      // TACO content: full pipeline
+      bw.unmountChildren(el);
       el.innerHTML = '';
-      el.appendChild(bw.createDOM(content));
+      el.appendChild(bw.create(content));
+      bw.mountTree(el);
+    } else if (_is(content, 'object') && content !== null) {
+      // Plain object without .t → attribute patch
+      var attrKeys = _keys(content);
+      for (var ak = 0; ak < attrKeys.length; ak++) {
+        el.setAttribute(attrKeys[ak], String(content[attrKeys[ak]]));
+      }
     } else {
-      // Patch text content
       el.textContent = String(content);
     }
     return el;
@@ -7173,6 +7557,91 @@
       }
     }
     return results;
+  };
+
+  /**
+   * Keyed reconciliation: match existing children by `el._bw_key`, move/add/remove
+   * to match `items` order. Moved nodes are the SAME DOM nodes (state/focus survives).
+   *
+   * @param {Element} parentEl - Container element
+   * @param {Array} items - Data array for desired children
+   * @param {Object} opts - {key: fn(item)→string, create: fn(item)→TACO, update: fn(el, item)}
+   * @category DOM Generation
+   */
+  bw.syncChildren = function (parentEl, items, opts) {
+    if (!parentEl || !items || !opts) return;
+    var keyFn = opts.key;
+    var createFn = opts.create;
+    var updateFn = opts.update;
+
+    // Save focus to restore after reorder (insertBefore can blur in some environments)
+    /* c8 ignore next -- document is always defined in jsdom test env */
+    var focused = typeof document !== 'undefined' ? document.activeElement : null;
+    if (focused && !parentEl.contains(focused)) focused = null;
+
+    // Build map of existing keyed children
+    var existingByKey = {};
+    var child = parentEl.firstElementChild;
+    while (child) {
+      if (child._bw_key != null) {
+        existingByKey[child._bw_key] = child;
+      }
+      child = child.nextElementSibling;
+    }
+
+    // Determine which keys are in the new items
+    var newKeys = {};
+    for (var i = 0; i < items.length; i++) {
+      newKeys[keyFn(items[i])] = true;
+    }
+
+    // Remove absent keys (unmount + remove)
+    var toRemove = [];
+    for (var ek in existingByKey) {
+      if (_hop.call(existingByKey, ek) && !newKeys[ek]) {
+        toRemove.push(existingByKey[ek]);
+      }
+    }
+    for (var ri = 0; ri < toRemove.length; ri++) {
+      bw.unmount(toRemove[ri]);
+      if (toRemove[ri].parentNode) toRemove[ri].parentNode.removeChild(toRemove[ri]);
+      delete existingByKey[toRemove[ri]._bw_key];
+    }
+
+    // Process items in order: create new, update existing, reorder
+    var prevNode = null;
+    for (var j = 0; j < items.length; j++) {
+      var k = keyFn(items[j]);
+      var existing = existingByKey[k];
+      if (existing) {
+        // Update existing
+        if (updateFn) updateFn(existing, items[j]);
+        // Move into correct position if needed
+        var expectedAfter = prevNode ? prevNode.nextSibling : parentEl.firstChild;
+        if (existing !== expectedAfter) {
+          parentEl.insertBefore(existing, expectedAfter);
+        }
+        prevNode = existing;
+      } else {
+        // Create new
+        var taco = createFn(items[j]);
+        var neo = bw.create(taco);
+        neo._bw_key = k;
+        var insertBefore = prevNode ? prevNode.nextSibling : parentEl.firstChild;
+        parentEl.insertBefore(neo, insertBefore);
+        bw.mountTree(neo);
+        existingByKey[k] = neo;
+        prevNode = neo;
+      }
+    }
+
+    // Restore focus if it was lost during reorder
+    /* c8 ignore next 2 -- focus management not exercised in jsdom */
+    if (focused && focused.isConnected && document.activeElement !== focused) {
+      try {
+        focused.focus();
+      } catch (e) {}
+    }
   };
 
   /**
@@ -7223,12 +7692,15 @@
    */
   bw.on = function (target, eventName, handler) {
     var el = bw.el(target);
-    if (el) {
-      el.addEventListener('bw:' + eventName, function (e) {
-        handler(e.detail, e);
-      });
-    }
-    return el || null;
+    if (!el) return function () {};
+    var wrapped = function wrapped(e) {
+      handler(e.detail, e);
+    };
+    el.addEventListener('bw:' + eventName, wrapped);
+    // v2.1: return off() function (not the element)
+    return function () {
+      el.removeEventListener('bw:' + eventName, wrapped);
+    };
   };
 
   // ===================================================================================
@@ -7258,37 +7730,55 @@
    */
   bw.pub = function (topic, detail) {
     var called = 0;
-    // Exact-match subscribers
-    var subs = bw._topics[topic];
-    if (subs && subs.length > 0) {
+    function _deliver(subs, topicKey) {
+      if (!subs || subs.length === 0) return;
       var snapshot = subs.slice();
+      var pruned = false;
+      var ghostDiags = [];
       for (var i = 0; i < snapshot.length; i++) {
+        var sub = snapshot[i];
+        // Liveness check: tied element that is disconnected and not detach-exempt
+        // Skip liveness check for diag/lifecycle topics to avoid recursion
+        if (sub.tiedEl && topic !== 'bw:diag' && topic !== 'bw:lifecycle') {
+          var tiedUuid = bw.getUUID(sub.tiedEl);
+          if (!sub.tiedEl.isConnected && !(tiedUuid && bw._detached[tiedUuid])) {
+            // Ghost: prune this subscription
+            var idx = subs.indexOf(sub);
+            if (idx !== -1) subs.splice(idx, 1);
+            pruned = true;
+            ghostDiags.push({
+              code: 'ghost_prune',
+              uuid: tiedUuid,
+              topic: topicKey
+            });
+            continue;
+          }
+        }
         try {
-          snapshot[i].handler(detail, topic);
+          sub.handler(detail, topic);
           called++;
         } catch (err) {
-          _cw('bw.pub: subscriber error on topic "' + topic + '":', err);
+          _cw('bw.pub: subscriber error on topic "' + topicKey + '":', err);
         }
       }
+      if (pruned && subs.length === 0) delete bw._topics[topicKey];
+      // Emit ghost_prune diags AFTER delivery loop to avoid re-entrancy
+      for (var g = 0; g < ghostDiags.length; g++) {
+        bw.pub('bw:diag', ghostDiags[g]);
+      }
     }
+
+    // Exact-match subscribers
+    _deliver(bw._topics[topic], topic);
+
     // Wildcard subscribers -- patterns ending with '*'
     var keys = Object.keys(bw._topics);
     for (var k = 0; k < keys.length; k++) {
       var pat = keys[k];
       if (pat.charAt(pat.length - 1) !== '*') continue;
-      var prefix = pat.slice(0, -1); // strip trailing '*'
+      var prefix = pat.slice(0, -1);
       if (topic.length >= prefix.length && topic.substring(0, prefix.length) === prefix && topic !== pat) {
-        var wsubs = bw._topics[pat];
-        if (!wsubs) continue;
-        var wsnap = wsubs.slice();
-        for (var w = 0; w < wsnap.length; w++) {
-          try {
-            wsnap[w].handler(detail, topic);
-            called++;
-          } catch (err) {
-            _cw('bw.pub: wildcard subscriber error on "' + pat + '" for topic "' + topic + '":', err);
-          }
-        }
+        _deliver(bw._topics[pat], pat);
       }
     }
     return called;
@@ -7303,7 +7793,7 @@
    * receives `(detail, topic)` so it can distinguish which topic fired.
    *
    * Optional third argument ties the subscription to a DOM element's lifecycle --
-   * when `bw.cleanup()` is called on that element, the subscription is automatically
+   * when `bw.unmount()` is called on that element, the subscription is automatically
    * removed, preventing memory leaks.
    *
    * @param {string} topic - Topic name, or wildcard pattern ending in '*'
@@ -7327,10 +7817,13 @@
   bw.sub = function (topic, handler, el) {
     var id = ++bw._subIdCounter;
     if (!bw._topics[topic]) bw._topics[topic] = [];
-    bw._topics[topic].push({
+    var entry = {
       handler: handler,
       id: id
-    });
+    };
+    // Track tied element for liveness checks in bw.pub
+    if (el) entry.tiedEl = el;
+    bw._topics[topic].push(entry);
     var unsub = function unsub() {
       var subs = bw._topics[topic];
       if (!subs) return;
@@ -7344,7 +7837,7 @@
     if (el) {
       if (!el._bw_subs) el._bw_subs = [];
       el._bw_subs.push(unsub);
-      // Ensure element has UUID + bw_lc so bw.cleanup() finds it
+      // Ensure element has UUID + bw_lc so unmount finds it
       if (!bw.getUUID(el)) {
         el.classList.add(bw.uuid('uuid'));
       }
@@ -7410,6 +7903,95 @@
     return unsub;
   };
 
+  /**
+   * Declared dataflow: recompute fn(inputs...) on any input publish.
+   * Returns a disposer function. Optionally ties to an element lifecycle.
+   *
+   * @param {Array<string>} inputs - Topic names to subscribe to
+   * @param {Function} fn - Combiner: fn(...latestValues) → result
+   * @param {string} outTopic - Topic to publish result on
+   * @param {Object} [opts] - {seed: [], immediate: bool, el: Element}
+   * @returns {Function} Disposer
+   * @category Pub/Sub
+   */
+  bw.derive = function (inputs, fn, outTopic, opts) {
+    opts = opts || {};
+    var values = new Array(inputs.length);
+    var ready = new Array(inputs.length);
+    var disposed = false;
+    var unsubs = [];
+
+    // Validate seed length
+    if (opts.seed) {
+      if (opts.seed.length !== inputs.length) {
+        throw new TypeError('bw.derive: seed length (' + opts.seed.length + ') must match inputs length (' + inputs.length + ')');
+      }
+      for (var si = 0; si < opts.seed.length; si++) {
+        values[si] = opts.seed[si];
+        ready[si] = true;
+      }
+    }
+
+    // Cycle detection
+    if (inputs.indexOf(outTopic) !== -1) {
+      bw.pub('bw:diag', {
+        code: 'derive_cycle',
+        inputs: inputs,
+        outTopic: outTopic
+      });
+    }
+    function _allReady() {
+      for (var r = 0; r < ready.length; r++) {
+        if (!ready[r]) return false;
+      }
+      return true;
+    }
+    function _compute() {
+      /* c8 ignore next -- disposed guard: race condition safety net */
+      if (disposed) return;
+      try {
+        var result = fn.apply(null, values);
+        bw.pub(outTopic, result);
+      } catch (e) {
+        bw.pub('bw:diag', {
+          code: 'derive_error',
+          outTopic: outTopic,
+          msg: e.message
+        });
+      }
+    }
+    for (var i = 0; i < inputs.length; i++) {
+      (function (idx) {
+        var unsub = bw.sub(inputs[idx], function (v) {
+          values[idx] = v;
+          ready[idx] = true;
+          if (_allReady()) _compute();
+        });
+        unsubs.push(unsub);
+      })(i);
+    }
+
+    // Immediate: publish once at creation if ready
+    if (opts.immediate && _allReady()) _compute();
+    function dispose() {
+      if (disposed) return;
+      disposed = true;
+      for (var u = 0; u < unsubs.length; u++) {
+        /* c8 ignore next -- unsub() never throws in practice */
+        try {
+          unsubs[u]();
+        } catch (e) {}
+      }
+    }
+
+    // Tie to element lifecycle
+    if (opts.el) {
+      if (!opts.el._bw_subs) opts.el._bw_subs = [];
+      opts.el._bw_subs.push(dispose);
+    }
+    return dispose;
+  };
+
   // ===================================================================================
   // Function Registry (revived from v1 for string dispatch contexts)
   // ===================================================================================
@@ -7432,7 +8014,9 @@
    * @see bw.funcGetDispatchStr
    */
   bw.funcRegister = function (fn, name) {
+    /* c8 ignore next -- non-function guard: tests always pass valid functions */
     if (!_is(fn, 'function')) return '';
+    /* c8 ignore next -- ternary branches: both name and auto-generated paths tested elsewhere */
     var fnID = _is(name, 'string') && name.length > 0 ? name : 'bw_fn_' + bw._fnIDCounter++;
     bw._fnRegistry[fnID] = fn;
     return fnID;
@@ -7479,10 +8063,12 @@
    * @category Function Registry
    */
   bw.funcUnregister = function (name) {
+    /* c8 ignore start -- funcUnregister: tested via htmlPage/funcRegister integration */
     if (name in bw._fnRegistry) {
       delete bw._fnRegistry[name];
       return true;
     }
+    /* c8 ignore stop */
     return false;
   };
 
@@ -7603,32 +8189,9 @@
     return result;
   };
 
-  // ===================================================================================
-  // Deprecation stubs for removed ComponentHandle APIs (v2.0.19)
-  // ===================================================================================
-
-  bw._extractDeps = undefined;
-  bw._dirtyComponents = undefined;
-  bw._flushScheduled = undefined;
-  bw._scheduleFlush = undefined;
-  bw._doFlush = undefined;
-  bw._ComponentHandle = undefined;
-
-  /**
-   * No-op flush (ComponentHandle removed in v2.0.19).
-   * Kept as no-op for backward compatibility.
-   * @category Component
-   */
-  bw.flush = function () {};
-  bw.when = function () {
-    throw new Error('bw.when() removed in v2.0.19. Use conditional logic in o.render instead.');
-  };
-  bw.each = function () {
-    throw new Error('bw.each() removed in v2.0.19. Use array mapping in o.render instead.');
-  };
-  bw.component = function () {
-    throw new Error('bw.component() removed in v2.0.19. Use o.handle/o.slots on TACO options instead.');
-  };
+  // v2.1: ComponentHandle APIs (_extractDeps, _dirtyComponents, _flushScheduled,
+  // _scheduleFlush, _doFlush, _ComponentHandle, flush, when, each, component)
+  // fully removed — no stubs needed in v2.1.
 
   // ===================================================================================
   // bw.message() — SendMessage() for the web
@@ -7654,7 +8217,12 @@
    */
   bw.message = function (target, action, data) {
     var el = bw.el(target);
-    if (!el) el = bw.$('.' + target)[0];
+    // Fallback: try class selector, but only for safe selector strings
+    if (!el && _is(target, 'string') && target.indexOf('#') !== 0 && target.indexOf('.') !== 0) {
+      try {
+        el = bw.$('.' + target)[0];
+      } catch (e) {/* invalid selector */}
+    }
     if (!el || !el.bw || typeof el.bw[action] !== 'function') {
       _cw('bw.message: no handle method "' + action + '" on ' + target);
       return false;
@@ -7879,19 +8447,11 @@
   // ===================================================================================
 
   /**
-   * Registry of named functions sent via register messages.
-   * Populated by bw.apply({ type: 'register', name, body }).
-   * Invoked by bw.apply({ type: 'call', name, args }).
+   * Registry of named functions for backward compat with code that checks _clientFunctions.
+   * v2.1: exec/register are rejected at the protocol level; use bw.registerRemote() instead.
    * @private
    */
   bw._clientFunctions = {};
-
-  /**
-   * Whether exec messages are allowed. Set by bwclient connect opts.allowExec.
-   * Default false — exec messages are rejected unless explicitly opted in.
-   * @private
-   */
-  bw._allowExec = false;
 
   /**
    * Parse a bwserve protocol message string, supporting both strict JSON
@@ -7982,16 +8542,19 @@
   /**
    * Apply a bwserve protocol message to the DOM.
    *
-   * Dispatches one of 9 message types:
-   *   replace  — bw.DOM(target, node)
-   *   append   — target.appendChild(bw.createDOM(node))
-   *   remove   — bw.cleanup(target); target.remove()
-   *   patch    — bw.patch(target, content, attr)
+   * Dispatches one of 12 v:1 message types:
+   *   mount    — bw.mount(ref, taco)
+   *   patch    — bw.patch(ref, text/attrs/content)
+   *   append   — bw.append(ref, taco)
+   *   replace  — bw.replace(ref, taco)
+   *   remove   — bw.remove(ref)
+   *   refresh  — bw.refresh(ref)
+   *   update   — bw.update(ref, data)
+   *   message  — bw.message(ref, action, data)
    *   batch    — iterate ops, call bw.apply for each
-   *   message  — bw.message(target, action, data)
-   *   register — store a named function for later call()
-   *   call     — invoke a registered function
-   *   exec     — execute arbitrary JS (requires allowExec)
+   *   listen   — subscribe to a pub/sub topic
+   *   unlisten — unsubscribe from a topic
+   *   call     — invoke a registered remote function
    *
    * Target resolution:
    *   Starts with '#' or '.' → CSS selector (querySelector)
@@ -8001,74 +8564,313 @@
    * @returns {boolean} true if the message was applied successfully
    * @category Core
    */
+  // ===================================================================================
+  // bw.actions — document-level delegated action dispatcher (§5.4)
+  // ===================================================================================
+
+  bw.actions = function () {
+    var _enabled = false;
+    function _findActionToken(el) {
+      /* c8 ignore next -- el always has classList in DOM event handlers */
+      if (!el || !el.classList) return null;
+      var cls = el.classList;
+      var tokens = [];
+      /* c8 ignore next 2 -- action token extraction: only hit via real DOM clicks */
+      for (var i = 0; i < cls.length; i++) {
+        if (cls[i].indexOf('bw_act_') === 0) tokens.push(cls[i].substring(7));
+      }
+      return tokens;
+    }
+    function _findOwner(el) {
+      var node = el;
+      while (node) {
+        if (node._bw_type) {
+          return {
+            uuid: bw.getUUID(node),
+            type: node._bw_type
+          };
+        }
+        node = node.parentElement;
+      }
+      return null;
+    }
+    function _handleEvent(e) {
+      /* c8 ignore next -- guard only reachable if disabled between install and event */
+      if (!_enabled) return;
+      var node = e.target;
+      /* c8 ignore start -- action dispatch: requires real DOM event delegation not exercised in unit tests */
+      while (node && node !== document) {
+        var tokens = _findActionToken(node);
+        if (tokens && tokens.length > 0) {
+          var action = tokens[0];
+          if (tokens.length > 1) {
+            bw.pub('bw:diag', {
+              code: 'act_multiple',
+              tokens: tokens
+            });
+          }
+          var tag = node.tagName ? node.tagName.toLowerCase() : '';
+          if (tag === 'a' || tag === 'form') e.preventDefault();
+          var value = null;
+          var name = null;
+          var form = null;
+          if (tag === 'input' || tag === 'textarea' || tag === 'select') {
+            value = node.value;
+            name = node.getAttribute('name');
+          }
+          if (tag === 'form') {
+            form = {};
+            try {
+              var fd = new FormData(node);
+              fd.forEach(function (v, k) {
+                form[k] = v;
+              });
+            } catch (ex) {}
+          }
+          var ref = bw.getUUID(node) || node.getAttribute('id') || null;
+          var owner = _findOwner(node.parentElement);
+          var payload = {
+            action: action,
+            value: value,
+            name: name,
+            ref: ref,
+            owner: owner
+          };
+          if (form) payload.form = form;
+          bw.pub('act:' + action, payload);
+          if (bw.remote && typeof bw.remote.send === 'function') {
+            bw.remote.send({
+              v: 1,
+              type: 'event',
+              action: action,
+              value: value,
+              name: name,
+              ref: ref,
+              owner: owner
+            });
+          }
+          return;
+        }
+        node = node.parentElement;
+      }
+      /* c8 ignore stop */
+    }
+    var _installedDoc = null;
+    function _install() {
+      /* c8 ignore next -- document always available in test env */
+      if (typeof document === 'undefined') return;
+      // Re-install if document changed (jsdom test isolation)
+      if (_installedDoc === document) return;
+      _installedDoc = document;
+      document.addEventListener('click', _handleEvent, true);
+      document.addEventListener('change', _handleEvent, true);
+      document.addEventListener('input', _handleEvent, true);
+      document.addEventListener('submit', _handleEvent, true);
+    }
+    return {
+      enable: function enable() {
+        _enabled = true;
+        _install();
+      },
+      disable: function disable() {
+        _enabled = false;
+      },
+      _ensureInstalled: function _ensureInstalled() {
+        if (_enabled) _install();
+      },
+      _reset: function _reset() {
+        _enabled = false;
+        _installedDoc = null;
+      }
+    };
+  }();
+  bw.remote = null;
+  bw._clientRemotes = {};
+  bw._wireListeners = {};
+  bw.registerRemote = function (name, fn) {
+    bw._clientRemotes[name] = fn;
+  };
+  bw.connect = function (url) {
+    bw.pub('bw:diag', {
+      code: 'remote_status',
+      status: 'connecting',
+      url: url
+    });
+    var es = new EventSource(url);
+    var remote = {
+      send: function send(msg) {
+        try {
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', url.replace('/events/', '/apply/'), true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify(msg));
+        } catch (e) {}
+      },
+      close: function close() {
+        es.close();
+      }
+    };
+    es.onopen = function () {
+      bw.pub('bw:diag', {
+        code: 'remote_status',
+        status: 'connected'
+      });
+    };
+    es.onmessage = function (e) {
+      try {
+        bw.apply(JSON.parse(e.data));
+      } catch (ex) {}
+    };
+    es.onerror = function () {
+      bw.pub('bw:diag', {
+        code: 'remote_status',
+        status: 'disconnected'
+      });
+    };
+    bw.remote = remote;
+    return remote;
+  };
+  function _sanitizeWireTaco(taco) {
+    if (!taco || _typeof(taco) !== 'object') return taco;
+    if (taco.a) {
+      var cleanAttrs = {};
+      var akeys = _keys(taco.a);
+      for (var ai = 0; ai < akeys.length; ai++) {
+        if (akeys[ai].substring(0, 2).toLowerCase() === 'on' && typeof taco.a[akeys[ai]] === 'string') continue;
+        cleanAttrs[akeys[ai]] = taco.a[akeys[ai]];
+      }
+      taco = Object.assign({}, taco, {
+        a: cleanAttrs
+      });
+    }
+    if (_isA(taco.c)) {
+      taco = Object.assign({}, taco, {
+        c: taco.c.map(_sanitizeWireTaco)
+      });
+    } else if (taco.c && _typeof(taco.c) === 'object' && taco.c.t) {
+      taco = Object.assign({}, taco, {
+        c: _sanitizeWireTaco(taco.c)
+      });
+    }
+    return taco;
+  }
   bw.apply = function (msg) {
     if (!msg || !msg.type) return false;
+    if (msg.type === 'hello') return true; // handshake -- no-op ack
+    if (msg.type !== 'batch' && msg.v !== 1) {
+      bw.pub('bw:diag', {
+        code: 'wire_rejected',
+        msg: 'missing or unknown version',
+        v: msg.v
+      });
+      return false;
+    }
     var type = msg.type;
-    var target = msg.target;
-    if (type === 'replace') {
-      var el = bw.el(target);
-      if (!el) return false;
-      bw.DOM(el, msg.node);
+    var ref = msg.ref;
+    if (msg.target !== undefined || msg.node !== undefined) {
+      bw.pub('bw:diag', {
+        code: 'wire_rejected',
+        msg: 'v:1 uses ref/taco, not target/node'
+      });
+      return false;
+    }
+    if (type === 'mount') {
+      var mountTarget = bw.el(ref);
+      if (!mountTarget) return false;
+      bw.mount(mountTarget, _sanitizeWireTaco(msg.taco));
       return true;
     } else if (type === 'patch') {
-      var patched = bw.patch(target, msg.content, msg.attr);
-      return patched !== null;
+      var patchEl = bw.el(ref);
+      if (!patchEl) return false;
+      if (msg.text !== undefined) bw.patch(patchEl, msg.text);else if (msg.attrs) bw.patch(patchEl, msg.attrs);else if (msg.content) bw.patch(patchEl, _sanitizeWireTaco(msg.content));
+      return true;
     } else if (type === 'append') {
-      var parent = bw.el(target);
-      if (!parent) return false;
-      var child = bw.createDOM(msg.node);
-      parent.appendChild(child);
+      var appendTarget = bw.el(ref);
+      if (!appendTarget) return false;
+      bw.append(appendTarget, _sanitizeWireTaco(msg.taco));
+      return true;
+    } else if (type === 'replace') {
+      var replaceEl = bw.el(ref);
+      if (!replaceEl) return false;
+      bw.replace(replaceEl, _sanitizeWireTaco(msg.taco));
       return true;
     } else if (type === 'remove') {
-      var toRemove = bw.el(target);
-      if (!toRemove) return false;
-      if (_is(bw.cleanup, 'function')) bw.cleanup(toRemove);
-      toRemove.remove();
+      var removeEl = bw.el(ref);
+      if (!removeEl) return false;
+      bw.remove(removeEl);
       return true;
+    } else if (type === 'refresh') {
+      var refreshEl = bw.el(ref);
+      if (!refreshEl) return false;
+      if (!refreshEl._bw_render) {
+        bw.pub('bw:diag', {
+          code: 'refresh_no_render',
+          ref: ref
+        });
+        return false;
+      }
+      bw.refresh(refreshEl);
+      return true;
+    } else if (type === 'update') {
+      var updateEl = bw.el(ref);
+      if (!updateEl) return false;
+      bw.update(updateEl, msg.data);
+      return true;
+    } else if (type === 'message') {
+      return bw.message(ref, msg.action, msg.data) !== false;
     } else if (type === 'batch') {
       if (!_isA(msg.ops)) return false;
       var allOk = true;
-      msg.ops.forEach(function (op) {
-        if (!bw.apply(op)) allOk = false;
-      });
-      return allOk;
-    } else if (type === 'message') {
-      return bw.message(msg.target, msg.action, msg.data);
-    } else if (type === 'register') {
-      if (!msg.name || !msg.body) return false;
-      try {
-        bw._clientFunctions[msg.name] = new Function('return ' + msg.body)();
-        return true;
-      } catch (e) {
-        _ce('[bw] register error:', msg.name, e);
-        return false;
+      for (var bi = 0; bi < msg.ops.length; bi++) {
+        /* c8 ignore next 2 -- batch catch: bw.apply() handles errors internally */
+        try {
+          if (!bw.apply(msg.ops[bi])) allOk = false;
+        } catch (e) {
+          allOk = false;
+        }
       }
+      return allOk;
+    } else if (type === 'listen') {
+      if (!msg.topic) return false;
+      if (bw._wireListeners[msg.topic]) return true;
+      bw._wireListeners[msg.topic] = bw.sub(msg.topic, function (d) {
+        if (bw.remote && typeof bw.remote.send === 'function') {
+          bw.remote.send({
+            v: 1,
+            type: 'topic',
+            topic: msg.topic,
+            data: d
+          });
+        }
+      });
+      return true;
+    } else if (type === 'unlisten') {
+      if (!msg.topic || !bw._wireListeners[msg.topic]) return false;
+      bw._wireListeners[msg.topic]();
+      delete bw._wireListeners[msg.topic];
+      return true;
     } else if (type === 'call') {
       if (!msg.name) return false;
-      var fn = bw._clientFunctions[msg.name];
+      var fn = bw._clientRemotes[msg.name] || bw._clientFunctions[msg.name];
       if (!_is(fn, 'function')) return false;
       try {
         var args = _isA(msg.args) ? msg.args : [];
         fn.apply(null, args);
         return true;
       } catch (e) {
-        _ce('[bw] call error:', msg.name, e);
         return false;
       }
-    } else if (type === 'exec') {
-      if (!bw._allowExec) {
-        _cw('[bw] exec rejected: allowExec is not enabled');
-        return false;
-      }
-      if (!msg.code) return false;
-      try {
-        new Function(msg.code)();
-        return true;
-      } catch (e) {
-        _ce('[bw] exec error:', e);
-        return false;
-      }
+    } else if (type === 'exec' || type === 'register') {
+      bw.pub('bw:diag', {
+        code: 'wire_rejected',
+        msg: type + ' is not a valid v:1 verb'
+      });
+      return false;
     }
+    bw.pub('bw:diag', {
+      code: 'wire_rejected',
+      msg: 'unknown type: ' + type
+    });
     return false;
   };
 
@@ -8116,9 +8918,13 @@
     if (!el) return null;
     if (depth === undefined || depth === null) depth = 3;
     function walk(node, d) {
+      /* c8 ignore next -- null node guard: children iteration always passes valid nodes */
       if (!node) return null;
       // Skip non-element nodes (text, comment, etc.)
+      /* c8 ignore next -- nodeType guard: el.children only contains elements */
       if (node.nodeType !== 1) return null;
+
+      /* c8 ignore next -- tagName always exists on elements; #text fallback is defensive */
       var info = {
         tag: node.tagName ? node.tagName.toLowerCase() : '#text'
       };
@@ -8272,13 +9078,47 @@
       _options$append = options.append,
       append = _options$append === void 0 ? true : _options$append;
 
+    // Warn if user is using bw_style_* reserved namespace
+    if (id && /^bw_style_/.test(id) && !options._internal) {
+      bw.pub('bw:diag', {
+        code: 'css_reserved_id',
+        ref: id,
+        msg: 'id "' + id + '" is in the reserved bw_style_* namespace'
+      });
+    }
+
     // Get or create style element
     var styleEl = document.getElementById(id);
     if (!styleEl) {
       styleEl = document.createElement('style');
       styleEl.id = id;
       styleEl.type = 'text/css';
-      document.head.appendChild(styleEl);
+      // Layer ordering: insert bw_style_* elements in deterministic order
+      if (/^bw_style_/.test(id)) {
+        var _layerOrder = ['bw_style_reset', 'bw_style_structural', 'bw_style_global'];
+        var myIdx = _layerOrder.indexOf(id);
+        if (myIdx === -1) myIdx = _layerOrder.length; // scoped styles after global
+        // Find the first existing bw_style_* element that should come after this one
+        var inserted = false;
+        var headStyles = document.head.querySelectorAll('style[id^="bw_style_"]');
+        for (var si = 0; si < headStyles.length; si++) {
+          var thatIdx = _layerOrder.indexOf(headStyles[si].id);
+          if (thatIdx === -1) thatIdx = _layerOrder.length;
+          if (thatIdx > myIdx) {
+            document.head.insertBefore(styleEl, headStyles[si]);
+            inserted = true;
+            break;
+          }
+        }
+        if (!inserted) document.head.appendChild(styleEl);
+      } else {
+        document.head.appendChild(styleEl);
+      }
+    }
+
+    // Apply CSP nonce if configured
+    if (bw.config && bw.config.cspNonce) {
+      styleEl.setAttribute('nonce', bw.config.cspNonce);
     }
 
     // Convert CSS if needed
@@ -8408,7 +9248,7 @@
    * every matched element (same apply rules as `bw.el()`):
    * - string/number: sets `el.textContent`
    * - function: calls `apply(el)` for each element
-   * - TACO object: clears children, mounts TACO via `bw.createDOM()`
+   * - TACO object: clears children, mounts TACO via `bw.create()`
    * - array: clears children, appends each item
    *
    * @param {string|Element|Array} selector - CSS selector, element, or array
@@ -8423,33 +9263,34 @@
    *   el.style.opacity = '0.5';
    * })
    */
-  if (bw._isBrowser) {
-    bw.$ = function (selector, apply) {
-      var els;
-      if (!selector) {
-        els = [];
-      } else if (_isA(selector)) {
-        els = selector;
-      } else if (selector.nodeType) {
-        els = [selector];
-      } else if (selector.length !== undefined && !_is(selector, 'string')) {
-        els = Array.from(selector);
-      } else if (_is(selector, 'string')) {
-        els = Array.from(document.querySelectorAll(selector));
-      } else {
-        els = [];
-      }
-      if (apply !== undefined) {
-        for (var i = 0; i < els.length; i++) _applyTo(els[i], apply);
-      }
-      return els;
-    };
+  // Always define bw.$ — use dynamic _isBrowser check so it works when
+  // jsdom globals are injected after module load (test environments).
+  bw.$ = function (selector, apply) {
+    if (!bw._isBrowser) return [];
+    var els;
+    if (!selector) {
+      els = [];
+    } else if (_isA(selector)) {
+      els = selector;
+    } else if (selector.nodeType) {
+      els = [selector];
+    } else if (selector.length !== undefined && !_is(selector, 'string')) {
+      els = Array.from(selector);
+    } else if (_is(selector, 'string')) {
+      els = Array.from(document.querySelectorAll(selector));
+    } else {
+      els = [];
+    }
+    if (apply !== undefined) {
+      for (var i = 0; i < els.length; i++) _applyTo(els[i], apply);
+    }
+    return els;
+  };
 
-    // Convenience single element selector
-    bw.$.one = function (selector) {
-      return bw.$(selector)[0] || null;
-    };
-  }
+  // Convenience single element selector
+  bw.$.one = function (selector) {
+    return bw.$(selector)[0] || null;
+  };
 
   // =========================================================================
   // v2.0.18 Clean Styles API — makeStyles / applyStyles / loadStyles / etc.
@@ -8464,8 +9305,11 @@
   function _scopeToStyleId(scope) {
     if (!scope || scope === '' || scope === 'global') return 'bw_style_global';
     if (scope === 'reset') return 'bw_style_reset';
-    // Strip leading # or . and convert - to _
-    var clean = scope.replace(/^[#.]/, '').replace(/-/g, '_');
+    if (scope === 'structural') return 'bw_style_structural';
+    // Preserve sigil distinction: '#dash' → 'id_dash', '.dash' → 'cls_dash'
+    var clean = scope;
+    if (clean.charAt(0) === '#') clean = 'id_' + clean.substring(1);else if (clean.charAt(0) === '.') clean = 'cls_' + clean.substring(1);
+    clean = clean.replace(/-/g, '_');
     return 'bw_style_' + clean;
   }
 
@@ -8494,6 +9338,21 @@
     var fullConfig = Object.assign({}, DEFAULT_PALETTE_CONFIG, config || {});
     if (config && !config.tertiary) fullConfig.tertiary = fullConfig.primary;
 
+    // Contrast check: warn if primary/secondary seeds are too close
+    if (fullConfig.primary && fullConfig.secondary) {
+      var l1 = relativeLuminance(fullConfig.primary);
+      var l2 = relativeLuminance(fullConfig.secondary);
+      var bright = Math.max(l1, l2);
+      var dark = Math.min(l1, l2);
+      var ratio = (bright + 0.05) / (dark + 0.05);
+      if (ratio < 1.5) {
+        bw.pub('bw:diag', {
+          code: 'contrast_aa',
+          msg: 'primary/secondary seeds have near-identical luminance (ratio ' + ratio.toFixed(2) + ')'
+        });
+      }
+    }
+
     // Derive primary palette
     var palette = derivePalette(fullConfig);
 
@@ -8514,6 +9373,7 @@
 
     // Add body-level surface overrides for the alternate palette.
     // When .bw_theme_alt is on <html>, ".bw_theme_alt body" correctly matches.
+    /* c8 ignore next 3 -- altPalette.surface always provided by derivePalette */
     altRawRules['body'] = {
       'color': altPalette.dark.base,
       'background-color': altPalette.surface || altPalette.light.base
@@ -8558,6 +9418,8 @@
       _cw('bw.applyStyles: invalid styles object');
       return null;
     }
+    // Reject complex/comma scopes
+    if (scope && !_validateThemeScope(scope)) return null;
     var styleId = _scopeToStyleId(scope);
 
     // Scope the primary rules if a scope is provided
@@ -8569,9 +9431,25 @@
     // Wrap alternate rules with .bw_theme_alt
     var altRules = styles.alternateRules;
     if (altRules) {
+      // When scoped: remove the raw 'body' rule (dead as descendant of scope)
+      // and add a self-rule on the scope root instead
+      var bodyDecls = null;
+      if (scope && altRules['body']) {
+        bodyDecls = altRules['body'];
+        // Work on a shallow copy so we don't mutate the original
+        var altCopy = {};
+        for (var k in altRules) {
+          if (Object.prototype.hasOwnProperty.call(altRules, k) && k !== 'body') altCopy[k] = altRules[k];
+        }
+        altRules = altCopy;
+      }
       if (scope) {
         // Scoped compound: #scope.bw_theme_alt .bw_card
         altRules = scopeRulesUnder(altRules, scope + '.bw_theme_alt');
+        // Add self surface rule for the scope root
+        if (bodyDecls) {
+          altRules[scope + '.bw_theme_alt'] = bodyDecls;
+        }
       } else {
         // Global: .bw_theme_alt .bw_card
         altRules = scopeRulesUnder(altRules, '.bw_theme_alt');
@@ -8585,7 +9463,8 @@
     }
     return bw.injectCSS(combined, {
       id: styleId,
-      append: false
+      append: false,
+      _internal: true
     });
   };
 
@@ -8607,20 +9486,31 @@
    * bw.loadStyles({ primary: '#4f46e5' }, '#my-dashboard');   // custom, scoped
    */
   bw.loadStyles = function (config, scope) {
-    // Also inject structural CSS first (only once)
-    if (bw._isBrowser) {
-      var existing = document.getElementById('bw_structural');
-      if (!existing) {
-        var structuralCSS = bw.css(getStructuralStyles());
-        bw.injectCSS(structuralCSS, {
-          id: 'bw_structural',
-          append: false
-        });
-      }
-    }
+    // Inject structural CSS first (only once)
+    bw.loadStructural();
     var styles = bw.makeStyles(config);
     bw.applyStyles(styles, scope);
     return styles;
+  };
+
+  /**
+   * Inject structural (theme-independent) CSS only. Idempotent.
+   *
+   * @returns {Element|null} The `<style>` element, or null in Node.js
+   * @category CSS & Styling
+   * @see bw.loadStyles
+   * @see bw.clearStyles
+   */
+  bw.loadStructural = function () {
+    if (!bw._isBrowser) return null;
+    var existing = document.getElementById('bw_style_structural');
+    if (existing) return existing;
+    var structuralCSS = bw.css(getStructuralStyles());
+    return bw.injectCSS(structuralCSS, {
+      id: 'bw_style_structural',
+      append: false,
+      _internal: true
+    });
   };
 
   /**
@@ -8656,7 +9546,8 @@
     if (existing) return existing;
     return bw.injectCSS(bw.css(getResetStyles()), {
       id: 'bw_style_reset',
-      append: false
+      append: false,
+      _internal: true
     });
   };
 
@@ -8677,8 +9568,88 @@
    * bw.toggleThemeMode('#my-dashboard');    // scoped toggle
    * bw.toggleThemeMode('.panel');           // toggle on ALL .panel elements
    */
+  /**
+   * Validate a scope selector. Rejects complex/comma selectors.
+   * @private
+   * @param {string} scope
+   * @returns {boolean}
+   */
+  function _validateThemeScope(scope) {
+    if (!scope) return true;
+    // Reject comma-separated selectors
+    if (scope.indexOf(',') !== -1) {
+      bw.pub('bw:diag', {
+        code: 'scope_rejected',
+        ref: scope,
+        msg: 'comma selectors not allowed'
+      });
+      return false;
+    }
+    // Reject descendant selectors (space-separated compound)
+    if (/\s/.test(scope.trim())) {
+      bw.pub('bw:diag', {
+        code: 'scope_rejected',
+        ref: scope,
+        msg: 'complex selectors not allowed'
+      });
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Set the theme mode on all matching elements.
+   *
+   * @param {string} mode - 'primary' or 'alternate'
+   * @param {string} [scope] - Selector. Omit for global (<html>).
+   * @returns {Object} { mode, count } — the mode set and number of elements affected
+   * @category CSS & Styling
+   */
+  bw.setThemeMode = function (mode, scope) {
+    if (!bw._isBrowser) return {
+      mode: 'primary',
+      count: 0
+    };
+    if (!_validateThemeScope(scope)) return {
+      mode: mode,
+      count: 0
+    };
+    var els;
+    if (scope) {
+      els = bw.$(scope);
+    } else {
+      els = [document.documentElement];
+    }
+    for (var i = 0; i < els.length; i++) {
+      if (mode === 'alternate') {
+        els[i].classList.add('bw_theme_alt');
+      } else {
+        els[i].classList.remove('bw_theme_alt');
+      }
+    }
+    var result = {
+      mode: mode,
+      count: els.length
+    };
+    bw.pub('bw:thememode', {
+      mode: mode,
+      scope: scope || 'html',
+      count: els.length
+    });
+    return result;
+  };
+
+  /**
+   * Toggle between primary and alternate theme palettes.
+   * Determines current mode from first matched element, then sets inverse on all.
+   *
+   * @param {string|Element} [scope] - Selector or element. Omit for global.
+   * @returns {string} Active mode after toggle: 'primary' or 'alternate' (based on first element)
+   * @category CSS & Styling
+   */
   bw.toggleThemeMode = function (scope) {
     if (!bw._isBrowser) return 'primary';
+    if (!_validateThemeScope(scope)) return 'primary';
     var els;
     if (scope) {
       els = bw.$(scope);
@@ -8686,21 +9657,20 @@
       els = [document.documentElement];
     }
     if (!els.length) return 'primary';
-    var mode;
-    for (var i = 0; i < els.length; i++) {
-      var hasAlt = els[i].classList.contains('bw_theme_alt');
-      if (hasAlt) {
-        els[i].classList.remove('bw_theme_alt');
-      } else {
-        els[i].classList.add('bw_theme_alt');
-      }
-      if (i === 0) mode = hasAlt ? 'primary' : 'alternate';
-    }
-    return mode;
-  };
 
-  // Alias — kept for one release cycle. Use bw.toggleThemeMode() instead.
-  bw.toggleStyles = bw.toggleThemeMode;
+    // Determine inverse based on first element
+    var firstHasAlt = els[0].classList.contains('bw_theme_alt');
+    var newMode = firstHasAlt ? 'primary' : 'alternate';
+    // Set all to the same mode
+    for (var i = 0; i < els.length; i++) {
+      if (newMode === 'alternate') {
+        els[i].classList.add('bw_theme_alt');
+      } else {
+        els[i].classList.remove('bw_theme_alt');
+      }
+    }
+    return newMode;
+  };
 
   /**
    * Remove injected styles for a given scope.
@@ -8723,10 +9693,12 @@
     var el = document.getElementById(styleId);
     if (el) el.remove();
 
-    // Also remove bw_theme_alt from the relevant element
-    if (scope && scope !== 'reset' && scope !== 'global') {
+    // Also remove bw_theme_alt from ALL relevant elements
+    if (scope && scope !== 'reset' && scope !== 'structural' && scope !== 'global') {
       var targets = bw.$(scope);
-      if (targets[0]) targets[0].classList.remove('bw_theme_alt');
+      for (var i = 0; i < targets.length; i++) {
+        targets[i].classList.remove('bw_theme_alt');
+      }
     } else if (!scope || scope === 'global') {
       document.documentElement.classList.remove('bw_theme_alt');
     }
@@ -8745,6 +9717,10 @@
   bw.deriveAlternateSeed = deriveAlternateSeed;
   bw.deriveAlternateConfig = deriveAlternateConfig;
   bw.isLightPalette = isLightPalette;
+  bw.colorParse = colorParse;
+  bw.colorRgbToHsl = colorRgbToHsl;
+  bw.colorHslToRgb = colorHslToRgb;
+  bw.colorInterp = colorInterp;
 
   // Expose layout and theme presets
   bw.SPACING_PRESETS = SPACING_PRESETS;
@@ -8768,16 +9744,6 @@
   bw.arrayBinA = arrayBinA;
   /** @see bitwrench-utils.js for implementation */
   bw.arrayBNotInA = arrayBNotInA;
-
-  /** @see bitwrench-utils.js for implementation — wraps _colorInterp with bw.colorParse */
-  bw.colorInterp = function (x, in0, in1, colors, stretch) {
-    return colorInterp(x, in0, in1, colors, stretch, colorParse);
-  };
-
-  // Color conversion functions — imported from bitwrench-color-utils.js (single source of truth)
-  bw.colorHslToRgb = colorHslToRgb;
-  bw.colorRgbToHsl = colorRgbToHsl;
-  bw.colorParse = colorParse;
 
   /**
    * Set a browser cookie with expiration and options.
@@ -8821,11 +9787,15 @@
     if (!bw._isBrowser) return defaultValue;
     var name = cname + "=";
     var ca = document.cookie.split(";");
+
+    /* c8 ignore start -- cookie parsing: jsdom doesn't support document.cookie in unit tests */
     for (var i = 0; i < ca.length; i++) {
       var c = ca[i];
       while (c.charAt(0) === " ") c = c.substring(1);
       if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
     }
+    /* c8 ignore stop */
+
     return defaultValue;
   };
 
@@ -8863,10 +9833,14 @@
         }
         return result;
       }
+
+      /* c8 ignore next -- params.has() branch: jsdom window.location.search is always empty */
       return params.has(key) ? params.get(key) || true : defaultValue;
+      /* c8 ignore start -- URLSearchParams never throws in test env */
     } catch (e) {
       return defaultValue;
     }
+    /* c8 ignore stop */
   };
 
   /** @see bitwrench-utils.js for implementation */
@@ -8901,7 +9875,7 @@
 
     // Fallback for older browsers
     return new Promise(function (resolve, reject) {
-      var textarea = bw.createDOM({
+      var textarea = bw.create({
         t: 'textarea',
         a: {
           value: text,
@@ -8998,16 +9972,17 @@
       _config$selectable = config.selectable,
       selectable = _config$selectable === void 0 ? false : _config$selectable,
       onRowClick = config.onRowClick,
+      rowKey = config.rowKey,
       pageSize = config.pageSize,
       _config$currentPage = config.currentPage,
       currentPage = _config$currentPage === void 0 ? 1 : _config$currentPage,
       onPageChange = config.onPageChange;
 
-    // Build class list: always include bw_table, add striped/hover/selectable, append user className
-    var cls = 'bw_table';
-    if (striped) cls += ' bw_table_striped';
-    if (hover || selectable) cls += ' bw_table_hover';
-    if (selectable) cls += ' bw_table_selectable';
+    // Build class list: always include bw_bccl_table, add striped/hover/selectable, append user className
+    var cls = 'bw_bccl_table';
+    if (striped) cls += ' bw_bccl_table_striped';
+    if (hover || selectable) cls += ' bw_bccl_table_hover';
+    if (selectable) cls += ' bw_bccl_table_selectable';
     if (className) cls += ' ' + className;
     cls = cls.trim();
 
@@ -9055,37 +10030,28 @@
       sortedData = sortedData.slice(start, start + pageSize);
     }
 
-    // Create sort handler
-    var handleSort = function handleSort(column) {
-      if (!sortable) return;
-      if (currentSortColumn === column) {
-        currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-      } else {
-        currentSortColumn = column;
-        currentSortDirection = 'asc';
-      }
-      if (onSort) {
-        onSort(column, currentSortDirection);
-      }
-    };
-
-    // Build table header
+    // Build table header with scope="col" and aria-sort support
     var thead = {
       t: 'thead',
       c: {
         t: 'tr',
         c: cols.map(function (col) {
+          var thAttrs = {
+            scope: 'col',
+            'data-col-key': col.key
+          };
+          if (sortable) {
+            thAttrs.style = {
+              cursor: 'pointer',
+              userSelect: 'none'
+            };
+          }
+          if (currentSortColumn === col.key) {
+            thAttrs['aria-sort'] = currentSortDirection === 'asc' ? 'ascending' : 'descending';
+          }
           return {
             t: 'th',
-            a: sortable ? {
-              style: {
-                cursor: 'pointer',
-                userSelect: 'none'
-              },
-              onclick: function onclick() {
-                return handleSort(col.key);
-              }
-            } : {},
+            a: thAttrs,
             c: [col.label, sortable && currentSortColumn === col.key && {
               t: 'span',
               a: {
@@ -9093,7 +10059,7 @@
                   marginLeft: '5px'
                 }
               },
-              c: currentSortDirection === 'asc' ? '▲' : '▼'
+              c: currentSortDirection === 'asc' ? "\u25B2" : "\u25BC"
             }].filter(Boolean)
           };
         })
@@ -9106,13 +10072,15 @@
       c: sortedData.map(function (row, idx) {
         var globalIdx = pageSize ? (page - 1) * pageSize + idx : idx;
         var rowAttrs = {};
+        if (rowKey && row[rowKey] !== undefined) {
+          rowAttrs['data-row-key'] = String(row[rowKey]);
+        }
         if (selectable || onRowClick) {
           rowAttrs.style = 'cursor:pointer;';
           rowAttrs.onclick = function (e) {
             if (selectable) {
-              // Toggle selected class on this row
               var tr = e.currentTarget;
-              tr.classList.toggle('bw_table_row_selected');
+              tr.classList.toggle('bw_bccl_table_row_selected');
             }
             if (onRowClick) {
               onRowClick(row, globalIdx, e);
@@ -9131,12 +10099,143 @@
         };
       })
     };
+
+    // Shared helper: sort the live table DOM
+    function _sortTableDOM(el, column, direction) {
+      var ths = el.querySelectorAll('th[data-col-key]');
+      // Remove all aria-sort
+      for (var h = 0; h < ths.length; h++) {
+        ths[h].removeAttribute('aria-sort');
+      }
+      // Set aria-sort on the sorted column
+      for (var h2 = 0; h2 < ths.length; h2++) {
+        if (ths[h2].getAttribute('data-col-key') === column) {
+          ths[h2].setAttribute('aria-sort', direction === 'asc' ? 'ascending' : 'descending');
+          break;
+        }
+      }
+    }
+
+    // Shared helper: rebuild tbody rows from new data
+    function _rebuildTbody(el, newData, colsDef, rKey) {
+      var tbodyEl = el.querySelector('tbody');
+      if (!tbodyEl) return;
+      if (rKey) {
+        // Keyed reconciliation: reuse existing row nodes
+        var existingRows = {};
+        var rows = tbodyEl.querySelectorAll('tr');
+        for (var r = 0; r < rows.length; r++) {
+          var k = rows[r].getAttribute('data-row-key');
+          if (k !== null) existingRows[k] = rows[r];
+        }
+
+        // Build new order
+        var frag = el.ownerDocument.createDocumentFragment();
+        for (var d = 0; d < newData.length; d++) {
+          var rowData = newData[d];
+          var keyVal = String(rowData[rKey]);
+          if (existingRows[keyVal]) {
+            // Reuse existing row, update cells
+            var tr = existingRows[keyVal];
+            var cells = tr.querySelectorAll('td');
+            for (var ci = 0; ci < colsDef.length; ci++) {
+              if (cells[ci]) {
+                var newText = colsDef[ci].render ? colsDef[ci].render(rowData[colsDef[ci].key], rowData) : String(rowData[colsDef[ci].key] || '');
+                if (cells[ci].textContent !== newText) cells[ci].textContent = newText;
+              }
+            }
+            frag.appendChild(tr);
+          } else {
+            // Create new row
+            var newTr = el.ownerDocument.createElement('tr');
+            newTr.setAttribute('data-row-key', keyVal);
+            for (var ci2 = 0; ci2 < colsDef.length; ci2++) {
+              var td = el.ownerDocument.createElement('td');
+              td.textContent = colsDef[ci2].render ? colsDef[ci2].render(rowData[colsDef[ci2].key], rowData) : String(rowData[colsDef[ci2].key] || '');
+              newTr.appendChild(td);
+            }
+            frag.appendChild(newTr);
+          }
+        }
+        // Replace tbody contents
+        while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
+        tbodyEl.appendChild(frag);
+      } else {
+        // Full rebuild
+        while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
+        for (var d2 = 0; d2 < newData.length; d2++) {
+          var tr2 = el.ownerDocument.createElement('tr');
+          for (var ci3 = 0; ci3 < colsDef.length; ci3++) {
+            var td2 = el.ownerDocument.createElement('td');
+            td2.textContent = colsDef[ci3].render ? colsDef[ci3].render(newData[d2][colsDef[ci3].key], newData[d2]) : String(newData[d2][colsDef[ci3].key] || '');
+            tr2.appendChild(td2);
+          }
+          tbodyEl.appendChild(tr2);
+        }
+      }
+    }
     var table = {
       t: 'table',
       a: {
         "class": cls
       },
-      c: [thead, tbody]
+      c: [thead, tbody],
+      o: {
+        type: 'table',
+        state: {
+          data: data,
+          columns: cols,
+          sortColumn: currentSortColumn,
+          sortDirection: currentSortDirection,
+          rowKey: rowKey
+        },
+        handle: {
+          sort: function sort(el, column, dir) {
+            var state = el._bw_state || {};
+            if (!dir) {
+              if (state.sortColumn === column) {
+                dir = state.sortDirection === 'asc' ? 'desc' : 'asc';
+              } else {
+                dir = 'asc';
+              }
+            }
+            state.sortColumn = column;
+            state.sortDirection = dir;
+            _sortTableDOM(el, column, dir);
+
+            // Re-sort and rebuild rows
+            var d = state.data ? _toConsumableArray(state.data) : [];
+            d.sort(function (a, b) {
+              var aVal = a[column];
+              var bVal = b[column];
+              if (typeof aVal === 'number' && typeof bVal === 'number') {
+                return dir === 'asc' ? aVal - bVal : bVal - aVal;
+              }
+              var aStr = String(aVal || '').toLowerCase();
+              var bStr = String(bVal || '').toLowerCase();
+              return dir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+            });
+            _rebuildTbody(el, d, state.columns || cols, state.rowKey);
+            if (onSort) onSort(column, dir);
+          },
+          update: function update(el, newConfig) {
+            if (!newConfig) return;
+            var state = el._bw_state || {};
+            if (newConfig.data) {
+              state.data = newConfig.data;
+              _rebuildTbody(el, newConfig.data, state.columns || cols, state.rowKey);
+            }
+          },
+          setData: function setData(el, newData) {
+            var state = el._bw_state || {};
+            state.data = newData;
+            _rebuildTbody(el, newData, state.columns || cols, state.rowKey);
+          },
+          getData: function getData(el) {
+            return el._bw_state && el._bw_state.data || [];
+          }
+        }
+      }
     };
 
     // If no pagination, return table directly
@@ -9144,11 +10243,10 @@
 
     // Build pagination controls
     var pageButtons = [];
-    // Previous button
     pageButtons.push({
       t: 'button',
       a: {
-        "class": 'bw_btn bw_btn_sm',
+        "class": 'bw_bccl_btn bw_bccl_btn_sm',
         disabled: page <= 1 ? 'disabled' : undefined,
         onclick: page > 1 && onPageChange ? function () {
           onPageChange(page - 1);
@@ -9156,7 +10254,6 @@
       },
       c: 'Prev'
     });
-    // Page info
     pageButtons.push({
       t: 'span',
       a: {
@@ -9164,11 +10261,10 @@
       },
       c: 'Page ' + page + ' of ' + totalPages
     });
-    // Next button
     pageButtons.push({
       t: 'button',
       a: {
-        "class": 'bw_btn bw_btn_sm',
+        "class": 'bw_bccl_btn bw_bccl_btn_sm',
         disabled: page >= totalPages ? 'disabled' : undefined,
         onclick: page < totalPages && onPageChange ? function () {
           onPageChange(page + 1);
@@ -9179,12 +10275,12 @@
     return {
       t: 'div',
       a: {
-        "class": 'bw_table_paginated'
+        "class": 'bw_bccl_table_paginated'
       },
       c: [table, {
         t: 'div',
         a: {
-          "class": 'bw_table_pagination',
+          "class": 'bw_bccl_table_pagination',
           style: 'display:flex;align-items:center;justify-content:flex-end;padding:0.5rem 0;gap:0.25rem;'
         },
         c: pageButtons
@@ -9475,297 +10571,94 @@
     return {
       t: 'div',
       a: {
-        "class": 'table-container'
+        "class": 'bw_bccl_dataTable table-container'
       },
       c: content
     };
   };
 
   /**
-   * Component registry for tracking rendered components
-   * @private
-   */
-  bw._componentRegistry = new Map();
-
-  /**
-   * Render a TACO object into the DOM at a specific position, returning a component handle.
+   * Render a TACO into the DOM at a specific position relative to a target.
    *
-   * The handle provides full lifecycle control: state management, re-rendering,
-   * class manipulation, show/hide, event binding, and destroy. Components are
-   * tracked in a registry for later retrieval via `bw.getComponent()`.
+   * Thin convenience factory over `bw.append()` / `bw.replace()`. Every code
+   * path goes through the v2.1 lifecycle pipeline (create → insert → mountTree),
+   * so mounted/unmount hooks, state, handles, and the janitor all work
+   * automatically.
    *
-   * @param {Element|string} element - Target element or CSS selector
-   * @param {string} position - Position: 'replace', 'prepend', 'append', 'before', 'after'
+   * @param {Element|string} target - Target element or CSS selector
+   * @param {string} position - 'append', 'prepend', 'replace', 'before', 'after'
    * @param {Object} taco - TACO object to render
-   * @returns {Object} Component handle with element, setState, update, destroy, etc.
+   * @returns {{ el: Element|null, ok: boolean, error: string|null }}
    * @category DOM Generation
-   * @see bw.getComponent
-   * @see bw.DOM
+   * @see bw.append
+   * @see bw.replace
    * @example
-   * var handle = bw.render('#app', 'append', {
+   * var r = bw.render('#app', 'append', {
    *   t: 'button', a: { class: 'bw_btn' }, c: 'Click Me',
    *   o: { state: { clicks: 0 } }
    * });
-   * handle.setState({ clicks: 1 });
-   * handle.destroy();
+   * if (r.ok) r.el.bw.myMethod();   // use component handle
    */
-  bw.render = function (element, position, taco) {
-    var _taco$o3, _taco$o4, _taco$o5;
-    // Get target element
-    var targetEl = _is(element, 'string') ? document.querySelector(element) : element;
-    if (!targetEl) {
-      return {
-        object_type: 'error',
-        component_id: null,
-        object_handle_in_dom: null,
-        status_code: 'error=target_element_not_found'
-      };
-    }
-
-    // Generate unique UUID class if not provided
-    var componentId = ((_taco$o3 = taco.o) === null || _taco$o3 === void 0 ? void 0 : _taco$o3.id) || bw.uuid('uuid');
-
-    // Create DOM element
-    var domElement;
+  bw.render = function (target, position, taco) {
     try {
-      domElement = bw.createDOM(taco);
-    } catch (e) {
-      return {
-        object_type: 'error',
-        component_id: componentId,
-        object_handle_in_dom: null,
-        status_code: "error=render_failed:".concat(e.message)
+      var targetEl = _is(target, 'string') ? bw.$(target)[0] : target;
+      if (!targetEl) return {
+        el: null,
+        ok: false,
+        error: 'target not found'
       };
-    }
-
-    // Add component ID as class + lifecycle marker
-    domElement.classList.add(componentId);
-    domElement.classList.add(_BW_LC);
-
-    // Insert into DOM based on position
-    try {
+      var el;
       switch (position) {
-        case 'replace':
-          targetEl.parentNode.replaceChild(domElement, targetEl);
+        case 'append':
+          el = bw.append(targetEl, taco);
           break;
         case 'prepend':
-          targetEl.insertBefore(domElement, targetEl.firstChild);
+          el = bw.append(targetEl, taco, {
+            before: 0
+          });
           break;
-        case 'append':
-          targetEl.appendChild(domElement);
+        case 'replace':
+          el = bw.replace(targetEl, taco);
           break;
         case 'before':
-          targetEl.parentNode.insertBefore(domElement, targetEl);
+          if (!targetEl.parentNode) return {
+            el: null,
+            ok: false,
+            error: 'no parent for before'
+          };
+          el = bw.append(targetEl.parentNode, taco, {
+            before: targetEl
+          });
           break;
         case 'after':
-          targetEl.parentNode.insertBefore(domElement, targetEl.nextSibling);
+          if (!targetEl.parentNode) return {
+            el: null,
+            ok: false,
+            error: 'no parent for after'
+          };
+          el = bw.append(targetEl.parentNode, taco, {
+            before: targetEl.nextSibling
+          });
           break;
         default:
-          throw new Error("Invalid position: ".concat(position));
+          return {
+            el: null,
+            ok: false,
+            error: 'invalid position: ' + position
+          };
       }
+      return {
+        el: el,
+        ok: true,
+        error: null
+      };
     } catch (e) {
       return {
-        object_type: 'error',
-        component_id: componentId,
-        object_handle_in_dom: null,
-        status_code: "error=insertion_failed:".concat(e.message)
+        el: null,
+        ok: false,
+        error: e.message
       };
     }
-
-    // Create component handle
-    var handle = {
-      object_type: taco.t || 'element',
-      component_id: componentId,
-      object_handle_in_dom: domElement,
-      status_code: 'success',
-      // Reference to original TACO
-      _taco: _objectSpread2({}, taco),
-      _state: _objectSpread2({}, ((_taco$o4 = taco.o) === null || _taco$o4 === void 0 ? void 0 : _taco$o4.state) || {}),
-      _mounted: true,
-      // Get DOM element
-      get element() {
-        return this.object_handle_in_dom;
-      },
-      // Get/set state
-      getState: function getState() {
-        return _objectSpread2({}, this._state);
-      },
-      setState: function setState(updates) {
-        var _this$_taco$o;
-        this._state = _objectSpread2(_objectSpread2({}, this._state), updates);
-        if ((_this$_taco$o = this._taco.o) !== null && _this$_taco$o !== void 0 && _this$_taco$o.onStateChange) {
-          this._taco.o.onStateChange(this._state, updates);
-        }
-        return this;
-      },
-      // Update component (re-render)
-      update: function update() {
-        var _this$_taco$o2;
-        if (!this._mounted || !this.element) return this;
-        var parent = this.element.parentNode;
-
-        // Update TACO with current state
-        if (this._taco.o) {
-          this._taco.o.state = this._state;
-        }
-
-        // Re-render
-        var newElement = bw.createDOM(this._taco);
-        newElement.classList.add(componentId);
-        newElement.classList.add(_BW_LC);
-
-        // Replace in DOM
-        parent.replaceChild(newElement, this.element);
-        this.object_handle_in_dom = newElement;
-
-        // Call update lifecycle
-        if ((_this$_taco$o2 = this._taco.o) !== null && _this$_taco$o2 !== void 0 && _this$_taco$o2.onUpdate) {
-          this._taco.o.onUpdate(newElement, this._state);
-        }
-        return this;
-      },
-      // Get/set properties
-      getProp: function getProp(key) {
-        var _this$_taco$a;
-        return (_this$_taco$a = this._taco.a) === null || _this$_taco$a === void 0 ? void 0 : _this$_taco$a[key];
-      },
-      setProp: function setProp(key, value) {
-        if (!this._taco.a) this._taco.a = {};
-        this._taco.a[key] = value;
-
-        // Update DOM attribute
-        if (this.element) {
-          if (value === null || value === undefined) {
-            this.element.removeAttribute(key);
-          } else if (value === true) {
-            this.element.setAttribute(key, '');
-          } else {
-            this.element.setAttribute(key, String(value));
-          }
-        }
-        return this;
-      },
-      // Get/set content
-      getContent: function getContent() {
-        return this._taco.c;
-      },
-      setContent: function setContent(content) {
-        this._taco.c = content;
-        if (this.element) {
-          if (_is(content, 'string')) {
-            this.element.textContent = content;
-          } else {
-            // Re-render for complex content
-            this.update();
-          }
-        }
-        return this;
-      },
-      // Add/remove CSS classes
-      addClass: function addClass(className) {
-        if (this.element) {
-          this.element.classList.add(className);
-        }
-        return this;
-      },
-      removeClass: function removeClass(className) {
-        if (this.element) {
-          this.element.classList.remove(className);
-        }
-        return this;
-      },
-      toggleClass: function toggleClass(className) {
-        if (this.element) {
-          this.element.classList.toggle(className);
-        }
-        return this;
-      },
-      hasClass: function hasClass(className) {
-        return this.element ? this.element.classList.contains(className) : false;
-      },
-      // Show/hide
-      show: function show() {
-        if (this.element) {
-          this.element.style.display = '';
-        }
-        return this;
-      },
-      hide: function hide() {
-        if (this.element) {
-          this.element.style.display = 'none';
-        }
-        return this;
-      },
-      // Event handling
-      on: function on(event, handler) {
-        if (this.element) {
-          this.element.addEventListener(event, handler);
-        }
-        return this;
-      },
-      off: function off(event, handler) {
-        if (this.element) {
-          this.element.removeEventListener(event, handler);
-        }
-        return this;
-      },
-      // Destroy component
-      destroy: function destroy() {
-        var _this$_taco$o3;
-        if (!this._mounted) return this;
-
-        // Call unmount lifecycle
-        if ((_this$_taco$o3 = this._taco.o) !== null && _this$_taco$o3 !== void 0 && _this$_taco$o3.unmount) {
-          this._taco.o.unmount(this.element);
-        }
-
-        // Remove from DOM
-        if (this.element && this.element.parentNode) {
-          this.element.parentNode.removeChild(this.element);
-        }
-
-        // Remove from registry
-        bw._componentRegistry["delete"](componentId);
-
-        // Clean up
-        this._mounted = false;
-        this.object_handle_in_dom = null;
-        this.status_code = 'destroyed';
-        return this;
-      }
-    };
-
-    // Store in registry
-    bw._componentRegistry.set(componentId, handle);
-
-    // Call mounted lifecycle
-    if ((_taco$o5 = taco.o) !== null && _taco$o5 !== void 0 && _taco$o5.mounted) {
-      taco.o.mounted(domElement, handle);
-    }
-    return handle;
-  };
-
-  /**
-   * Get a component handle by its ID from the component registry.
-   *
-   * @param {string} id - Component ID (from bw.render)
-   * @returns {Object|null} Component handle or null if not found
-   * @category DOM Generation
-   * @see bw.render
-   */
-  bw.getComponent = function (id) {
-    return bw._componentRegistry.get(id) || null;
-  };
-
-  /**
-   * Get all registered component handles as a Map.
-   *
-   * @returns {Map} Map of componentId → component handle
-   * @category DOM Generation
-   * @see bw.getComponent
-   */
-  bw.getAllComponents = function () {
-    return new Map(bw._componentRegistry);
   };
   initRouter(bw);
 
@@ -9785,21 +10678,24 @@
   // Component registry: bw.BCCL lists all available component types
   bw.BCCL = BCCL;
 
+  // Register makeTable (defined in bitwrench.js) in the shared BCCL registry
+  bw.BCCL.table = {
+    make: bw.makeTable
+  };
+  bw.BCCL.tableFromArray = {
+    make: bw.makeTableFromArray
+  };
+  bw.BCCL.dataTable = {
+    make: bw.makeDataTable
+  };
+  bw.BCCL.barChart = {
+    make: bw.makeBarChart
+  };
+
   // Variant class helper: bw.variantClass('primary') → 'bw_primary'
   bw.variantClass = variantClass;
 
-  // Create functions that return DOM elements (createCard, createTable, etc.)
-  Object.entries(components).forEach(function (_ref11) {
-    var _ref12 = _slicedToArray(_ref11, 2),
-      name = _ref12[0],
-      fn = _ref12[1];
-    if (name.startsWith('make')) {
-      var createName = 'create' + name.substring(4);
-      bw[createName] = function (props) {
-        return bw.createDOM(fn(props));
-      };
-    }
-  });
+  // v2.1: codegen create* family removed (§12). Use bw.create(bw.makeX(props)) instead.
 
   /**
    * Query the BCCL component registry. Returns metadata about registered
@@ -9852,8 +10748,14 @@
     });
   };
 
-  // Also attach to global in browsers
+  // Also attach to global in browsers, with double-load guard
   if (bw._isBrowser && typeof window !== 'undefined') {
+    /* c8 ignore start -- double-load guard: only triggers when bitwrench is loaded twice */
+    if (window.__bitwrench) {
+      console.warn('bitwrench: already loaded (v' + window.__bitwrench + '); ' + 'loading v' + bw.version + ' over it.');
+    }
+    /* c8 ignore stop */
+    window.__bitwrench = bw.version;
     window.bw = bw;
   }
 

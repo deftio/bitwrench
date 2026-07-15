@@ -1,5 +1,13 @@
 # Bitwrench 2.x Direction Discussion
 
+> **ARCHIVED (2026-06-09).** The founding Feb 2026 discussion. The thesis
+> lives on in `bitwrench-north-star.md`; the designs were absorbed into
+> the 2.1 specs (bw.remote → bwserve; forms, a11y, XSS decisions → spec'd;
+> the CSP design was lifted into `bitwrench-css-cleanup-2026-06-09.md`).
+> API names here are stale (bw.remote, bw.render mode, bw_id, formValues,
+> 45KB budget). Read for history, not for implementation.
+
+
 **Date**: February 2026
 **Participants**: Manu Chatterjee, Claude (AI pair programming)
 

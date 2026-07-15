@@ -4,14 +4,14 @@ A full-page e-commerce landing built entirely with bitwrench — the most compre
 
 ## What This Demonstrates
 
-- `bw.component()` Level 2 with `${template}` bindings and `o.methods`
+- `o.handle` + `o.slots` for component state and DOM updates
 - `bw.pub()` / `bw.sub()` for cart state broadcast (navbar subscribes to `cart:updated`)
 - `bw.loadStyles({ primary: '#8B4513', ... })` with warm brown/chocolate palette
 - `bw.makeBarChart()`, `bw.makeTimeline()`, `bw.makeAccordion()`, `bw.makeTable()`
 - `bw.makeSearchInput()` with live filter pattern
-- `bw.createDOM()` for toast append pattern (transient UI)
+- `bw.create()` for toast append pattern (transient UI)
 - `bw.makeStatCard()`, `bw.makeFeatureGrid()`, `bw.makeCodeDemo()`
-- Level 1 + Level 2 components working side by side
+- Static TACOs, `o.mounted` components, and `o.handle`/`o.slots` components working side by side
 - 27 BCCL components used in a single page
 
 ## Audience
@@ -34,9 +34,9 @@ open examples/ember-and-oak/index.html
 
 The page is organized as a sequence of TACO sections mounted via a single `bw.DOM('#app', ...)` call:
 
-1. **Navbar** — `bw.component()` Level 2 with `${cartCount}` binding
+1. **Navbar** — `o.handle` + `o.slots` with cart count binding
 2. **Hero** — Static TACO with gradient background
-3. **Coffee Grid** — Level 1 `o.mounted` with search + filter re-render
+3. **Coffee Grid** — `o.mounted` with search + filter re-render
 4. **How It Works** — Static step cards
 5. **Our Story** — `bw.makeTimeline()` with milestone entries
 6. **Features** — `bw.makeFeatureGrid()` with 6 items
@@ -44,8 +44,8 @@ The page is organized as a sequence of TACO sections mounted via a single `bw.DO
 8. **Testimonials** — Dark section with quote cards
 9. **Impact** — `bw.makeStatCard()` + `bw.makeBarChart()` + `bw.makeTable()`
 10. **FAQ** — `bw.makeAccordion()` with 6 entries
-11. **Contact** — `bw.component()` Level 2 form with status binding
-12. **Newsletter** — Level 1 with mounted event handler
+11. **Contact** — `o.handle`/`o.slots` form with status binding
+12. **Newsletter** — inline `onclick` handler
 13. **Showcase** — Live counter + progress demos + code example
 14. **Footer** — Static TACO
 15. **Cart panel** — Slide-out panel driven by pub/sub
@@ -53,7 +53,7 @@ The page is organized as a sequence of TACO sections mounted via a single `bw.DO
 ## Key Patterns to Study
 
 1. **Pub/sub cart**: `cartAdd()` publishes `cart:updated` → navbar component subscribes and updates badge count automatically
-2. **Component Level 2**: `${count}` template bindings auto-update DOM when `handle.set()` is called
+2. **Component handles**: `o.slots` auto-generates setter/getter methods on `el.bw`
 3. **Filter pattern**: `renderCoffeeSection()` re-renders the product grid based on search text and selected filter
-4. **Toast append**: `bw.createDOM()` creates transient notifications that auto-dismiss after 3.5 seconds
+4. **Toast append**: `bw.create()` creates transient notifications that auto-dismiss after 3.5 seconds
 5. **Theme tokens**: All colors derived from 3 seed hex values via `bw.loadStyles()`

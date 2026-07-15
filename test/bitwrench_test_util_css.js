@@ -316,3 +316,59 @@ describe('utilCSS: plugin install', function() {
     assert.ok(bw.u.cls('bold').indexOf('bw_bold') !== -1);
   });
 });
+
+
+// =========================================================================
+// bitwrench-util-css.js — install with null bw (line 217)
+// =========================================================================
+
+describe('utilCSS: install edge cases', function() {
+  it('install(null) should not throw (line 217)', function() {
+    install(null);
+    // Should silently return without error
+    assert.ok(true);
+  });
+
+  it('install(undefined) should not throw', function() {
+    install(undefined);
+    assert.ok(true);
+  });
+
+  it('install(false) should not throw', function() {
+    install(false);
+    assert.ok(true);
+  });
+});
+
+
+// =========================================================================
+// bitwrench-util-css.js — auto-install via window.bw (line 223)
+// =========================================================================
+
+describe('utilCSS: auto-install via window.bw', function() {
+  it('should install utilCSS and u on the bw object (line 223 code path)', function() {
+    // The module-level auto-install at line 223 fires when window.bw is defined.
+    // Whether auto-install or manual install ran, bw should have utilCSS and u.
+    // Use the imported bw object (not window.bw) since window may be replaced by other tests.
+    assert.strictEqual(typeof bw.utilCSS, 'function');
+    assert.strictEqual(typeof bw.u, 'function');
+    assert.strictEqual(bw.u, bw.utilCSS);
+  });
+
+  it('installed bw.u should produce correct styles', function() {
+    assert.deepStrictEqual(bw.u('flex'), { display: 'flex' });
+  });
+});
+
+// =========================================================================
+// bitwrench-util-css.js — auto-install at module load (lines 224-225)
+//
+// NOTE: Lines 224-225 execute at ESM module load time:
+//   if (typeof window !== 'undefined' && window.bw) { install(window.bw); }
+//
+// Since the module is cached after first import, re-importing won't re-run
+// this code. In jsdom tests, window.bw is not set at module load time,
+// so this branch evaluates the false side. Covering the true side would
+// require Playwright/browser tests where bitwrench-util-css.js is loaded
+// as a script tag AFTER bw is defined on window.
+// =========================================================================

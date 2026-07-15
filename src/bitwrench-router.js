@@ -130,7 +130,8 @@ export function initRouter(bw) {
       return p + s;
     }
 
-    function handleRoute(toRaw, opts) {
+    function handleRoute(toRaw, _opts) {
+      /* c8 ignore next -- all callers (navigate, onHashChange, onPopState) check destroyed first */
       if (destroyed) return;
       var fromPath = currentPath;
       var toPath = normalizePath(toRaw);
@@ -180,6 +181,7 @@ export function initRouter(bw) {
           window.location.hash = path;
         }
         // hashchange listener will fire handleRoute; but if same hash, trigger manually
+        /* c8 ignore next -- fallback for bare '#' hash; navigate always sets a path */
         var currentHash = window.location.hash.replace(/^#/, '') || '/';
         if (normalizePath(currentHash) === normalizePath(path)) {
           handleRoute(path, opts);
@@ -196,11 +198,13 @@ export function initRouter(bw) {
     }
 
     function onHashChange() {
+      /* c8 ignore next -- destroy() removes the hashchange listener; belt-and-suspenders guard */
       if (destroyed) return;
       handleRoute(getPath());
     }
 
     function onPopState() {
+      /* c8 ignore next -- destroy() removes the popstate listener; belt-and-suspenders guard */
       if (destroyed) return;
       handleRoute(getPath());
     }
@@ -259,7 +263,6 @@ export function initRouter(bw) {
     }
     if (_activeRouter) {
       // determine href based on mode -- check hash by looking at current location
-      var isHash = window.location.hash !== undefined; // always true, but we default hash
       a.href = '#' + path;
     } else {
       a.href = path;

@@ -1,7 +1,7 @@
 /**
  * bitwrench.h — TACO format helpers for C/C++ embedded systems
  *
- * Part of the bitwrench project: https://github.com/nicktackes/bitwrench
+ * Part of the bitwrench project: https://github.com/deftio/bitwrench
  *
  * Provides macros for composing TACO ({t,a,c,o}) JSON strings from C code.
  * These strings are sent to a browser running bitwrench.js, which renders
@@ -85,8 +85,8 @@ extern "C" {
 
 /**
  * BW_TACO_ATTR — Element with arbitrary attribute string (pre-composed)
- *   BW_TACO_ATTR(buf, "button", "'data-bw-action':'increment','class':'bw-btn'", "+1")
- *   → r{'t':'button','a':{'data-bw-action':'increment','class':'bw-btn'},'c':'+1'}
+ *   BW_TACO_ATTR(buf, "button", "'class':'bw_btn bw_primary bw_act_increment'", "+1")
+ *   → r{'t':'button','a':{'class':'bw_btn bw_primary bw_act_increment'},'c':'+1'}
  */
 #define BW_TACO_ATTR(buf, tag, attr_str, text) \
     snprintf(buf, sizeof(buf), \

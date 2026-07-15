@@ -462,7 +462,7 @@
 
     // =========================================================================
     // Section 1: Digital Clock Component
-    // Uses o.render + bw.update() — full re-render every second
+    // Uses o.render + bw.refresh() — full re-render every second
     // =========================================================================
     function makeDigitalClock() {
       var clockId = bw.uuid('clock');
@@ -518,7 +518,7 @@
               });
               // Only re-render when visible (skip DOM work when tab pane is hidden)
               if (el.offsetParent !== null) {
-                bw.update(el);
+                bw.refresh(el);
               }
             }, 1000);
           },
@@ -537,7 +537,7 @@
     // =========================================================================
     // Section 2: Stopwatch Component
     // Uses bw.patch() for millisecond display (targeted updates)
-    // Uses bw.update() for structural changes (lap list)
+    // Uses bw.refresh() for structural changes (lap list)
     // =========================================================================
     function makeStopwatch() {
       var swId = bw.uuid('sw');
@@ -626,7 +626,7 @@
                                 { t: 'span', a: { class: 'stopwatch-ms' }, c: '.' + pad2(tMsVal) }
                               ]);
                             }, 33); // ~30fps
-                            bw.update(el); // re-render to swap button state
+                            bw.refresh(el); // re-render to swap button state
                           }
                         })
                       : bw.makeButton({
@@ -639,7 +639,7 @@
                               s.timerId = null;
                             }
                             s.elapsed = Date.now() - s.startTime;
-                            bw.update(el);
+                            bw.refresh(el);
                           }
                         }),
                     bw.makeButton({
@@ -654,7 +654,7 @@
                           elapsed: s.elapsed,
                           delta: s.elapsed - previousTotal
                         });
-                        bw.update(el);
+                        bw.refresh(el);
                       }
                     }),
                     bw.makeButton({
@@ -669,7 +669,7 @@
                         s.elapsed = 0;
                         s.startTime = 0;
                         s.laps = [];
-                        bw.update(el);
+                        bw.refresh(el);
                       }
                     })
                   ]
@@ -767,7 +767,7 @@
                         clearTimeout(s.ringingTimerId);
                         s.ringingTimerId = null;
                       }
-                      bw.update(el);
+                      bw.refresh(el);
                     }
                   })
                 ]
@@ -835,7 +835,7 @@
                       onclick: function() {
                         s.alarmSet = true;
                         s.ringing = false;
-                        bw.update(el);
+                        bw.refresh(el);
                       }
                     }),
                     bw.makeButton({
@@ -849,7 +849,7 @@
                           clearTimeout(s.ringingTimerId);
                           s.ringingTimerId = null;
                         }
-                        bw.update(el);
+                        bw.refresh(el);
                       }
                     })
                   ]
@@ -885,14 +885,14 @@
                   minute: s.alarmMinute,
                   period: s.alarmPeriod
                 });
-                bw.update(el);
+                bw.refresh(el);
 
                 // Auto-dismiss after 30 seconds
                 s.ringingTimerId = setTimeout(function() {
                   if (s.ringing) {
                     s.ringing = false;
                     s.alarmSet = false;
-                    bw.update(el);
+                    bw.refresh(el);
                   }
                 }, 30000);
               }
@@ -967,7 +967,7 @@
               return {
                 t: 'button', a: { class: cls, onclick: function() {
                   s.mode = mode;
-                  bw.update(el);
+                  bw.refresh(el);
                 }},
                 c: label
               };
@@ -1031,7 +1031,7 @@
                                 { t: 'span', a: { class: 'combo-ms' }, c: '.' + pad2(tC) }
                               ]);
                             }, 33);
-                            bw.update(el);
+                            bw.refresh(el);
                           }},
                           c: s.swElapsed > 0 ? 'Resume' : 'Start'
                         }
@@ -1041,7 +1041,7 @@
                             s.swRunning = false;
                             if (s.swTimerId) { clearInterval(s.swTimerId); s.swTimerId = null; }
                             s.swElapsed = Date.now() - s.swStartTime;
-                            bw.update(el);
+                            bw.refresh(el);
                           }},
                           c: 'Stop'
                         },
@@ -1053,7 +1053,7 @@
                           s.swRunning = false;
                           s.swElapsed = 0;
                           s.swStartTime = 0;
-                          bw.update(el);
+                          bw.refresh(el);
                         }
                       },
                       c: 'Reset'
@@ -1079,9 +1079,9 @@
                       pad2(s.tmSetMinutes), ':', pad2(s.tmSetSeconds)
                     ]},
                     { t: 'div', a: { class: 'timer-set-row' }, c: [
-                      { t: 'select', a: { onchange: function(e) { s.tmSetMinutes = parseInt(e.target.value, 10); bw.update(el); } }, c: minOpts },
+                      { t: 'select', a: { onchange: function(e) { s.tmSetMinutes = parseInt(e.target.value, 10); bw.refresh(el); } }, c: minOpts },
                       { t: 'span', a: { class: 'timer-colon' }, c: ':' },
-                      { t: 'select', a: { onchange: function(e) { s.tmSetSeconds = parseInt(e.target.value, 10); bw.update(el); } }, c: secOpts }
+                      { t: 'select', a: { onchange: function(e) { s.tmSetSeconds = parseInt(e.target.value, 10); bw.refresh(el); } }, c: secOpts }
                     ]},
                     { t: 'div', a: { class: 'combo-sub' }, c: 'Set duration and press Start' },
                     { t: 'div', a: { class: 'combo-btns' }, c: [
@@ -1105,9 +1105,9 @@
                                 s.tmFinished = true;
                                 bw.pub('timer:finished', { minutes: s.tmSetMinutes, seconds: s.tmSetSeconds });
                               }
-                              bw.update(el);
+                              bw.refresh(el);
                             }, 250);
-                            bw.update(el);
+                            bw.refresh(el);
                           }
                         },
                         c: 'Start'
@@ -1140,7 +1140,7 @@
                           a: { class: 'combo-btn combo-btn-danger', onclick: function() {
                             s.tmRunning = false;
                             if (s.tmTimerId) { clearInterval(s.tmTimerId); s.tmTimerId = null; }
-                            bw.update(el);
+                            bw.refresh(el);
                           }},
                           c: 'Pause'
                         }
@@ -1161,9 +1161,9 @@
                                     s.tmFinished = true;
                                     bw.pub('timer:finished', { minutes: s.tmSetMinutes, seconds: s.tmSetSeconds });
                                   }
-                                  bw.update(el);
+                                  bw.refresh(el);
                                 }, 250);
-                                bw.update(el);
+                                bw.refresh(el);
                               }},
                               c: 'Resume'
                             }
@@ -1177,7 +1177,7 @@
                         s.tmFinished = false;
                         s.tmRemaining = 0;
                         s.tmTotalMs = 0;
-                        bw.update(el);
+                        bw.refresh(el);
                       }},
                       c: 'Reset'
                     }
@@ -1209,7 +1209,7 @@
             el._bw_render(el);
             el._bw_state.clockTimerId = setInterval(function() {
               if (el._bw_state.mode === 'clock') {
-                bw.update(el);
+                bw.refresh(el);
               }
             }, 1000);
           },
@@ -1243,7 +1243,7 @@
     // =========================================================================
 
     var clockCodeStr = [
-      '// Digital Clock: o.render + bw.update() pattern',
+      '// Digital Clock: o.render + bw.refresh() pattern',
       '// Re-renders the entire clock face every second',
       '',
       'function makeDigitalClock() {',
@@ -1283,7 +1283,7 @@
       '          });',
       '          // Only re-render when visible',
       '          if (el.offsetParent !== null) {',
-      '            bw.update(el);',
+      '            bw.refresh(el);',
       '          }',
       '        }, 1000);',
       '      },',
@@ -1297,7 +1297,7 @@
 
     var stopwatchCodeStr = [
       '// Stopwatch: bw.patch() for high-frequency display,',
-      '// bw.update() for structural changes (lap list)',
+      '// bw.refresh() for structural changes (lap list)',
       '',
       'var displayId = bw.uuid("sw-display");',
       '',
@@ -1321,7 +1321,7 @@
       '            // Targeted update: only the display',
       '            bw.patch(displayId, formatTime(s.elapsed));',
       '          }, 33); // ~30fps',
-      '          bw.update(el);',
+      '          bw.refresh(el);',
       '        }',
       '      }),',
       '',
@@ -1330,7 +1330,7 @@
       '        variant: "success",',
       '        onclick: function() {',
       '          s.laps.push({ elapsed: s.elapsed });',
-      '          bw.update(el); // rebuild lap list',
+      '          bw.refresh(el); // rebuild lap list',
       '        }',
       '      })',
       '    ]});',
@@ -1363,7 +1363,7 @@
       '      minute: s.alarmMinute,',
       '      period: s.alarmPeriod',
       '    });',
-      '    bw.update(el);',
+      '    bw.refresh(el);',
       '  }',
       '}, el); // tie sub to element lifecycle',
       '',
@@ -1409,7 +1409,7 @@
       '          if (s.mode === mode) cls += " active-" + mode;',
       '          return { t: "button", a: { class: cls,',
       '            onclick: function() {',
-      '              s.mode = mode; bw.update(el);',
+      '              s.mode = mode; bw.refresh(el);',
       '            }}, c: label };',
       '        }',
       '',
@@ -1440,7 +1440,7 @@
       '        el._bw_state.clockTimerId = setInterval(',
       '          function() {',
       '            if (el._bw_state.mode === "clock")',
-      '              bw.update(el);',
+      '              bw.refresh(el);',
       '          }, 1000);',
       '      },',
       '      unmount: function(el) {',
@@ -1481,7 +1481,7 @@
             // =================================================================
             {
               t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
-                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Level 1 \u2014 Real-time Updates' },
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Real-time Updates' },
                 { t: 'p', c: ['setInterval + bw.DOM() is all you need for live-updating UI. No framework overhead \u2014 just re-render the TACO. ',
                   { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
               ]
@@ -1521,7 +1521,7 @@
                       {
                         t: 'div', a: { style: 'display: flex; align-items: center; gap: 0.5rem;' },
                         c: [
-                          { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' },
+                          { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.refresh()' },
                           { t: 'span', a: { style: 'font-size: 0.8125rem; color: #444;' }, c: 'Full re-render (clock face)' }
                         ]
                       },
@@ -1550,11 +1550,11 @@
             // =================================================================
             site.makeDemoSection('section-clock', [
                 'Digital Clock',
-                { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' }
+                { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.refresh()' }
               ],
               [
                 'A live clock that re-renders every second using ',
-                { t: 'code', c: 'o.render' }, ' + ', { t: 'code', c: 'bw.update()' },
+                { t: 'code', c: 'o.render' }, ' + ', { t: 'code', c: 'bw.refresh()' },
                 '. The ', { t: 'code', c: 'o.mounted' },
                 ' lifecycle hook starts a ', { t: 'code', c: 'setInterval' },
                 ', and ', { t: 'code', c: 'o.unmount' },
@@ -1574,18 +1574,18 @@
             site.makeDemoSection('section-stopwatch', [
                 'Stopwatch',
                 { t: 'span', a: { class: 'reactivity-badge badge-patch' }, c: 'bw.patch()' },
-                { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.update()' }
+                { t: 'span', a: { class: 'reactivity-badge badge-update' }, c: 'bw.refresh()' }
               ],
               [
                 'The stopwatch demonstrates two update strategies. The time display updates at ~30fps using ',
                 { t: 'code', c: 'bw.patch(displayId, content)' },
                 ' for targeted, high-frequency updates without rebuilding the DOM tree. ',
                 'Structural changes (adding laps, toggling buttons) use ',
-                { t: 'code', c: 'bw.update(el)' },
+                { t: 'code', c: 'bw.refresh(el)' },
                 ' for a full re-render. This is the recommended pattern: ',
                 { t: 'code', c: 'bw.patch()' },
                 ' for values, ',
-                { t: 'code', c: 'bw.update()' },
+                { t: 'code', c: 'bw.refresh()' },
                 ' for structure.'
               ],
               createTabbedDemo(
@@ -1643,7 +1643,7 @@
                         t: 'div', a: { style: 'background: #ffffff; border: 2px solid #00acc1; border-radius: 8px; padding: 1rem;' },
                         c: [
                           { t: 'div', a: { style: 'font-weight: 700; color: #00acc1; margin-bottom: 0.25rem;' }, c: 'Clock' },
-                          { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'bw.update(el)' },
+                          { t: 'code', a: { style: 'font-size: 0.75rem;' }, c: 'bw.refresh(el)' },
                           { t: 'div', a: { style: 'font-size: 0.75rem; color: #444; margin-top: 0.25rem;' }, c: 'every 1s' }
                         ]
                       },
@@ -1699,7 +1699,7 @@
                             t: 'tbody', c: [
                               {
                                 t: 'tr', c: [
-                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: { t: 'code', c: 'bw.update(el)' } },
+                                  { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: { t: 'code', c: 'bw.refresh(el)' } },
                                   { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: 'Structure changes, infrequent updates' },
                                   { t: 'td', a: { style: 'padding: 0.3rem 0.5rem; border-bottom: 1px solid #d8d8d8;' }, c: 'Clock (1/s), lap list changes' }
                                 ]
@@ -1731,7 +1731,7 @@
                       {
                         t: 'ul', a: { style: 'margin: 0; padding-left: 1.25rem;' },
                         c: [
-                          { t: 'li', c: 'Watch the clock update every second (bw.update re-renders the entire clock face)' },
+                          { t: 'li', c: 'Watch the clock update every second (bw.refresh re-renders the entire clock face)' },
                           { t: 'li', c: 'Start the stopwatch and notice how smooth the millisecond display is (bw.patch updates just the number)' },
                           { t: 'li', c: [
                             'Set an alarm for the next minute ',

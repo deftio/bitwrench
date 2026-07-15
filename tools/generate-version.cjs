@@ -23,11 +23,7 @@ export const VERSION = '${pkg.version}';
 export const VERSION_INFO = {
   version: '${pkg.version}',
   name: '${pkg.name}',
-  description: '${pkg.description}',
   license: '${pkg.license}',
-  homepage: '${pkg.homepage || ''}',
-  repository: '${pkg.repository ? pkg.repository.url || pkg.repository : ''}',
-  author: '${pkg.author}',
   buildDate: '${new Date().toISOString()}'
 };
 `;

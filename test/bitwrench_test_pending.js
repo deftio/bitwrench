@@ -34,22 +34,6 @@ describe.skip("PENDING: Cookie Operations in jsdom", function() {
   });
 });
 
-describe.skip("PENDING: Component Registry Auto-registration", function() {
-  /**
-   * REASON: Components are only registered when mounted to DOM
-   * FIX NEEDED: Decide if auto-registration should happen on creation
-   * PRIORITY: Medium - affects component lifecycle management
-   */
-  describe("#getComponent() without mounting", function() {
-    it("should retrieve component by ID without DOM mounting", function() {
-      const taco = { t: "div", a: { id: "comp2" }, c: "Test" };
-      const handle = bw.renderComponent(taco);
-      const retrieved = bw.getComponent("comp2");
-      assert.equal(retrieved, handle);
-    });
-  });
-});
-
 describe.skip("PENDING: Environment Detection in Test Environment", function() {
   /**
    * REASON: jsdom environment confuses Node.js detection
@@ -83,21 +67,6 @@ describe.skip("PENDING: Legacy v1 API Compatibility", function() {
       assert.equal(typeof bw.random, "object");
       assert.equal(typeof bw.random.int, "function");
       assert.equal(typeof bw.random.float, "function");
-    });
-  });
-});
-
-describe.skip("PENDING: Advanced Color Operations", function() {
-  /**
-   * REASON: Color interpolation returns different formats than expected
-   * FIX NEEDED: Standardize color output format across all color functions
-   * PRIORITY: Medium - affects visual consistency
-   */
-  
-  describe("#colorInterp() format consistency", function() {
-    it("should return hex format consistently", function() {
-      const result = bw.colorInterp(0.5, 0, 1, ["#000000", "#FFFFFF"]);
-      assert.equal(result, "#808080");
     });
   });
 });
@@ -171,10 +140,9 @@ describe.skip("PENDING: Performance Optimizations", function() {
 
 // Export test counts for reporting
 export const pendingTests = {
-  total: 9,
+  total: 8,
   categories: {
     "Cookie Operations": { count: 1, priority: "Low" },
-    "Component Registry": { count: 1, priority: "Medium" },
     "Environment Detection": { count: 1, priority: "Low" },
     "Legacy v1 API": { count: 2, priority: "High" },
     "Color Operations": { count: 1, priority: "Medium" },

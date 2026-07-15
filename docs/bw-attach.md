@@ -4,7 +4,6 @@
 
 `bwcli attach` is a built-in terminal-based debugger for any bitwrench page. It starts a bwserve server, waits for a browser to connect via a drop-in `<script>` tag, then gives you an interactive REPL where you can:
 
-- **Evaluate JavaScript** in the connected browser and see results
 - **Inspect the DOM** with `/tree` — a structured tree view of elements
 - **Take screenshots** with `/screenshot` — capture any element to a PNG file
 - **Listen to events** with `/listen` — watch clicks, inputs, and other DOM events in real time
@@ -25,7 +24,7 @@ bwcli attach
 You'll see:
 
 ```
-bwcli attach v2.0.18
+bwcli attach v2.1.x
   Server: http://localhost:7902
   Drop-in: <script src="http://localhost:7902/bw/attach.js"></script>
 
@@ -59,18 +58,18 @@ bw>
 ### 3. Start debugging
 
 ```
-bw> document.title
-"My Page Title"
-
-bw> bw.$('.bw-card').length
-3
-
 bw> /tree #app 2
 div#app
   div.main-panel
     h1#title
     ul#list
     div.footer
+
+bw> /mount #app statCard {"value":"42","label":"Users"}
+Mounted statCard at #app
+
+bw> /patch status Online
+Patched status
 ```
 
 ## Installation
@@ -117,37 +116,6 @@ bwcli attach -v
 
 ## REPL Command Reference
 
-### JavaScript Expressions
-
-Any input that doesn't start with `/` is treated as a JavaScript expression. It is evaluated in the connected browser and the result is printed.
-
-```
-bw> document.title
-"My Page Title"
-
-bw> window.innerWidth
-1440
-
-bw> bw.$('.bw-card').length
-3
-
-bw> bw.$('.bw-btn').map(function(b) { return b.textContent; })
-["Save", "Cancel", "Delete"]
-
-bw> location.href
-"http://localhost:3000/dashboard"
-```
-
-**Expression wrapping**: Expressions are automatically wrapped in `return(...)` so the result comes back. Statements (starting with `var`, `let`, `const`, `if`, `for`, `while`, `function`, `try`, `switch`, `throw`, `class`, or `{`) are sent without wrapping.
-
-```
-bw> var x = 42
-undefined
-
-bw> x
-42
-```
-
 ### `/tree [selector] [depth]`
 
 Shows a DOM tree summary. Defaults: selector = `body`, depth = `3`.
@@ -168,11 +136,11 @@ div#app
     ul#list
     div.footer
 
-bw> /tree .bw-card 1
-div.bw-card
-  div.bw-card-header
-  div.bw-card-body
-  div.bw-card-footer
+bw> /tree .bw_bccl_card 1
+div.bw_bccl_card
+  div.bw_bccl_card_header
+  div.bw_bccl_card_body
+  div.bw_bccl_card_footer
 ```
 
 The tree shows tag name, id, and CSS classes for each element. Child elements are indented. Limited to 20 children per level to prevent flooding.
@@ -190,8 +158,8 @@ bw> /screenshot body page.png
 Capturing body ...
 Saved: page.png (1440x900, 245832 bytes)
 
-bw> /screenshot .bw-card card.png
-Capturing .bw-card ...
+bw> /screenshot .bw_bccl_card card.png
+Capturing .bw_bccl_card ...
 Saved: card.png (400x300, 48291 bytes)
 ```
 
@@ -214,13 +182,13 @@ Mounted statCard at #main
 
 ### `/render <selector> <taco-json>`
 
-Renders a TACO object at the specified selector. Use for quick UI injection.
+Renders a TACO object at the specified selector using `client.mount()`. Use for quick UI injection.
 
 ```
 bw> /render #app {"t":"h1","c":"Hello from REPL"}
 Rendered at #app
 
-bw> /render #app {"t":"div","a":{"class":"bw-alert bw-alert-info"},"c":"Injected alert"}
+bw> /render #app {"t":"div","a":{"class":"bw_bccl_alert bw_info"},"c":"Injected alert"}
 Rendered at #app
 ```
 
@@ -250,10 +218,10 @@ Listening for click on button
 [event] click on button → BUTTON#save-btn "Save"
 [event] click on button → BUTTON#cancel-btn "Cancel"
 
-bw> /listen .bw-card mouseover
-Listening for mouseover on .bw-card
+bw> /listen .bw_bccl_card mouseover
+Listening for mouseover on .bw_bccl_card
 
-[event] mouseover on .bw-card → DIV "Card Title"
+[event] mouseover on .bw_bccl_card → DIV "Card Title"
 
 bw> /listen input change
 Listening for change on input
@@ -272,18 +240,6 @@ Removes a previously added event listener.
 ```
 bw> /unlisten button click
 Stopped listening for click on button
-```
-
-### `/exec <code>`
-
-Executes JavaScript on the client without capturing the return value. Fire-and-forget.
-
-```
-bw> /exec alert('Hello from the REPL!')
-Executed.
-
-bw> /exec document.body.style.background = 'lightyellow'
-Executed.
 ```
 
 ### `/clients`
@@ -313,8 +269,8 @@ Exit the REPL and stop the server.
 │  bwcli attach                │     │  Target Browser Page  │
 │                              │     │                       │
 │  readline REPL ──────────────┼─SSE─┤  bwclient.attach()   │
-│  /screenshot, /tree, etc.    │     │  _bw_query, _bw_tree │
-│  JS expressions → query()    │◄POST┤  respond()            │
+│  /tree, /mount, /patch, etc. │     │  _bw_tree, _bw_mount │
+│  slash commands → call/mount │◄POST┤  respond()            │
 │                              │     │                       │
 │  bwserve (port 7902)         │     │  <script src=         │
 │  /bw/events/:id  (SSE out)   │     │   .../bw/attach.js>  │
@@ -327,25 +283,23 @@ Exit the REPL and stop the server.
 1. **Server starts**: `bwcli attach` creates a bwserve instance on the specified port (default 7902)
 2. **Drop-in script**: The browser loads `/bw/attach.js` which:
    - Checks if bitwrench is already loaded; if not, injects the UMD bundle from `/bw/lib/bitwrench.umd.js`
-   - Evaluates the bwclient.js source inline (including builtins for query, tree, listen, screenshot)
+   - Evaluates the bwclient.js source inline (including builtins for tree, listen, mount, screenshot)
    - Calls `bw._bwClient.attach()` to connect via SSE
 3. **SSE connection**: The browser opens `GET /bw/events/:clientId` — the server registers the client
-4. **REPL interaction**: You type JS or slash commands → the server sends protocol messages via SSE
-5. **Response**: The client evaluates the code and POSTs the result back via `/bw/return/query/:clientId`
+4. **REPL interaction**: You type slash commands → the server sends protocol messages via SSE
+5. **Response**: The client processes the command and POSTs the result back via `/bw/return/query/:clientId`
 6. **Events**: When `/listen` is active, DOM events POST back via `/bw/return/event/:clientId`
 
 ### Protocol Messages Used
 
 | REPL Action | Protocol | Route |
 |-------------|----------|-------|
-| JS expression | `call _bw_query` | `/bw/return/query/:id` |
 | `/tree` | `call _bw_tree` | `/bw/return/query/:id` |
 | `/screenshot` | `call _bw_screenshot` | `/bw/return/screenshot/:id` |
 | `/mount` | `call _bw_mount` | `/bw/return/mount/:id` |
-| `/render` | SSE `replace` | — (one-way) |
-| `/patch` | SSE `patch` | — (one-way) |
+| `/render` | SSE `mount` (v:1, ref + taco) | -- (one-way) |
+| `/patch` | SSE `patch` (v:1, ref + discriminated fields) | -- (one-way) |
 | `/listen` | `call _bw_listen` | `/bw/return/event/:id` |
-| `/exec` | SSE `exec` | — (one-way) |
 
 ### Client Builtins
 
@@ -371,12 +325,12 @@ OPTIONS preflight requests on `/bw/return/*` are handled with a 204 response and
 
 ## Security
 
-- **allowExec is always true**: Attach mode is a debugging tool. The whole point is to execute arbitrary code on the client.
+- **No code-over-wire**: In v2.1, bare JS evaluation (`exec`, `register`, `query`) was removed from the wire protocol. Attach mode uses only the structured protocol verbs (`mount`, `patch`, `call` to named builtins, etc.).
 - **Local-only by default**: The server binds to `localhost`. Do not expose to a network without understanding the implications.
 - **CORS headers**: All endpoints include `Access-Control-Allow-Origin: *` to support cross-origin attach. This is intentional for debugging workflows.
 - **No authentication**: Anyone who can reach the port can attach. Use firewall rules if needed.
 
-**Do not run `bwcli attach` on a production server or expose it to the public internet.** It provides full JavaScript execution in the browser and should only be used for local development and debugging.
+**Do not run `bwcli attach` on a production server or expose it to the public internet.** The attach REPL can mount components, patch content, and inspect the DOM. It should only be used for local development and debugging.
 
 ## Use Cases
 
@@ -385,7 +339,7 @@ OPTIONS preflight requests on `/bw/return/*` are handled with a 204 response and
 - **Event debugging**: Listen to click, input, submit, and other DOM events in real time
 - **Visual regression**: Take screenshots of specific components for comparison
 - **Remote inspection**: Attach to a page running on another machine (within your local network)
-- **AI-driven UI**: Script the REPL from another process for automated UI testing
+- **AI-driven UI**: Script the REPL from another process for automated UI workflows
 
 ## Multiple Clients
 

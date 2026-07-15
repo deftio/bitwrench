@@ -313,7 +313,7 @@
         // Teaching callout
         {
           t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
-            { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Level 0 \u2014 Theme Generation' },
+            { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Theme Generation' },
             { t: 'p', c: ['Themes are data: hand bw.makeStyles() seed colors and get a complete CSS palette with dark mode. Theme generation is pure computation \u2014 no DOM required. ',
               { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
           ]
@@ -579,7 +579,7 @@
                     { t: 'strong', c: 'primary' },
                     ' (your seed colors) and ',
                     { t: 'strong', c: 'alternate' },
-                    bw.raw(' (luminance-inverted). Use <code>bw.toggleStyles()</code> to switch.')
+                    bw.raw(' (luminance-inverted). Use <code>bw.toggleThemeMode()</code> to switch.')
                   ]
                 },
                 { t: 'div', a: { id: 'theme-toggle-demo' } }
@@ -983,7 +983,7 @@
       var altClass = state.isAlternate ? ' bw_theme_alt' : '';
       var modeLabel = state.isAlternate ? ' (Alternate)' : '';
 
-      // Use bw.$ for fresh DOM lookup — bw._el cache can go stale
+      // Use bw.$ for fresh DOM lookup — bw.el cache can go stale
       // when #theme-preview is re-created by renderGenerator()
       var tpEls = bw.$('#theme-preview');
       if (tpEls.length) {
@@ -1012,31 +1012,31 @@
             t: 'button', c: 'Light',
             a: {
               style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:4px 0 0 4px;cursor:pointer;font-size:0.875rem;font-weight:600;' +
-                (!isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;')
-            },
-            o: { mounted: function(el) { el.addEventListener('click', function() {
-              state.galleryDark = false;
-              state.isAlternate = false;
-              generateCurrentTheme();
-              renderGenerator();
-              renderGallery();
-              renderPreview();
-            }); }}
+                (!isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;'),
+              onclick: function() {
+                state.galleryDark = false;
+                state.isAlternate = false;
+                generateCurrentTheme();
+                renderGenerator();
+                renderGallery();
+                renderPreview();
+              }
+            }
           },
           {
             t: 'button', c: 'Dark',
             a: {
               style: 'padding:0.4rem 1rem;border:1px solid #ccc;border-radius:0 4px 4px 0;cursor:pointer;font-size:0.875rem;font-weight:600;' +
-                (isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;')
-            },
-            o: { mounted: function(el) { el.addEventListener('click', function() {
-              state.galleryDark = true;
-              state.isAlternate = true;
-              generateCurrentTheme();
-              renderGenerator();
-              renderGallery();
-              renderPreview();
-            }); }}
+                (isDark ? 'background:' + p.primary.base + ';color:#fff;border-color:' + p.primary.base + ';' : 'background:#fff;color:#333;'),
+              onclick: function() {
+                state.galleryDark = true;
+                state.isAlternate = true;
+                generateCurrentTheme();
+                renderGenerator();
+                renderGallery();
+                renderPreview();
+              }
+            }
           }
         ]
       });
@@ -1578,7 +1578,7 @@
                 { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'How it works' },
                 { t: 'p', c: bw.raw('Every theme has two sides: <strong>primary</strong> (your seed colors) and <strong>alternate</strong> (luminance-inverted). If your primary is light, the alternate is dark, and vice versa. Both go through the same derivation pipeline.') },
                 (function() {
-                  var toggleCode = '// Generate theme (always produces both palettes)\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n\n// Toggle between primary and alternate\nbw.toggleStyles();           // flip between them';
+                  var toggleCode = '// Generate theme (always produces both palettes)\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n\n// Switch to alternate palette\nbw.toggleThemeMode();\n\n// Switch back to primary\nbw.toggleThemeMode();';
                   var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
                   return typeof bw.codeEditor === 'function'
                     ? bw.codeEditor({ code: toggleCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })

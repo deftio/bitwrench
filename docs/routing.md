@@ -235,12 +235,11 @@ function dashboard() {
       state: { data: null },
       mounted: function(el) {
         fetch('/api/stats').then(function(r) { return r.json(); })
-          .then(function(d) { el._bw_state.data = d; bw.update(el); });
+          .then(function(d) { el._bw_state.data = d; bw.refresh(el); });
       },
-      render: function(el) {
-        var s = el._bw_state;
-        bw.DOM(el, s.data
-          ? bw.makeTable({ data: s.data, sortable: true })
+      render: function(el, state) {
+        bw.DOM(el, state.data
+          ? bw.makeTable({ data: state.data, sortable: true })
           : { t: 'p', c: 'Loading...' }
         );
       }
@@ -249,7 +248,7 @@ function dashboard() {
 }
 ```
 
-When the router mounts this TACO, `mounted` fires, fetches data, updates state, and triggers a re-render. The route handler is just a function that returns any valid TACO -- the full component model (Level 0 through Level 2) is available.
+When the router mounts this TACO, `mounted` fires, fetches data, updates state, and triggers a re-render. The route handler is just a function that returns any valid TACO -- the full component model (static TACOs, mounted components, and stateful components) is available.
 
 ---
 
@@ -405,15 +404,14 @@ function makeNav() {
       mounted: function(el) {
         bw.sub('bw:route', function(d) {
           el._bw_state.active = d.path;
-          bw.update(el);
+          bw.refresh(el);
         }, el);
       },
-      render: function(el) {
-        var s = el._bw_state;
+      render: function(el, state) {
         bw.DOM(el, {
           t: 'ul', c: links.map(function(link) {
             return { t: 'li', a: {
-              style: link.path === s.active ? 'font-weight:bold' : ''
+              style: link.path === state.active ? 'font-weight:bold' : ''
             }, c: bw.link(link.path, link.label) };
           })
         });
@@ -460,9 +458,9 @@ function usersPage() {
     o: {
       state: {},
       mounted: function(el) {
-        bw.sub('store:users', function() { bw.update(el); }, el);
+        bw.sub('store:users', function() { bw.refresh(el); }, el);
       },
-      render: function(el) {
+      render: function(el, state) {
         bw.DOM(el, bw.makeTable({
           data: store.users,
           columns: ['name', 'role', 'status'],
@@ -492,7 +490,7 @@ The client router complements bwserve's server-side `app.page()`. Use bwserve fo
 ```javascript
 // Server handles top-level pages
 app.page('/dashboard', function(client) {
-  client.render('#app', dashboardShell());
+  client.mount('#app', dashboardShell());
 });
 
 // Client handles tab navigation within the dashboard

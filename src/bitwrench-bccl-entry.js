@@ -47,13 +47,13 @@ export function registerBCCL(bw) {
   bw.variantClass = components.variantClass;
 
   // Create functions that return DOM elements
-  if (typeof bw.createDOM === 'function') {
+  if (typeof bw.create === 'function') {
     Object.entries(components).forEach(function(entry) {
       var name = entry[0], fn = entry[1];
       if (name.indexOf('make') === 0) {
         var createName = 'create' + name.substring(4);
         bw[createName] = function(props) {
-          return bw.createDOM(fn(props));
+          return bw.create(fn(props));
         };
       }
     });

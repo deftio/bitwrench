@@ -5,7 +5,7 @@ Runs on Adafruit QT Py ESP32 (S2/S3/C3) with ST25DV16K attached via I2C.
 Serves a web UI on the local LAN using bitwrench.js for display.
 Browse to the printed IP address to see scanned NFC tags.
 
-bitwrench.js is served locally from a pre-gzipped file (~40KB) so the
+bitwrench.js is served locally from a pre-gzipped file (~45KB) so the
 app works without internet access.
 """
 
@@ -159,29 +159,29 @@ def build_patches_json():
     # Build bwserve-compatible patch ops for all live-updating elements
     ops = [
         # Stat cards
-        {"type": "patch", "target": "stat-scans", "content": str(scan_count)},
-        {"type": "patch", "target": "stat-records", "content": str(len(current_ndef))},
-        {"type": "patch", "target": "stat-rf", "content": "Active" if eh["field_on"] else "None"},
-        {"type": "patch", "target": "stat-uptime", "content": uptime_str},
+        {"type": "patch", "ref": "stat-scans", "text": str(scan_count)},
+        {"type": "patch", "ref": "stat-records", "text": str(len(current_ndef))},
+        {"type": "patch", "ref": "stat-rf", "text": "Active" if eh["field_on"] else "None"},
+        {"type": "patch", "ref": "stat-uptime", "text": uptime_str},
         # Live panel values
-        {"type": "patch", "target": "live-rf-activity", "content": "YES" if it_sts["rf_activity"] else "no"},
-        {"type": "patch", "target": "live-field-rising", "content": "YES" if it_sts["field_rising"] else "no"},
-        {"type": "patch", "target": "live-field-falling", "content": "YES" if it_sts["field_falling"] else "no"},
-        {"type": "patch", "target": "live-rf-write", "content": "YES" if it_sts["rf_write"] else "no"},
-        {"type": "patch", "target": "live-rf-put", "content": "YES" if it_sts["rf_put_msg"] else "no"},
-        {"type": "patch", "target": "live-rf-get", "content": "YES" if it_sts["rf_get_msg"] else "no"},
-        {"type": "patch", "target": "live-eh", "content": "Active" if eh["eh_on"] else "Off"},
-        {"type": "patch", "target": "live-field", "content": "Yes" if eh["field_on"] else "No"},
-        {"type": "patch", "target": "live-vcc", "content": "Yes" if eh["vcc_on"] else "No"},
-        {"type": "patch", "target": "live-mb-en", "content": "Yes" if mb["mb_enabled"] else "No"},
-        {"type": "patch", "target": "live-mb-host", "content": "Yes" if mb["host_put_msg"] else "No"},
-        {"type": "patch", "target": "live-mb-rf", "content": "Yes" if mb["rf_put_msg"] else "No"},
+        {"type": "patch", "ref": "live-rf-activity", "text": "YES" if it_sts["rf_activity"] else "no"},
+        {"type": "patch", "ref": "live-field-rising", "text": "YES" if it_sts["field_rising"] else "no"},
+        {"type": "patch", "ref": "live-field-falling", "text": "YES" if it_sts["field_falling"] else "no"},
+        {"type": "patch", "ref": "live-rf-write", "text": "YES" if it_sts["rf_write"] else "no"},
+        {"type": "patch", "ref": "live-rf-put", "text": "YES" if it_sts["rf_put_msg"] else "no"},
+        {"type": "patch", "ref": "live-rf-get", "text": "YES" if it_sts["rf_get_msg"] else "no"},
+        {"type": "patch", "ref": "live-eh", "text": "Active" if eh["eh_on"] else "Off"},
+        {"type": "patch", "ref": "live-field", "text": "Yes" if eh["field_on"] else "No"},
+        {"type": "patch", "ref": "live-vcc", "text": "Yes" if eh["vcc_on"] else "No"},
+        {"type": "patch", "ref": "live-mb-en", "text": "Yes" if mb["mb_enabled"] else "No"},
+        {"type": "patch", "ref": "live-mb-host", "text": "Yes" if mb["host_put_msg"] else "No"},
+        {"type": "patch", "ref": "live-mb-rf", "text": "Yes" if mb["rf_put_msg"] else "No"},
         # System stats
-        {"type": "patch", "target": "sys-temp", "content": str(cpu_temp) + "\u00b0C"},
-        {"type": "patch", "target": "sys-ip", "content": ip_addr},
-        {"type": "patch", "target": "sys-lastscan", "content": last_scan_str},
-        {"type": "patch", "target": "sys-history", "content": str(len(scan_history))},
-        {"type": "patch", "target": "sys-nfc", "content": "Connected" if nfc.connected else "Not found"},
+        {"type": "patch", "ref": "sys-temp", "text": str(cpu_temp) + "\u00b0C"},
+        {"type": "patch", "ref": "sys-ip", "text": ip_addr},
+        {"type": "patch", "ref": "sys-lastscan", "text": last_scan_str},
+        {"type": "patch", "ref": "sys-history", "text": str(len(scan_history))},
+        {"type": "patch", "ref": "sys-nfc", "text": "Connected" if nfc.connected else "Not found"},
     ]
 
     return {
@@ -277,7 +277,7 @@ def test_page(request: Request):
 @server.route("/bitwrench.js")
 def serve_bitwrench(request: Request):
     """Serve pre-gzipped bitwrench.js with Content-Encoding: gzip.
-    The browser transparently decompresses it. ~40KB transfer."""
+    The browser transparently decompresses it. ~45KB transfer."""
     return FileResponse(
         request,
         filename="bitwrench.umd.min.js.gz",

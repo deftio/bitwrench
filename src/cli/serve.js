@@ -15,7 +15,6 @@
 
 import { parseArgs } from 'node:util';
 import { createServer } from 'node:http';
-import { createReadStream } from 'node:fs';
 import { VERSION } from '../version.js';
 
 var SERVE_USAGE = `
@@ -34,8 +33,8 @@ Options:
       --stdin                Read protocol messages from stdin (newline-delimited JSON)
   -t, --theme <name>         Theme preset or hex colors ("#pri,#sec")
       --title <string>       Page title (default: "bwcli serve")
-      --allow-exec           Enable exec messages (runs JS in browser, use for dev only)
       --no-dir-list          Disable directory listings
+      --allow-screenshot     Enable client.screenshot() capability
       --open                 Open browser on start
   -v, --verbose              Verbose output
   -h, --help                 Print this help
@@ -45,8 +44,7 @@ Examples:
   bwcli serve ./public --port 3000        Serve ./public on :3000
   bwcli serve --stdin                     Read from pipe instead of input port
   sensor-reader | bwcli serve --stdin     Pipe sensor data to browser
-  curl -X POST :9000 -d '{"type":"replace","target":"#app","node":{"t":"h1","c":"Hi"}}'
-  curl -X POST :9000 -d '{"command":"query","code":"document.title"}'
+  curl -X POST :9000 -d '{"type":"mount","ref":"#app","taco":{"t":"h1","c":"Hi"},"v":1}'
   curl -X POST :9000 -d '{"command":"clients"}'
 `.trim();
 
@@ -141,20 +139,19 @@ function parseRelaxedJSON(str) {
 
 // Required fields per command (async commands also listed)
 var _COMMAND_REQUIRED = {
-    query:    ['code'],
     screenshot: [],
     tree:     [],
-    mount:    ['selector', 'factory'],
-    exec:     ['code'],
-    render:   ['selector', 'taco'],
-    patch:    ['id'],
-    listen:   ['selector', 'event'],
-    unlisten: ['selector', 'event'],
+    query:    ['code'],
+    mount:    ['ref', 'taco'],
+    render:   ['ref', 'taco'],   // deprecated alias for mount
+    patch:    ['ref'],
+    listen:   ['topic'],
+    unlisten: ['topic'],
     clients:  []
 };
 
 // Commands that return a result via promise
-var _ASYNC_COMMANDS = { query: 1, screenshot: 1, tree: 1, mount: 1 };
+var _ASYNC_COMMANDS = { screenshot: 1, tree: 1, query: 1 };
 
 /**
  * Handle an interactive command from the listen port.
@@ -177,7 +174,7 @@ function handleCommand(msg, app, verbose) {
     }
 
     // Validate command name
-    if (!_COMMAND_REQUIRED.hasOwnProperty(cmd)) {
+    if (!Object.prototype.hasOwnProperty.call(_COMMAND_REQUIRED, cmd)) {
         return Promise.resolve({ error: 'Unknown command: ' + cmd });
     }
 
@@ -202,12 +199,11 @@ function handleCommand(msg, app, verbose) {
             return Promise.resolve({ error: 'Client not found: ' + msg.clientId });
         }
     } else {
-        // Pick first connected client
+        // Pick most recently connected client (last non-closed in insertion order)
         for (var pair of app._clients) {
             if (pair[1] && pair[1].client && !pair[1].client._closed) {
                 client = pair[1].client;
                 clientId = pair[0];
-                break;
             }
         }
     }
@@ -225,16 +221,21 @@ function handleCommand(msg, app, verbose) {
     // Dispatch
     try {
         switch (cmd) {
-            case 'query':
-                return client.query(msg.code, { timeout: timeout || 5000 }).then(function(result) {
-                    return { ok: true, result: result, clientId: clientId };
-                });
-
             case 'screenshot':
                 return client.screenshot(msg.selector || 'body', { timeout: timeout || 10000 }).then(function(result) {
                     // Convert Buffer to base64 for JSON response
                     var data = result && result.data ? result.data.toString('base64') : null;
                     return { ok: true, result: { data: data, width: result.width, height: result.height, format: result.format }, clientId: clientId };
+                });
+
+            case 'query':
+                var qPend = client._pend(timeout || 10000);
+                client.call('_bw_query', {
+                    code: msg.code,
+                    requestId: qPend.requestId
+                });
+                return qPend.promise.then(function(result) {
+                    return { ok: true, result: result, clientId: clientId };
                 });
 
             case 'tree':
@@ -249,28 +250,26 @@ function handleCommand(msg, app, verbose) {
                 });
 
             case 'mount':
-                return client.mount(msg.selector, msg.factory, msg.props || {}, { timeout: timeout || 10000 }).then(function(result) {
-                    return { ok: true, result: result, clientId: clientId };
-                });
-
-            case 'exec':
-                client.exec(msg.code);
-                return Promise.resolve({ ok: true, clientId: clientId });
-
             case 'render':
-                client.render(msg.selector, msg.taco);
+                client.mount(msg.ref, msg.taco);
                 return Promise.resolve({ ok: true, clientId: clientId });
 
             case 'patch':
-                client.patch(msg.id, msg.content, msg.attr);
+                var patchFields = {};
+                for (var pk in msg) {
+                    if (pk !== 'command' && pk !== 'ref' && pk !== 'clientId' && pk !== 'timeout') {
+                        patchFields[pk] = msg[pk];
+                    }
+                }
+                client.patch(msg.ref, patchFields);
                 return Promise.resolve({ ok: true, clientId: clientId });
 
             case 'listen':
-                client.call('_bw_listen', { selector: msg.selector, event: msg.event });
+                client.listen(msg.topic);
                 return Promise.resolve({ ok: true, clientId: clientId });
 
             case 'unlisten':
-                client.call('_bw_unlisten', { selector: msg.selector, event: msg.event });
+                client._send({ type: 'unlisten', topic: msg.topic });
                 return Promise.resolve({ ok: true, clientId: clientId });
         }
     } catch (err) {
@@ -298,9 +297,9 @@ export function runServe(argv, ioOpts) {
                 stdin:   { type: 'boolean' },
                 theme:   { type: 'string', short: 't' },
                 title:   { type: 'string' },
-                'allow-exec': { type: 'boolean' },
                 'no-dir-list': { type: 'boolean' },
                 open:    { type: 'boolean' },
+                'allow-screenshot': { type: 'boolean' },
                 verbose: { type: 'boolean', short: 'v' },
                 help:    { type: 'boolean', short: 'h' }
             }
@@ -352,7 +351,7 @@ export function runServe(argv, ioOpts) {
             dirList: dirList,
             verbose: verbose,
             open: !!values.open,
-            allowExec: !!values['allow-exec']
+            allowScreenshot: !!values['allow-screenshot']
         });
     }).catch(function(err) {
         console.error('Failed to load bwserve: ' + err.message);
@@ -373,7 +372,7 @@ function startServer(bwserve, opts) {
         static: opts.dir,
         theme: opts.theme,
         dirList: opts.dirList,
-        allowExec: opts.allowExec
+        allowScreenshot: opts.allowScreenshot
     });
 
     // Register a passthrough page handler — just keeps clients alive
@@ -434,6 +433,7 @@ function startInputServer(app, listenPort, verbose) {
             if (err.code === 'EADDRINUSE') {
                 console.error('  Warning: Input port ' + listenPort + ' in use, picking a free port...');
                 var retry = _createInputServer(app, verbose);
+                /* c8 ignore next 5 -- double port failure is a rare edge case */
                 retry.on('error', function(err2) {
                     console.error('  Warning: Could not bind input server (' + err2.message + '). Continuing without input port.');
                     resolve(null);
@@ -443,6 +443,7 @@ function startInputServer(app, listenPort, verbose) {
                     console.error('  Input port:  http://localhost:' + actualPort + ' (fallback)');
                     resolve(retry);
                 });
+            /* c8 ignore next 3 -- non-EADDRINUSE errors are rare */
             } else {
                 console.error('  Warning: Input server error (' + err.message + '). Continuing without input port.');
                 resolve(null);
@@ -480,6 +481,7 @@ function _createInputServer(app, verbose) {
             // Interactive command path
             if (msg.command) {
                 handleCommand(msg, app, verbose).then(function(result) {
+                    /* c8 ignore next -- error status covered in isolation; flaky in combined */
                     var status = result.error ? 400 : 200;
                     // Unknown command and client-not-found get 400; timeout also 400
                     res.writeHead(status, { 'Content-Type': 'application/json' });

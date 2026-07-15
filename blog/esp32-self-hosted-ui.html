@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self-hosted live UI on ESP32 — Bitwrench Blog</title>
+  <meta name="description" content="Build a complete self-hosted dashboard on ESP32: the device serves JSON, Bitwrench renders the UI in the browser. No cloud, no HTML from the chip.">
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="../pages/site.js"></script>
+  <script src="blog-posts.js"></script>
+  <script src="blog-nav.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    var styles = initBlogPage('esp32-self-hosted-ui.html', '..');
+    var p = styles.palette;
+
+    bw.injectCSS(bw.css({
+      '.blog-article': {
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
+        'box-shadow': '0 1px 3px rgba(0,0,0,0.08)',
+        padding: '1.5rem',
+        'margin-bottom': '1.5rem'
+      },
+      '.blog-article h2': {
+        'font-size': '1.15rem',
+        'font-weight': '600',
+        color: p.dark.base,
+        margin: '2rem -1.5rem 1rem',
+        padding: '1rem 1.5rem',
+        background: p.surfaceAlt,
+        'border-bottom': '1px solid ' + p.light.border,
+        'border-top': '1px solid ' + p.light.border,
+        'border-left': '4px solid ' + p.primary.base
+      },
+      '.blog-article h2:first-of-type': {
+        'margin-top': '-1.5rem',
+        'margin-left': '-1.5rem',
+        'margin-right': '-1.5rem',
+        'border-top': 'none'
+      },
+      '.blog-article p, .blog-article li': {
+        'line-height': '1.6',
+        'margin-bottom': '0.85rem'
+      },
+      '.blog-article ul': {
+        'padding-left': '1.5rem',
+        'margin-bottom': '1rem'
+      },
+      '.blog-article code': {
+        'font-family': SITE.fontMono,
+        'font-size': '0.85em'
+      },
+      '.blog-draft-banner': {
+        background: '#fef3c7',
+        color: '#92400e',
+        padding: '0.75rem 1rem',
+        'border-radius': '6px',
+        'margin-bottom': '1.25rem',
+        'font-size': '0.9rem'
+      },
+      '.blog-arch': {
+        background: '#1e293b',
+        color: '#94a3b8',
+        'font-family': SITE.fontMono,
+        'font-size': '0.8rem',
+        'line-height': '1.55',
+        padding: '1.25rem',
+        'border-radius': '8px',
+        'white-space': 'pre',
+        'overflow-x': 'auto',
+        margin: '1rem 0'
+      }
+    }), { id: 'blog-article-styles' });
+
+    bw.DOM('#app', {
+      t: 'div',
+      c: [
+        site.makePageHeader(
+          'Self-hosted live UI on ESP32',
+          'Adafruit-style build: one board, flash, browser — a complete dashboard with no cloud.'
+        ),
+        {
+          t: 'div',
+          a: { class: 'content-container wide' },
+          c: {
+            t: 'div',
+            a: { class: 'blog-article' },
+            c: [
+              {
+                t: 'div',
+                a: { class: 'blog-draft-banner' },
+                c: 'Draft shell for the HN / embedded launch post. Full walkthrough will follow examples/embedded-basic. Links below already point at the working example.'
+              },
+              { t: 'h2', c: 'What you\'ll build' },
+              {
+                t: 'p',
+                c: 'A live board dashboard served entirely from an ESP32 (or Pico 2W): NeoPixel or LED control, on-chip temperature, WiFi RSSI, heap, uptime, and an event log. Your phone\'s browser is the display.'
+              },
+              {
+                t: 'div',
+                a: { class: 'blog-arch' },
+                c:
+                  '+--------+     HTTP / SSE      +---------+\n' +
+                  '| ESP32  | <-----------------> | Browser |\n' +
+                  '|        |  dashboard.html     |         |\n' +
+                  '|        |  bitwrench.js.gz    | bitwrench|\n' +
+                  '|        |  SSE: JSON patches  | renders |\n' +
+                  '|        |  POST: commands     |   UI    |\n' +
+                  '+--------+                     +---------+'
+              },
+              {
+                t: 'p',
+                c: 'The device never generates HTML. It serves two static files from flash, then pushes small JSON patches (~200 bytes). Bitwrench mounts and updates the DOM in the browser.'
+              },
+              { t: 'h2', c: 'Start here (working example)' },
+              {
+                t: 'ul',
+                c: [
+                  {
+                    t: 'li',
+                    c: [
+                      {
+                        t: 'a',
+                        a: { href: '../examples/embedded-basic/README.md' },
+                        c: 'examples/embedded-basic/'
+                      },
+                      ' — full tutorial, ESP32-S3 Pro and Pico 2W'
+                    ]
+                  },
+                  {
+                    t: 'li',
+                    c: [
+                      {
+                        t: 'a',
+                        a: { href: '../examples/embedded-basic/dashboard.html' },
+                        c: 'dashboard.html'
+                      },
+                      ' — the UI (open on-device; needs the board\'s HTTP server)'
+                    ]
+                  },
+                  {
+                    t: 'li',
+                    c: [
+                      {
+                        t: 'a',
+                        a: { href: '../embedded_c/' },
+                        c: 'embedded_c/'
+                      },
+                      ' — ',
+                      { t: 'code', c: 'bitwrench.h' },
+                      ' / ',
+                      { t: 'code', c: 'bwserve.h' },
+                      ' C helpers'
+                    ]
+                  },
+                  {
+                    t: 'li',
+                    c: [
+                      {
+                        t: 'a',
+                        a: { href: '../pages/20-embedded.html' },
+                        c: 'Docs: Embedded'
+                      },
+                      ' — overview on the docs site'
+                    ]
+                  }
+                ]
+              },
+              { t: 'h2', c: 'Article outline (coming)' },
+              {
+                t: 'ul',
+                c: [
+                  { t: 'li', c: 'Parts list (one board — no DHT22 required)' },
+                  { t: 'li', c: 'Flash LittleFS: dashboard + gzipped bitwrench' },
+                  { t: 'li', c: 'Sketch: SSE patches + POST commands' },
+                  { t: 'li', c: 'Bring-up: serial IP → browser → live stats' },
+                  { t: 'li', c: 'Make it yours: one new card, one new patch id' },
+                  { t: 'li', c: 'Next: IMU / STEMMA QT extras' }
+                ]
+              },
+              {
+                t: 'p',
+                a: { style: 'margin-top:1.5rem' },
+                c: [
+                  { t: 'a', a: { href: 'index.html' }, c: '\u2190 Blog home' },
+                  ' · ',
+                  {
+                    t: 'a',
+                    a: { href: '../pages/index.html' },
+                    c: 'Docs'
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    });
+  </script>
+</body>
+</html>

@@ -77,11 +77,11 @@ test.describe('Bitwrench v2 Examples', () => {
     await resultTab.click();
 
     // Check cards are rendered (visible in Result tab)
-    const cards = page.locator('.bw_card:visible');
+    const cards = page.locator('.bw_bccl_card:visible');
     await expect(cards.first()).toBeVisible();
 
     // Check buttons exist
-    const buttons = page.locator('.bw_btn:visible');
+    const buttons = page.locator('.bw_bccl_btn:visible');
     await expect(buttons.first()).toBeVisible();
 
     expect(page.errors).toHaveLength(0);
@@ -152,7 +152,7 @@ test.describe('Bitwrench v2 Examples', () => {
     await expect(page.locator('h1').first()).toContainText('Tables & Forms');
 
     // Check form inputs are rendered (inside form-tabs demo section)
-    const formInputs = page.locator('.bw_form_control');
+    const formInputs = page.locator('.bw_bccl_form_control');
     await expect(formInputs.first()).toBeVisible();
 
     // Test tabbed forms section — the inner makeTabs has Personal Info / Address / Preferences tabs
@@ -263,12 +263,12 @@ test.describe('Bitwrench v2 Examples', () => {
     await expect(alertsSection).toBeVisible();
 
     // Check alerts exist
-    const alerts = alertsSection.locator('.bw_alert');
+    const alerts = alertsSection.locator('.bw_bccl_alert');
     const alertCount = await alerts.count();
     expect(alertCount).toBeGreaterThanOrEqual(1);
 
     // Test progress bars exist and have width values
-    const progressBars = page.locator('.bw_progress_bar');
+    const progressBars = page.locator('.bw_bccl_progress_bar');
     const progressCount = await progressBars.count();
     expect(progressCount).toBeGreaterThanOrEqual(2);
     // Verify they have width set (values may change with component updates)
@@ -350,7 +350,7 @@ test.describe('Accessibility Tests', () => {
 
     // Check forms have labels
     await page.goto('/pages/02-tables-forms.html');
-    const formGroups = page.locator('.bw_form_group');
+    const formGroups = page.locator('.bw_bccl_form_group');
     const firstGroup = formGroups.first();
     const label = firstGroup.locator('label');
     await expect(label).toBeVisible();
@@ -359,30 +359,27 @@ test.describe('Accessibility Tests', () => {
   test('Keyboard navigation works', async ({ page }) => {
     await page.goto('/pages/01-components.html');
 
-    // Check tabs are keyboard-focusable
     const firstTab = page.locator('[role="tab"]').first();
-    await firstTab.focus();
+    await expect(firstTab).toHaveAttribute('tabindex', '0');
+    await firstTab.click();
     await expect(firstTab).toBeFocused();
   });
 
   test('09-downloads.html loads build tables from builds.json', async ({ page }) => {
     await page.goto('/pages/09-downloads.html');
 
-    // Wait for async fetch of builds.json to complete
-    await page.waitForTimeout(2000);
-
-    // Downloads section should have loaded a table with rows
+    // Wait for the downloads table to render (async fetch of builds.json)
     const dlSection = page.locator('#section-downloads');
     await expect(dlSection).toBeVisible();
-    const dlTable = dlSection.locator('table.bw_table');
-    await expect(dlTable).toBeVisible();
+    const dlTable = dlSection.locator('table.bw_bccl_table');
+    await expect(dlTable).toBeVisible({ timeout: 10000 });
     expect(await dlTable.locator('tbody tr').count()).toBeGreaterThanOrEqual(2);
 
     // All Builds section should also have a table
     const allSection = page.locator('#section-all');
     await expect(allSection).toBeVisible();
-    const allTable = allSection.locator('table.bw_table');
-    await expect(allTable).toBeVisible();
+    const allTable = allSection.locator('table.bw_bccl_table');
+    await expect(allTable).toBeVisible({ timeout: 10000 });
     expect(await allTable.locator('tbody tr').count()).toBeGreaterThanOrEqual(5);
   });
 });

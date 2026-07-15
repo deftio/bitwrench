@@ -139,24 +139,24 @@ var app = bwserve.create({ port: 7902 });
 var count = 0;
 
 app.page('/', function(client) {
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'h1', c: 'Server Counter' },
       { t: 'span', a: { id: 'val' }, c: '0' },
-      { t: 'button', a: { 'data-bw-action': 'inc' }, c: '+1' }
+      { t: 'button', a: { class: 'bw_act_inc' }, c: '+1' }
     ]
   });
 
   client.on('inc', function() {
     count++;
-    client.patch('val', String(count));
+    client.patch('val', { text: String(count) });
   });
 });
 
 app.listen();
 ```
 
-**State flow:** Browser requests `/` => server returns HTML shell. Shell opens SSE => server sends TACO via `client.render()`. User clicks `data-bw-action` => browser POSTs to server. Server calls `client.patch()` => browser updates. All state stays on the server. See [bwserve.md](bwserve.md).
+**State flow:** Browser requests `/` => server returns HTML shell. Shell opens SSE => server sends TACO via `client.mount()`. User clicks a `bw_act_*` classed element => browser POSTs to server. Server calls `client.patch()` => browser updates. All state stays on the server. See [bwserve.md](bwserve.md).
 
 ---
 
@@ -189,7 +189,8 @@ bw.DOM('#app', { t: 'div', c: [
   }})
 ]});
 
-// Poll the device -- re-render readings section each cycle
+// Quick prototype: poll + full re-render. For production, use SSE
+// with bw.patch() instead -- see tutorial-embedded.md for the SSE version.
 setInterval(function() {
   fetch('/api/sensors').then(function(r) { return r.json(); })
     .then(function(data) {
@@ -244,7 +245,7 @@ Each output is self-contained with bitwrench embedded inline. No CDN, no toolcha
 |----------|---------|---------|
 | Monitoring dashboard, admin panel | Single-Page Dashboard | `bw.pub/sub`, `bw.DOM()`, `makeStatCard` |
 | Multi-view app with URL navigation | Multi-Page SPA | `bw.router()`, `bw.navigate()` |
-| Server owns all logic (internal tool, LLM UI) | bwserve Server-Driven | `client.render()`, `client.patch()` |
+| Server owns all logic (internal tool, LLM UI) | bwserve Server-Driven | `client.mount()`, `client.patch()` |
 | Microcontroller or constrained device | Embedded / IoT | `bw.DOM()`, `fetch()` polling or SSE |
 | Documentation, blog, project pages | Static Site (bwcli) | `bwcli`, `--theme`, `--standalone` |
 | Prototype or quick one-off | Single-Page Dashboard | One HTML file, no build step |

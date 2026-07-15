@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMU Dashboard</title>
+  <script src="/bitwrench.umd.min.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // =====================================================================
+    // Embedded IMU Dashboard
+    //
+    // Extends the basic dashboard with accelerometer + gyroscope readouts.
+    // Works with MPU6050 or ICM-20948 connected via I2C (STEMMA QT).
+    //
+    // Shared HTML for ESP32-S3 Pro and Pico 2W.
+    // =====================================================================
+
+    bw.loadStyles({
+      primary: '#6366f1',
+      secondary: '#10b981',
+      spacing: 'compact',
+      radius: 'sm'
+    });
+
+    bw.injectCSS(bw.css({
+      'body': {
+        background: '#0f172a',
+        color: '#e2e8f0',
+        margin: '0',
+        'min-height': '100vh'
+      },
+      '.dash-header': {
+        'text-align': 'center',
+        padding: '1.5rem 1rem 0.5rem',
+        'border-bottom': '1px solid #1e293b'
+      },
+      '.dash-header h1': {
+        margin: '0 0 0.25rem',
+        'font-size': '1.25rem',
+        color: '#6366f1'
+      },
+      '.dash-header .subtitle': {
+        'font-size': '0.8rem',
+        color: '#64748b'
+      },
+      '.dash-status': {
+        display: 'inline-block',
+        width: '8px',
+        height: '8px',
+        'border-radius': '50%',
+        'margin-right': '0.4rem',
+        'vertical-align': 'middle'
+      },
+      '.dash-status.online': { background: '#10b981' },
+      '.dash-status.offline': { background: '#ef4444' },
+      '.axis-bar': {
+        height: '18px',
+        'border-radius': '4px',
+        transition: 'width 0.15s ease',
+        'min-width': '2px'
+      },
+      '.axis-label': {
+        'font-size': '0.75rem',
+        color: '#94a3b8',
+        'min-width': '20px',
+        display: 'inline-block'
+      },
+      '.axis-val': {
+        'font-size': '0.8rem',
+        'font-weight': '600',
+        'min-width': '70px',
+        'text-align': 'right',
+        display: 'inline-block',
+        'font-family': 'monospace'
+      },
+      '.axis-row': {
+        display: 'flex',
+        'align-items': 'center',
+        gap: '0.5rem',
+        'margin-bottom': '0.4rem'
+      },
+      '.axis-track': {
+        flex: '1',
+        background: '#1e293b',
+        'border-radius': '4px',
+        height: '18px',
+        overflow: 'hidden',
+        position: 'relative'
+      },
+      '.tilt-indicator': {
+        width: '60px',
+        height: '60px',
+        'border-radius': '50%',
+        border: '2px solid #475569',
+        position: 'relative',
+        margin: '0 auto'
+      },
+      '.tilt-dot': {
+        width: '10px',
+        height: '10px',
+        'border-radius': '50%',
+        background: '#6366f1',
+        position: 'absolute',
+        transition: 'all 0.15s ease',
+        transform: 'translate(-50%, -50%)'
+      }
+    }));
+
+    // -- State ----------------------------------------------------------------
+    var state = {
+      connected: false,
+      board: '--',
+      chip: '--',
+      imuChip: '--',
+      temp: '--',
+      voltage: '--',
+      rssi: '--',
+      heap: '--',
+      uptime: '--',
+      // IMU data
+      accelX: 0, accelY: 0, accelZ: 0,
+      gyroX: 0, gyroY: 0, gyroZ: 0,
+      magX: 0, magY: 0, magZ: 0,
+      hasMag: false,
+      sampleRate: 500
+    };
+
+    var logEntries = [];
+
+    function addLog(msg) {
+      var ts = new Date().toLocaleTimeString();
+      logEntries.unshift(ts + ' -- ' + msg);
+      if (logEntries.length > 15) logEntries.pop();
+    }
+
+    // -- API ------------------------------------------------------------------
+
+    function sendCmd(cmd, data) {
+      fetch('/api/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.assign({ cmd: cmd }, data || {}))
+      });
+    }
+
+    function setSampleRate(ms) {
+      state.sampleRate = ms;
+      sendCmd('set_rate', { rate: ms });
+      render();
+    }
+
+    // -- SSE ------------------------------------------------------------------
+
+    function connectSSE() {
+      var es = new EventSource('/events');
+
+      es.onmessage = function(e) {
+        var raw = e.data;
+        if (raw.charAt(0) === 'r') raw = raw.slice(1).replace(/'/g, '"');
+        try { var msg = JSON.parse(raw); } catch(x) { return; }
+
+        if (msg.type === 'batch') {
+          msg.ops.forEach(applyOp);
+        } else {
+          applyOp(msg);
+        }
+      };
+
+      es.onopen = function() {
+        if (!state.connected) {
+          state.connected = true;
+          addLog('Connected to device');
+          render();
+        }
+      };
+
+      es.onerror = function() {
+        if (state.connected) {
+          state.connected = false;
+          addLog('Connection lost -- reconnecting...');
+          render();
+        }
+      };
+    }
+
+    function applyOp(op) {
+      if (op.type !== 'patch' || !op.ref) return;
+
+      var refMap = {
+        'val-temp': 'temp', 'val-voltage': 'voltage', 'val-rssi': 'rssi',
+        'val-heap': 'heap', 'val-uptime': 'uptime', 'val-board': 'board',
+        'val-chip': 'chip', 'val-imu-chip': 'imuChip',
+        'val-accel-x': 'accelX', 'val-accel-y': 'accelY', 'val-accel-z': 'accelZ',
+        'val-gyro-x': 'gyroX', 'val-gyro-y': 'gyroY', 'val-gyro-z': 'gyroZ',
+        'val-mag-x': 'magX', 'val-mag-y': 'magY', 'val-mag-z': 'magZ',
+        'val-has-mag': 'hasMag'
+      };
+
+      if (refMap[op.ref] && op.text != null) {
+        var key = refMap[op.ref];
+        if (key === 'hasMag') {
+          state.hasMag = op.text === '1' || op.text === 'true';
+        } else if (['accelX','accelY','accelZ','gyroX','gyroY','gyroZ','magX','magY','magZ'].indexOf(key) >= 0) {
+          state[key] = parseFloat(op.text) || 0;
+        } else {
+          state[key] = op.text;
+        }
+      }
+
+      // Update DOM directly for live values
+      if (op.text != null) bw.el(op.ref, function(el) { el.textContent = op.text; });
+
+      if (!state.connected) {
+        state.connected = true;
+        addLog('Connected to device');
+      }
+
+      // Re-render for IMU bars (they need position recalculation)
+      if (op.ref && op.ref.indexOf('val-accel') === 0 || op.ref && op.ref.indexOf('val-gyro') === 0) {
+        renderIMU();
+      }
+    }
+
+    // -- Render helpers -------------------------------------------------------
+
+    function makeAxisBar(label, value, max, color) {
+      // Map value from [-max..+max] to 0..100% (50% = center = zero)
+      var pct = Math.round(((value / max) + 1) * 50);
+      pct = Math.max(0, Math.min(100, pct));
+      var barLeft = pct < 50 ? pct : 50;
+      var barWidth = Math.abs(pct - 50);
+
+      return { t: 'div', a: { class: 'axis-row' }, c: [
+        { t: 'span', a: { class: 'axis-label' }, c: label },
+        { t: 'div', a: { class: 'axis-track' }, c: [
+          { t: 'div', a: {
+            class: 'axis-bar',
+            style: 'background:' + color + ';position:absolute;left:' + barLeft + '%;width:' + barWidth + '%'
+          }, c: '' }
+        ]},
+        { t: 'span', a: { class: 'axis-val' }, c: value.toFixed(2) }
+      ]};
+    }
+
+    function makeTiltIndicator() {
+      // Map accel X/Y to dot position (center = level)
+      var maxG = 2.0;
+      var dotX = 50 + (state.accelX / maxG) * 40;
+      var dotY = 50 + (state.accelY / maxG) * 40;
+      dotX = Math.max(10, Math.min(90, dotX));
+      dotY = Math.max(10, Math.min(90, dotY));
+
+      var isLevel = Math.abs(state.accelX) < 0.15 && Math.abs(state.accelY) < 0.15;
+
+      return bw.makeCard({
+        title: 'Tilt',
+        className: 'bw_mb_2',
+        content: [
+          { t: 'div', a: { class: 'tilt-indicator' }, c: [
+            { t: 'div', a: {
+              class: 'tilt-dot',
+              style: 'left:' + dotX + '%;top:' + dotY + '%'
+            }, c: '' }
+          ]},
+          { t: 'div', a: { style: 'text-align:center;margin-top:0.5rem' }, c:
+            bw.makeBadge({
+              text: isLevel ? 'Level' : 'Tilted',
+              variant: isLevel ? 'success' : 'warning',
+              pill: true
+            })
+          }
+        ]
+      });
+    }
+
+    // -- Render (full) --------------------------------------------------------
+
+    function renderIMU() {
+      // Only update the IMU section if it exists
+      var imuEl = bw.$('#imu-section')[0];
+      if (!imuEl) return;
+
+      var accelContent = [
+        makeAxisBar('X', state.accelX, 4, '#ef4444'),
+        makeAxisBar('Y', state.accelY, 4, '#22c55e'),
+        makeAxisBar('Z', state.accelZ, 4, '#3b82f6')
+      ];
+
+      var gyroContent = [
+        makeAxisBar('X', state.gyroX, 500, '#f97316'),
+        makeAxisBar('Y', state.gyroY, 500, '#a855f7'),
+        makeAxisBar('Z', state.gyroZ, 500, '#06b6d4')
+      ];
+
+      bw.DOM('#imu-accel', { t: 'div', c: accelContent });
+      bw.DOM('#imu-gyro', { t: 'div', c: gyroContent });
+
+      // Tilt indicator
+      var maxG = 2.0;
+      var dotX = 50 + (state.accelX / maxG) * 40;
+      var dotY = 50 + (state.accelY / maxG) * 40;
+      dotX = Math.max(10, Math.min(90, dotX));
+      dotY = Math.max(10, Math.min(90, dotY));
+      var dot = bw.$('.tilt-dot')[0];
+      if (dot) {
+        dot.style.left = dotX + '%';
+        dot.style.top = dotY + '%';
+      }
+      var isLevel = Math.abs(state.accelX) < 0.15 && Math.abs(state.accelY) < 0.15;
+      bw.el('tilt-badge', function(el) { el.textContent = isLevel ? 'Level' : 'Tilted'; });
+    }
+
+    function render() {
+      var statusDot = { t: 'span', a: { class: 'dash-status ' + (state.connected ? 'online' : 'offline') }, c: '' };
+
+      // System stats row
+      function makeStatCard(label, id, value) {
+        return bw.makeCol({ size: { xs: 6, md: 4 }, content:
+          bw.makeCard({
+            className: 'bw_mb_2',
+            content: [
+              { t: 'div', a: { style: 'font-size:0.75rem;color:#94a3b8;text-transform:uppercase;margin-bottom:0.3rem' }, c: label },
+              { t: 'div', a: { id: id, style: 'font-size:1.2rem;font-weight:700;color:#38bdf8' }, c: value || '--' }
+            ]
+          })
+        });
+      }
+
+      var statsRow = bw.makeRow({
+        children: [
+          makeStatCard('Temperature', 'val-temp', state.temp),
+          makeStatCard('Voltage', 'val-voltage', state.voltage),
+          makeStatCard('WiFi RSSI', 'val-rssi', state.rssi),
+          makeStatCard('Free Heap', 'val-heap', state.heap),
+          makeStatCard('Uptime', 'val-uptime', state.uptime),
+          makeStatCard('IMU', 'val-imu-chip', state.imuChip)
+        ]
+      });
+
+      // Sample rate selector
+      var rateButtons = [100, 250, 500, 1000].map(function(ms) {
+        var label = ms < 1000 ? ms + 'ms' : (ms/1000) + 's';
+        return bw.makeButton({
+          text: label,
+          size: 'sm',
+          variant: state.sampleRate === ms ? 'primary' : 'outline_secondary',
+          onclick: function() { setSampleRate(ms); }
+        });
+      });
+
+      var isLevel = Math.abs(state.accelX) < 0.15 && Math.abs(state.accelY) < 0.15;
+
+      // Accelerometer + Gyro section
+      var imuSection = { t: 'div', a: { id: 'imu-section' }, c: [
+        bw.makeRow({ children: [
+          bw.makeCol({ size: { xs: 12, md: 5 }, content:
+            bw.makeCard({
+              title: 'Accelerometer (g)',
+              className: 'bw_mb_2',
+              content: { t: 'div', a: { id: 'imu-accel' }, c: [
+                makeAxisBar('X', state.accelX, 4, '#ef4444'),
+                makeAxisBar('Y', state.accelY, 4, '#22c55e'),
+                makeAxisBar('Z', state.accelZ, 4, '#3b82f6')
+              ]}
+            })
+          }),
+          bw.makeCol({ size: { xs: 12, md: 5 }, content:
+            bw.makeCard({
+              title: 'Gyroscope (deg/s)',
+              className: 'bw_mb_2',
+              content: { t: 'div', a: { id: 'imu-gyro' }, c: [
+                makeAxisBar('X', state.gyroX, 500, '#f97316'),
+                makeAxisBar('Y', state.gyroY, 500, '#a855f7'),
+                makeAxisBar('Z', state.gyroZ, 500, '#06b6d4')
+              ]}
+            })
+          }),
+          bw.makeCol({ size: { xs: 12, md: 2 }, content:
+            bw.makeCard({
+              title: 'Tilt',
+              className: 'bw_mb_2',
+              content: [
+                { t: 'div', a: { class: 'tilt-indicator' }, c: [
+                  { t: 'div', a: { class: 'tilt-dot', style: 'left:50%;top:50%' }, c: '' }
+                ]},
+                { t: 'div', a: { style: 'text-align:center;margin-top:0.5rem' }, c:
+                  { t: 'span', a: { id: 'tilt-badge', class: 'bw-badge bw-badge-' + (isLevel ? 'success' : 'warning') + ' bw-pill' }, c: isLevel ? 'Level' : 'Tilted' }
+                }
+              ]
+            })
+          })
+        ]})
+      ]};
+
+      // Magnetometer (if available)
+      var magSection = state.hasMag ? bw.makeCard({
+        title: 'Magnetometer (uT)',
+        className: 'bw_mb_2',
+        content: [
+          makeAxisBar('X', state.magX, 100, '#f59e0b'),
+          makeAxisBar('Y', state.magY, 100, '#ec4899'),
+          makeAxisBar('Z', state.magZ, 100, '#14b8a6')
+        ]
+      }) : null;
+
+      // Log
+      var logList = bw.makeListGroup({
+        items: logEntries.length ? logEntries : ['Waiting for connection...']
+      });
+
+      // Assemble page
+      bw.DOM('#app', bw.makeContainer({
+        className: 'bw_py_2',
+        children: [
+          { t: 'div', a: { class: 'dash-header' }, c: [
+            { t: 'h1', c: [statusDot, ' IMU Sensor Dashboard'] },
+            { t: 'div', a: { class: 'subtitle' }, c: state.board + ' | ' + state.chip + ' | ' + state.imuChip }
+          ]},
+
+          state.connected ? null : bw.makeAlert({
+            content: 'Connecting to device...',
+            variant: 'warning',
+            className: 'bw_mt_3'
+          }),
+
+          // Sample rate
+          { t: 'div', a: { style: 'text-align:center;margin:1rem 0 0.5rem' }, c: [
+            { t: 'span', a: { style: 'font-size:0.8rem;color:#94a3b8;margin-right:0.5rem' }, c: 'Sample Rate:' },
+            { t: 'span', c: rateButtons }
+          ]},
+
+          // IMU
+          imuSection,
+
+          // Magnetometer
+          magSection,
+
+          // System stats
+          bw.makeSection({ title: 'System', content: [statsRow] }),
+
+          // Event log
+          bw.makeSection({ title: 'Event Log', content: [logList] })
+        ].filter(Boolean)
+      }));
+    }
+
+    // -- Start ----------------------------------------------------------------
+    addLog('Connecting to device...');
+    render();
+    connectSSE();
+  </script>
+</body>
+</html>

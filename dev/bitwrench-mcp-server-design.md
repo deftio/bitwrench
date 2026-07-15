@@ -1,5 +1,10 @@
 # Bitwrench MCP Server Design
 
+> **STALE-CHECK (2026-07):** pre-implementation draft. `bwmcp` Phase 1 has
+> since shipped (`bin/bwmcp.js`, `src/mcp/`) -- the current documentation is
+> `docs/bitwrench-mcp.md`. Protocol examples here predate the v2.1 wire
+> cleanup; re-verify field names against `docs/bwserve.md`.
+
 2026-03-23 -- Discussion draft
 
 ## Overview

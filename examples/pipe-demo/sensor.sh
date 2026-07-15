@@ -15,8 +15,8 @@ echo "Press Ctrl+C to stop."
 # Set up the dashboard layout first
 curl -s -X POST "$URL" -H "Content-Type: application/json" -d '{
   "type": "replace",
-  "target": "#app",
-  "node": {
+  "ref": "#app",
+  "taco": {
     "t": "div",
     "a": {"style": "max-width:500px;margin:2rem auto;font-family:system-ui,sans-serif"},
     "c": [
@@ -48,9 +48,9 @@ while true; do
   curl -s -X POST "$URL" -H "Content-Type: application/json" -d "{
     \"type\": \"batch\",
     \"ops\": [
-      {\"type\": \"patch\", \"target\": \"temp\", \"content\": \"${TEMP} C\"},
-      {\"type\": \"patch\", \"target\": \"hum\", \"content\": \"${HUM}%\"},
-      {\"type\": \"patch\", \"target\": \"status\", \"content\": \"Last update: ${TIME}\"}
+      {\"type\": \"patch\", \"ref\": \"temp\", \"text\": \"${TEMP} C\"},
+      {\"type\": \"patch\", \"ref\": \"hum\", \"text\": \"${HUM}%\"},
+      {\"type\": \"patch\", \"ref\": \"status\", \"text\": \"Last update: ${TIME}\"}
     ]
   }" > /dev/null
 

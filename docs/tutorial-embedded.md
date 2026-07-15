@@ -45,11 +45,11 @@ Copy the embedded C headers into your project:
 ```
 my_project/
   my_project.ino
-  bitwrench.h      ← from embedded_c/
-  bwserve.h        ← from embedded_c/
+  bitwrench.h      <- from embedded_c/
+  bwserve.h        <- from embedded_c/
   data/
-    index.html                 ← the dashboard page
-    bitwrench.umd.min.js.gz   ← gzip -k dist/bitwrench.umd.min.js
+    index.html                 <- the dashboard page
+    bitwrench.umd.min.js.gz   <- gzip -k dist/bitwrench.umd.min.js
 ```
 
 ### With PlatformIO
@@ -64,7 +64,7 @@ data/
   bitwrench.umd.min.js.gz
 ```
 
-Store the gzipped file on flash (~40KB instead of ~150KB). ESPAsyncWebServer
+Store the gzipped file on flash (~45KB instead of ~169KB). ESPAsyncWebServer
 serves `.gz` files transparently -- the browser decompresses automatically.
 
 ## Step 2: Write the Arduino sketch
@@ -206,19 +206,8 @@ Create `data/index.html`:
       if (raw.charAt(0) === 'r') raw = raw.slice(1).replace(/'/g, '"');
       try { var msg = JSON.parse(raw); } catch(x) { return; }
 
-      if (msg.type === 'batch') {
-        msg.ops.forEach(applyOp);
-      } else {
-        applyOp(msg);
-      }
+      bw.apply(msg);
     };
-
-    function applyOp(op) {
-      if (op.type === 'patch') {
-        var el = document.getElementById(op.target);
-        if (el) el.textContent = op.content;
-      }
-    }
 
     function sendCmd(cmd) {
       fetch('/api/command', {
@@ -232,7 +221,7 @@ Create `data/index.html`:
 </html>
 ```
 
-This page is ~2KB. With bitwrench.umd.min.js.gz (~40KB), the total SPIFFS usage is ~42KB out of 1.5MB available. ESPAsyncWebServer serves `.gz` files transparently -- the browser decompresses automatically.
+This page is ~2KB. With bitwrench.umd.min.js.gz (~45KB), the total SPIFFS usage is ~47KB out of 1.5MB available. ESPAsyncWebServer serves `.gz` files transparently -- the browser decompresses automatically.
 
 ## Step 4: Upload and test
 
@@ -261,8 +250,8 @@ Same protocol, same macros, simulated sensors. Copy the pattern to your real ske
 | Item | Size |
 |------|------|
 | Dashboard HTML | ~2 KB |
-| bitwrench.umd.min.js.gz | ~40 KB |
-| **Total SPIFFS** | **~42 KB** |
+| bitwrench.umd.min.js.gz | ~45 KB |
+| **Total SPIFFS** | **~47 KB** |
 | ESP32 SPIFFS partition | 1.5 MB |
 | Free heap (runtime) | ~240 KB |
 | SSE frame per update | ~200 bytes |
@@ -274,7 +263,7 @@ serves `.gz` files transparently for the matching uncompressed filename.
 
 The C macros produce strings like:
 ```
-r{'type':'patch','target':'val-temp','content':'23.5 C'}
+r{'v':1,'type':'patch','ref':'val-temp','text':'23.5 C'}
 ```
 
 The `r` prefix tells the browser parser to convert single quotes to double quotes before `JSON.parse()`. This avoids escaping double quotes in C string literals — a major ergonomic win.

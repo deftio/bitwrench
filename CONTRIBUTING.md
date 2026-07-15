@@ -48,12 +48,14 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 - `npm test` — Unit tests with coverage (Mocha + c8)
 - `npm run test:examples` — Playwright e2e tests for example pages
 - `npm run test:all` — Run all test suites
+- `npm run lint` — ESLint over `src/` (is the code well-formed?)
+- `npm run lint:drift` — drift-lint over docs/examples/pages (do the docs still tell the truth?). Runs automatically after `npm test` and `npm run build`. See [docs/drift-lint.md](docs/drift-lint.md) — if you remove or rename a user-facing API, add a rule in the same commit.
 
 ## Code Rules
 
-- **No direct DOM manipulation** in examples or library code. Use `bw.DOM()`, `bw.createDOM()`, and TACO patterns.
+- **No direct DOM manipulation** in examples or library code. Use `bw.DOM()`, `bw.create()`, and TACO patterns.
 - **TACO format**: `{ t, a, c, o }` — Tag, Attributes, Content, Options.
-- **CSS classes**: Both `bw-` (canonical) and `bw_` (alias) forms work. Generated CSS includes both selectors. Use `bw.normalizeClass()` to convert underscores to hyphens.
+- **CSS classes**: All bitwrench classes use underscores (`bw_btn`, `bw_card`, etc.). This is the only supported form.
 - **Content escaping**: On by default. Use `bw.raw()` or `o: { raw: true }` to opt out.
 
 ## Build Commands

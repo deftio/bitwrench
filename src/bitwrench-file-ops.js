@@ -40,7 +40,7 @@ export function bindFileOps(bw) {
     } else {
       var blob = new Blob([data], { type: "application/octet-stream" });
       var url = window.URL.createObjectURL(blob);
-      var a = bw.createDOM({
+      var a = bw.create({
         t: 'a',
         a: {
           href: url,
@@ -144,7 +144,7 @@ export function bindFileOps(bw) {
       return;
     }
 
-    var input = bw.createDOM({
+    var input = bw.create({
       t: 'input',
       a: {
         type: 'file',

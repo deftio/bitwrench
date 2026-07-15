@@ -30,7 +30,7 @@ Upload this folder to your ESP32's flash filesystem (SPIFFS/LittleFS).
 ```
 data/
   index.html                  ~5 KB
-  bitwrench.umd.min.js.gz   ~40 KB
+  bitwrench.umd.min.js.gz   ~45 KB
                              ------
   Total:                     ~45 KB  (out of 1.5 MB SPIFFS)
 ```

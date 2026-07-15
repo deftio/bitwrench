@@ -9,9 +9,8 @@ components, compose layout, render live, screenshot, inspect, iterate.
 - **MCP stdio protocol**: JSON-RPC 2.0 over stdin/stdout to a Node.js server
 - **Knowledge-first workflow**: Agent calls `bitwrench_start_here` before building
 - **TACO composition**: Build components individually, nest into grid layout
-- **Live rendering**: Push UI to browser via `render_live` (bwserve SSE)
+- **Live rendering**: Push UI to browser via `render_live` with `ref` field (bwserve SSE)
 - **Screenshot feedback**: Capture browser state, save to disk for inspection
-- **DOM inspection**: `query_dom` to read element counts, text content, etc.
 - **Standalone export**: `build_page` produces an offline HTML file with theme
 
 ## Requirements
@@ -55,7 +54,6 @@ The script builds a sales metrics dashboard in six phases:
 In `--live` mode, it also:
 7. **Render** -- Pushes the layout to the browser via `render_live`
 8. **Screenshot** -- Captures the browser via `screenshot`, saves PNG
-9. **Inspect** -- Calls `query_dom` to count elements and read text
 
 ## How It Works
 
@@ -94,10 +92,6 @@ Python Script                bwmcp                          Browser
   |<-- PNG base64              |<-- html2canvas capture ------- |
   |                            |                               |
   | (save dashboard.png)       |                               |
-  |                            |                               |
-  | tools/call query_dom       |                               |
-  |--------------------------->|-- eval JS ------  -----------> |
-  |<-- "3" (stat card count)   |<-- result -------------------- |
 ```
 
 ## Structure

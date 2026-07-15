@@ -1,5 +1,12 @@
 # Bitwrench Component Lifecycle
 
+> **HISTORICAL (2.0.x reference).** Accurate for v2.0.25 internals; the
+> 2.1 lifecycle differs in important ways (verbs renamed, sync mounted,
+> janitor, registrations at mount only). The spec of record is
+> `bitwrench-lifecycle-cleanup-2026-06-09.md`. Keep this document for
+> mining (composition patterns, line-level 2.0.x behavior) until the
+> §16 docs workstream replaces it, then archive.
+
 Complete walkthrough of a TACO component from definition to removal.
 Covers every internal step bitwrench performs, with source references.
 

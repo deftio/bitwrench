@@ -2,7 +2,7 @@
 
 A CircuitPython web app running on an Adafruit QT Py ESP32 with an ST25DV16K NFC/RFID EEPROM breakout. Displays scanned NFC tag data on a web dashboard using [bitwrench.js](https://github.com/deftio/bitwrench) and nothing else.
 
-Works fully offline on your LAN - bitwrench.js is served from the ESP32 itself (pre-gzipped, ~40KB).
+Works fully offline on your LAN - bitwrench.js is served from the ESP32 itself (pre-gzipped, ~45KB).
 
 ## What You Need
 
@@ -64,7 +64,7 @@ Invoke-WebRequest -Uri "https://cdn.jsdelivr.net/npm/bitwrench@2.0.17/dist/bitwr
 # Or use any tool that creates a .gz file
 ```
 
-This produces `bitwrench.umd.min.js.gz` (~40KB).
+This produces `bitwrench.umd.min.js.gz` (~45KB).
 
 ### Step 4: Copy project files to the board
 
@@ -175,7 +175,7 @@ Server started on http://192.168.1.42
 | Endpoint | Description |
 |----------|-------------|
 | `GET /` | Main web UI |
-| `GET /bitwrench.js` | Pre-gzipped bitwrench.js (~40KB) |
+| `GET /bitwrench.js` | Pre-gzipped bitwrench.js (~45KB) |
 | `GET /api/patches` | Lightweight patch ops for live data |
 | `GET /api/status` | Full device state, NDEF records, history |
 | `GET /api/scan` | Trigger a manual NFC scan |

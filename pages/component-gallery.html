@@ -50,7 +50,9 @@
       })).concat([
         { t: 'span', a: { style: 'width:1px;height:1.25rem;background:rgba(128,128,128,0.3);margin:0 0.25rem;' } },
         bw.makeButton({ text: 'Toggle Dark', variant: 'dark', size: 'sm',
-          onclick: function() { bw.toggleStyles(); }
+          onclick: function() {
+            bw.toggleThemeMode();
+          }
         })
       ])
     };
@@ -235,7 +237,7 @@
             bw.makeListGroup({ items: [
               { text: 'Framework: Bitwrench v2' },
               { text: 'Components: 40+ BCCL helpers' },
-              { text: 'Bundle: 40KB gzipped' }
+              { text: 'Bundle: 45KB gzipped' }
             ]})
           ]},
           { label: 'Settings', content: [
@@ -258,7 +260,7 @@
             ]
           }, open: true },
           { title: 'How does theming work?', content: 'Call bw.loadStyles() with a palette config containing primary and secondary colors. The design system derives a complete set of shades, surfaces, and semantic colors from just two seed hex values.' },
-          { title: 'What about dark mode?', content: 'Call bw.toggleStyles() to switch between primary and alternate palettes. The alternate palette is automatically derived with inverted luminance.' }
+          { title: 'What about dark mode?', content: 'Call bw.toggleThemeMode() to swap between the primary and alternate palettes. The alternate palette is automatically derived with inverted luminance.' }
         ]
       })
     ]);
@@ -347,14 +349,14 @@
             title: 'Confirm Action',
             content: { t: 'p', c: 'Are you sure you want to proceed? This demonstrates the modal component with header, body, and footer.' },
             footer: [
-              bw.makeButton({ text: 'Cancel', variant: 'secondary', onclick: function() { bw.$('.bw_modal')[0].classList.remove('bw_modal_show'); } }),
+              bw.makeButton({ text: 'Cancel', variant: 'secondary', onclick: function() { bw.$('.bw_bccl_modal')[0].classList.remove('bw_bccl_modal_show'); } }),
               bw.makeButton({ text: 'Confirm', variant: 'primary' })
             ]
           });
           bw.DOM('body', modal, { mode: 'append' });
           setTimeout(function() {
-            var modals = bw.$('.bw_modal');
-            if (modals.length) modals[modals.length - 1].classList.add('bw_modal_show');
+            var modals = bw.$('.bw_bccl_modal');
+            if (modals.length) modals[modals.length - 1].classList.add('bw_bccl_modal_show');
           }, 10);
         }
       })

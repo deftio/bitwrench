@@ -7,8 +7,9 @@
  *
  * Includes: HTML/DOM generation, CSS generation, color utilities,
  *           state management, pub/sub, file I/O, random/lorem,
- *           cookies, URL params, logging, makeTable, makeDataTable.
- * Excludes: All make* component helpers from bitwrench-bccl.js
- *           (makeButton, makeCard, makeAlert, makeTabs, etc.)
+ *           cookies, URL params, logging, makeTable, makeTableFromArray,
+ *           makeDataTable, makeBarChart.
+ * Excludes: BCCL component helpers from bitwrench-bccl.js
+ *           (makeButton, makeCard, makeAlert, makeTabs, makeModal, etc.)
  */
 export { default } from './bitwrench.js';

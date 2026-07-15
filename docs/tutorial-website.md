@@ -94,7 +94,7 @@ var features = bw.makeFeatureGrid({
   features: [
     { icon: 'bolt',   title: 'Fast',      desc: 'No build step, no virtual DOM. Just objects and functions.' },
     { icon: 'shield', title: 'Reliable',   desc: '100% test coverage. Works in IE11 through modern browsers.' },
-    { icon: 'code',   title: 'Simple',     desc: 'One file, ~40KB gzipped. Zero dependencies. Learn in an afternoon.' }
+    { icon: 'code',   title: 'Simple',     desc: 'One file, ~45KB gzipped. Zero dependencies. Learn in an afternoon.' }
   ]
 });
 ```
@@ -219,7 +219,7 @@ Use `bw.css()` for page-specific styles:
 
 ```javascript
 bw.injectCSS(bw.css({
-  '.brand .bw-hero': {
+  '.brand .bw_bccl_hero': {
     'text-align': 'center',
     'background': 'linear-gradient(135deg, #2563eb 0%, #7c3aed 100%)',
     'color': '#fff',

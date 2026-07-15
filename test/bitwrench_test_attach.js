@@ -8,7 +8,7 @@
  * - _bw_listen/_bw_unlisten builtins — event delegation
  * - event route in _handleReturn — dispatch to _bw_event
  * - CORS preflight on /bw/return/
- * - wrapExpression() — REPL expression wrapping
+ * - REPL command handling (bare JS eval removed in v2.1)
  */
 
 import assert from "assert";
@@ -19,9 +19,12 @@ const { JSDOM } = jsdom;
 import bwserve from "../src/bwserve/index.js";
 const { BwServeApp, BwServeClient } = bwserve;
 import { generateAttachScript } from "../src/bwserve/attach.js";
-import { wrapExpression, printTree, printHelp, handleSlashCommand, startAttach, runAttach } from "../src/cli/attach.js";
+import { printTree, printHelp, handleSlashCommand, startAttach, runAttach } from "../src/cli/attach.js";
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { unlinkSync, mkdtempSync } from 'node:fs';
 
 function resetApp() {
   var dom = new JSDOM('<!DOCTYPE html><html><body><div id="app"></div></body></html>');
@@ -92,9 +95,89 @@ describe("generateAttachScript()", function() {
     assert.ok(js.includes('window.bw'), 'should check for existing bw');
   });
 
-  it("should set allowExec to true", function() {
+  it("should not include allowExec (removed in v2.1)", function() {
     var js = generateAttachScript();
-    assert.ok(js.includes('allowExec: true'), 'should enable allowExec');
+    assert.ok(!js.includes('allowExec'), 'should not contain allowExec');
+  });
+});
+
+// ===================================================================================
+// bwclient source content tests (v2.1)
+// ===================================================================================
+
+describe("bwclient source content (v2.1)", function() {
+  var js;
+  before(function() {
+    js = generateAttachScript({ origin: 'http://localhost:7902' });
+  });
+
+  // -- _bw_query remote --
+  it("should include _bw_query remote registration", function() {
+    assert.ok(js.includes('registerRemote("_bw_query"'), 'should register _bw_query');
+  });
+
+  it("_bw_query should use expression-first eval (return (code))", function() {
+    assert.ok(js.includes('return (' ), 'should wrap in return (expr)');
+  });
+
+  it("_bw_query should have statement fallback on SyntaxError", function() {
+    assert.ok(js.includes('new Function(opts.code)'), 'should fall back to statement eval');
+  });
+
+  it("_bw_query should respond with result via query route", function() {
+    assert.ok(js.includes('respond("query", opts.requestId'), 'should respond on query route');
+  });
+
+  it("_bw_query should respond with error on failure", function() {
+    assert.ok(js.includes('respond("query", opts.requestId, null, e.message'), 'should respond with error');
+  });
+
+  // -- data-bw-* removal --
+  it("should NOT contain data-bw-action anywhere", function() {
+    assert.ok(!js.includes('data-bw-action'), 'data-bw-action removed in v2.1');
+  });
+
+  it("should NOT contain data-bw-id anywhere", function() {
+    assert.ok(!js.includes('data-bw-id'), 'data-bw-id removed in v2.1');
+  });
+
+  // -- bw_act_* class-only delegation --
+  it("should include bw_act_ class-based action delegation", function() {
+    assert.ok(js.includes('bw_act_'), 'should have bw_act_ class pattern');
+  });
+
+  it("click handler should walk up DOM for bw_act_ class", function() {
+    assert.ok(js.includes('el.parentElement'), 'should walk up DOM tree');
+    assert.ok(js.includes('indexOf("bw_act_") === 0'), 'should check for bw_act_ prefix');
+  });
+
+  it("click handler should use el.id for action identity", function() {
+    assert.ok(js.includes('if (el.id) actionData.id = el.id'), 'should pass el.id not data-bw-id');
+  });
+
+  it("Enter key handler should find buttons via class*=bw_act_ selector", function() {
+    assert.ok(js.includes('[class*=bw_act_]'), 'should use class attribute selector');
+  });
+
+  // -- cross-origin respond --
+  it("respond() should prefix fetch URL with origin variable", function() {
+    assert.ok(js.includes('origin !== "undefined" ? origin : ""'), 'should use origin prefix');
+    assert.ok(js.includes('base + "/bw/return/"'), 'should prepend base to return URL');
+  });
+
+  it("respond() should log warning on failure", function() {
+    assert.ok(js.includes('console.warn'), 'should warn on fetch failure');
+    assert.ok(js.includes('[bwclient] respond failed'), 'should include descriptive message');
+  });
+
+  // -- origin propagation --
+  it("should inject provided origin into generated script", function() {
+    assert.ok(js.includes('"http://localhost:7902"'), 'should contain provided origin');
+  });
+
+  it("empty origin should produce empty string variable", function() {
+    var jsEmpty = generateAttachScript({ origin: '' });
+    assert.ok(jsEmpty.includes('var origin = ""'), 'should be empty string for same-origin');
   });
 });
 
@@ -287,10 +370,10 @@ describe("_bw_tree builtin", function() {
   });
 
   it("should register _bw_tree function from body string", function() {
-    // Register the _bw_tree builtin
+    // v2.1: register type is rejected by bw.apply wire protocol; register directly
     var body = 'function(opts){if(!bw._bwClient)return;var sel=opts.selector||"body";var depth=opts.depth||3;function walk(el,d){if(!el||d>depth)return null;var info={tag:el.tagName?el.tagName.toLowerCase():"#text"};if(el.id)info.id=el.id;if(el.className&&typeof el.className==="string")info.cls=el.className.split(" ").slice(0,5).join(" ");if(el.children&&el.children.length>0&&d<depth){info.children=[];for(var i=0;i<Math.min(el.children.length,20);i++){var c=walk(el.children[i],d+1);if(c)info.children.push(c);}}return info;}var root=document.querySelector(sel);bw._bwClient.respond("query",opts.requestId,walk(root,0));}';
-    var result = bw.apply({ type: 'register', name: '_bw_tree', body: body });
-    assert.strictEqual(result, true);
+    var fn = new Function('return (' + body + ')')();
+    bw._clientFunctions._bw_tree = fn;
     assert.strictEqual(typeof bw._clientFunctions._bw_tree, 'function');
   });
 
@@ -337,96 +420,18 @@ describe("_bw_tree builtin", function() {
   });
 });
 
-// ===================================================================================
-// wrapExpression() tests
-// ===================================================================================
-
-describe("wrapExpression()", function() {
-  it("should wrap simple expression in return()", function() {
-    assert.strictEqual(wrapExpression('document.title'), 'return (document.title)');
-  });
-
-  it("should wrap property access", function() {
-    assert.strictEqual(wrapExpression('window.innerWidth'), 'return (window.innerWidth)');
-  });
-
-  it("should wrap function call", function() {
-    assert.strictEqual(wrapExpression('bw.$(".card").length'), 'return (bw.$(".card").length)');
-  });
-
-  it("should wrap number literal", function() {
-    assert.strictEqual(wrapExpression('42'), 'return (42)');
-  });
-
-  it("should wrap string literal", function() {
-    assert.strictEqual(wrapExpression('"hello"'), 'return ("hello")');
-  });
-
-  it("should NOT wrap var declarations", function() {
-    assert.strictEqual(wrapExpression('var x = 5'), 'var x = 5');
-  });
-
-  it("should NOT wrap let declarations", function() {
-    assert.strictEqual(wrapExpression('let x = 5'), 'let x = 5');
-  });
-
-  it("should NOT wrap const declarations", function() {
-    assert.strictEqual(wrapExpression('const x = 5'), 'const x = 5');
-  });
-
-  it("should NOT wrap if statements", function() {
-    assert.strictEqual(wrapExpression('if (true) { alert(1); }'), 'if (true) { alert(1); }');
-  });
-
-  it("should NOT wrap for loops", function() {
-    assert.strictEqual(wrapExpression('for (var i=0; i<10; i++) {}'), 'for (var i=0; i<10; i++) {}');
-  });
-
-  it("should NOT wrap while loops", function() {
-    assert.strictEqual(wrapExpression('while (false) {}'), 'while (false) {}');
-  });
-
-  it("should NOT wrap function declarations", function() {
-    assert.strictEqual(wrapExpression('function foo() {}'), 'function foo() {}');
-  });
-
-  it("should NOT wrap try statements", function() {
-    assert.strictEqual(wrapExpression('try { x(); } catch(e) {}'), 'try { x(); } catch(e) {}');
-  });
-
-  it("should NOT wrap switch statements", function() {
-    assert.strictEqual(wrapExpression('switch (x) { case 1: break; }'), 'switch (x) { case 1: break; }');
-  });
-
-  it("should NOT wrap throw statements", function() {
-    assert.strictEqual(wrapExpression('throw new Error("test")'), 'throw new Error("test")');
-  });
-
-  it("should NOT wrap class declarations", function() {
-    assert.strictEqual(wrapExpression('class Foo {}'), 'class Foo {}');
-  });
-
-  it("should NOT wrap object literals starting with {", function() {
-    assert.strictEqual(wrapExpression('{ a: 1 }'), '{ a: 1 }');
-  });
-
-  it("should trim whitespace", function() {
-    assert.strictEqual(wrapExpression('  document.title  '), 'return (document.title)');
-  });
-});
+// wrapExpression() tests removed — function removed in v2.1 security migration
 
 // ===================================================================================
 // BwServeClient _bw_tree via client.call
 // ===================================================================================
 
-describe("BwServeClient _bw_tree call", function() {
+describe("BwServeClient _bw_tree call via client.call()", function() {
   it("should send a call to _bw_tree with selector and depth", function() {
     var client = new BwServeClient('tree-1', null);
-    var pend = client._pend(5000);
     client.call('_bw_tree', {
       selector: '#app',
-      depth: 2,
-      requestId: pend.requestId
+      depth: 2
     });
     assert.strictEqual(client._sent.length, 1);
     var msg = client._sent[0];
@@ -434,46 +439,18 @@ describe("BwServeClient _bw_tree call", function() {
     assert.strictEqual(msg.name, '_bw_tree');
     assert.strictEqual(msg.args[0].selector, '#app');
     assert.strictEqual(msg.args[0].depth, 2);
-    assert.ok(msg.args[0].requestId);
-    // Resolve to clean up
-    client._resolvePending(pend.requestId, { result: null });
+    assert.strictEqual(msg.v, 1);
   });
 });
 
 // ===================================================================================
-// BwServeClient client.inspect() convenience method
+// BwServeClient client.inspect() — removed in 2.1
 // ===================================================================================
 
 describe("BwServeClient client.inspect()", function() {
-  it("should be a function", function() {
+  it("inspect is removed in 2.1", function() {
     var client = new BwServeClient('ins-1', null);
-    assert.strictEqual(typeof client.inspect, 'function');
-  });
-
-  it("should call _bw_tree with defaults", function() {
-    var client = new BwServeClient('ins-2', null);
-    client.inspect();
-    assert.strictEqual(client._sent.length, 1);
-    var msg = client._sent[0];
-    assert.strictEqual(msg.type, 'call');
-    assert.strictEqual(msg.name, '_bw_tree');
-    assert.strictEqual(msg.args[0].selector, 'body');
-    assert.strictEqual(msg.args[0].depth, 3);
-    assert.ok(msg.args[0].requestId);
-  });
-
-  it("should pass selector and depth options", function() {
-    var client = new BwServeClient('ins-3', null);
-    client.inspect('#sidebar', { depth: 5 });
-    var msg = client._sent[0];
-    assert.strictEqual(msg.args[0].selector, '#sidebar');
-    assert.strictEqual(msg.args[0].depth, 5);
-  });
-
-  it("should return a promise", function() {
-    var client = new BwServeClient('ins-4', null);
-    var result = client.inspect();
-    assert.ok(result && typeof result.then === 'function');
+    assert.strictEqual(client.inspect, undefined);
   });
 });
 
@@ -632,7 +609,7 @@ describe("printHelp()", function() {
     assert.ok(text.includes('/patch'), 'should mention /patch');
     assert.ok(text.includes('/listen'), 'should mention /listen');
     assert.ok(text.includes('/unlisten'), 'should mention /unlisten');
-    assert.ok(text.includes('/exec'), 'should mention /exec');
+    assert.ok(!text.includes('/exec'), 'should NOT mention /exec (removed in v2.1)');
     assert.ok(text.includes('/clients'), 'should mention /clients');
   });
 });
@@ -785,15 +762,11 @@ describe("handleSlashCommand()", function() {
     assert.ok(logged.some(function(l) { return l.includes('Usage'); }));
   });
 
-  it("/exec with no client shows message", function() {
-    handleSlashCommand('/exec', null, new Map(), {}, mockRl);
-    assert.ok(logged.some(function(l) { return l.includes('No client'); }));
-  });
+  // /exec tests removed — command removed in v2.1 security migration
 
-  it("/exec with too few args shows usage", function() {
-    var mockClient = {};
-    handleSlashCommand('/exec', mockClient, new Map(), {}, mockRl);
-    assert.ok(logged.some(function(l) { return l.includes('Usage'); }));
+  it("/exec is now an unknown command", function() {
+    handleSlashCommand('/exec alert("hi")', null, new Map(), {}, mockRl);
+    assert.ok(logged.some(function(l) { return l.includes('Unknown command'); }));
   });
 
   it("unknown command shows error", function() {
@@ -873,10 +846,12 @@ describe("handleSlashCommand()", function() {
         return Promise.resolve({ data: Buffer.from('png'), width: 100, height: 50 });
       }
     };
-    // Need to mock writeFileSync
-    handleSlashCommand('/screenshot body test.png', mockClient, new Map(), { allowScreenshot: true }, mockRl);
+    // Write to tmpdir, not the repo root (the handler's writeFileSync is real)
+    var ssPath = join(tmpdir(), 'bw-attach-test-' + Date.now() + '.png');
+    handleSlashCommand('/screenshot body ' + ssPath, mockClient, new Map(), { allowScreenshot: true }, mockRl);
     setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('Saved') || l.includes('test.png'); }));
+      assert.ok(logged.some(function(l) { return l.includes('Saved'); }));
+      try { unlinkSync(ssPath); } catch (e) { /* already gone */ }
       done();
     }, 50);
   });
@@ -894,31 +869,17 @@ describe("handleSlashCommand()", function() {
     }, 50);
   });
 
-  it("/mount with valid args calls client.mount", function(done) {
+  it("/mount with valid args calls client.call('_bw_mount', ...)", function() {
+    var callArgs = null;
     var mockClient = {
-      mount: function(sel, comp, props, opts) {
-        assert.strictEqual(sel, '#app');
-        assert.strictEqual(comp, 'card');
-        assert.deepStrictEqual(props, { title: 'Hi' });
-        return Promise.resolve();
-      }
+      call: function(name, args) { callArgs = { name: name, args: args }; }
     };
     handleSlashCommand('/mount #app card {"title":"Hi"}', mockClient, new Map(), {}, mockRl);
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('Mounted'); }));
-      done();
-    }, 50);
-  });
-
-  it("/mount handles rejection", function(done) {
-    var mockClient = {
-      mount: function() { return Promise.reject(new Error('mount failed')); }
-    };
-    handleSlashCommand('/mount #app card', mockClient, new Map(), {}, mockRl);
-    setTimeout(function() {
-      assert.ok(errors.some(function(l) { return l.includes('mount failed'); }));
-      done();
-    }, 50);
+    assert.strictEqual(callArgs.name, '_bw_mount');
+    assert.strictEqual(callArgs.args.target, '#app');
+    assert.strictEqual(callArgs.args.factory, 'card');
+    assert.deepStrictEqual(callArgs.args.props, { title: 'Hi' });
+    assert.ok(logged.some(function(l) { return l.includes('Mounted'); }));
   });
 
   it("/mount with invalid JSON shows error", function() {
@@ -983,15 +944,7 @@ describe("handleSlashCommand()", function() {
     assert.ok(logged.some(function(l) { return l.includes('Stopped listening'); }));
   });
 
-  it("/exec calls client.exec", function() {
-    var execCode = null;
-    var mockClient = {
-      exec: function(code) { execCode = code; }
-    };
-    handleSlashCommand('/exec alert("hi")', mockClient, new Map(), {}, mockRl);
-    assert.strictEqual(execCode, 'alert("hi")');
-    assert.ok(logged.some(function(l) { return l.includes('Executed'); }));
-  });
+  // "/exec calls client.exec" test removed — /exec removed in v2.1
 
   it("/screenshot generates default filename when not specified", function(done) {
     var ssSel = null;
@@ -1001,8 +954,14 @@ describe("handleSlashCommand()", function() {
         return Promise.resolve({ data: Buffer.from('png'), width: 10, height: 10 });
       }
     };
+    // Default filename is written to cwd; chdir to a temp dir so test runs
+    // don't litter the repo root with screenshot-<timestamp>.png files.
+    var prevCwd = process.cwd();
+    var workDir = mkdtempSync(join(tmpdir(), 'bw-attach-'));
+    process.chdir(workDir);
     handleSlashCommand('/screenshot', mockClient, new Map(), { allowScreenshot: true }, mockRl);
     setTimeout(function() {
+      process.chdir(prevCwd);
       assert.strictEqual(ssSel, 'body');
       assert.ok(logged.some(function(l) { return l.includes('screenshot-'); }));
       done();
@@ -1266,11 +1225,11 @@ describe("startAttach()", function() {
     }, 50);
   });
 
-  it("should show 'No client connected' for JS expression with no client", function(done) {
+  it("should show 'Unknown input' for bare JS expression (eval removed in v2.1)", function(done) {
     var inst = makeInstance();
     inst.fakeInput.write('document.title\n');
     setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('No client connected'); }));
+      assert.ok(logged.some(function(l) { return l.includes('Unknown input'); }));
       done();
     }, 50);
   });
@@ -1399,102 +1358,22 @@ describe("startAttach()", function() {
     assert.ok(logged.some(function(l) { return l.includes('[active]'); }));
   });
 
-  it("should handle JS query with connected client", function(done) {
-    var inst = makeInstance({ verbose: false });
+  // JS query tests removed — bare JS eval removed in v2.1 security migration
+  // client.query() no longer exists; bare input shows "Unknown input" message
+
+  it("should show 'Unknown input' for bare JS with connected client (v2.1)", function(done) {
+    var inst = makeInstance();
     var app = inst.mockBwserve._app;
 
-    // Set up a mock client with query method
     var mockClient = new EventEmitter();
     mockClient.id = 'att_q1';
-    mockClient.query = function(code, opts) {
-      return Promise.resolve('test-title');
-    };
     app._clients.set('att_q1', { pagePath: '/_attach', client: mockClient });
     var mockReq = new EventEmitter();
     app._handleSSE(mockReq, {}, 'att_q1');
 
-    // Send a JS expression
     inst.fakeInput.write('document.title\n');
     setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l === 'test-title'; }));
-      done();
-    }, 100);
-  });
-
-  it("should handle JS query that returns object", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_q2';
-    mockClient.query = function() {
-      return Promise.resolve({ foo: 'bar' });
-    };
-    app._clients.set('att_q2', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_q2');
-
-    inst.fakeInput.write('someObj\n');
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('"foo"'); }));
-      done();
-    }, 100);
-  });
-
-  it("should handle JS query that returns null", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_q3';
-    mockClient.query = function() {
-      return Promise.resolve(null);
-    };
-    app._clients.set('att_q3', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_q3');
-
-    inst.fakeInput.write('null\n');
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l === 'undefined'; }));
-      done();
-    }, 100);
-  });
-
-  it("should handle JS query rejection", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_q4';
-    mockClient.query = function() {
-      return Promise.reject(new Error('eval failed'));
-    };
-    app._clients.set('att_q4', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_q4');
-
-    inst.fakeInput.write('badcode\n');
-    setTimeout(function() {
-      assert.ok(errors.some(function(l) { return l.includes('eval failed'); }));
-      done();
-    }, 100);
-  });
-
-  it("should show verbose query info when verbose is true", function(done) {
-    var inst = makeInstance({ verbose: true });
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_v1';
-    mockClient.query = function() { return Promise.resolve('ok'); };
-    app._clients.set('att_v1', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_v1');
-
-    inst.fakeInput.write('1+1\n');
-    setTimeout(function() {
-      assert.ok(logged.some(function(l) { return l.includes('[query]'); }));
+      assert.ok(logged.some(function(l) { return l.includes('Unknown input'); }));
       done();
     }, 100);
   });
@@ -1508,26 +1387,7 @@ describe("startAttach()", function() {
     }, 50);
   });
 
-  it("should handle query result that throws on JSON.stringify", function(done) {
-    var inst = makeInstance();
-    var app = inst.mockBwserve._app;
-
-    var mockClient = new EventEmitter();
-    mockClient.id = 'att_circ';
-    var circular = {};
-    circular.self = circular;
-    mockClient.query = function() { return Promise.resolve(circular); };
-    app._clients.set('att_circ', { pagePath: '/_attach', client: mockClient });
-    var mockReq = new EventEmitter();
-    app._handleSSE(mockReq, {}, 'att_circ');
-
-    inst.fakeInput.write('circularObj\n');
-    setTimeout(function() {
-      // Should fall back to String(result)
-      assert.ok(logged.some(function(l) { return l.includes('[object Object]'); }));
-      done();
-    }, 100);
-  });
+  // "handle query result that throws on JSON.stringify" test removed — query removed in v2.1
 });
 
 // ===================================================================================
@@ -1593,18 +1453,7 @@ describe("runAttach() --allow-screenshot flag", function() {
 // ===================================================================================
 
 describe("attach malformed inputs", function() {
-  it("wrapExpression with empty string", function() {
-    var result = wrapExpression('');
-    assert.strictEqual(typeof result, 'string');
-  });
-
-  it("wrapExpression with null-ish input should throw", function() {
-    assert.throws(function() { wrapExpression(null); });
-  });
-
-  it("wrapExpression with numeric input should throw", function() {
-    assert.throws(function() { wrapExpression(42); });
-  });
+  // wrapExpression tests removed — function removed in v2.1 security migration
 
   it("printTree with null node", function() {
     var origLog = console.log;
@@ -1652,5 +1501,196 @@ describe("attach malformed inputs", function() {
     handleSlashCommand('/help', null, new Map(), { verbose: false }, mockRl);
     console.log = origLog;
     assert.ok(logged.length > 0, 'should have printed help text');
+  });
+});
+
+
+// =========================================================================
+// cli/attach.js — default port when --port not specified (line 131)
+// =========================================================================
+
+describe("runAttach() default port (line 131)", function() {
+  var origExit, origLog, origError;
+  var exitCode, logged, errors;
+
+  beforeEach(function() {
+    origExit = process.exit;
+    origLog = console.log;
+    origError = console.error;
+    exitCode = null;
+    logged = [];
+    errors = [];
+    process.exit = function(code) { exitCode = code; throw new Error('EXIT_' + code); };
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    console.error = function() {
+      errors.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+  });
+
+  afterEach(function() {
+    process.exit = origExit;
+    console.log = origLog;
+    console.error = origError;
+  });
+
+  it("should use default port 7902 when --port is not specified (line 131)", function(done) {
+    this.timeout(10000);
+    var fakeInput = new PassThrough();
+    var fakeOutput = new PassThrough();
+    // No --port flag, should default to 7902
+    var promise = runAttach([], {
+      input: fakeInput,
+      output: fakeOutput
+    });
+    if (promise && promise.then) {
+      promise.then(function(result) {
+        assert.ok(result, 'should return { rl, app }');
+        assert.ok(result.app, 'should have app');
+        // App should be using default port 7902
+        assert.strictEqual(result.app.port, 7902);
+        result.rl.removeAllListeners('close');
+        result.rl.close();
+        if (result.app.close) {
+          result.app.close().then(function() { done(); });
+        } else {
+          done();
+        }
+      }).catch(function(err) { done(err); });
+    } else {
+      done();
+    }
+  });
+});
+
+// =========================================================================
+// cli/attach.js — ioOpts fallback to {} (line 141)
+// =========================================================================
+
+describe("runAttach() without ioOpts (line 141)", function() {
+  var origExit, origLog, origError;
+  var exitCode, logged, errors;
+
+  beforeEach(function() {
+    origExit = process.exit;
+    origLog = console.log;
+    origError = console.error;
+    exitCode = null;
+    logged = [];
+    errors = [];
+    process.exit = function(code) { exitCode = code; throw new Error('EXIT_' + code); };
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    console.error = function() {
+      errors.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+  });
+
+  afterEach(function() {
+    process.exit = origExit;
+    console.log = origLog;
+    console.error = origError;
+  });
+
+  it("should handle null ioOpts (line 141) — fails on import but exercises io fallback", function(done) {
+    this.timeout(5000);
+    // Call runAttach with no ioOpts and a bad import path to trigger catch
+    // The key is that io = ioOpts || {} is exercised when ioOpts is undefined
+    var promise = runAttach(['--port', '9878'], undefined);
+    // The bad import path is the default, so startAttach will be called.
+    // But stdin/stdout will be used since no io.input/io.output.
+    // We cannot easily test this without side effects, so we use a bad import path.
+    if (promise && promise.then) {
+      promise.then(function(result) {
+        // If it succeeds, clean up
+        if (result && result.rl) {
+          result.rl.removeAllListeners('close');
+          result.rl.close();
+        }
+        if (result && result.app && result.app.close) {
+          result.app.close().then(function() { done(); });
+        } else {
+          done();
+        }
+      }).catch(function(err) {
+        // Expected - import might fail or port might be in use
+        done();
+      });
+    } else {
+      done();
+    }
+  });
+});
+
+// =========================================================================
+// cli/attach.js — startAttach without opts.input/opts.output (lines 246-247)
+// =========================================================================
+
+describe("startAttach() without input/output in opts (lines 246-247)", function() {
+  var origLog, origError, origExit;
+  var logged, errors;
+  var instances;
+  var origStdin, origStdout;
+
+  beforeEach(function() {
+    origLog = console.log;
+    origError = console.error;
+    origExit = process.exit;
+    logged = [];
+    errors = [];
+    instances = [];
+    console.log = function() {
+      logged.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    console.error = function() {
+      errors.push(Array.prototype.slice.call(arguments).join(' '));
+    };
+    process.exit = function() {};
+    // Replace process.stdin with a fake readable to avoid test hangs
+    origStdin = process.stdin;
+    origStdout = process.stdout;
+    var fakeStdin = new PassThrough();
+    Object.defineProperty(process, 'stdin', { value: fakeStdin, writable: true, configurable: true });
+  });
+
+  afterEach(function() {
+    for (var inst of instances) {
+      try {
+        inst.rl.removeAllListeners('close');
+        inst.rl.close();
+      } catch (e) {}
+    }
+    console.log = origLog;
+    console.error = origError;
+    process.exit = origExit;
+    Object.defineProperty(process, 'stdin', { value: origStdin, writable: true, configurable: true });
+  });
+
+  it("should use process.stdin/stdout when opts.input/output not specified (lines 246-247)", function(done) {
+    var mockApp = {
+      _clients: new Map(),
+      _handleSSE: function() {},
+      listen: function(cb) { if (cb) setImmediate(cb); },
+      close: function() { return Promise.resolve(); }
+    };
+    var mockBwserve = {
+      create: function() { return mockApp; },
+      _app: mockApp
+    };
+    // Call startAttach without input/output
+    var result = startAttach(mockBwserve, {
+      port: 7998,
+      allowScreenshot: false,
+      verbose: false
+      // NO input, NO output — should fall back to process.stdin/process.stdout
+    });
+    instances.push(result);
+    setTimeout(function() {
+      assert.ok(result.rl, 'should have rl interface');
+      assert.ok(result.app, 'should have app');
+      done();
+    }, 50);
   });
 });

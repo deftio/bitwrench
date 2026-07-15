@@ -88,12 +88,10 @@
       footer: {
         t: 'div', a: { style: 'display: flex; gap: 0.5rem; justify-content: flex-end;' }, c: [
           bw.makeButton({ text: 'Cancel', variant: 'secondary', onclick: function() {
-            var m = bw.$('.bw_modal'); if (m.length) m[0].classList.remove('bw_modal_show');
-            bw.$('body')[0].style.overflow = '';
+            var m = bw.$('.bw_bccl_modal'); if (m.length) m[0].bw.close();
           }}),
           bw.makeButton({ text: 'Confirm', variant: 'primary', onclick: function() {
-            var m = bw.$('.bw_modal'); if (m.length) m[0].classList.remove('bw_modal_show');
-            bw.$('body')[0].style.overflow = '';
+            var m = bw.$('.bw_bccl_modal'); if (m.length) m[0].bw.close();
           }})
         ]
       }
@@ -125,7 +123,7 @@
             // Teaching callout
             // =================================================================
             { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
-                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Level 0 \u2014 Components' },
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'BCCL Components' },
                 { t: 'p', c: ['BCCL factories like makeButton() and makeCard() return plain TACO objects. No magic \u2014 every component is a JS object you can inspect, compose, and extend. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
             ]},
 
@@ -240,9 +238,9 @@
                     ]},
                     { t: 'div', a: { style: 'margin-bottom: 1rem;' }, c: [
                       subheading('Outline Variants'),
-                      bw.makeButton({ text: 'Primary', variant: 'outline-primary' }), ' ',
-                      bw.makeButton({ text: 'Secondary', variant: 'outline-secondary' }), ' ',
-                      bw.makeButton({ text: 'Success', variant: 'outline-success' })
+                      bw.makeButton({ text: 'Primary', variant: 'outline_primary' }), ' ',
+                      bw.makeButton({ text: 'Secondary', variant: 'outline_secondary' }), ' ',
+                      bw.makeButton({ text: 'Success', variant: 'outline_success' })
                     ]},
                     { t: 'div', a: { style: 'margin-bottom: 1rem;' }, c: [
                       subheading('Sizes'),
@@ -257,7 +255,7 @@
                     ]}
                   ]
                 },
-                "bw.makeButton({ text: 'Primary', variant: 'primary' })\nbw.makeButton({ text: 'Outline', variant: 'outline-primary' })\nbw.makeButton({ text: 'Small', size: 'sm' })\nbw.makeButton({ text: 'Disabled', disabled: true })"
+                "bw.makeButton({ text: 'Primary', variant: 'primary' })\nbw.makeButton({ text: 'Outline', variant: 'outline_primary' })\nbw.makeButton({ text: 'Small', size: 'sm' })\nbw.makeButton({ text: 'Disabled', disabled: true })"
               )
             ),
 
@@ -974,14 +972,13 @@
                     bw.makeButton({
                       text: 'Open Modal', variant: 'primary',
                       onclick: function() {
-                        var m = bw.$('.bw_modal'); if (m.length) m[0].classList.add('bw_modal_show');
-                        bw.$('body')[0].style.overflow = 'hidden';
+                        var m = bw.$('.bw_bccl_modal'); if (m.length) m[0].bw.open();
                       }
                     }),
                     modalTaco
                   ]
                 },
-                "var modal = bw.makeModal({\n  title: 'Confirm Action',\n  content: 'Are you sure?',\n  footer: {\n    t: 'div', c: [\n      bw.makeButton({ text: 'Cancel', variant: 'secondary' }),\n      bw.makeButton({ text: 'Confirm', variant: 'primary' })\n    ]\n  }\n});\n\n// Show the modal\nbw.$('.bw_modal')[0].classList.add('bw_modal_show');"
+                "var modal = bw.makeModal({\n  title: 'Confirm Action',\n  content: 'Are you sure?',\n  footer: {\n    t: 'div', c: [\n      bw.makeButton({ text: 'Cancel', variant: 'secondary' }),\n      bw.makeButton({ text: 'Confirm', variant: 'primary' })\n    ]\n  }\n});\n\n// Show the modal via handle\nbw.$('.bw_bccl_modal')[0].bw.open();"
               )
             ),
 
@@ -995,13 +992,13 @@
                   t: 'div', c: [
                     { t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;' }, c: [
                       bw.makeButton({ text: 'Success Toast', variant: 'success', onclick: function() {
-                        bw.$.one('#toast-container').appendChild(bw.createDOM(bw.makeToast({ title: 'Success', content: 'Operation completed!', variant: 'success', delay: 3000 })));
+                        bw.$.one('#toast-container').appendChild(bw.create(bw.makeToast({ title: 'Success', content: 'Operation completed!', variant: 'success', delay: 3000 })));
                       }}),
                       bw.makeButton({ text: 'Error Toast', variant: 'danger', onclick: function() {
-                        bw.$.one('#toast-container').appendChild(bw.createDOM(bw.makeToast({ title: 'Error', content: 'Something went wrong.', variant: 'danger', delay: 3000 })));
+                        bw.$.one('#toast-container').appendChild(bw.create(bw.makeToast({ title: 'Error', content: 'Something went wrong.', variant: 'danger', delay: 3000 })));
                       }}),
                       bw.makeButton({ text: 'Info Toast', variant: 'info', onclick: function() {
-                        bw.$.one('#toast-container').appendChild(bw.createDOM(bw.makeToast({ title: 'Info', content: 'Here is some information.', variant: 'info', delay: 3000 })));
+                        bw.$.one('#toast-container').appendChild(bw.create(bw.makeToast({ title: 'Info', content: 'Here is some information.', variant: 'info', delay: 3000 })));
                       }})
                     ]},
                     { t: 'div', a: { style: 'margin-bottom: 0.75rem;' }, c: [
@@ -1137,13 +1134,13 @@
                       variant: 'primary', size: 'sm', centered: true,
                       actions: [
                         bw.makeButton({ text: 'Get Started', variant: 'light' }),
-                        bw.makeButton({ text: 'Learn More', variant: 'outline-light' })
+                        bw.makeButton({ text: 'Learn More', variant: 'outline_light' })
                       ]
                     }),
                     bw.makeHero({
                       title: 'Dark Variant', subtitle: 'For dramatic headers and dark-themed pages.',
                       variant: 'dark', size: 'sm', centered: true,
-                      actions: [ bw.makeButton({ text: 'Explore', variant: 'outline-light' }) ]
+                      actions: [ bw.makeButton({ text: 'Explore', variant: 'outline_light' }) ]
                     }),
                     bw.makeHero({
                       title: 'Light Variant', subtitle: 'Subtle background for content-heavy pages.',
@@ -1201,10 +1198,10 @@
                         variant: 'primary', size: 'md', centered: true,
                         actions: [
                           bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),
-                          bw.makeButton({ text: 'Learn More', variant: 'outline-light', size: 'lg' })
+                          bw.makeButton({ text: 'Learn More', variant: 'outline_light', size: 'lg' })
                         ]
                       }),
-                      "// Basic hero with CTA buttons\nbw.makeHero({\n  title: 'Build Beautiful UIs',\n  subtitle: 'Zero deps. No build step.',\n  variant: 'primary',   // 'primary' | 'secondary' | 'light' | 'dark'\n  size: 'md',           // 'sm' | 'md' | 'lg' | 'xl'\n  centered: true,       // false for left-aligned\n  actions: [\n    bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),\n    bw.makeButton({ text: 'Learn More', variant: 'outline-light', size: 'lg' })\n  ]\n})\n\n// Hero with background image + overlay\nbw.makeHero({\n  title: 'Image Hero',\n  subtitle: 'Use overlay: true for readability over images.',\n  variant: 'dark',\n  size: 'lg',\n  backgroundImage: 'https://example.com/photo.jpg',\n  overlay: true,\n  actions: [ bw.makeButton({ text: 'CTA', variant: 'primary', size: 'lg' }) ]\n})\n\n// Left-aligned dashboard header\nbw.makeHero({\n  title: 'Dashboard',\n  subtitle: 'Welcome back, user.',\n  variant: 'light',\n  size: 'sm',\n  centered: false\n})"
+                      "// Basic hero with CTA buttons\nbw.makeHero({\n  title: 'Build Beautiful UIs',\n  subtitle: 'Zero deps. No build step.',\n  variant: 'primary',   // 'primary' | 'secondary' | 'light' | 'dark'\n  size: 'md',           // 'sm' | 'md' | 'lg' | 'xl'\n  centered: true,       // false for left-aligned\n  actions: [\n    bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' }),\n    bw.makeButton({ text: 'Learn More', variant: 'outline_light', size: 'lg' })\n  ]\n})\n\n// Hero with background image + overlay\nbw.makeHero({\n  title: 'Image Hero',\n  subtitle: 'Use overlay: true for readability over images.',\n  variant: 'dark',\n  size: 'lg',\n  backgroundImage: 'https://example.com/photo.jpg',\n  overlay: true,\n  actions: [ bw.makeButton({ text: 'CTA', variant: 'primary', size: 'lg' }) ]\n})\n\n// Left-aligned dashboard header\nbw.makeHero({\n  title: 'Dashboard',\n  subtitle: 'Welcome back, user.',\n  variant: 'light',\n  size: 'sm',\n  centered: false\n})"
                     )
                   }
                 ]
@@ -1241,7 +1238,7 @@
                   actions: [
                     bw.makeButton({ text: 'Sign Up Free', variant: 'primary', size: 'lg' }),
                     { t: 'span', c: ' ' },
-                    bw.makeButton({ text: 'View Docs', variant: 'outline-primary', size: 'lg' })
+                    bw.makeButton({ text: 'View Docs', variant: 'outline_primary', size: 'lg' })
                   ]
                 }),
                 "bw.makeCTA({\n  title: 'Ready to Get Started?',\n  description: 'Join thousands of developers.',\n  actions: [\n    bw.makeButton({ text: 'Sign Up', variant: 'primary', size: 'lg' })\n  ]\n})"

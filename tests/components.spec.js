@@ -41,32 +41,32 @@ test.describe('Component Library - All Components Render', () => {
   test('cards render with proper structure', async ({ page }) => {
     const demo = page.locator('#section-cards');
     await expect(demo).toBeVisible();
-    const cards = demo.locator('.bw_card');
+    const cards = demo.locator('.bw_bccl_card');
     expect(await cards.count()).toBeGreaterThanOrEqual(3);
-    await expect(demo.locator('.bw_card_title').first()).toBeVisible();
-    await expect(demo.locator('.bw_card_body').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_card_title').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_card_body').first()).toBeVisible();
   });
 
   // ---- Buttons ----
   test('buttons render all variants and sizes', async ({ page }) => {
     const demo = page.locator('#section-buttons');
     await expect(demo).toBeVisible();
-    // variantClass() returns 'bw_<variant>' as a separate class alongside 'bw_btn'
-    await expect(demo.locator('.bw_btn.bw_primary').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn.bw_secondary').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn.bw_success').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn.bw_danger').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn.bw_btn_outline').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn_sm').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn_lg').first()).toBeVisible();
+    // variantClass() returns 'bw_<variant>' as a separate class alongside 'bw_bccl_btn'
+    await expect(demo.locator('.bw_bccl_btn.bw_primary').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn.bw_secondary').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn.bw_success').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn.bw_danger').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn.bw_bccl_btn_outline').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn_sm').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn_lg').first()).toBeVisible();
   });
 
   // ---- Button Groups ----
   test('button groups render horizontal and vertical', async ({ page }) => {
     const demo = page.locator('#section-button-groups');
     await expect(demo).toBeVisible();
-    await expect(demo.locator('.bw_btn_group').first()).toBeVisible();
-    await expect(demo.locator('.bw_btn_group_vertical').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn_group').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_btn_group_vertical').first()).toBeVisible();
   });
 
   // ---- Grid ----
@@ -89,9 +89,9 @@ test.describe('Component Library - All Components Render', () => {
   test('navigation components render', async ({ page }) => {
     const demo = page.locator('#section-navigation');
     await expect(demo).toBeVisible();
-    await expect(demo.locator('.bw_nav').first()).toBeVisible();
-    await expect(demo.locator('.bw_navbar').first()).toBeVisible();
-    await expect(demo.locator('.bw_breadcrumb').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_nav').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_navbar').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_breadcrumb').first()).toBeVisible();
   });
 
   // ---- Tabs ----
@@ -106,11 +106,11 @@ test.describe('Component Library - All Components Render', () => {
   test('alerts render all variants', async ({ page }) => {
     const demo = page.locator('#section-alerts');
     await expect(demo).toBeVisible();
-    // variantClass() returns 'bw_<variant>' as a separate class alongside 'bw_alert'
-    await expect(demo.locator('.bw_alert.bw_primary').first()).toBeVisible();
-    await expect(demo.locator('.bw_alert.bw_success').first()).toBeVisible();
-    await expect(demo.locator('.bw_alert.bw_warning').first()).toBeVisible();
-    await expect(demo.locator('.bw_alert.bw_danger').first()).toBeVisible();
+    // variantClass() returns 'bw_<variant>' as a separate class alongside 'bw_bccl_alert'
+    await expect(demo.locator('.bw_bccl_alert.bw_primary').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_alert.bw_success').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_alert.bw_warning').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_alert.bw_danger').first()).toBeVisible();
     await expect(demo.locator('.bw_close').first()).toBeVisible();
   });
 
@@ -118,18 +118,18 @@ test.describe('Component Library - All Components Render', () => {
   test('badges render all variants and sizes', async ({ page }) => {
     const demo = page.locator('#section-badges');
     await expect(demo).toBeVisible();
-    const badges = demo.locator('.bw_badge');
+    const badges = demo.locator('.bw_bccl_badge');
     expect(await badges.count()).toBeGreaterThanOrEqual(7);
     // Size variants
-    await expect(demo.locator('.bw_badge_sm').first()).toBeVisible();
-    await expect(demo.locator('.bw_badge_lg').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_badge_sm').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_badge_lg').first()).toBeVisible();
   });
 
   // ---- Progress Bars ----
   test('progress bars render with correct widths', async ({ page }) => {
     const demo = page.locator('#section-progress');
     await expect(demo).toBeVisible();
-    const bars = demo.locator('.bw_progress_bar');
+    const bars = demo.locator('.bw_bccl_progress_bar');
     expect(await bars.count()).toBeGreaterThanOrEqual(4);
     const firstBar = bars.first();
     const width = await firstBar.evaluate(el => el.style.width);
@@ -170,30 +170,30 @@ test.describe('Component Library - All Components Render', () => {
   test('pagination renders with page numbers', async ({ page }) => {
     const demo = page.locator('#section-pagination');
     await expect(demo).toBeVisible();
-    const pagination = demo.locator('.bw_pagination');
+    const pagination = demo.locator('.bw_bccl_pagination');
     expect(await pagination.count()).toBeGreaterThanOrEqual(2);
     await expect(demo.locator('.bw_active').first()).toBeVisible();
-    await expect(demo.locator('.bw_pagination_sm').first()).toBeVisible();
-    await expect(demo.locator('.bw_pagination_lg').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_pagination_sm').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_pagination_lg').first()).toBeVisible();
   });
 
   // ---- Accordion ----
   test('accordion renders with collapsible items', async ({ page }) => {
     const demo = page.locator('#section-accordion');
     await expect(demo).toBeVisible();
-    const accordion = demo.locator('.bw_accordion');
+    const accordion = demo.locator('.bw_bccl_accordion');
     expect(await accordion.count()).toBeGreaterThanOrEqual(2);
-    const firstCollapse = demo.locator('.bw_accordion_collapse').first();
+    const firstCollapse = demo.locator('.bw_bccl_accordion_collapse').first();
     await expect(firstCollapse).toHaveClass(/bw_collapse_show/);
-    await expect(demo.locator('.bw_accordion_button').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_accordion_button').first()).toBeVisible();
   });
 
   test('accordion toggle works', async ({ page }) => {
     const demo = page.locator('#section-accordion');
-    const secondButton = demo.locator('.bw_accordion_button').nth(1);
+    const secondButton = demo.locator('.bw_bccl_accordion_button').nth(1);
     await secondButton.click();
     await page.waitForTimeout(400);
-    const secondCollapse = demo.locator('.bw_accordion_collapse').nth(1);
+    const secondCollapse = demo.locator('.bw_bccl_accordion_collapse').nth(1);
     await expect(secondCollapse).toHaveClass(/bw_collapse_show/);
   });
 
@@ -201,11 +201,11 @@ test.describe('Component Library - All Components Render', () => {
   test('dropdown renders and opens on click', async ({ page }) => {
     const demo = page.locator('#section-dropdown');
     await expect(demo).toBeVisible();
-    const dropdown = demo.locator('.bw_dropdown').first();
+    const dropdown = demo.locator('.bw_bccl_dropdown').first();
     await expect(dropdown).toBeVisible();
-    await dropdown.locator('.bw_dropdown_toggle').click();
+    await dropdown.locator('.bw_bccl_dropdown_toggle').click();
     await page.waitForTimeout(200);
-    await expect(dropdown.locator('.bw_dropdown_show')).toBeVisible();
+    await expect(dropdown.locator('.bw_bccl_dropdown_show')).toBeVisible();
     await page.locator('body').click({ position: { x: 10, y: 10 } });
     await page.waitForTimeout(200);
   });
@@ -216,18 +216,18 @@ test.describe('Component Library - All Components Render', () => {
     await expect(demo).toBeVisible();
     await demo.locator('button:has-text("Open Modal")').click();
     await page.waitForTimeout(300);
-    const modal = page.locator('.bw_modal_show');
+    const modal = page.locator('.bw_bccl_modal_show');
     await expect(modal).toBeVisible();
     await modal.locator('.bw_close').click();
     await page.waitForTimeout(300);
-    await expect(page.locator('.bw_modal_show')).toHaveCount(0);
+    await expect(page.locator('.bw_bccl_modal_show')).toHaveCount(0);
   });
 
   // ---- Toast ----
   test('toast renders static previews', async ({ page }) => {
     const demo = page.locator('#section-toast');
     await expect(demo).toBeVisible();
-    const toasts = demo.locator('.bw_toast');
+    const toasts = demo.locator('.bw_bccl_toast');
     expect(await toasts.count()).toBeGreaterThanOrEqual(2);
   });
 
@@ -264,10 +264,10 @@ test.describe('Component Library - All Components Render', () => {
   test('hero section renders with white text', async ({ page }) => {
     const demo = page.locator('#section-hero');
     await expect(demo).toBeVisible();
-    await expect(demo.locator('.bw_hero').first()).toBeVisible();
-    await expect(demo.locator('.bw_hero_title').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_hero').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_hero_title').first()).toBeVisible();
     // Hero title on primary variant should have white text
-    const color = await demo.locator('.bw_hero_title').first().evaluate(el => {
+    const color = await demo.locator('.bw_bccl_hero_title').first().evaluate(el => {
       return window.getComputedStyle(el).color;
     });
     // rgb(255, 255, 255) = white
@@ -286,14 +286,14 @@ test.describe('Component Library - All Components Render', () => {
   test('CTA section renders', async ({ page }) => {
     const demo = page.locator('#section-cta');
     await expect(demo).toBeVisible();
-    await expect(demo.locator('.bw_cta').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_cta').first()).toBeVisible();
   });
 
   // ---- Section ----
   test('section component renders', async ({ page }) => {
     const demo = page.locator('#section-section');
     await expect(demo).toBeVisible();
-    await expect(demo.locator('.bw_section').first()).toBeVisible();
+    await expect(demo.locator('.bw_bccl_section').first()).toBeVisible();
   });
 
   test('no console errors after all checks', async ({ page }) => {
@@ -309,35 +309,35 @@ test.describe('Component Visual Quality', () => {
   });
 
   test('buttons have proper padding and are not cramped', async ({ page }) => {
-    const btn = page.locator('#section-buttons .bw_btn.bw_primary').first();
+    const btn = page.locator('#section-buttons .bw_bccl_btn.bw_primary').first();
     const box = await btn.boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(30);
     expect(box.width).toBeGreaterThanOrEqual(50);
   });
 
   test('cards have proper spacing', async ({ page }) => {
-    const card = page.locator('#section-cards .bw_card').first();
+    const card = page.locator('#section-cards .bw_bccl_card').first();
     const box = await card.boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(80);
     expect(box.width).toBeGreaterThanOrEqual(200);
   });
 
   test('alerts are not too tall', async ({ page }) => {
-    const alert = page.locator('#section-alerts .bw_alert').first();
+    const alert = page.locator('#section-alerts .bw_bccl_alert').first();
     const box = await alert.boundingBox();
     expect(box.height).toBeLessThan(120);
     expect(box.height).toBeGreaterThanOrEqual(20);
   });
 
   test('pagination items are compact and aligned', async ({ page }) => {
-    const pagination = page.locator('#section-pagination .bw_pagination').first();
+    const pagination = page.locator('#section-pagination .bw_bccl_pagination').first();
     const box = await pagination.boundingBox();
     expect(box.height).toBeLessThan(60);
     expect(box.height).toBeGreaterThanOrEqual(20);
   });
 
   test('accordion items have reasonable padding', async ({ page }) => {
-    const accordionBtn = page.locator('#section-accordion .bw_accordion_button').first();
+    const accordionBtn = page.locator('#section-accordion .bw_bccl_accordion_button').first();
     const box = await accordionBtn.boundingBox();
     expect(box.height).toBeGreaterThanOrEqual(30);
     expect(box.height).toBeLessThan(80);
@@ -354,7 +354,7 @@ test.describe('Component Visual Quality', () => {
   });
 
   test('avatars are circular', async ({ page }) => {
-    const avatar = page.locator('#section-avatar .bw_avatar').first();
+    const avatar = page.locator('#section-avatar .bw_bccl_avatar').first();
     const borderRadius = await avatar.evaluate(el => {
       return window.getComputedStyle(el).borderRadius;
     });
@@ -362,15 +362,15 @@ test.describe('Component Visual Quality', () => {
   });
 
   test('switches have distinct appearance from checkboxes', async ({ page }) => {
-    const switchEl = page.locator('#section-forms .bw_form_switch').first();
+    const switchEl = page.locator('#section-forms .bw_bccl_form_switch').first();
     await expect(switchEl).toBeVisible();
     const switchInput = switchEl.locator('input[role="switch"]');
     await expect(switchInput).toBeVisible();
   });
 
   test('dropdown menu is initially hidden', async ({ page }) => {
-    const menu = page.locator('#section-dropdown .bw_dropdown_menu').first();
-    await expect(menu).not.toHaveClass(/bw_dropdown_show/);
+    const menu = page.locator('#section-dropdown .bw_bccl_dropdown_menu').first();
+    await expect(menu).not.toHaveClass(/bw_bccl_dropdown_show/);
   });
 
   test('font sizes are readable (not too small)', async ({ page }) => {
@@ -379,16 +379,16 @@ test.describe('Component Visual Quality', () => {
     });
     expect(bodyFontSize).toBeGreaterThanOrEqual(14);
 
-    const btnFontSize = await page.locator('#section-buttons .bw_btn').first().evaluate(el => {
+    const btnFontSize = await page.locator('#section-buttons .bw_bccl_btn').first().evaluate(el => {
       return parseFloat(window.getComputedStyle(el).fontSize);
     });
     expect(btnFontSize).toBeGreaterThanOrEqual(12);
   });
 
   test('badge sizes are distinct', async ({ page }) => {
-    const smBox = await page.locator('#section-badges .bw_badge_sm').first().boundingBox();
-    const defaultBox = await page.locator('#section-badges .bw_badge:not(.bw_badge_sm):not(.bw_badge_lg)').first().boundingBox();
-    const lgBox = await page.locator('#section-badges .bw_badge_lg').first().boundingBox();
+    const smBox = await page.locator('#section-badges .bw_bccl_badge_sm').first().boundingBox();
+    const defaultBox = await page.locator('#section-badges .bw_bccl_badge:not(.bw_bccl_badge_sm):not(.bw_bccl_badge_lg)').first().boundingBox();
+    const lgBox = await page.locator('#section-badges .bw_bccl_badge_lg').first().boundingBox();
     // sm < default < lg
     expect(smBox.height).toBeLessThan(defaultBox.height);
     expect(defaultBox.height).toBeLessThan(lgBox.height);
@@ -404,12 +404,12 @@ test.describe('Component Theming', () => {
     const hasStyles = await page.evaluate(() => {
       var styles = document.querySelectorAll('style');
       return Array.from(styles).some(function(s) {
-        return s.textContent.indexOf('bw_btn') !== -1 || s.id === 'bw_style_global';
+        return s.textContent.indexOf('bw_bccl_btn') !== -1 || s.id === 'bw_style_global';
       });
     });
     expect(hasStyles).toBe(true);
 
-    const btnBg = await page.locator('#section-buttons .bw_btn.bw_primary').first().evaluate(el => {
+    const btnBg = await page.locator('#section-buttons .bw_bccl_btn.bw_primary').first().evaluate(el => {
       return window.getComputedStyle(el).backgroundColor;
     });
     expect(btnBg).not.toBe('rgba(0, 0, 0, 0)');
@@ -425,16 +425,22 @@ test.describe('Component Theming', () => {
     expect(count).toBeGreaterThanOrEqual(20);
 
     for (let i = 0; i < Math.min(5, count); i++) {
-      const tabList = tabLists.nth(i);
-      const codeTab = tabList.locator('[role="tab"]:has-text("Code")');
-      const resultTab = tabList.locator('[role="tab"]:has-text("Result")');
+      const tabContainer = page.locator('.bw_bccl_tabs').nth(i);
+      const tabs = tabContainer.locator('[role="tab"]');
+      const tabCount = await tabs.count();
+      if (tabCount < 2) continue;
 
-      if (await codeTab.count() > 0) {
-        await codeTab.click();
-        await expect(codeTab).toHaveAttribute('aria-selected', 'true');
-        await resultTab.click();
-        await expect(resultTab).toHaveAttribute('aria-selected', 'true');
-      }
+      // Switch to second tab (Code) via handle API (el.bw.setActiveTab auto-binds el)
+      await page.evaluate(el => {
+        if (el.bw && el.bw.setActiveTab) el.bw.setActiveTab(1);
+      }, await tabContainer.elementHandle());
+      await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'true', { timeout: 5000 });
+
+      // Switch back to first tab (Result)
+      await page.evaluate(el => {
+        if (el.bw && el.bw.setActiveTab) el.bw.setActiveTab(0);
+      }, await tabContainer.elementHandle());
+      await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true', { timeout: 5000 });
     }
   });
 });

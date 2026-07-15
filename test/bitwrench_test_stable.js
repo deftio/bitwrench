@@ -123,68 +123,6 @@ describe("Array Functions", function() {
 });
 
 // ================================================================
-// Color functions
-// ================================================================
-describe("Color Functions", function() {
-  describe("#colorParse()", function() {
-    it("should parse hex colors", function() {
-      const result = bw.colorParse("#FF0000");
-      assert.deepEqual(result, [255, 0, 0, 255, "rgb"]);
-    });
-
-    it("should parse rgb colors", function() {
-      const result = bw.colorParse("rgb(255, 0, 0)");
-      assert.deepEqual(result, [255, 0, 0, 255, "rgb"]);
-    });
-
-    it("should parse rgba colors with proper alpha", function() {
-      const result = bw.colorParse("rgba(255, 0, 0, 0.5)");
-      // Alpha 0.5 should convert to 127.5, which is acceptable
-      assert.equal(result[0], 255);
-      assert.equal(result[1], 0);
-      assert.equal(result[2], 0);
-      assert.ok(result[3] >= 127 && result[3] <= 128);
-      assert.equal(result[4], "rgb");
-    });
-  });
-
-  describe("#colorRgbToHsl()", function() {
-    it("should convert RGB to HSL", function() {
-      const result = bw.colorRgbToHsl(255, 0, 0);
-      assert.equal(result[0], 0); // Hue
-      assert.equal(result[1], 100); // Saturation
-      assert.equal(result[2], 50); // Lightness
-    });
-  });
-
-  describe("#colorHslToRgb()", function() {
-    it("should convert HSL to RGB", function() {
-      const result = bw.colorHslToRgb(0, 100, 50);
-      assert.equal(result[0], 255); // Red
-      assert.equal(result[1], 0); // Green
-      assert.equal(result[2], 0); // Blue
-    });
-  });
-
-  describe("#colorInterp()", function() {
-    it("should interpolate between colors", function() {
-      const result = bw.colorInterp(0.5, 0, 1, ["#000000", "#FFFFFF"]);
-      // colorInterp might return an array or string
-      if (typeof result === "string") {
-        assert.ok(result.includes("128") || result.includes("80") || result.includes("808080"));
-      } else if (Array.isArray(result)) {
-        // Middle gray should have RGB values around 128
-        assert.ok(result[0] >= 127 && result[0] <= 129);
-        assert.ok(result[1] >= 127 && result[1] <= 129);
-        assert.ok(result[2] >= 127 && result[2] <= 129);
-      } else {
-        assert.fail("colorInterp should return string or array");
-      }
-    });
-  });
-});
-
-// ================================================================
 // Browser functions (limited in Node environment)
 // ================================================================
 describe("Browser Functions", function() {
@@ -233,10 +171,10 @@ describe("TACO and HTML Generation", function() {
     });
   });
 
-  describe("#createDOM()", function() {
+  describe("#create()", function() {
     it("should create DOM elements from TACO", function() {
       const taco = { t: "div", a: { id: "test" }, c: "Hello" };
-      const element = bw.createDOM(taco);
+      const element = bw.create(taco);
       assert.equal(element.tagName, "DIV");
       assert.equal(element.id, "test");
       assert.equal(element.textContent, "Hello");
@@ -288,29 +226,9 @@ describe("CSS Functions", function() {
 // Component functions
 // ================================================================
 describe("Component Functions", function() {
-  describe("#renderComponent()", function() {
-    it("should render component and return handle", function() {
-      const taco = { t: "div", a: { id: "comp1" }, c: "Test" };
-      const handle = bw.renderComponent(taco);
-      assert.ok(handle);
-      assert.equal(handle.element.tagName, "DIV");
-      assert.equal(handle.element.id, "comp1");
-    });
-  });
-
-  describe("#getComponent()", function() {
-    it("should register and retrieve component when mounted", function() {
-      const taco = { t: "div", a: { id: "comp-test-" + Date.now() }, c: "Test" };
-      const handle = bw.renderComponent(taco);
-      
-      // Component needs to be mounted to be registered
-      document.body.appendChild(handle.element);
-      
-      const retrieved = bw.getComponent(handle.element.id);
-      assert.equal(retrieved, handle);
-      
-      // Clean up
-      handle.destroy();
+  describe("#renderComponent() removal", function() {
+    it("should be undefined for removed renderComponent", function() {
+      assert.strictEqual(bw.renderComponent, undefined);
     });
   });
 });

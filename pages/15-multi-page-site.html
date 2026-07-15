@@ -214,7 +214,7 @@
           c: ['header', 'nav', 'footer', 'sidebar'].map(function(key) {
             return bw.makeButton({
               text: key.charAt(0).toUpperCase() + key.slice(1),
-              variant: dictPreviewItem === key ? 'primary' : 'outline-secondary',
+              variant: dictPreviewItem === key ? 'primary' : 'outline_secondary',
               size: 'sm',
               onclick: function() {
                 dictPreviewItem = key;
@@ -259,7 +259,7 @@
           c: ['header', 'nav', 'footer', 'sidebar'].map(function(key) {
             return bw.makeButton({
               text: key.charAt(0).toUpperCase() + key.slice(1),
-              variant: dictPreviewItem === key ? 'primary' : 'outline-secondary',
+              variant: dictPreviewItem === key ? 'primary' : 'outline_secondary',
               size: 'sm',
               onclick: function() {
                 dictPreviewItem = key;
@@ -354,7 +354,7 @@
           c: ['home', 'about', 'blog', 'contact'].map(function(pg) {
             return bw.makeButton({
               text: pg.charAt(0).toUpperCase() + pg.slice(1),
-              variant: currentPage === pg ? 'primary' : 'outline-secondary',
+              variant: currentPage === pg ? 'primary' : 'outline_secondary',
               size: 'sm',
               onclick: function() {
                 currentPage = pg;
@@ -395,7 +395,7 @@
           c: ['home', 'about', 'blog', 'contact'].map(function(pg) {
             return bw.makeButton({
               text: pg.charAt(0).toUpperCase() + pg.slice(1),
-              variant: currentPage === pg ? 'primary' : 'outline-secondary',
+              variant: currentPage === pg ? 'primary' : 'outline_secondary',
               size: 'sm',
               onclick: function() {
                 currentPage = pg;
@@ -1075,7 +1075,7 @@
           '    mounted: function(el) {\n' +
           '      bw.sub(\'bw:route\', function(d) {\n' +
           '        el._bw_state.active = d.path;\n' +
-          '        bw.update(el);\n' +
+          '        bw.refresh(el);\n' +
           '      }, el);  // auto-unsubscribes when el is removed\n' +
           '    },\n' +
           '    render: function(el) {\n' +
@@ -1174,7 +1174,7 @@
         {
           t: 'ul',
           c: [
-            { t: 'li', c: { t: 'a', a: { href: '05-state.html' }, c: 'State Management -- o.state, bw.patch, bw.update' } },
+            { t: 'li', c: { t: 'a', a: { href: '05-state.html' }, c: 'State Management -- o.state, bw.patch, bw.refresh' } },
             { t: 'li', c: { t: 'a', a: { href: '04-dashboard.html' }, c: 'Dashboard -- full example app' } },
             { t: 'li', c: { t: 'a', a: { href: '01-components.html' }, c: 'Components -- BCCL component gallery' } },
             { t: 'li', c: { t: 'a', a: { href: '03-styling.html' }, c: 'Styling & CSS -- bw.css(), bw.injectCSS()' } },

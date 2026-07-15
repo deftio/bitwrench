@@ -1,6 +1,13 @@
 # Bitwrench V2 Component Lifecycle Design
 
-**Status**: Active design (discussion + prototype)
+> **HISTORICAL (superseded 2026-06-09).** This March 2026 document
+> specifies the handle-object model (`hydrate()` returning `{el, uuid,
+> methods…}`, `o.methods`, throw-on-collision) — all reversed by later
+> design. The spec of record is
+> `bitwrench-lifecycle-cleanup-2026-06-09.md` (el.bw, o.handle,
+> fresh-UUID-on-collision). Do not implement from this document.
+
+**Status**: HISTORICAL — prototype notes only
 **Author**: Claude + Manu Chatterjee
 **Date**: March 2026
 **Prototype**: `src/exp_html_hydrate/core.js` (73 tests passing)

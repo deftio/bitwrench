@@ -206,7 +206,7 @@
     '.todo-input-row': { display: 'flex', gap: '0.5rem', 'margin-bottom': '0.75rem' },
     '.todo-item:last-child': { 'border-bottom': 'none' },
     '.todo-item span': { flex: '1' },
-    '.bw_site_pages_tablecard .bw_table': { 'margin-bottom': '0' },
+    '.bw_site_pages_tablecard .bw_bccl_table': { 'margin-bottom': '0' },
 
     // ---- Snippet (structural-only) ----
     '.bw_site_pages_snippet': { 'margin-bottom': '1.25rem' },
@@ -609,10 +609,10 @@
         background: p.surface, border: '1px solid ' + p.light.border,
         'border-radius': SITE.radius, 'box-shadow': o.shadowSm
       },
-      '.bw_site_pages_tablecard .bw_table > thead > tr > *': {
+      '.bw_site_pages_tablecard .bw_bccl_table > thead > tr > *': {
         background: p.primary.darkText, color: p.primary.textOn, 'border-bottom-color': p.primary.base
       },
-      '.bw_site_pages_tablecard .bw_table > tbody > tr:nth-of-type(odd) > *': {
+      '.bw_site_pages_tablecard .bw_bccl_table > tbody > tr:nth-of-type(odd) > *': {
         'background-color': o.stripe
       },
 
@@ -767,6 +767,7 @@
   // No merge needed: SITE_STRUCTURAL and themed rules have disjoint selectors.
   // =========================================================================
   function applySiteChromeCSS(styles) {
+    window._bw_current_styles = styles;
     var structural = bw.css(SITE_STRUCTURAL);
     var primary = bw.css(siteAllThemedRules(styles.palette));
     var alt = bw.css(bw.scopeRulesUnder(
@@ -965,6 +966,7 @@
   // =========================================================================
   function initBitwrenchPage(currentPage, baseHref) {
     var styles = bw.loadStyles();
+    window._bw_current_styles = styles;
     applySiteChromeCSS(styles);
     mountExampleNav('#example-nav', currentPage, baseHref);
     return styles;

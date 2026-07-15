@@ -178,7 +178,7 @@ class BwmcpClient:
 
     def render(self, taco):
         """Shorthand: replace #app with this TACO."""
-        self.call_tool('render_live', {'target': '#app', 'taco': taco, 'action': 'replace'})
+        self.call_tool('render_live', {'ref': '#app', 'taco': taco, 'action': 'replace'})
 
     def close(self):
         try:

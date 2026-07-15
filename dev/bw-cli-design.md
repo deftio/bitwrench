@@ -1,5 +1,9 @@
 # Bitwrench CLI Design Doc
 
+> **STALE-CHECK (2026-07):** pre-implementation draft. The CLI has since
+> shipped -- the current, accurate documentation is `docs/cli.md` and
+> `docs/bw-attach.md`. This draft may differ from what was actually built.
+
 > **Status:** Draft
 > **Author:** Manu Chatterjee (deftio)
 > **Date:** March 2026

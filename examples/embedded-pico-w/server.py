@@ -356,7 +356,7 @@ def serve_dist(request, path):
 
     Supports .gz files with Content-Encoding: gzip so the browser
     transparently decompresses them. This saves flash space on the Pico W --
-    bitwrench.umd.min.js.gz is ~40KB vs ~130KB uncompressed.
+    bitwrench.umd.min.js.gz is ~45KB vs ~165KB uncompressed.
     """
     file_path = WWW_ROOT + "/dist/" + path
     content_type = get_mime_type(path)

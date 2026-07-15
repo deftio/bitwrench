@@ -10,7 +10,7 @@ Multi-step form with validation, state transitions, and formatted review summary
 - `bw.makeButton()` with onclick handlers that survive re-renders
 - `bw.makeAlert()` for informational callouts
 - State transitions (step 1 -> 2 -> 3 -> 4)
-- Level 1 manual render pattern
+- Manual re-render pattern with `bw.DOM()`
 
 ## Audience
 

@@ -23,8 +23,8 @@ var app = create({
 app.page('/', function(client) {
   var count = 0;
 
-  // Render initial UI
-  client.render('#app', {
+  // Mount initial UI
+  client.mount('#app', {
     t: 'div', a: { style: 'max-width: 500px; margin: 2rem auto; text-align: center;' },
     c: [
       { t: 'h1', c: 'bwserve Counter' },
@@ -42,15 +42,15 @@ app.page('/', function(client) {
           t: 'div', a: { style: 'display: flex; gap: 1rem; justify-content: center;' },
           c: [
             { t: 'button', a: {
-              class: 'bw_btn bw_primary', 'data-bw-action': 'decrement',
+              class: 'bw_bccl_btn bw_primary bw_act_decrement',
               style: 'font-size: 1.25rem; padding: 0.5rem 1.5rem;'
             }, c: '\u2212' },
             { t: 'button', a: {
-              class: 'bw_btn bw_secondary', 'data-bw-action': 'reset',
+              class: 'bw_bccl_btn bw_secondary bw_act_reset',
               style: 'font-size: 1.25rem; padding: 0.5rem 1.5rem;'
             }, c: 'Reset' },
             { t: 'button', a: {
-              class: 'bw_btn bw_primary', 'data-bw-action': 'increment',
+              class: 'bw_bccl_btn bw_primary bw_act_increment',
               style: 'font-size: 1.25rem; padding: 0.5rem 1.5rem;'
             }, c: '+' }
           ]
@@ -65,17 +65,17 @@ app.page('/', function(client) {
   // Handle actions from the client
   client.on('increment', function() {
     count++;
-    client.patch('counter-display', String(count));
+    client.patch('counter-display', { text: String(count) });
   });
 
   client.on('decrement', function() {
     count--;
-    client.patch('counter-display', String(count));
+    client.patch('counter-display', { text: String(count) });
   });
 
   client.on('reset', function() {
     count = 0;
-    client.patch('counter-display', '0');
+    client.patch('counter-display', { text: '0' });
   });
 });
 
@@ -91,7 +91,7 @@ app.page('/dashboard', function(client) {
   };
 
   function renderDashboard() {
-    client.render('#app', {
+    client.mount('#app', {
       t: 'div', a: { style: 'max-width: 800px; margin: 2rem auto;' },
       c: [
         { t: 'h1', a: { style: 'text-align: center;' }, c: 'Live Dashboard' },
@@ -108,7 +108,7 @@ app.page('/dashboard', function(client) {
           ]
         },
         { t: 'div', a: { style: 'text-align: center;' }, c: [
-          { t: 'button', a: { class: 'bw_btn bw_primary', 'data-bw-action': 'refresh' }, c: 'Force Refresh' },
+          { t: 'button', a: { class: 'bw_bccl_btn bw_primary bw_act_refresh' }, c: 'Force Refresh' },
           { t: 'span', a: { style: 'display:inline-block; width:1rem;' } },
           { t: 'a', a: { href: '/', class: 'bw_btn bw_secondary' }, c: '\u2190 Counter' }
         ]},
@@ -143,11 +143,11 @@ app.page('/dashboard', function(client) {
     stats.uptime = 99.9 + Math.random() * 0.09;
 
     client.batch([
-      { type: 'replace', target: '#users-card', node: statCard('users-card', 'Active Users', stats.users, '\uD83D\uDC64') },
-      { type: 'replace', target: '#req-card', node: statCard('req-card', 'Requests/min', stats.requests, '\uD83D\uDCE1') },
-      { type: 'replace', target: '#err-card', node: statCard('err-card', 'Errors', stats.errors, '\u26A0\uFE0F') },
-      { type: 'replace', target: '#up-card', node: statCard('up-card', 'Uptime', stats.uptime.toFixed(2) + '%', '\u2705') },
-      { type: 'patch', target: 'last-update', content: 'Last update: ' + new Date().toLocaleTimeString() }
+      { type: 'replace', ref: '#users-card', taco: statCard('users-card', 'Active Users', stats.users, '\uD83D\uDC64') },
+      { type: 'replace', ref: '#req-card', taco: statCard('req-card', 'Requests/min', stats.requests, '\uD83D\uDCE1') },
+      { type: 'replace', ref: '#err-card', taco: statCard('err-card', 'Errors', stats.errors, '\u26A0\uFE0F') },
+      { type: 'replace', ref: '#up-card', taco: statCard('up-card', 'Uptime', stats.uptime.toFixed(2) + '%', '\u2705') },
+      { type: 'patch', ref: 'last-update', text: 'Last update: ' + new Date().toLocaleTimeString() }
     ]);
   }, 2000);
 

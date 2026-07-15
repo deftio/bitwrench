@@ -124,14 +124,14 @@
                 { t: 'div', a: { class: 'debug-step-num' }, c: '3' },
                 { t: 'div', a: { class: 'debug-step-body' }, c: [
                   { t: 'h4', c: 'Mutate live' },
-                  { t: 'p', c: bw.raw('Change state directly: <code>$0._bw_state.count = 99; bw.update($0);</code> &mdash; the component re-renders immediately.') }
+                  { t: 'p', c: bw.raw('Change state directly: <code>$0._bw_state.count = 99; bw.refresh($0);</code> &mdash; the component re-renders immediately.') }
                 ]}
               ]},
               { t: 'div', a: { class: 'debug-step' }, c: [
                 { t: 'div', a: { class: 'debug-step-num' }, c: '4' },
                 { t: 'div', a: { class: 'debug-step-body' }, c: [
                   { t: 'h4', c: 'Targeted updates' },
-                  { t: 'p', c: bw.raw('Use <code>bw.patch(id, content)</code> to update a specific element by its id or UUID. Or call <code>bw.update($0)</code> to re-run the element\'s <code>o.render</code> function.') }
+                  { t: 'p', c: bw.raw('Use <code>bw.patch(id, content)</code> to update a specific element by its id or UUID. Or call <code>bw.refresh($0)</code> to re-run the element\'s <code>o.render</code> function.') }
                 ]}
               ]}
             ]
@@ -165,7 +165,7 @@
                 ]},
                 { t: 'tr', c: [
                   { t: 'td', c: 'Edit state in DevTools sidebar' },
-                  { t: 'td', c: bw.raw('Edit in Console: <code>$0._bw_state.x = 42; bw.update($0)</code>') }
+                  { t: 'td', c: bw.raw('Edit in Console: <code>$0._bw_state.x = 42; bw.refresh($0)</code>') }
                 ]},
                 { t: 'tr', c: [
                   { t: 'td', c: bw.raw('<code>$r</code> &mdash; reference to selected component') },
@@ -173,7 +173,7 @@
                 ]},
                 { t: 'tr', c: [
                   { t: 'td', c: 'Profiler for re-render tracking' },
-                  { t: 'td', c: bw.raw('<code>bw.update($0)</code> re-renders; <code>bw_uuid_*</code> class identifies elements') }
+                  { t: 'td', c: bw.raw('<code>bw.refresh($0)</code> re-renders; <code>bw_uuid_*</code> class identifies elements') }
                 ]}
               ]}
             ]
@@ -212,7 +212,7 @@
           { t: 'h3', c: 'Modifying state live' },
           consoleBlock([
             '<span class="console-comment">// Modify _bw_state directly, then trigger re-render</span>',
-            '<span class="console-prompt">&gt;</span> $0._bw_state.count = 99; bw.update($0);',
+            '<span class="console-prompt">&gt;</span> $0._bw_state.count = 99; bw.refresh($0);',
             '<span class="console-output">// Counter immediately shows 99</span>',
             '',
             '<span class="console-comment">// Targeted update by id or UUID</span>',
@@ -220,10 +220,10 @@
             '<span class="console-output">// Updates the element with id="my-counter"</span>'
           ]),
 
-          { t: 'h3', c: 'Using bw.update() and bw.patch()' },
+          { t: 'h3', c: 'Using bw.refresh() and bw.patch()' },
           consoleBlock([
             '<span class="console-comment">// Force re-render: calls o.render(el) again</span>',
-            '<span class="console-prompt">&gt;</span> bw.update($0)',
+            '<span class="console-prompt">&gt;</span> bw.refresh($0)',
             '<span class="console-output">// o.render runs, DOM updates, bw:statechange event fires</span>',
             '',
             '<span class="console-comment">// Targeted content update by id</span>',
@@ -249,7 +249,7 @@
                 '',
                 '<span class="console-comment">// Change state and re-render from console</span>',
                 '<span class="console-prompt">&gt;</span> var el = bw.$(\'#my-counter\')[0];',
-                '<span class="console-prompt">&gt;</span> el._bw_state.count = 42; bw.update(el);',
+                '<span class="console-prompt">&gt;</span> el._bw_state.count = 42; bw.refresh(el);',
                 '<span class="console-output">// Counter now shows 42</span>'
               ])
             ]
@@ -260,57 +260,57 @@
 
 
     // =========================================================================
-    // Section 2: Three Levels of TACO Materialization
+    // Section 2: TACO Materialization Stages
     // =========================================================================
 
     var section2 = {
       t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Three Levels of Materialization' },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'TACO Materialization Stages' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('A TACO object exists at one of three levels. Understanding this model is key to debugging effectively.') },
+            c: bw.raw('A TACO object exists at one of three stages. Understanding this model is key to debugging effectively.') },
 
           { t: 'table', a: { class: 'api-table' }, c: [
             { t: 'thead', c: { t: 'tr', c: [
-              { t: 'th', c: 'Level' },
+              { t: 'th', c: 'Stage' },
               { t: 'th', c: 'What it is' },
               { t: 'th', c: 'How you get it' },
               { t: 'th', c: 'Use case' }
             ]}},
             { t: 'tbody', c: [
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Level 0: TACO' } },
+                { t: 'td', c: { t: 'strong', c: 'Data (TACO)' } },
                 { t: 'td', c: 'Plain JS object (data/intent)' },
                 { t: 'td', c: bw.raw('<code>bw.makeCard({...})</code>') },
                 { t: 'td', c: 'Serialize, transform, send over wire, SSR' }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Level 1: DOM/HTML' } },
+                { t: 'td', c: { t: 'strong', c: 'DOM / HTML' } },
                 { t: 'td', c: 'Live DOM nodes (fire-and-forget)' },
                 { t: 'td', c: bw.raw('<code>bw.DOM(sel, taco)</code> or <code>bw.html(taco)</code>') },
                 { t: 'td', c: 'Render once, static pages' }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'strong', c: 'Level 2: Stateful' } },
+                { t: 'td', c: { t: 'strong', c: 'Stateful' } },
                 { t: 'td', c: 'Element with state + render' },
                 { t: 'td', c: bw.raw('<code>o: { state: {...}, render: fn }</code>') },
-                { t: 'td', c: 'Reactive state, bw.update(el), bw.patch(id, content)' }
+                { t: 'td', c: 'Stateful components, bw.refresh(el), bw.patch(id, content)' }
               ]}
             ]}
           ]},
 
-          { t: 'h3', c: 'When to use each level' },
+          { t: 'h3', c: 'When to use each stage' },
           consoleBlock([
-            '<span class="console-comment">// Level 0 — I just need a description</span>',
+            '<span class="console-comment">// Data — I just need a description</span>',
             'var card = bw.makeCard({ title: \'Users\', content: \'1,234\' });',
             'typeof card;  <span class="console-comment">// "object" — plain TACO</span>',
             '',
-            '<span class="console-comment">// Level 1 — mount it and forget</span>',
+            '<span class="console-comment">// DOM — mount it and forget</span>',
             'bw.DOM(\'#app\', card);',
             '<span class="console-comment">// or: var html = bw.html(card); // for SSR</span>',
             '',
-            '<span class="console-comment">// Level 2 — I need reactive state + render</span>',
+            '<span class="console-comment">// Stateful — I need state + render</span>',
             'var counter = {',
             '  t: \'div\',',
             '  o: {',
@@ -322,7 +322,7 @@
             '          { t: \'h3\', c: \'Count: \' + s.count },',
             '          bw.makeButton({ text: \'+1\', onclick: function() {',
             '            s.count++;',
-            '            bw.update(el);',
+            '            bw.refresh(el);',
             '          }})',
             '        ]',
             '      });',
@@ -330,12 +330,12 @@
             '  }',
             '};',
             'bw.DOM(\'#app\', counter);',
-            '<span class="console-comment">// State lives at el._bw_state, re-render via bw.update(el)</span>'
+            '<span class="console-comment">// State lives at el._bw_state, re-render via bw.refresh(el)</span>'
           ]),
 
           site.makeCallout('concept', 'The key insight', {
             t: 'p',
-            c: bw.raw('Level 0 is bitwrench\'s <strong>moat</strong>. No other framework has a pure-data layer that\'s serializable, transformable, and sendable over a WebSocket. Level 2 adds reactivity <em>on top</em> of Level 0 &mdash; it doesn\'t replace it. You choose which level you need per-component.')
+            c: bw.raw('The data stage is bitwrench\'s <strong>moat</strong>. No other framework has a pure-data layer that\'s serializable, transformable, and sendable over a WebSocket. The stateful stage adds reactivity <em>on top</em> of the data stage &mdash; it doesn\'t replace it. You choose which stage you need per-component.')
           })
         ]}
       ]
@@ -352,7 +352,7 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Stateful Elements API' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('When you need reactive state, add <code>o.state</code> and <code>o.render</code> to any TACO. State lives directly on the DOM element at <code>el._bw_state</code>. Re-render by calling <code>bw.update(el)</code>.') },
+            c: bw.raw('When you need explicit state, add <code>o.state</code> and <code>o.render</code> to any TACO. State lives directly on the DOM element at <code>el._bw_state</code>. Re-render by calling <code>bw.refresh(el)</code>.') },
 
           { t: 'table', a: { class: 'api-table' }, c: [
             { t: 'thead', c: { t: 'tr', c: [
@@ -366,7 +366,7 @@
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: 'o.render(el)' } },
-                { t: 'td', c: bw.raw('Called on mount and on every <code>bw.update(el)</code>. Reads <code>el._bw_state</code>, writes DOM.') }
+                { t: 'td', c: bw.raw('Called on mount and on every <code>bw.refresh(el)</code>. Reads <code>el._bw_state</code>, writes DOM.') }
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: 'o.mounted(el)' } },
@@ -374,14 +374,14 @@
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: 'o.unmount(el)' } },
-                { t: 'td', c: bw.raw('Cleanup hook. Called by <code>bw.cleanup(el)</code>.') }
+                { t: 'td', c: bw.raw('Cleanup hook. Called by <code>bw.unmount(el)</code>.') }
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: 'el._bw_state' } },
                 { t: 'td', c: 'Direct access to the state object on the DOM element.' }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'code', c: 'bw.update(el)' } },
+                { t: 'td', c: { t: 'code', c: 'bw.refresh(el)' } },
                 { t: 'td', c: bw.raw('Re-runs <code>o.render(el)</code> and emits a <code>bw:statechange</code> event.') }
               ]},
               { t: 'tr', c: [
@@ -389,7 +389,7 @@
                 { t: 'td', c: bw.raw('Update content of element by its id or UUID. Content can be a string or TACO.') }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'code', c: 'bw.cleanup(el)' } },
+                { t: 'td', c: { t: 'code', c: 'bw.unmount(el)' } },
                 { t: 'td', c: 'Run unmount hooks and clean up lifecycle references.' }
               ]}
             ]}
@@ -424,11 +424,11 @@
             '      <span class="console-comment">// Behavior as closures — simple functions that close over el</span>',
             '      function addAlert(data) {',
             '        s.alerts = s.alerts.concat(data);',
-            '        bw.update(el);',
+            '        bw.refresh(el);',
             '      }',
             '      function clearAlerts() {',
             '        s.alerts = [];',
-            '        bw.update(el);',
+            '        bw.refresh(el);',
             '      }',
             '',
             '      var alertList = s.alerts.length',
@@ -466,16 +466,16 @@
 
 
     // =========================================================================
-    // Section 5: Targeted Updates — bw.patch() and bw.update()
+    // Section 5: Targeted Updates — bw.patch() and bw.refresh()
     // =========================================================================
 
     var section5 = {
       t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
-        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Targeted Updates &mdash; bw.patch() and bw.update()') },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Targeted Updates &mdash; bw.patch() and bw.refresh()') },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'intro-text' },
-            c: bw.raw('Use <code>bw.patch(id, content)</code> to update a specific element by its id or UUID. Use <code>bw.update(el)</code> to re-run an element\'s <code>o.render</code> function. Both work from the console, from event handlers, or from server-driven updates via SSE.') },
+            c: bw.raw('Use <code>bw.patch(id, content)</code> to update a specific element by its id or UUID. Use <code>bw.refresh(el)</code> to re-run an element\'s <code>o.render</code> function. Both work from the console, from event handlers, or from server-driven updates via SSE.') },
 
           { t: 'table', a: { class: 'api-table' }, c: [
             { t: 'thead', c: { t: 'tr', c: [
@@ -488,7 +488,7 @@
                 { t: 'td', c: bw.raw('Update element by id or UUID. Content can be string or TACO.') }
               ]},
               { t: 'tr', c: [
-                { t: 'td', c: { t: 'code', c: 'bw.update(el)' } },
+                { t: 'td', c: { t: 'code', c: 'bw.refresh(el)' } },
                 { t: 'td', c: bw.raw('Re-run <code>o.render(el)</code> and emit <code>bw:statechange</code>.') }
               ]},
               { t: 'tr', c: [
@@ -527,13 +527,13 @@
             '<span class="console-comment">// Or update state and re-render:</span>',
             'var el = bw.$(\'#dashboard_prod\')[0];',
             'el._bw_state.status = \'complete\';',
-            'bw.update(el);',
+            'bw.refresh(el);',
             '',
             '<span class="console-comment">// Server-driven pattern via SSE:</span>',
             'var es = new EventSource(\'/api/events\');',
             'es.onmessage = function(e) {',
             '  var msg = JSON.parse(e.data);',
-            '  bw.patch(msg.target, msg.content);',
+            '  bw.patch(msg.ref, msg);',
             '};'
           ]),
 
@@ -568,13 +568,13 @@
             '',
             '        function addItem(item) {',
             '          s.items = s.items.concat(item);',
-            '          bw.update(el);',
+            '          bw.refresh(el);',
             '        }',
             '        function removeItem(id) {',
             '          s.items = s.items.filter(function(it) {',
             '            return it.id !== id;',
             '          });',
-            '          bw.update(el);',
+            '          bw.refresh(el);',
             '        }',
             '',
             '        bw.DOM(el, {',
@@ -613,13 +613,13 @@
             '<span class="console-comment">// From server (target by id):</span>',
             'var el = bw.$(\'#team-list\')[0];',
             'el._bw_state.items.push({ id: 4, name: \'Dave\' });',
-            'bw.update(el);'
+            'bw.refresh(el);'
           ]),
 
           site.makeCallout('concept', 'Explicit rendering vs React reconciliation', {
             t: 'div', c: [
               { t: 'p', c: bw.raw('React: change state &rarr; virtual DOM diff &rarr; O(n) reconciliation &rarr; patch DOM.') },
-              { t: 'p', c: bw.raw('Bitwrench: mutate <code>el._bw_state</code> &rarr; call <code>bw.update(el)</code> &rarr; <code>o.render</code> writes the DOM exactly.') },
+              { t: 'p', c: bw.raw('Bitwrench: mutate <code>el._bw_state</code> &rarr; call <code>bw.refresh(el)</code> &rarr; <code>o.render</code> writes the DOM exactly.') },
               { t: 'p', c: bw.raw('The render function tells the DOM exactly what to do. No diffing, no guessing. This is the MFC/Qt model &mdash; you own the update path.') }
             ]
           })
@@ -657,11 +657,11 @@
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: 'el._bw_render' } },
-                { t: 'td', c: bw.raw('The render function (from <code>o.render</code>). Called by <code>bw.update(el)</code>.') }
+                { t: 'td', c: bw.raw('The render function (from <code>o.render</code>). Called by <code>bw.refresh(el)</code>.') }
               ]},
               { t: 'tr', c: [
                 { t: 'td', c: { t: 'code', c: 'el._bw_unmount' } },
-                { t: 'td', c: bw.raw('Cleanup hook (from <code>o.unmount</code>). Called by <code>bw.cleanup(el)</code>.') }
+                { t: 'td', c: bw.raw('Cleanup hook (from <code>o.unmount</code>). Called by <code>bw.unmount(el)</code>.') }
               ]}
             ]}
           ]},
@@ -683,7 +683,7 @@
                 '  })',
                 '',
                 '<span class="console-comment">// Mutate and re-render:</span>',
-                '<span class="console-prompt">&gt;</span> $0._bw_state.count = 42; bw.update($0);',
+                '<span class="console-prompt">&gt;</span> $0._bw_state.count = 42; bw.refresh($0);',
                 '',
                 '<span class="console-comment">// Targeted update without element reference:</span>',
                 '<span class="console-prompt">&gt;</span> bw.patch(\'my-counter\', \'Count: 99\')'
@@ -750,7 +750,7 @@
 
           site.makeCallout('tip', 'When to use which', {
             t: 'div', c: [
-              { t: 'p', c: bw.raw('The browser console gives you direct access to all <code>bw.*</code> APIs -- <code>bw.patch()</code>, <code>bw.DOM()</code>, <code>bw.update()</code>, <code>bw.$</code>, etc. For most debugging, this is all you need.') },
+              { t: 'p', c: bw.raw('The browser console gives you direct access to all <code>bw.*</code> APIs -- <code>bw.patch()</code>, <code>bw.DOM()</code>, <code>bw.refresh()</code>, <code>bw.$</code>, etc. For most debugging, this is all you need.') },
               { t: 'p', c: bw.raw('<code>bwcli attach</code> adds capabilities that are harder to replicate by hand: <strong>text-based DOM tree visualization</strong>, <strong>automated screenshots to disk</strong>, and <strong>event listening that prints inline</strong> without cluttering the browser console. Use it when you need to inspect from a remote terminal or capture screenshots programmatically.') },
               { t: 'p', c: bw.raw('See the <a href="17-bwcli.html">bwcli page</a> for a full reference and worked examples.') }
             ]
@@ -888,11 +888,11 @@
                 { t: 'span', a: { style: 'font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 80px; text-align: center;' }, c: 'Count: ' + s.count },
                 bw.makeButton({ text: '+', variant: 'primary', onclick: function() {
                   s.count++;
-                  bw.update(el);
+                  bw.refresh(el);
                 }}),
                 bw.makeButton({ text: 'Reset', variant: 'secondary', onclick: function() {
                   s.count = 0;
-                  bw.update(el);
+                  bw.refresh(el);
                 }})
               ]
             });
@@ -904,7 +904,7 @@
       if (target) {
         bw.DOM(target, [
           { t: 'p', a: { style: 'font-size: 0.8125rem; color: #444; margin: 0 0 0.75rem;' },
-            c: bw.raw('Live counter component &mdash; right-click it and choose <strong>Inspect</strong>, then switch to the Console tab and type <code>$0._bw_state.count = 99; bw.update($0)</code>') },
+            c: bw.raw('Live counter component &mdash; right-click it and choose <strong>Inspect</strong>, then switch to the Console tab and type <code>$0._bw_state.count = 99; bw.refresh($0)</code>') },
           counter
         ]);
       }
@@ -928,7 +928,7 @@
         '          { t: \'p\', c: \'Clicked \' + s.clicks + \' times\' },\n' +
         '          bw.makeButton({ text: \'Click me\', onclick: function() {\n' +
         '            s.clicks++;\n' +
-        '            bw.update(el);\n' +
+        '            bw.refresh(el);\n' +
         '          }})\n' +
         '        ]\n' +
         '      });\n' +
@@ -954,7 +954,7 @@
         '        s.direction = newPrice > s.price\n' +
         '          ? \'UP\' : \'DOWN\';\n' +
         '        s.price = newPrice.toFixed(2);\n' +
-        '        bw.update(el);\n' +
+        '        bw.refresh(el);\n' +
         '      }\n' +
         '\n' +
         '      bw.DOM(el, {\n' +
@@ -1015,7 +1015,7 @@
         'setTimeout(function() {\n' +
         '  var el = bw.$(\'#status-panel\')[0];\n' +
         '  el._bw_state.status = \'complete!\';\n' +
-        '  bw.update(el);\n' +
+        '  bw.refresh(el);\n' +
         '}, 1000);',
       height: '480px'
     }));
@@ -1033,7 +1033,7 @@
         var text = code.textContent;
         var lines = text.split('\n').length;
         var h = Math.max(180, Math.min(lines * 19, 700)) + 'px';
-        var div = bw.createDOM({ t: 'div' });
+        var div = bw.create({ t: 'div' });
         pre.parentNode.replaceChild(div, pre);
         bw.DOM(div, bw.codeEditor({
           code: text,

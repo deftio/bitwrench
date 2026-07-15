@@ -52,11 +52,12 @@
     { text: 'Code Editor', href: '13-code-editor.html' }
   ];
 
-  // bwserve sub-nav (unchanged)
+  // bwserve sub-nav
   var bwserveSecondaryItems = [
     { text: 'Protocol', href: '12-bwserve-protocol.html' },
     { text: 'CLI', href: '17-bwcli.html' },
-    { text: 'Sandbox', href: '14-bwserve-sandbox.html' }
+    { text: 'Sandbox', href: '14-bwserve-sandbox.html' },
+    { text: 'Embedded', href: '20-embedded.html' }
   ];
 
   // Set of hrefs for quick lookup
@@ -111,6 +112,12 @@
 
   function createExampleNav(currentPage, baseHref) {
     var homeHref = resolveHref(primaryItems[0].href, baseHref);
+    // Icon lives at <root>/images/; baseHref points at <root>/pages/ from the
+    // current page (undefined when the page itself is in pages/). Derive the
+    // icon path from it so nested example dirs (../../pages/) resolve correctly.
+    var iconSrc = baseHref
+      ? baseHref.replace(/pages\/$/, 'images/') + 'bitwrench-icon.svg'
+      : '../images/bitwrench-icon.svg';
     var ver = window.bw && window.bw.version || '2.0.4';
     var onLearnPage = isLearnPage(currentPage);
     var onExamplePage = isExamplePage(currentPage);
@@ -259,7 +266,7 @@
                 {
                   t: 'img',
                   a: {
-                    src: '../images/bitwrench-icon.svg',
+                    src: iconSrc,
                     alt: 'bitwrench',
                     class: 'bw_site_nav_icon'
                   }
@@ -289,7 +296,17 @@
                     id: 'bw_theme_toggle_btn',
                     title: 'Toggle theme palette',
                     onclick: function() {
-                      var mode = bw.toggleStyles();
+                      var isAlt = document.documentElement.classList.contains('bw_theme_alt');
+                      var currentStyles = window._bw_current_styles;
+                      if (currentStyles) {
+                        if (isAlt) {
+                          bw.applyStyles(currentStyles);
+                        } else if (currentStyles.alternateCss) {
+                          bw.applyStyles({ css: currentStyles.alternateCss });
+                        }
+                      }
+                      document.documentElement.classList.toggle('bw_theme_alt');
+                      var mode = document.documentElement.classList.contains('bw_theme_alt') ? 'alternate' : 'primary';
                       this.textContent = mode === 'alternate' ? '\u2600' : '\u263D';
                       bw.setCookie('bw_theme_mode', mode, 365, { path: '/' });
                     }
@@ -394,7 +411,7 @@
       var navEls = bw.$(selector);
       var navEl = navEls.length ? navEls[0] : null;
       if (navEl && parts.belowNav.length) {
-        var belowWrapper = bw.createDOM({
+        var belowWrapper = bw.create({
           t: 'div', a: { class: 'bw_site_nav_wrapper' }, c: parts.belowNav
         });
         navEl.parentNode.insertBefore(belowWrapper, navEl.nextSibling);
@@ -405,7 +422,11 @@
       // Otherwise ensure clean state: remove stale alt class and cookie.
       var savedMode = bw.getCookie('bw_theme_mode');
       if ((savedMode === 'alternate' || savedMode === 'primary') && document.getElementById('bw_style_global')) {
-        bw.toggleStyles();
+        var currentStyles = window._bw_current_styles;
+        if (savedMode === 'alternate' && currentStyles && currentStyles.alternateCss) {
+          bw.applyStyles({ css: currentStyles.alternateCss });
+          document.documentElement.classList.add('bw_theme_alt');
+        }
         var btns = bw.$('#bw_theme_toggle_btn');
         if (btns.length) {
           btns[0].textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';
@@ -429,7 +450,7 @@
       };
       var body = bw.$('body');
       if (body.length) {
-        body[0].appendChild(bw.createDOM(footerTaco));
+        body[0].appendChild(bw.create(footerTaco));
       }
     }
   }

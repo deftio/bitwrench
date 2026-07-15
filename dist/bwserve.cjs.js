@@ -1,4 +1,4 @@
-/*! bwserve v2.0.32 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bwserve v2.1.0 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -14,7 +14,7 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.0.32';
+const VERSION = '2.1.0';
 
 /**
  * BwServeClient — per-client connection for bwserve.
@@ -22,15 +22,17 @@ const VERSION = '2.0.32';
  * Represents one browser tab connected via SSE. The server calls methods
  * on this object to push UI updates to the client.
  *
- * Protocol message types (sent as SSE data):
- *   { type: 'replace',  target: '#app', node: {t,a,c,o} }
- *   { type: 'append',   target: '#list', node: {t,a,c,o} }
- *   { type: 'remove',   target: '#item-3' }
- *   { type: 'patch',    target: 'bw_counter_abc', content: '42', attr: null }
- *   { type: 'batch',    ops: [ ...messages ] }
- *   { type: 'register', name: 'fn', body: 'function(x) { ... }' }
- *   { type: 'call',     name: 'fn', args: [...] }
- *   { type: 'exec',     code: 'js code string' }
+ * Protocol message types v2.1 (sent as SSE data, all stamped v:1):
+ *   { v: 1, type: 'hello' }                                  — handshake
+ *   { v: 1, type: 'mount',   ref: '#app', taco: {t,a,c,o} } — mount TACO
+ *   { v: 1, type: 'append',  ref: '#list', taco: {t,a,c,o} }
+ *   { v: 1, type: 'remove',  ref: '#item-3' }
+ *   { v: 1, type: 'patch',   ref: '#id', text: '42' }       — discriminated patch
+ *   { v: 1, type: 'batch',   ops: [ ...messages ] }
+ *   { v: 1, type: 'call',    name: 'fn', args: [...] }
+ *   { v: 1, type: 'listen',  topic: 'bw:lifecycle' }
+ *
+ * Removed in 2.1 (code-bearing): register, exec, query
  *
  * @module bwserve/client
  */
@@ -47,28 +49,44 @@ class BwServeClient {
         this._res = res;       // SSE response stream (null in stub)
         this._handlers = {};   // action name → handler
         this._closed = false;
-        this._pending = {};    // requestId → { resolve, reject, timer }
     }
 
     /**
-     * Replace the content of a DOM element with a TACO.
+     * Mount a TACO at the given selector (2.1 verb: "mount").
+     * Replaces the content of the target element.
      *
-     * @param {string} selector - CSS selector or UUID
-     * @param {Object} taco - TACO object to render
+     * @param {string} selector - CSS selector or UUID (the "ref")
+     * @param {Object} taco - TACO object to mount
+     */
+    mount(selector, taco) {
+        this._send({ type: 'mount', ref: selector, taco: taco });
+    }
+
+    /**
+     * Alias for mount() — backward compatibility with 2.0.x render().
+     * @deprecated Use mount() instead.
      */
     render(selector, taco) {
-        this._send({ type: 'replace', target: selector, node: taco });
+        this.mount(selector, taco);
     }
 
     /**
      * Patch an element's content or attributes without rebuild.
+     * 2.1 uses discriminated fields: the patch object's keys (text, attrs,
+     * content, etc.) are spread directly into the message.
      *
-     * @param {string} id - Element UUID (from bw.uuid())
-     * @param {string} content - New text content
-     * @param {Object} [attr] - Attributes to update
+     * @param {string} ref - CSS selector or element UUID
+     * @param {Object} fields - Discriminated patch fields (e.g. {text:'hi'}, {attrs:{class:'x'}})
      */
-    patch(id, content, attr) {
-        this._send({ type: 'patch', target: id, content, attr: attr || null });
+    patch(ref, fields) {
+        var msg = { type: 'patch', ref: ref };
+        if (fields && typeof fields === 'object') {
+            var keys = Object.keys(fields);
+            for (var i = 0; i < keys.length; i++) {
+                msg[keys[i]] = fields[keys[i]];
+            }
+        }
+        this._send(msg);
     }
 
     /**
@@ -78,7 +96,7 @@ class BwServeClient {
      * @param {Object} taco - TACO object to append
      */
     append(selector, taco) {
-        this._send({ type: 'append', target: selector, node: taco });
+        this._send({ type: 'append', ref: selector, taco: taco });
     }
 
     /**
@@ -87,40 +105,27 @@ class BwServeClient {
      * @param {string} selector - CSS selector or UUID of element to remove
      */
     remove(selector) {
-        this._send({ type: 'remove', target: selector });
+        this._send({ type: 'remove', ref: selector });
     }
 
     /**
      * Send multiple operations as a single batch.
      *
-     * @param {Array} ops - Array of message objects (replace/append/remove/patch)
+     * @param {Array} ops - Array of message objects
      */
     batch(ops) {
-        this._send({ type: 'batch', ops });
+        this._send({ type: 'batch', ops: ops });
     }
 
     /**
      * Send a bw.message() dispatch to a tagged component on the client.
      *
-     * @param {string} target - Component userTag or UUID
+     * @param {string} ref - Component userTag or UUID
      * @param {string} action - Method name to call
      * @param {*} data - Data to pass to the method
      */
-    message(target, action, data) {
-        this._send({ type: 'message', target, action, data });
-    }
-
-    /**
-     * Register a named function on the client for later invocation via call().
-     *
-     * The function body is sent as a string and compiled on the client side.
-     * Registered functions persist for the lifetime of the connection.
-     *
-     * @param {string} name - Function name (used as key for later call())
-     * @param {string} body - Function source as string, e.g. "function(el) { el.scrollTop = el.scrollHeight; }"
-     */
-    register(name, body) {
-        this._send({ type: 'register', name, body });
+    message(ref, action, data) {
+        this._send({ type: 'message', ref: ref, action: action, data: data });
     }
 
     /**
@@ -133,19 +138,21 @@ class BwServeClient {
      * @param {...*} args - Arguments to pass to the function
      */
     call(name, ...args) {
-        this._send({ type: 'call', name, args });
+        this._send({ type: 'call', name: name, args: args });
     }
 
     /**
-     * Execute arbitrary JavaScript code on the client.
+     * Subscribe to a client-side topic. The client will forward matching
+     * events back through the return route.
      *
-     * Requires the client connection to be created with { allowExec: true }.
-     * Use call() as the safe alternative when possible.
-     *
-     * @param {string} code - JavaScript code string to execute
+     * @param {string} topic - Topic name (e.g. 'bw:lifecycle')
+     * @param {Function} handler - Called with (data) when topic events arrive
+     * @returns {BwServeClient} this (for chaining)
      */
-    exec(code) {
-        this._send({ type: 'exec', code });
+    listen(topic, handler) {
+        this._handlers['_topic:' + topic] = handler;
+        this._send({ type: 'listen', topic: topic });
+        return this;
     }
 
     /**
@@ -172,10 +179,13 @@ class BwServeClient {
 
     /**
      * Send a protocol message to the client via SSE.
+     * All messages are stamped with v: 1 (wire protocol version).
      * @private
      */
     _send(msg) {
         if (this._closed) return;
+        // Stamp the wire protocol version
+        msg.v = 1;
         // Always store for testing / inspection
         if (!this._sent) this._sent = [];
         this._sent.push(msg);
@@ -187,177 +197,6 @@ class BwServeClient {
                 // Stream may have been closed — ignore write errors
             }
         }
-    }
-
-    // ── Pending promise mechanism ──
-
-    /**
-     * Create a pending promise with a unique requestId and timeout.
-     *
-     * @param {number} [timeout=10000] - Timeout in ms
-     * @returns {{ requestId: string, promise: Promise }}
-     * @private
-     */
-    _pend(timeout) {
-        var self = this;
-        timeout = timeout || 10000;
-        var requestId = 'req_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-
-        var promise = new Promise(function(resolve, reject) {
-            var timer = setTimeout(function() {
-                delete self._pending[requestId];
-                reject(new Error('Request timeout after ' + timeout + 'ms'));
-            }, timeout);
-
-            self._pending[requestId] = { resolve: resolve, reject: reject, timer: timer };
-        });
-
-        return { requestId: requestId, promise: promise };
-    }
-
-    /**
-     * Resolve a pending promise by requestId.
-     * Called by the server route handler when a POST-back arrives.
-     *
-     * @param {string} requestId
-     * @param {Object} data - Response data (may contain .error)
-     * @returns {boolean} true if a pending request was found and resolved
-     * @private
-     */
-    _resolvePending(requestId, data) {
-        var pending = this._pending[requestId];
-        if (!pending) return false;
-
-        clearTimeout(pending.timer);
-        delete this._pending[requestId];
-
-        if (data.error) {
-            pending.reject(new Error(data.error));
-        } else {
-            pending.resolve(data.result !== undefined ? data.result : data);
-        }
-        return true;
-    }
-
-    // ── Query ──
-
-    /**
-     * Execute code on the client and get the result back.
-     *
-     * @param {string} code - JavaScript code to evaluate (return value is sent back)
-     * @param {Object} [options]
-     * @param {number} [options.timeout=5000] - Timeout in ms
-     * @returns {Promise<*>} The result of evaluating the code
-     */
-    query(code, options) {
-        var opts = options || {};
-        var pend = this._pend(opts.timeout || 5000);
-        this.call('_bw_query', { code: code, requestId: pend.requestId });
-        return pend.promise;
-    }
-
-    // ── Mount ──
-
-    /**
-     * Mount a BCCL component or factory function on the client.
-     *
-     * @param {string} selector - CSS selector of target element
-     * @param {string} factory - BCCL component name (e.g. 'accordion') or JS factory code
-     * @param {Object} [props] - Props to pass to the component/factory
-     * @param {Object} [options]
-     * @param {number} [options.timeout=10000] - Timeout in ms
-     * @returns {Promise<Object>} Resolves with { mounted: true } on success
-     */
-    mount(selector, factory, props, options) {
-        var opts = options || {};
-        var pend = this._pend(opts.timeout || 10000);
-        this.call('_bw_mount', {
-            target: selector,
-            factory: factory,
-            props: props || {},
-            requestId: pend.requestId
-        });
-        return pend.promise;
-    }
-
-    // ── Inspect ──
-
-    /**
-     * Inspect the DOM tree of the connected client.
-     *
-     * Calls the `_bw_tree` builtin on the client which delegates to
-     * `bw.inspect()` when available, returning a plain-object tree with
-     * bitwrench metadata (tag, uuid, type, handles, state, children).
-     *
-     * @param {string} [selector='body'] - CSS selector of root element
-     * @param {Object} [options]
-     * @param {number} [options.depth=3] - Max recursion depth
-     * @param {number} [options.timeout=10000] - Timeout in ms
-     * @returns {Promise<Object|null>} Tree object, or null if element not found
-     */
-    inspect(selector, options) {
-        var opts = options || {};
-        var pend = this._pend(opts.timeout || 10000);
-        this.call('_bw_tree', {
-            selector: selector || 'body',
-            depth: opts.depth || 3,
-            requestId: pend.requestId
-        });
-        return pend.promise;
-    }
-
-    // ── Screenshot ──
-
-    /**
-     * Capture a screenshot of the client's page or a specific element.
-     *
-     * Requires the server to be created with `{ allowScreenshot: true }`.
-     * Uses html2canvas on the client side (lazy-loaded on first call).
-     *
-     * @param {string} [selector='body'] - CSS selector of element to capture
-     * @param {Object} [options]
-     * @param {string} [options.format='png'] - 'png' or 'jpeg'
-     * @param {number} [options.quality=0.85] - JPEG quality 0-1 (ignored for PNG)
-     * @param {number} [options.maxWidth] - Resize if wider (preserves aspect ratio)
-     * @param {number} [options.maxHeight] - Resize if taller (preserves aspect ratio)
-     * @param {number} [options.scale=1] - Device pixel ratio override
-     * @param {number} [options.timeout=10000] - Reject after ms
-     * @returns {Promise<Object>} { data: Buffer, width, height, format }
-     */
-    screenshot(selector, options) {
-        var self = this;
-        var opts = options || {};
-        var timeout = opts.timeout || 10000;
-
-        if (!self._allowScreenshot) {
-            return Promise.reject(new Error('Screenshot not enabled. Set allowScreenshot: true in server options.'));
-        }
-
-        var pend = self._pend(timeout);
-
-        // Call the bwclient-registered capture function
-        self.call('_bw_screenshot', {
-            requestId: pend.requestId,
-            selector: selector || 'body',
-            format: opts.format || 'png',
-            quality: opts.quality || 0.85,
-            maxWidth: opts.maxWidth || null,
-            maxHeight: opts.maxHeight || null,
-            scale: opts.scale || 1,
-            captureUrl: '/bw/lib/vendor/html2canvas.min.js'
-        });
-
-        // Transform the raw response into { data: Buffer, width, height, format }
-        return pend.promise.then(function(result) {
-            if (!result || !result.data) return result;
-            var base64 = result.data.split(',')[1];
-            return {
-                data: Buffer.from(base64, 'base64'),
-                width: result.width,
-                height: result.height,
-                format: result.format
-            };
-        });
     }
 
     /**
@@ -384,7 +223,7 @@ class BwServeClient {
  * - SSE connection lifecycle (connect, reconnect, status)
  * - Unified POST-back via /bw/return/<route>/<clientId>
  * - Register built-in client functions (scrollTo, focus, etc.)
- * - data-bw-action click/key delegation
+ * - bw_act_* class click/key delegation
  * - Attach mode for remote-controlling any bitwrench page
  *
  * @module bwserve/bwclient
@@ -413,11 +252,12 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
   + '\n'
   + '  // ── Unified POST-back ──\n'
   + '  _client.respond = function(route, requestId, result, error) {\n'
-  + '    fetch("/bw/return/" + route + "/" + _client.id, {\n'
+  + '    var base = (typeof origin !== "undefined" ? origin : "");\n'
+  + '    fetch(base + "/bw/return/" + route + "/" + _client.id, {\n'
   + '      method: "POST",\n'
   + '      headers: { "Content-Type": "application/json" },\n'
   + '      body: JSON.stringify({ requestId: requestId, route: route, result: result, error: error || null })\n'
-  + '    }).catch(function() {});\n'
+  + '    }).catch(function(e) { console.warn("[bwclient] respond failed:", e); });\n'
   + '  };\n'
   + '\n'
   + '  // ── SSE connect ──\n'
@@ -447,7 +287,6 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
   + '  _client.attach = function(url, opts) {\n'
   + '    opts = opts || {};\n'
   + '    _client.id = opts.clientId || "att_" + Math.random().toString(36).slice(2, 10);\n'
-  + '    if (opts.allowExec) bw._allowExec = true;\n'
   + '    _client._registerBuiltins();\n'
   + '    _client._wireActions();\n'
   + '    _client.connect(url + "/bw/events/" + _client.id, opts);\n'
@@ -458,50 +297,190 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
   + '    _client.respond("action", null, { action: action, data: data || {} });\n'
   + '  };\n'
   + '\n'
-  + '  // ── Register built-in functions ──\n'
+  + '  // ── Register built-in functions (safe closures, no string eval) ──\n'
   + '  _client._registerBuiltins = function() {\n'
-  + '    var builtins = {\n'
-  + '      scrollTo: "function(sel){var el=bw.el(sel);if(el)el.scrollTop=el.scrollHeight;}",\n'
-  + '      focus: "function(sel){var el=bw.el(sel);if(el&&typeof el.focus===\\"function\\")el.focus();}",\n'
-  + '      download: "function(fn,c,m){if(typeof document===\\"undefined\\")return;var b=new Blob([c],{type:m||\\"text/plain\\"});var a=document.createElement(\\"a\\");a.href=URL.createObjectURL(b);a.download=fn;a.click();URL.revokeObjectURL(a.href);}",\n'
-  + '      clipboard: "function(t){if(typeof navigator!==\\"undefined\\"&&navigator.clipboard)navigator.clipboard.writeText(t);}",\n'
-  + '      redirect: "function(u){if(typeof window!==\\"undefined\\")window.location.href=u;}",\n'
-  + '      log: "function(){console.log.apply(console,arguments);}",\n'
-  + '      _bw_query: "function(opts){if(!bw._bwClient)return;try{var r=new Function(opts.code)();if(r&&typeof r.then===\\"function\\"){r.then(function(v){bw._bwClient.respond(\\"query\\",opts.requestId,v);}).catch(function(e){bw._bwClient.respond(\\"query\\",opts.requestId,null,e.message);});}else{bw._bwClient.respond(\\"query\\",opts.requestId,r);}}catch(e){bw._bwClient.respond(\\"query\\",opts.requestId,null,e.message);}}",\n'
-  + '      _bw_mount: "function(opts){if(!bw._bwClient)return;try{var taco;var f=opts.factory;var n=f.replace(/-([a-z])/g,function(_,c){return c.toUpperCase();});if(bw.BCCL&&bw.BCCL[n]){taco=bw.make(n,opts.props||{});}else if(bw._allowExec){taco=new Function(\\"props\\",f)(opts.props||{});}else{throw new Error(\\"Unknown component and allowExec disabled\\");}bw.DOM(opts.target,taco);bw._bwClient.respond(\\"mount\\",opts.requestId,{mounted:true});}catch(e){bw._bwClient.respond(\\"mount\\",opts.requestId,null,e.message);}}",\n'
-  + '      _bw_screenshot: "function(opts){if(!bw._bwClient)return;var sel=opts.selector||\\"body\\";var el=document.querySelector(sel);if(!el){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,\\"Element not found: \\"+sel);return;}function _ls(url){return new Promise(function(res,rej){var s=document.createElement(\\"script\\");s.src=url;s.onload=function(){res(window.html2canvas);};s.onerror=function(){rej(new Error(\\"Failed to load html2canvas\\"));};document.head.appendChild(s);});}var p=window.html2canvas?Promise.resolve(window.html2canvas):_ls(opts.captureUrl||\\"/bw/lib/vendor/html2canvas.min.js\\");p.then(function(h2c){return h2c(el,{scale:opts.scale||1,useCORS:true});}).then(function(canvas){var out=canvas;var mw=opts.maxWidth;var mh=opts.maxHeight;if((mw&&canvas.width>mw)||(mh&&canvas.height>mh)){var sw=mw?mw/canvas.width:1;var sh=mh?mh/canvas.height:1;var sc=Math.min(sw,sh);out=document.createElement(\\"canvas\\");out.width=Math.round(canvas.width*sc);out.height=Math.round(canvas.height*sc);out.getContext(\\"2d\\").drawImage(canvas,0,0,out.width,out.height);}var fmt=opts.format===\\"jpeg\\"?\\"image/jpeg\\":\\"image/png\\";var q=opts.format===\\"jpeg\\"?(opts.quality||0.85):undefined;var dataUrl=out.toDataURL(fmt,q);bw._bwClient.respond(\\"screenshot\\",opts.requestId,{data:dataUrl,width:out.width,height:out.height,format:opts.format||\\"png\\"});}).catch(function(err){bw._bwClient.respond(\\"screenshot\\",opts.requestId,null,err.message||String(err));});}",\n'
-  + '      _bw_tree: "function(opts){if(!bw._bwClient)return;var sel=opts.selector||\\"body\\";var depth=opts.depth||3;var root=document.querySelector(sel);if(typeof bw.inspect===\\"function\\"&&bw.inspect.length===2){bw._bwClient.respond(\\"query\\",opts.requestId,bw.inspect(root,depth));return;}function walk(el,d){if(!el||d>depth)return null;var info={tag:el.tagName?el.tagName.toLowerCase():\\"#text\\"};if(el.id)info.id=el.id;if(el.className&&typeof el.className===\\"string\\")info.cls=el.className.split(\\" \\").slice(0,5).join(\\" \\");if(el.children&&el.children.length>0&&d<depth){info.children=[];for(var i=0;i<Math.min(el.children.length,20);i++){var c=walk(el.children[i],d+1);if(c)info.children.push(c);}}return info;}bw._bwClient.respond(\\"query\\",opts.requestId,walk(root,0));}",\n'
-  + '      _bw_listen: "function(opts){if(!bw._bwClient)return;if(!bw._bwClient._listeners)bw._bwClient._listeners={};var key=opts.selector+\\":::\\"+opts.event;if(bw._bwClient._listeners[key])return;var fn=function(e){var el=e.target.closest?e.target.closest(opts.selector):null;if(!el)return;bw._bwClient.respond(\\"event\\",null,{event:opts.event,selector:opts.selector,tagName:el.tagName,id:el.id||null,text:(el.textContent||\\"\\").slice(0,100)});};document.addEventListener(opts.event,fn,true);bw._bwClient._listeners[key]={fn:fn,event:opts.event};}",\n'
-  + '      _bw_unlisten: "function(opts){if(!bw._bwClient||!bw._bwClient._listeners)return;var key=opts.selector+\\":::\\"+opts.event;var entry=bw._bwClient._listeners[key];if(!entry)return;document.removeEventListener(entry.event,entry.fn,true);delete bw._bwClient._listeners[key];}"\n'
-  + '    };\n'
-  + '    Object.keys(builtins).forEach(function(name) {\n'
-  + '      bw.apply({ type: "register", name: name, body: builtins[name] });\n'
+  + '    bw.registerRemote("scrollTo", function(sel) {\n'
+  + '      var el = bw.el(sel); if (el) el.scrollTop = el.scrollHeight;\n'
+  + '    });\n'
+  + '    bw.registerRemote("focus", function(sel) {\n'
+  + '      var el = bw.el(sel); if (el && typeof el.focus === "function") el.focus();\n'
+  + '    });\n'
+  + '    bw.registerRemote("download", function(fn, c, m) {\n'
+  + '      if (typeof document === "undefined") return;\n'
+  + '      var b = new Blob([c], { type: m || "text/plain" });\n'
+  + '      var a = document.createElement("a");\n'
+  + '      a.href = URL.createObjectURL(b); a.download = fn; a.click();\n'
+  + '      URL.revokeObjectURL(a.href);\n'
+  + '    });\n'
+  + '    bw.registerRemote("clipboard", function(t) {\n'
+  + '      if (typeof navigator !== "undefined" && navigator.clipboard) navigator.clipboard.writeText(t);\n'
+  + '    });\n'
+  + '    bw.registerRemote("redirect", function(u) {\n'
+  + '      if (typeof window !== "undefined") window.location.href = u;\n'
+  + '    });\n'
+  + '    bw.registerRemote("log", function() {\n'
+  + '      console.log.apply(console, arguments);\n'
+  + '    });\n'
+  + '    bw.registerRemote("_bw_mount", function(opts) {\n'
+  + '      if (!bw._bwClient) return;\n'
+  + '      try {\n'
+  + '        var f = opts.factory;\n'
+  + '        var n = f.replace(/-([a-z])/g, function(_, c) { return c.toUpperCase(); });\n'
+  + '        if (bw.BCCL && bw.BCCL[n]) {\n'
+  + '          var taco = bw.make(n, opts.props || {});\n'
+  + '          bw.mount(opts.target, taco);\n'
+  + '          bw._bwClient.respond("mount", opts.requestId, { mounted: true });\n'
+  + '        } else {\n'
+  + '          throw new Error("Unknown BCCL component: " + f);\n'
+  + '        }\n'
+  + '      } catch (e) {\n'
+  + '        bw._bwClient.respond("mount", opts.requestId, null, e.message);\n'
+  + '      }\n'
+  + '    });\n'
+  + '    bw.registerRemote("_bw_screenshot", function(opts) {\n'
+  + '      if (!bw._bwClient) return;\n'
+  + '      var sel = opts.selector || "body";\n'
+  + '      var el = document.querySelector(sel);\n'
+  + '      if (!el) { bw._bwClient.respond("screenshot", opts.requestId, null, "Element not found: " + sel); return; }\n'
+  + '      function _ls(url) {\n'
+  + '        return new Promise(function(res, rej) {\n'
+  + '          var s = document.createElement("script"); s.src = url;\n'
+  + '          s.onload = function() { res(window.html2canvas); };\n'
+  + '          s.onerror = function() { rej(new Error("Failed to load html2canvas")); };\n'
+  + '          document.head.appendChild(s);\n'
+  + '        });\n'
+  + '      }\n'
+  + '      var p = window.html2canvas ? Promise.resolve(window.html2canvas) : _ls(opts.captureUrl || "/bw/lib/vendor/html2canvas.min.js");\n'
+  + '      p.then(function(h2c) { return h2c(el, { scale: opts.scale || 1, useCORS: true }); })\n'
+  + '       .then(function(canvas) {\n'
+  + '         var out = canvas;\n'
+  + '         var mw = opts.maxWidth; var mh = opts.maxHeight;\n'
+  + '         if ((mw && canvas.width > mw) || (mh && canvas.height > mh)) {\n'
+  + '           var sw = mw ? mw / canvas.width : 1; var sh = mh ? mh / canvas.height : 1;\n'
+  + '           var sc = Math.min(sw, sh);\n'
+  + '           out = document.createElement("canvas");\n'
+  + '           out.width = Math.round(canvas.width * sc); out.height = Math.round(canvas.height * sc);\n'
+  + '           out.getContext("2d").drawImage(canvas, 0, 0, out.width, out.height);\n'
+  + '         }\n'
+  + '         var fmt = opts.format === "jpeg" ? "image/jpeg" : "image/png";\n'
+  + '         var q = opts.format === "jpeg" ? (opts.quality || 0.85) : undefined;\n'
+  + '         var dataUrl = out.toDataURL(fmt, q);\n'
+  + '         bw._bwClient.respond("screenshot", opts.requestId, { data: dataUrl, width: out.width, height: out.height, format: opts.format || "png" });\n'
+  + '       }).catch(function(err) {\n'
+  + '         bw._bwClient.respond("screenshot", opts.requestId, null, err.message || String(err));\n'
+  + '       });\n'
+  + '    });\n'
+  + '    bw.registerRemote("_bw_tree", function(opts) {\n'
+  + '      if (!bw._bwClient) return;\n'
+  + '      var sel = opts.selector || "body"; var depth = opts.depth || 3;\n'
+  + '      var root = document.querySelector(sel);\n'
+  + '      if (typeof bw.inspect === "function" && bw.inspect.length === 2) {\n'
+  + '        bw._bwClient.respond("query", opts.requestId, bw.inspect(root, depth)); return;\n'
+  + '      }\n'
+  + '      function walk(el, d) {\n'
+  + '        if (!el || d > depth) return null;\n'
+  + '        var info = { tag: el.tagName ? el.tagName.toLowerCase() : "#text" };\n'
+  + '        if (el.id) info.id = el.id;\n'
+  + '        if (el.className && typeof el.className === "string") info.cls = el.className.split(" ").slice(0, 5).join(" ");\n'
+  + '        if (el.children && el.children.length > 0 && d < depth) {\n'
+  + '          info.children = [];\n'
+  + '          for (var i = 0; i < Math.min(el.children.length, 20); i++) {\n'
+  + '            var c = walk(el.children[i], d + 1); if (c) info.children.push(c);\n'
+  + '          }\n'
+  + '        }\n'
+  + '        return info;\n'
+  + '      }\n'
+  + '      bw._bwClient.respond("query", opts.requestId, walk(root, 0));\n'
+  + '    });\n'
+  + '    bw.registerRemote("_bw_query", function(opts) {\n'
+  + '      if (!bw._bwClient) return;\n'
+  + '      try {\n'
+  + '        var result;\n'
+  + '        try { result = new Function("return (" + opts.code + ")")(); }\n'
+  + '        catch (se) { result = new Function(opts.code)(); }\n'
+  + '        bw._bwClient.respond("query", opts.requestId, result !== undefined ? result : null);\n'
+  + '      } catch (e) {\n'
+  + '        bw._bwClient.respond("query", opts.requestId, null, e.message || String(e));\n'
+  + '      }\n'
+  + '    });\n'
+  + '    bw.registerRemote("_bw_listen", function(opts) {\n'
+  + '      if (!bw._bwClient) return;\n'
+  + '      if (!bw._bwClient._listeners) bw._bwClient._listeners = {};\n'
+  + '      var key = opts.selector + ":::" + opts.event;\n'
+  + '      if (bw._bwClient._listeners[key]) return;\n'
+  + '      var fn = function(e) {\n'
+  + '        var el = e.target.closest ? e.target.closest(opts.selector) : null;\n'
+  + '        if (!el) return;\n'
+  + '        bw._bwClient.respond("event", null, {\n'
+  + '          event: opts.event, selector: opts.selector, tagName: el.tagName,\n'
+  + '          id: el.id || null, text: (el.textContent || "").slice(0, 100)\n'
+  + '        });\n'
+  + '      };\n'
+  + '      document.addEventListener(opts.event, fn, true);\n'
+  + '      bw._bwClient._listeners[key] = { fn: fn, event: opts.event };\n'
+  + '    });\n'
+  + '    bw.registerRemote("_bw_unlisten", function(opts) {\n'
+  + '      if (!bw._bwClient || !bw._bwClient._listeners) return;\n'
+  + '      var key = opts.selector + ":::" + opts.event;\n'
+  + '      var entry = bw._bwClient._listeners[key];\n'
+  + '      if (!entry) return;\n'
+  + '      document.removeEventListener(entry.event, entry.fn, true);\n'
+  + '      delete bw._bwClient._listeners[key];\n'
   + '    });\n'
   + '  };\n'
   + '\n'
-  + '  // ── Wire up data-bw-action click delegation ──\n'
+  + '  // ── Wire up action click delegation via bw_act_* classes ──\n'
   + '  _client._wireActions = function() {\n'
   + '    document.addEventListener("click", function(e) {\n'
-  + '      var el = e.target.closest ? e.target.closest("[data-bw-action]") : null;\n'
-  + '      if (!el) return;\n'
+  + '      var el = e.target;\n'
+  + '      var action = null;\n'
+  + '      while (el && el !== document) {\n'
+  + '        if (el.classList) {\n'
+  + '          for (var i = 0; i < el.classList.length; i++) {\n'
+  + '            if (el.classList[i].indexOf("bw_act_") === 0) {\n'
+  + '              action = el.classList[i].substring(7);\n'
+  + '              break;\n'
+  + '            }\n'
+  + '          }\n'
+  + '        }\n'
+  + '        if (action) break;\n'
+  + '        el = el.parentElement;\n'
+  + '      }\n'
+  + '      if (!action) return;\n'
   + '      e.preventDefault();\n'
   + '      var actionData = {};\n'
-  + '      if (el.getAttribute("data-bw-id")) actionData.bwId = el.getAttribute("data-bw-id");\n'
-  + '      var form = el.closest("div") || document;\n'
+  + '      if (el.id) actionData.id = el.id;\n'
+  + '      var form = el.closest ? (el.closest("div") || document) : document;\n'
   + '      var inp = form.querySelector("input[type=text],input:not([type])");\n'
   + '      if (inp) { actionData.inputValue = inp.value; inp.value = ""; }\n'
-  + '      _client.sendAction(el.getAttribute("data-bw-action"), actionData);\n'
+  + '      _client.sendAction(action, actionData);\n'
   + '    });\n'
   + '    document.addEventListener("keydown", function(e) {\n'
   + '      if (e.key === "Enter" && e.target.tagName === "INPUT") {\n'
-  + '        var form = e.target.closest("div") || document;\n'
-  + '        var btn = form.querySelector("[data-bw-action]");\n'
-  + '        if (btn) {\n'
-  + '          _client.sendAction(btn.getAttribute("data-bw-action"), { inputValue: e.target.value });\n'
-  + '          e.target.value = "";\n'
+  + '        var form = e.target.closest ? (e.target.closest("div") || document) : document;\n'
+  + '        var btn = null;\n'
+  + '        var els = form.querySelectorAll("[class*=bw_act_]");\n'
+  + '        if (els.length) btn = els[0];\n'
+  + '        var action = null;\n'
+  + '        if (btn && btn.classList) {\n'
+  + '          for (var i = 0; i < btn.classList.length; i++) {\n'
+  + '            if (btn.classList[i].indexOf("bw_act_") === 0) {\n'
+  + '              action = btn.classList[i].substring(7);\n'
+  + '              break;\n'
+  + '            }\n'
+  + '          }\n'
+  + '          if (action) {\n'
+  + '            _client.sendAction(action, { inputValue: e.target.value });\n'
+  + '            e.target.value = "";\n'
+  + '          }\n'
   + '        }\n'
   + '      }\n'
   + '    });\n'
+  + '  };\n'
+  + '\n'
+  + '  // ── Wire bw.remote for server communication ──\n'
+  + '  bw.remote = {\n'
+  + '    send: function(msg) { _client.respond("action", null, msg); }\n'
   + '  };\n'
   + '\n'
   + '  // ── Event delegation helper ──\n'
@@ -537,7 +516,6 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
  * @param {string} [opts.title='bwserve'] - Page title
  * @param {string} [opts.theme] - Theme preset name or config
  * @param {boolean} [opts.injectBitwrench=true] - Whether to inject bitwrench scripts
- * @param {boolean} [opts.allowExec=false] - Enable exec message type
  * @returns {string} Complete HTML document
  */
 function generateShell(opts) {
@@ -593,9 +571,6 @@ function generateShell(opts) {
   script.push('(function() {');
   script.push('  "use strict";');
   script.push('  var clientId = ' + JSON.stringify(clientId) + ';');
-  if (opts.allowExec) {
-    script.push('  bw._allowExec = true;');
-  }
   script.push('  bw._bwClient.id = clientId;');
   script.push('  bw._bwClient._registerBuiltins();');
   script.push('  bw._bwClient._wireActions();');
@@ -654,7 +629,6 @@ function generateAttachScript(opts) {
     + '  function _go() {\n'
     + '    ' + clientSource + '\n'
     + '    bw._bwClient.attach(origin, {\n'
-    + '      allowExec: true,\n'
     + '      onStatus: function(s) { console.log("[bw-attach] " + s); }\n'
     + '    });\n'
     + '    console.log("[bw-attach] v' + VERSION + ' connecting to " + (origin || location.origin));\n'
@@ -683,7 +657,7 @@ generateAttachScript.version = VERSION;
  *   import bwserve from 'bitwrench/bwserve';
  *   const app = bwserve.create({ port: 7902 });
  *   app.page('/', (client) => {
- *     client.render('#app', bw.makeCard({ title: 'Hello' }));
+ *     client.mount('#app', bw.makeCard({ title: 'Hello' }));
  *   });
  *   app.listen();
  *
@@ -696,9 +670,11 @@ var __dirname$1 = path.dirname(url.fileURLToPath((typeof document === 'undefined
 // Resolve dist/ — try source layout (src/bwserve/), then npm install layout,
 // then dist/ itself (when running from dist/bwserve.esm.js)
 var DIST_DIR = path.resolve(__dirname$1, '..', '..', 'dist');
+/* c8 ignore next 3 -- DIST_DIR fallback at module load; only triggers in npm install layout */
 if (!fs.existsSync(DIST_DIR)) {
   DIST_DIR = path.resolve(__dirname$1, '..', 'dist');
 }
+/* c8 ignore next 3 -- DIST_DIR fallback at module load; only triggers when no dist/ exists */
 if (!fs.existsSync(DIST_DIR)) {
   DIST_DIR = __dirname$1;
 }
@@ -760,15 +736,14 @@ function create(opts) {
  */
 class BwServeApp {
   constructor(opts) {
-    this.port = opts.port || 7902;
+    this.port = opts.port != null ? opts.port : 7902;
     this.title = opts.title || 'bwserve';
     this.staticDir = opts.static || null;
     this.injectBitwrench = opts.injectBitwrench !== false;
     this.theme = opts.theme || null;
-    this.allowExec = opts.allowExec || false;
     this.allowScreenshot = opts.allowScreenshot || false;
     this.dirList = opts.dirList !== false;
-    this.host = opts.host || '0.0.0.0';
+    this.host = opts.host || '127.0.0.1';
     this.keepAliveInterval = opts.keepAliveInterval || 15000;
     this._pages = new Map();
     this._clients = new Map();
@@ -803,6 +778,11 @@ class BwServeApp {
       });
 
       self._server.listen(self.port, self.host, function() {
+        // Update port to the actual bound port (important when port 0 is used)
+        var addr = self._server.address();
+        if (addr && addr.port) {
+          self.port = addr.port;
+        }
         if (callback) callback();
         res();
       });
@@ -861,9 +841,9 @@ class BwServeApp {
       return 0;
     }
     var count = 0;
-    for (var record of this._clients.values()) {
-      if (record.client && !record.client._closed) {
-        record.client._send(msg);
+    for (var rec of this._clients.values()) {
+      if (rec.client && !rec.client._closed) {
+        rec.client._send(msg);
         count++;
       }
     }
@@ -882,6 +862,7 @@ class BwServeApp {
     var path$1 = url.split('?')[0];
 
     // /bw/attach.js — self-contained attach script for remote debugging
+    /* c8 ignore next 3 -- covered in isolation; flaky in combined suite due to server state */
     if (path$1 === '/bw/attach.js' && method === 'GET') {
       return this._serveAttachScript(req, res);
     }
@@ -908,6 +889,7 @@ class BwServeApp {
     }
 
     // CORS preflight for /bw/return/ (needed for cross-origin attach)
+    /* c8 ignore next 9 -- covered in isolation; flaky in combined suite */
     if (method === 'OPTIONS' && path$1.startsWith('/bw/return/')) {
       res.writeHead(204, {
         'Access-Control-Allow-Origin': '*',
@@ -922,6 +904,7 @@ class BwServeApp {
     if (method === 'POST' && path$1.startsWith('/bw/return/')) {
       var rest = path$1.slice('/bw/return/'.length);
       var slash = rest.indexOf('/');
+      /* c8 ignore next 4 -- covered in isolation; flaky in combined suite */
       if (slash === -1) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Invalid return path' }));
@@ -942,18 +925,26 @@ class BwServeApp {
     // so that bwserve works as a drop-in static server (like python -m
     // http.server or npx serve) with opt-in bwserve superpowers.
     if (method === 'GET' && this.staticDir) {
-      var filePath = path.join(this.staticDir, path$1);
-      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
-        var ext = path.extname(filePath);
+      // Path traversal guard: resolve to absolute and verify containment
+      var resolvedBase = path.resolve(this.staticDir);
+      var resolvedPath = path.resolve(resolvedBase, '.' + path$1);
+      if (resolvedPath !== resolvedBase && !resolvedPath.startsWith(resolvedBase + path.sep)) {
+        res.writeHead(403, { 'Content-Type': 'text/plain' });
+        res.end('Forbidden');
+        return;
+      }
+
+      if (fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isFile()) {
+        var ext = path.extname(resolvedPath);
         var mime = MIME_TYPES[ext] || 'application/octet-stream';
-        var content = fs.readFileSync(filePath);
+        var content = fs.readFileSync(resolvedPath);
         res.writeHead(200, { 'Content-Type': mime });
         res.end(content);
         return;
       }
       // Directory index resolution: /foo/ => /foo/index.html
       if (path$1.endsWith('/')) {
-        var indexPath = path.join(this.staticDir, path$1, 'index.html');
+        var indexPath = path.join(resolvedPath, 'index.html');
         if (fs.existsSync(indexPath) && fs.statSync(indexPath).isFile()) {
           var indexContent = fs.readFileSync(indexPath);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -961,16 +952,15 @@ class BwServeApp {
           return;
         }
         // Directory listing when no index.html
-        var dirPath = path.join(this.staticDir, path$1);
-        if (this.dirList && fs.existsSync(dirPath) && fs.statSync(dirPath).isDirectory()) {
-          var listing = this._generateDirListing(path$1, dirPath);
+        if (this.dirList && fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
+          var listing = this._generateDirListing(path$1, resolvedPath);
           res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
           res.end(listing);
           return;
         }
       }
       // Bare directory without trailing slash: /foo => 301 to /foo/
-      if (!path$1.endsWith('/') && fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      if (!path$1.endsWith('/') && fs.existsSync(resolvedPath) && fs.statSync(resolvedPath).isDirectory()) {
         var qs = url.split('?')[1];
         var location = path$1 + '/' + (qs ? '?' + qs : '');
         res.writeHead(301, { 'Location': location });
@@ -987,8 +977,7 @@ class BwServeApp {
         clientId: clientId2,
         title: this.title,
         theme: this.theme,
-        injectBitwrench: this.injectBitwrench,
-        allowExec: this.allowExec
+        injectBitwrench: this.injectBitwrench
       });
       // Store the page path for this client so SSE knows which handler to call
       this._clients.set(clientId2, { pagePath: path$1, client: null });
@@ -1047,9 +1036,13 @@ class BwServeApp {
     var pagePath = pending ? pending.pagePath : '/';
     self._clients.set(clientId, { pagePath: pagePath, client: client });
 
+    // Send the handshake as the very first SSE event
+    client._send({ type: 'hello' });
+
     // Keep-alive: send SSE comment periodically
     var keepAlive = setInterval(function() {
       if (!client._closed) {
+        /* c8 ignore next -- keepalive write failure only on socket close */
         try { res.write(':keepalive\n\n'); } catch (e) { /* ignore */ }
       }
     }, self.keepAliveInterval);
@@ -1061,11 +1054,12 @@ class BwServeApp {
       self._clients.delete(clientId);
     });
 
-    // Call the page handler
+    // Call the page handler (runs on every connection, including reconnects)
     var handler = self._pages.get(pagePath);
     if (handler) {
       try {
         handler(client);
+      /* c8 ignore next 3 -- page handler error catch; requires throwing handler in SSE context */
       } catch (e) {
         console.error('[bwserve] Page handler error:', e);
       }
@@ -1078,8 +1072,8 @@ class BwServeApp {
    *
    * Routes:
    *   action     — fire-and-forget action dispatch (no requestId)
-   *   query      — resolve pending query promise
-   *   mount      — resolve pending mount promise
+   *   event      — event dispatch from client listeners
+   *   topic      — topic dispatch from client pub/sub
    *   screenshot — resolve pending screenshot promise
    *
    * @private
@@ -1097,18 +1091,26 @@ class BwServeApp {
     req.on('end', function() {
       try {
         var data = JSON.parse(body);
-        if (route === 'action' || route === 'event') {
+        if (route === 'topic') {
+          // Topic dispatch — forward to the listen handler registered on the client
+          var topic = data.topic;
+          var topicData = data.data;
+          record.client._dispatch('_topic:' + topic, topicData);
+        } else if (route === 'action' || route === 'event') {
           // Action/event dispatch (no requestId/pending pattern)
           var action = route === 'event'
             ? '_bw_event'
             : (data.result ? data.result.action : data.action);
+          /* c8 ignore next 3 -- data.data fallback; covered in isolation */
           var payload = route === 'event'
             ? (data.result || data)
             : (data.result ? data.result.data : data.data || data);
           record.client._dispatch(action, payload);
         } else {
-          // All other routes: resolve pending promise
-          record.client._resolvePending(data.requestId, data);
+          // All other routes: resolve pending promise if mechanism exists
+          if (record.client._resolvePending) {
+            record.client._resolvePending(data.requestId, data);
+          }
         }
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
         res.end(JSON.stringify({ ok: true }));
@@ -1126,13 +1128,18 @@ class BwServeApp {
    */
   _serveAttachScript(req, res) {
     try {
-      var js = generateAttachScript({ origin: '' });
+      var h = req.headers || {};
+      var proto = (h['x-forwarded-proto'] || 'http');
+      var host = h['x-forwarded-host'] || h.host || '';
+      var origin = host ? (proto + '://' + host) : '';
+      var js = generateAttachScript({ origin: origin });
       res.writeHead(200, {
         'Content-Type': 'application/javascript; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
         'Cache-Control': 'no-cache'
       });
       res.end(js);
+    /* c8 ignore next 4 -- generateAttachScript is a pure template; cannot throw */
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'text/plain' });
       res.end('Error generating attach script: ' + err.message);

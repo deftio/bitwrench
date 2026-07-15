@@ -127,7 +127,7 @@
             ['lg', '992px', 'Large devices (desktops)'],
             ['xl', '1200px', 'Extra large devices (wide desktops)']
           ],
-          className: 'bw_table_sm',
+          className: 'bw_bccl_table_sm',
           style: 'margin-bottom: 1rem;'
         }),
         { t: 'div', a: { id: 'tryit-responsive' } }
@@ -243,13 +243,13 @@
             ['Hyphen (canonical)', 'bw_btn, bw_card, bw_table_hover', 'Used in docs, generated CSS, component output'],
             ['Underscore (alias)', 'bw_btn, bw_card, bw_table_hover', 'Convenient in JS objects (no quoting needed)']
           ],
-          className: 'bw_table_sm',
+          className: 'bw_bccl_table_sm',
           style: 'margin-bottom: 1rem;'
         }),
         { t: 'p', c: bw.raw('TACO attribute keys like <code>bw_id</code> and <code>bw_meta</code> use underscores because they\'re plain JS identifiers. CSS classes support both forms — the generated stylesheet includes both selectors automatically.') },
         { t: 'div', a: { style: 'margin-top: 0.5rem;' }, c: site.makeCallout('tip', [
-          { t: 'strong', c: 'bw.normalizeClass():' },
-          bw.raw(' Converts underscore classes to canonical hyphen form at runtime. Useful when comparing or concatenating class strings.')
+          { t: 'strong', c: 'Class naming:' },
+          bw.raw(' All bitwrench CSS classes use underscores (<code>bw_btn</code>, <code>bw_card</code>). This is the only supported form.')
         ]) }
       ]
     };

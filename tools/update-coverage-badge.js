@@ -42,17 +42,25 @@ else color = 'red';
 // Build the badge URL (shields.io static badge)
 const badgeUrl = `https://img.shields.io/badge/coverage-${rounded}%25-${color}.svg`;
 
-// Replace in README
+// Replace in README — handles both markdown ![alt](url) and quikdown <img> formats
 let readme = readFileSync(readmePath, 'utf8');
-const badgeRe = /\[!\[Coverage\]\(https:\/\/img\.shields\.io\/badge\/coverage-[^)]+\)\]/;
+const badgeReMd = /\[!\[Coverage\]\(https:\/\/img\.shields\.io\/badge\/coverage-[^)]+\)\]/;
+const badgeReImg = /src="https:\/\/img\.shields\.io\/badge\/coverage-[^"]+"/;
 
-if (!badgeRe.test(readme)) {
+if (badgeReMd.test(readme)) {
+  const newBadge = `[![Coverage](${badgeUrl})]`;
+  readme = readme.replace(badgeReMd, newBadge);
+} else if (badgeReImg.test(readme)) {
+  readme = readme.replace(badgeReImg, `src="${badgeUrl}"`);
+  // Also update data-qd-src if present
+  const qdSrcRe = /data-qd-src="https:\/\/img\.shields\.io\/badge\/coverage-[^"]+"/;
+  if (qdSrcRe.test(readme)) {
+    readme = readme.replace(qdSrcRe, `data-qd-src="${badgeUrl}"`);
+  }
+} else {
   console.error('  Could not find coverage badge in README.md');
   process.exit(1);
 }
-
-const newBadge = `[![Coverage](${badgeUrl})]`;
-readme = readme.replace(badgeRe, newBadge);
 writeFileSync(readmePath, readme);
 
 console.log(`  Coverage: ${rounded}% (${color})`);

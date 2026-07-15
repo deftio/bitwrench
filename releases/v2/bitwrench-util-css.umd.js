@@ -1,4 +1,4 @@
-/*! bitwrench-util-css v2.0.32 | BSD-2-Clause | https://deftio.github.com/bitwrench/pages */
+/*! bitwrench-util-css v2.1.0 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -227,6 +227,7 @@
   }
 
   // Auto-install if bw is on window (script tag usage)
+  /* c8 ignore next 3 -- module-level auto-install; only runs at import time in browser */
   if (typeof window !== 'undefined' && window.bw) {
     install(window.bw);
   }

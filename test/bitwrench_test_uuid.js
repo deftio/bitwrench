@@ -4,12 +4,12 @@
  * Tests cover:
  * - bw.assignUUID(): basic assign, idempotent, forceNew, creates a.class
  * - bw.getUUID(): from TACO, from DOM element, null when none
- * - createDOM() UUID registration in _nodeMap
+ * - create() UUID registration in _nodeMap
  * - bw.el() class-based fallback for bw_uuid_* tokens
  * - bw.patch() via UUID
  * - bw.apply() via UUID
  * - bw.message() via UUID
- * - bw.cleanup() deregistration
+ * - bw.unmount() deregistration
  * - Loop pattern with forceNew
  * - Edge cases: null, non-object, existing classes
  */
@@ -133,22 +133,22 @@ describe('bw.getUUID()', function() {
     clearNodeMap();
     var taco = { t: 'div', a: { class: 'bw_card' } };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     assert.strictEqual(bw.getUUID(el), uuid);
     el.remove();
   });
 });
 
-describe('createDOM() UUID registration', function() {
+describe('create() UUID registration', function() {
   beforeEach(function() {
     setupDOM();
   });
 
-  it('should register UUID class in _nodeMap during createDOM', function() {
+  it('should register UUID class in _nodeMap during create', function() {
     var taco = { t: 'div' };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     assert.strictEqual(bw._nodeMap[uuid], el, 'element should be cached under UUID');
     el.remove();
@@ -156,7 +156,7 @@ describe('createDOM() UUID registration', function() {
 
   it('should not register non-UUID classes', function() {
     var taco = { t: 'div', a: { class: 'bw_card my_thing' } };
-    bw.createDOM(taco);
+    bw.create(taco);
     assert.strictEqual(bw._nodeMap['bw_card'], undefined);
     assert.strictEqual(bw._nodeMap['my_thing'], undefined);
   });
@@ -170,7 +170,7 @@ describe('bw.el() UUID fallback', function() {
   it('should find element by UUID via _nodeMap cache', function() {
     var taco = { t: 'div' };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     assert.strictEqual(bw.el(uuid), el);
     el.remove();
@@ -179,7 +179,7 @@ describe('bw.el() UUID fallback', function() {
   it('should find element by UUID via class selector fallback', function() {
     var taco = { t: 'div' };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     // Remove from cache to force class-based fallback
     delete bw._nodeMap[uuid];
@@ -197,7 +197,7 @@ describe('bw.patch() via UUID', function() {
   it('should patch content by UUID', function() {
     var taco = { t: 'div', c: 'original' };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     bw.patch(uuid, 'updated');
     assert.strictEqual(el.textContent, 'updated');
@@ -207,7 +207,7 @@ describe('bw.patch() via UUID', function() {
   it('should patch attributes by UUID', function() {
     var taco = { t: 'div', a: { class: 'old' } };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     // bw.patch(id, value, attrName) — attr is the attribute name string
     bw.patch(uuid, '42', 'data-value');
@@ -224,7 +224,7 @@ describe('bw.apply() via UUID', function() {
   it('should apply patch message targeting UUID', function() {
     var taco = { t: 'span', c: '0' };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     var result = bw.apply({
       type: 'patch',
@@ -241,8 +241,8 @@ describe('bw.apply() via UUID', function() {
     var taco2 = { t: 'span', c: 'b' };
     var uuid1 = bw.assignUUID(taco1);
     var uuid2 = bw.assignUUID(taco2);
-    var el1 = bw.createDOM(taco1);
-    var el2 = bw.createDOM(taco2);
+    var el1 = bw.create(taco1);
+    var el2 = bw.create(taco2);
     document.body.appendChild(el1);
     document.body.appendChild(el2);
     bw.apply({
@@ -259,7 +259,7 @@ describe('bw.apply() via UUID', function() {
   });
 });
 
-describe('bw.cleanup() UUID deregistration', function() {
+describe('bw.unmount() UUID deregistration', function() {
   beforeEach(function() {
     setupDOM();
   });
@@ -267,10 +267,10 @@ describe('bw.cleanup() UUID deregistration', function() {
   it('should remove UUID from _nodeMap on cleanup', function() {
     var taco = { t: 'div' };
     var uuid = bw.assignUUID(taco);
-    var el = bw.createDOM(taco);
+    var el = bw.create(taco);
     document.body.appendChild(el);
     assert.ok(bw._nodeMap[uuid], 'UUID should be in cache before cleanup');
-    bw.cleanup(el);
+    bw.unmount(el);
     assert.strictEqual(bw._nodeMap[uuid], undefined, 'UUID should be removed after cleanup');
     el.remove();
   });
@@ -279,11 +279,11 @@ describe('bw.cleanup() UUID deregistration', function() {
     var child = { t: 'span', c: 'child' };
     var childUuid = bw.assignUUID(child);
     var parent = { t: 'div', c: [child] };
-    var parentEl = bw.createDOM(parent);
+    var parentEl = bw.create(parent);
     document.body.appendChild(parentEl);
     assert.ok(bw._nodeMap[childUuid], 'child UUID should be cached');
     // cleanup parent — UUID cleanup scans [class*="bw_uuid_"]
-    bw.cleanup(parentEl);
+    bw.unmount(parentEl);
     // cleanup deregisters UUID classes from all descendants.
     parentEl.remove();
   });

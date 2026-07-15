@@ -1,5 +1,21 @@
 # QA Todo -- v2.0.21+
 
+> **ARCHIVED (2026-07).** This was the working QA checklist for the 2.0.2x
+> line. Status of its major sections at archive time:
+>
+> - **P0 (data-* purge):** done for docs, pages, and examples (verified by
+>   grep -- zero `data-bw-action`/`client.render` hits outside legacy code).
+>   Still open: `src/bwserve/bwclient.js` keeps a `data-bw-action` legacy
+>   dispatch path alongside `bw_act_*`, and `embedded_c/` README + header
+>   still teach `data-bw-action`. Tracked in
+>   `dev/v2.1_release_open_issues.md` (sections 7 and 9).
+> - **P2 (MCP server):** Phase 1 shipped (`bin/bwmcp.js`, `src/mcp/`).
+>   Phases 2-3 are future work.
+> - **P2.7 / P3.x / P4.5 / P5 / P6 and Deferred:** remaining unchecked items
+>   are post-2.1 feature backlog, not release blockers. They are retained
+>   below as the backlog of record; promote individual items to
+>   `dev/future-features.md` or a new working doc when picked up.
+
 
 ## P0: Purge ALL data-* Attributes from Codebase and Docs
 
@@ -165,7 +181,7 @@ Source: `dev/bitwrench-component-lifecycle.md`, `dev/bitwrench_agui_a2ui_feedbac
 ### Should-have (unlocks)
 
 * [x] implement --> SVG namespace support in createDOM (createElementNS for SVG/MathML context)
-* [ ] implement --> Scoped theme toggle: bw.toggleStyles(scopeEl) for container-scoped palette switching
+* [ ] implement --> Scoped theme toggle: bw.toggleThemeMode(scopeEl) for container-scoped palette switching
 
 ### Small wins (from AG-UI/A2UI feedback)
 

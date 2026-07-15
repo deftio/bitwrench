@@ -133,7 +133,7 @@
             data: [
               { File: 'dashboard.html', Purpose: 'The HTML dashboard that runs on the Pico' },
               { File: 'settings.toml', Purpose: 'WiFi credentials template (CircuitPython)' },
-              { File: 'bitwrench.umd.min.js', Purpose: 'bitwrench library (from dist/, ~40 KB gzipped)' }
+              { File: 'bitwrench.umd.min.js', Purpose: 'bitwrench library (from dist/, ~45 KB gzipped)' }
             ],
             columns: [
               { key: 'File', label: 'File' },
@@ -188,7 +188,7 @@
             'mpremote mkdir :www/dist\n' +
             'mpremote cp dashboard.html :www/index.html\n' +
             '\n' +
-            '# Gzip saves flash (~40KB vs ~130KB)\n' +
+            '# Gzip saves flash (~45KB vs ~165KB)\n' +
             'gzip -k ../../dist/bitwrench.umd.min.js\n' +
             'mpremote cp ../../dist/bitwrench.umd.min.js.gz :www/dist/bitwrench.umd.min.js.gz\n' +
             '\n' +
@@ -253,7 +253,7 @@
           callout('concept', 'Why .gz works here',
             'server_circuitpython.py has a dedicated route that serves bitwrench.umd.min.js.gz with ' +
             'Content-Encoding: gzip -- the browser decompresses automatically. ' +
-            'The dashboard requests /dist/bitwrench.umd.min.js but the server sends the smaller .gz file (~40KB vs ~130KB).'
+            'The dashboard requests /dist/bitwrench.umd.min.js but the server sends the smaller .gz file (~45KB vs ~165KB).'
           )
         ]}
       ]

@@ -1,5 +1,9 @@
 # Future Features -- Landscape Comparison and Gap Analysis
 
+> **STALE-CHECK (2026-07):** written pre-2.1 (Mar 2026). Some gaps listed here
+> have since closed (router, MCP server, TypeScript declarations, charts).
+> Re-verify each claim against the current release before acting on it.
+
 Honest assessment of bitwrench vs the 2026 lightweight UI library landscape.
 Not compared against React/Vue/Angular ecosystems (different category entirely).
 Compared against: HTMX, Alpine.js, Lit, Preact, Solid, Svelte, Mithril, Van.js.
@@ -238,6 +242,26 @@ without needing a browser extension.
 Low priority -- browser DevTools + `el.bw` already work well.
 
 
+## 9. TACO Schema Validation (added Jul 2026)
+
+**Landscape:** No mainstream framework can validate UI structure without special
+tooling. JSX needs a compiler plus lint rules; template errors surface at
+runtime. Design systems at large companies enforce component usage through code
+review and custom ESLint plugins.
+
+**The bitwrench angle:** A TACO is plain JSON-compatible data, so it can be
+validated with an ordinary JSON Schema -- no compiler, no custom linter. A
+company could publish a schema for its design system ("cards must have a title,
+buttons must use approved variants, no inline styles in section X") and validate
+UI payloads in CI, at the API boundary, or before a `bw.apply()` -- the same way
+they already validate API responses. Server-driven and agent-generated UI make
+this more valuable: a schema check on the wire is a guardrail no HTML-based
+protocol can offer as cheaply.
+
+**Status:** Idea only -- nothing shipped, no schema file exists yet. First
+concrete step would be publishing a base TACO JSON Schema (t/a/c/o shape,
+attribute typing) that projects could extend.
+
 ## Summary
 
 | # | Feature | Gap? | Priority | Notes |
@@ -250,3 +274,4 @@ Low priority -- browser DevTools + `el.bw` already work well.
 | 6 | Hydration | Mild | Low | bwserve covers most cases; SEO+static is the gap |
 | 7 | Error boundaries | Real | Med | Prevents cascading failures in production |
 | 8 | Dev tooling | Mild | Low | Real DOM is inspectable; bw.inspect() would help |
+| 9 | TACO schema | Opportunity | Med | JSON Schema over TACOs; unique for corp design systems + agent UI |

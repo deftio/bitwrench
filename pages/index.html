@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>bitwrench.js - JavaScript UI Engine</title>
-  <meta name="description" content="UI engine, component library, router, and server push -- all from plain JavaScript objects. Under 45KB, zero dependencies, no build step.">
+  <meta name="description" content="UI engine, component library, router, and server push -- all from plain JavaScript objects. 165KB (45KB gzipped), zero dependencies, no build step.">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
@@ -244,12 +244,12 @@
             { t: 'img', a: { src: '../images/bitwrench-thick-logo.svg', alt: 'bitwrench', class: 'ha_hero_logo' } },
             { t: 'span', a: { class: 'ha_hero_ver' }, c: 'v' + ver }
           ]},
-          { t: 'h1', a: { class: 'ha_hero_tagline' }, c: 'A compact JavaScript UI engine' },
+          { t: 'h1', a: { class: 'ha_hero_tagline' }, c: 'Build web UIs from plain JavaScript objects' },
           { t: 'p', a: { class: 'ha_hero_intro' },
-            c: 'Rendering engine, component library, router, reactive state, theme generator, and server-push streaming -- all from plain JavaScript objects. Zero dependencies, no build step, client and remote debug tools included. Runs everywhere from Arduino/ESP32 to enterprise.'
+            c: 'Bitwrench is a complete UI library in a single script tag. Components, theming, state management, server-driven UI — 45 KB gzipped, zero dependencies, no build step.'
           },
           { t: 'div', a: { class: 'ha_hero_pills' }, c: (function() {
-            var items = ['Rendering Engine', 'Component Library', 'Router', 'Reactive State',
+            var items = ['Rendering Engine', 'Component Library', 'Router', 'Explicit State',
               'Theme Generator', 'Server Push', 'Debugging', 'Embedded / IoT'];
             var out = [];
             items.forEach(function(item, i) {
@@ -339,12 +339,12 @@
 
     function applyThemePreset(th) {
       var newStyles = bw.loadStyles({ primary: th.p, secondary: th.s, tertiary: th.tr });
-      // If switching between light/dark, toggle to the right palette
+      // If switching between light/dark, apply the appropriate palette
       if (th.dark && !currentThemeDark) {
-        bw.toggleStyles();
+        bw.setThemeMode('alternate');
         currentThemeDark = true;
       } else if (!th.dark && currentThemeDark) {
-        bw.toggleStyles();
+        bw.setThemeMode('primary');
         currentThemeDark = false;
       }
       applySiteChromeCSS(newStyles);
@@ -408,7 +408,7 @@
               onclick: function() {
                 var container = bw.$('#ha-toast-box');
                 if (container.length) {
-                  container[0].appendChild(bw.createDOM(
+                  container[0].appendChild(bw.create(
                     bw.makeToast({ title: 'Success', content: 'Operation completed.', variant: 'success', delay: 3000 })
                   ));
                 }
@@ -513,7 +513,7 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How It Works' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
-            c: 'In bitwrench, UI is written as plain JavaScript objects called TACOs -- Tag, Attributes, Content, Options. A button, a table row, or an entire page layout all use the same structure: {t: \'div\', a: {class: \'card\'}, c: \'Hello\'}. TACOs nest and compose like HTML does, so you can build a single widget or a full application from the same building blocks. bitwrench turns TACOs into real HTML -- either as DOM in the browser or as strings on a server -- and provides reactive state, lifecycle hooks, and pub/sub for keeping everything in sync.'
+            c: 'Every UI element is a JavaScript object with four keys: t (tag), a (attributes), c (content), and o (options). Bitwrench calls this shape a TACO. The code on the left produces the result on the right -- no compile step, no JSX, no virtual DOM.'
           },
           { t: 'div', a: { class: 'ha_how_grid' }, c: [
             { t: 'div', c: [
@@ -527,7 +527,7 @@
           ]},
           { t: 'p', a: { style: 'font-size:0.8125rem;color:#555;margin:1rem 0 0;line-height:1.55' },
             c: [
-              'This object format is called TACO (Tag, Attributes, Content, Options). Add state and it becomes reactive. Add handles for imperative control. The built-in components are TACO objects too -- they compose, nest, and render the same way. ',
+              'TACOs nest, compose, and loop with plain JS. Add o.state for stateful components, o.handle for imperative control. The built-in components are TACOs too. ',
               { t: 'a', a: { href: '00-quick-start.html' }, c: 'Quick Start' },
               ' walks through the full progression.'
             ]
@@ -551,7 +551,7 @@
       { title: 'Debugging Tools', href: '11-debugging.html',
         desc: 'Inspect components, trace events, and debug state from a terminal. See what your app is doing without digging through the DOM.' },
       { title: 'Runs Everywhere', href: '09-downloads.html',
-        desc: 'Under 45KB, zero dependencies. Works on Arduino/ESP32, Raspberry Pi, kiosks, air-gapped networks, and enterprise servers alike.' }
+        desc: '165KB on disk (45KB gzipped), zero dependencies. Works on Arduino/ESP32, Raspberry Pi, kiosks, air-gapped networks, and enterprise servers alike.' }
     ];
 
     var capabilitiesSection = {
@@ -579,34 +579,33 @@
     // 5. Page Index
     // =========================================================================
     var pageIndexData = [
-      { category: 'Learn', pages: [
-        { title: 'Quick Start', href: '00-quick-start.html', desc: 'Build your first page in 5 minutes' },
-        { title: 'Thinking in BW', href: 'thinking-in-bitwrench.html', desc: 'The design philosophy behind bitwrench' },
+      { category: 'Start Here', pages: [
+        { title: 'Quick Start', href: '00-quick-start.html', desc: 'Build your first page with TACOs and components' },
         { title: 'Components', href: '01-components.html', desc: 'Every built-in component with live demos' },
         { title: 'Styling', href: '03-styling.html', desc: 'Generate CSS from JavaScript' },
         { title: 'Tables & Forms', href: '02-tables-forms.html', desc: 'Sortable tables, inputs, and validation' },
-        { title: 'State', href: '05-state.html', desc: 'Make components interactive and reactive' },
-        { title: 'HTML Generation', href: '15-html-generation.html', desc: 'Render to strings for emails and static sites' },
-        { title: 'Themes', href: '10-themes.html', desc: 'Generate a full theme from 2-3 colors' }
+        { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' }
       ]},
-      { category: 'Examples', pages: [
+      { category: 'Go Deeper', pages: [
+        { title: 'State', href: '05-state.html', desc: 'Make components interactive and stateful' },
+        { title: 'Themes', href: '10-themes.html', desc: 'Generate a full theme from 2-3 colors' },
         { title: 'Dashboard', href: '04-dashboard.html', desc: 'Full-page app with charts and layout' },
         { title: 'Clock', href: '06-clock.html', desc: 'Real-time clock with live theme switching' },
-        { title: 'Tic-Tac-Toe', href: '06-tic-tac-toe-tutorial.html', desc: 'Step-by-step game tutorial' },
-        { title: 'Comparison', href: '07-framework-comparison.html', desc: 'How bitwrench compares to React, Vue, Svelte' },
-        { title: 'Pages & Routing', href: '15-multi-page-site.html', desc: 'Build multi-page apps with URL routing' }
+        { title: 'Pages & Routing', href: '15-multi-page-site.html', desc: 'Build multi-page apps with URL routing' },
+        { title: 'HTML Generation', href: '15-html-generation.html', desc: 'Render to strings for emails and static sites' }
       ]},
-      { category: 'Server', pages: [
+      { category: 'Server & Tools', pages: [
         { title: 'Server-Driven UI', href: '12-bwserve-protocol.html', desc: 'Push UI updates from Node.js to the browser' },
+        { title: 'Sandbox', href: '14-bwserve-sandbox.html', desc: 'Try server-driven UI in your browser' },
         { title: 'CLI Tool', href: '17-bwcli.html', desc: 'Convert Markdown to styled HTML pages' },
-        { title: 'Sandbox', href: '14-bwserve-sandbox.html', desc: 'Try server-driven UI in your browser' }
+        { title: 'Embedded', href: '20-embedded.html', desc: 'ESP32, Pico W, and more -- web dashboards from microcontrollers' }
       ]},
       { category: 'Reference', pages: [
+        { title: 'Thinking in BW', href: 'thinking-in-bitwrench.html', desc: 'The design philosophy behind bitwrench' },
         { title: 'API Reference', href: '08-api-reference.html', desc: 'Every function with signatures and examples' },
         { title: 'Debugging', href: '11-debugging.html', desc: 'Inspect components and trace events' },
-        { title: 'Code Editor', href: '13-code-editor.html', desc: 'Embeddable syntax-highlighted editor' }
-      ]},
-      { category: 'Downloads', pages: [
+        { title: 'Comparison', href: '07-framework-comparison.html', desc: 'How bitwrench compares to React, Vue, Svelte' },
+        { title: 'Code Editor', href: '13-code-editor.html', desc: 'Embeddable syntax-highlighted editor' },
         { title: 'Builds & CDN', href: '09-downloads.html', desc: 'All download formats and CDN links' }
       ]}
     ];

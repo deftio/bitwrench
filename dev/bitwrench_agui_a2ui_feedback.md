@@ -1,5 +1,9 @@
 # What bitwrench can learn from AG-UI and A2UI
 
+> **STALE-CHECK (2026-07):** pre-2.1 notes. Several suggestions have since
+> shipped (`bw.once`, `bw.catalog`, `bw.formData`); others remain open in the
+> backlog. API names here predate the v2.1 cleanup -- re-verify against `docs/`.
+
 Honest notes from building bitwrench-ag-ui. The goal is "just enough
 to be modern" -- bitwrench's core philosophy (plain JS, zero deps,
 runs everywhere) doesn't change. These are small, additive tweaks

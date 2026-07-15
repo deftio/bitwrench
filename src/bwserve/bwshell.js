@@ -22,7 +22,6 @@ import { VERSION } from '../version.js';
  * @param {string} [opts.title='bwserve'] - Page title
  * @param {string} [opts.theme] - Theme preset name or config
  * @param {boolean} [opts.injectBitwrench=true] - Whether to inject bitwrench scripts
- * @param {boolean} [opts.allowExec=false] - Enable exec message type
  * @returns {string} Complete HTML document
  */
 export function generateShell(opts) {
@@ -78,9 +77,6 @@ export function generateShell(opts) {
   script.push('(function() {');
   script.push('  "use strict";');
   script.push('  var clientId = ' + JSON.stringify(clientId) + ';');
-  if (opts.allowExec) {
-    script.push('  bw._allowExec = true;');
-  }
   script.push('  bw._bwClient.id = clientId;');
   script.push('  bw._bwClient._registerBuiltins();');
   script.push('  bw._bwClient._wireActions();');

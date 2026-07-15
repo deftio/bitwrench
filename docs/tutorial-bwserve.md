@@ -25,7 +25,7 @@ import bwserve from 'bitwrench/bwserve';
 var app = bwserve.create({ port: 7902, title: 'My Dashboard' });
 
 app.page('/', function(client) {
-  client.render('#app', { t: 'h1', c: 'Hello from the server!' });
+  client.mount('#app', { t: 'h1', c: 'Hello from the server!' });
 });
 
 app.listen();
@@ -49,14 +49,14 @@ app.page('/', function(client) {
   var count = 0;
 
   // Render initial UI
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'h1', c: 'Counter' },
       { t: 'div', a: { id: 'count', style: 'font-size: 3rem; text-align: center' }, c: '0' },
       { t: 'div', a: { style: 'text-align: center; margin-top: 1rem' }, c: [
-        { t: 'button', a: { 'data-bw-action': 'decrement', class: 'bw-btn bw-btn-secondary' }, c: '-1' },
-        { t: 'button', a: { 'data-bw-action': 'increment', class: 'bw-btn bw-btn-primary', style: 'margin-left: 0.5rem' }, c: '+1' },
-        { t: 'button', a: { 'data-bw-action': 'reset', class: 'bw-btn', style: 'margin-left: 0.5rem' }, c: 'Reset' }
+        { t: 'button', a: { class: 'bw_act_decrement bw_bccl_btn bw_secondary' }, c: '-1' },
+        { t: 'button', a: { class: 'bw_act_increment bw_bccl_btn bw_primary', style: 'margin-left: 0.5rem' }, c: '+1' },
+        { t: 'button', a: { class: 'bw_act_reset bw_bccl_btn', style: 'margin-left: 0.5rem' }, c: 'Reset' }
       ]}
     ]
   });
@@ -64,25 +64,25 @@ app.page('/', function(client) {
   // Handle button clicks
   client.on('increment', function() {
     count++;
-    client.patch('count', String(count));
+    client.patch('count', { text: String(count) });
   });
 
   client.on('decrement', function() {
     count--;
-    client.patch('count', String(count));
+    client.patch('count', { text: String(count) });
   });
 
   client.on('reset', function() {
     count = 0;
-    client.patch('count', '0');
+    client.patch('count', { text: '0' });
   });
 });
 ```
 
 Key concepts:
-- `data-bw-action="increment"` on the button tells the client to POST `{action: "increment"}` when clicked
+- `class: 'bw_act_increment'` on the button tells the client to POST `{action: "increment"}` when clicked
 - `client.on('increment', fn)` registers a server-side handler for that action
-- `client.patch('count', '0')` sends an SSE message that updates the element with `id="count"`
+- `client.patch('count', { text: '0' })` sends an SSE message that updates the element with `id="count"` using a discriminated fields object
 
 ## Step 3: Add live metrics
 
@@ -101,15 +101,15 @@ app.page('/', function(client) {
     t: 'div', a: { style: 'margin-top: 2rem' }, c: [
       { t: 'h2', c: 'Live Metrics' },
       { t: 'div', a: { style: 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem' }, c: [
-        { t: 'div', a: { class: 'bw-card' }, c: [
+        { t: 'div', a: { class: 'bw_bccl_card' }, c: [
           { t: 'div', a: { style: 'color: #666; font-size: 0.85rem' }, c: 'Uptime' },
           { t: 'div', a: { id: 'uptime', style: 'font-size: 1.5rem; font-weight: 700' }, c: '0s' }
         ]},
-        { t: 'div', a: { class: 'bw-card' }, c: [
+        { t: 'div', a: { class: 'bw_bccl_card' }, c: [
           { t: 'div', a: { style: 'color: #666; font-size: 0.85rem' }, c: 'Memory' },
           { t: 'div', a: { id: 'memory', style: 'font-size: 1.5rem; font-weight: 700' }, c: '--' }
         ]},
-        { t: 'div', a: { class: 'bw-card' }, c: [
+        { t: 'div', a: { class: 'bw_bccl_card' }, c: [
           { t: 'div', a: { style: 'color: #666; font-size: 0.85rem' }, c: 'Requests' },
           { t: 'div', a: { id: 'requests', style: 'font-size: 1.5rem; font-weight: 700' }, c: '0' }
         ]}
@@ -123,16 +123,16 @@ app.page('/', function(client) {
     var mem = Math.round(process.memoryUsage().heapUsed / 1024 / 1024);
 
     client.batch(
-      { type: 'patch', target: 'uptime', content: uptime + 's' },
-      { type: 'patch', target: 'memory', content: mem + ' MB' },
-      { type: 'patch', target: 'requests', content: String(requestCount) }
+      { type: 'patch', ref: 'uptime', text: uptime + 's', v: 1 },
+      { type: 'patch', ref: 'memory', text: mem + ' MB', v: 1 },
+      { type: 'patch', ref: 'requests', text: String(requestCount), v: 1 }
     );
   }, 2000);
 
   // Track actions as requests
-  client.on('increment', function() { count++; requestCount++; client.patch('count', String(count)); });
-  client.on('decrement', function() { count--; requestCount++; client.patch('count', String(count)); });
-  client.on('reset',     function() { count = 0; requestCount++; client.patch('count', '0'); });
+  client.on('increment', function() { count++; requestCount++; client.patch('count', { text: String(count) }); });
+  client.on('decrement', function() { count--; requestCount++; client.patch('count', { text: String(count) }); });
+  client.on('reset',     function() { count = 0; requestCount++; client.patch('count', { text: '0' }); });
 
   // Clean up when client disconnects
   client.on('disconnect', function() {
@@ -169,7 +169,7 @@ Append a scrolling log that records every action:
   // In each handler:
   client.on('increment', function() {
     count++; requestCount++;
-    client.patch('count', String(count));
+    client.patch('count', { text: String(count) });
     logEvent('increment → ' + count);
   });
 ```
@@ -194,7 +194,7 @@ Add a second page:
 
 ```javascript
 app.page('/settings', function(client) {
-  client.render('#app', {
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'h1', c: 'Settings' },
       { t: 'a', a: { href: '/' }, c: 'Back to Dashboard' },
@@ -215,37 +215,38 @@ Browser                              Server (Node.js)
   |  <── HTML shell (bitwrench + SSE)    |
   |                                      |
   |  GET /events/:id (SSE)               |
-  |  <── {type:'replace', target:'#app', |
-  |       node: {t:'div', c:[...]}}      |
+  |  <── {type:'mount', ref:'#app',      |
+  |       taco: {t:'div', c:[...]},      |
+  |       v:1}                           |
   |                                      |
   |  User clicks [+1] button             |
   |  POST /action/:id                    |
   |  {action:'increment', data:{}}  ──>  |
   |                                      |  count++
   |  <── {type:'patch',                  |
-  |       target:'count',                |
-  |       content:'1'}                   |
+  |       ref:'count',                   |
+  |       text:'1', v:1}                 |
   |                                      |
   |  (every 2s)                          |
   |  <── {type:'batch', ops:[            |
-  |       {type:'patch',target:'uptime'} |
-  |       {type:'patch',target:'memory'} |
-  |      ]}                              |
+  |       {type:'patch',ref:'uptime'}    |
+  |       {type:'patch',ref:'memory'}    |
+  |      ], v:1}                         |
 ```
 
 ## Protocol messages
 
 | Type | Method | What it does |
 |------|--------|-------------|
-| `replace` | `client.render(target, taco)` | Replace element content with TACO |
-| `patch` | `client.patch(id, text, attrs)` | Update text/attributes of element |
-| `append` | `client.append(target, taco)` | Add child element |
-| `remove` | `client.remove(target)` | Remove element from DOM |
+| `mount` | `client.mount(ref, taco)` | Mount TACO tree into element |
+| `patch` | `client.patch(ref, fields)` | Update element via discriminated fields (`text`, `attrs`, `css`, etc.) |
+| `append` | `client.append(ref, taco)` | Add child element |
+| `remove` | `client.remove(ref)` | Remove element from DOM |
 | `batch` | `client.batch(op1, op2, ...)` | Multiple ops in one frame |
 | `message` | `client.message(level, text)` | Show notification |
-| `call` | `client.call(name, ...args)` | Invoke registered or built-in function |
-| `exec` | `client.exec(code)` | Run arbitrary JS (requires `allowExec`) |
-| `register` | `client.register(name, body)` | Send named function to client |
+| `call` | `client.call(name, ...args)` | Invoke built-in client-side function |
+
+All messages are stamped `v: 1`.
 
 ### Screenshots
 
@@ -256,7 +257,7 @@ The server can capture what the browser is displaying:
 var app = create({ port: 7902, allowScreenshot: true });
 
 app.page('/', function(client) {
-  client.render('#app', myDashboard);
+  client.mount('#app', myDashboard);
 
   client.on('capture', async function() {
     // Capture the full page as PNG

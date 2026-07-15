@@ -1,0 +1,59 @@
+{
+    "name": "bitwrench",
+    "version": "2.1.0",
+    "description": "Header-only C/C++ library for composing bwserve protocol messages (TACO UI nodes, patch, mount, batch) as relaxed JSON. Enables microcontrollers to serve bitwrench-powered web dashboards via SSE.",
+    "keywords": [
+        "bitwrench",
+        "bwserve",
+        "embedded",
+        "iot",
+        "dashboard",
+        "web-ui",
+        "sse",
+        "server-sent-events",
+        "taco",
+        "json",
+        "esp32",
+        "rp2040",
+        "rp2350",
+        "pico"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/deftio/bitwrench.git"
+    },
+    "authors": [
+        {
+            "name": "M. A. Chatterjee",
+            "email": "deftio@deftio.com",
+            "url": "https://www.deftio.com",
+            "maintainer": true
+        }
+    ],
+    "license": "BSD-2-Clause",
+    "homepage": "https://github.com/deftio/bitwrench",
+    "frameworks": "*",
+    "platforms": "*",
+    "build": {
+        "srcFilter": ["-<*>"],
+        "includeDir": "embedded_c"
+    },
+    "export": {
+        "include": [
+            "embedded_c/*",
+            "src/bitwrench.h",
+            "src/bwserve.h",
+            "examples/embedded/*",
+            "examples/embedded-basic/*",
+            "examples/embedded-imu/*",
+            "examples/embedded-pico-w/*",
+            "library.properties",
+            "keywords.txt",
+            "LICENSE.txt",
+            "README.md"
+        ],
+        "exclude": [
+            "examples/embedded/cmake-demo/build/*"
+        ]
+    }
+}

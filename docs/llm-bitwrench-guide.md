@@ -25,7 +25,7 @@ Start here. This is a complete bitwrench page:
     bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });  // themed colors
 
     bw.DOM('#app', {
-      t: 'div', a: { class: 'bw-container' },
+      t: 'div', a: { class: 'bw_container' },
       c: [
         bw.makeNavbar({ brand: 'My App', items: [{ text: 'Home', href: '#' }] }),
         bw.makeCard({ title: 'Hello', content: 'Built with bitwrench.' }),
@@ -55,9 +55,9 @@ That's it. No build step. No npm install. Open the file in a browser.
 Every UI element is a plain JS object `{t, a, c, o}`:
 
 ```javascript
-{ t: 'div', a: { class: 'card', id: 'x' }, c: 'Hello world' }
+{ t: 'div', a: { class: 'bw_bccl_card', id: 'x' }, c: 'Hello world' }
 //  tag       attributes                      content
-// => <div class="card" id="x">Hello world</div>
+// => <div class="bw_bccl_card" id="x">Hello world</div>
 ```
 
 - `t` -- tag name (defaults to `'div'` if omitted)
@@ -112,17 +112,17 @@ bw.DOM('#app', { t: 'div', c: [
 
 ---
 
-## Step 3: Three Levels
+## Step 3: From Data to DOM
 
-| Level | What | How | When |
-|-------|------|-----|------|
-| **0 -- Data** | Plain JS object | `bw.makeCard({...})` or `{t,a,c}` | Static content, SSR |
-| **1 -- DOM** | Rendered tree | `bw.DOM('#x', taco)` | Re-render on demand |
-| **2 -- Stateful** | Reactive component | `o.state` + `o.render` + `bw.update()` | Interactive UI |
+| Form | What | How | When |
+|------|------|-----|------|
+| **Static TACO** | Plain JS object | `bw.makeCard({...})` or `{t,a,c}` | Static content, SSR |
+| **Mounted TACO** | Rendered tree | `bw.DOM('#x', taco)` | Re-render on demand |
+| **Stateful TACO** | Stateful component | `o.state` + `o.render` + `bw.refresh()` | Interactive UI |
 
-**Most UI should be Level 0.** Escalate only when needed.
+**Most UI should be static TACOs.** Escalate only when needed.
 
-### Level 1 -- re-render when data changes
+### Mounted -- re-render when data changes
 
 ```javascript
 var filter = 'all';
@@ -135,20 +135,19 @@ function render() {
 render();
 ```
 
-### Level 2 -- stateful TACO
+### Stateful TACO
 
 ```javascript
 bw.DOM('#app', {
   t: 'div',
   o: {
     state: { count: 0 },
-    render: function(el) {
-      var s = el._bw_state;
+    render: function(el, state) {
       bw.DOM(el, { t: 'div', c: [
-        { t: 'h3', c: 'Count: ' + s.count },
+        { t: 'h3', c: 'Count: ' + state.count },
         bw.makeButton({ text: '+1', onclick: function() {
-          s.count++;
-          bw.update(el);
+          state.count++;
+          bw.refresh(el);
         }})
       ]});
     }
@@ -156,7 +155,7 @@ bw.DOM('#app', {
 });
 ```
 
-**How it works:** `createDOM()` copies `o.state` to `el._bw_state`, stores `o.render` as `el._bw_render`, calls it immediately. On state change, call `bw.update(el)` to re-invoke render.
+**How it works:** `bw.create()` copies `o.state` to `el._bw_state`, stores `o.render` as `el._bw_render`, calls it immediately. On state change, call `bw.refresh(el)` to re-invoke render.
 
 ---
 
@@ -164,7 +163,7 @@ bw.DOM('#app', {
 
 **Always put event handlers in `a: { onclick: fn }`, never in `o.mounted`.**
 
-When a stateful component re-renders (after `bw.update()`), old DOM children are replaced. Listeners attached via `addEventListener` in `o.mounted` are silently lost.
+When a stateful component re-renders (after `bw.refresh()`), old DOM children are replaced. Listeners attached via `addEventListener` in `o.mounted` are silently lost.
 
 ```javascript
 // CORRECT -- re-attached on every render
@@ -187,7 +186,7 @@ bw.pub('cart:updated', { count: cart.length });
 // Subscriber (auto-cleans when element is removed)
 bw.sub('cart:updated', function(d) {
   el._bw_state.n = d.count;
-  bw.update(el);
+  bw.refresh(el);
 }, el);
 ```
 
@@ -248,10 +247,10 @@ var brand = '#336699', radius = '12px';
 
 ```javascript
 bw.injectCSS(bw.css({
-  '.card': { borderRadius: '12px', padding: '1.5rem', border: '1px solid #ddd' },
-  '.card:hover': { boxShadow: '0 4px 12px rgba(0,0,0,.1)' },
+  '.bw_bccl_card': { borderRadius: '12px', padding: '1.5rem', border: '1px solid #ddd' },
+  '.bw_bccl_card:hover': { boxShadow: '0 4px 12px rgba(0,0,0,.1)' },
   '@keyframes fadeIn': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-  '@media (max-width: 768px)': { '.card': { padding: '0.75rem' } }
+  '@media (max-width: 768px)': { '.bw_bccl_card': { padding: '0.75rem' } }
 }));
 ```
 
@@ -280,7 +279,11 @@ bw.loadStyles({
   harmonize: 0.20       // hue shift semantics toward primary (0-1)
 });
 
-bw.toggleStyles();  // switch primary <=> alternate palette
+// Theme switching: generate both themes and manually re-apply
+var primary = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+var dark = bw.makeStyles({ primary: '#1a1a2e', secondary: '#e94560' });
+bw.applyStyles(primary);  // apply primary theme
+// To switch: bw.applyStyles(dark);
 
 // Or generate separately:
 var theme = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
@@ -329,7 +332,7 @@ bw.u.css('p4 shadow')  // includes your custom token
 
 ## Step 6: BCCL Components
 
-**Bitwrench ships ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return Level 0 TACO objects. Factory dispatcher: `bw.make('card', props)`.
+**Bitwrench ships ready-made components. Check the table below BEFORE writing custom TACO for common UI patterns.** All `bw.make*()` return static TACO objects. Factory dispatcher: `bw.make('card', props)`.
 
 ### Most-Used Components
 
@@ -446,12 +449,12 @@ import bwserve from 'bitwrench/bwserve';
 var app = bwserve.create({ port: 7902, allowScreenshot: true });
 
 app.page('/', function(client) {
-  client.render('#app', myTaco);
+  client.mount('#app', myTaco);
 
   // Capture what the user sees
   var img = await client.screenshot('#app', { maxWidth: 800 });
   // img.data is a Buffer (PNG) -- send to vision model for evaluation
-  // Vision model says "button is too small" => adjust TACO => re-render => screenshot again
+  // Vision model says "button is too small" => adjust TACO => re-mount => screenshot again
 });
 ```
 
@@ -466,31 +469,31 @@ import bwserve from 'bitwrench/bwserve';
 var app = bwserve.create({ port: 7902 });
 
 app.page('/', function(client) {
-  // Render initial UI
-  client.render('#app', {
+  // Mount initial UI
+  client.mount('#app', {
     t: 'div', c: [
       { t: 'h1', c: 'Hello from server' },
       { t: 'p', a: { id: 'status' }, c: 'Connected.' },
-      { t: 'button', a: { 'data-bw-action': 'greet' }, c: 'Say hello' }
+      { t: 'button', a: { class: 'bw_act_greet' }, c: 'Say hello' }
     ]
   });
 
   // Incremental updates
-  client.patch('#status', 'Processing...');
+  client.patch('#status', { text: 'Processing...' });
   client.append('#log', { t: 'p', c: 'New entry' });
   client.remove('.old-item');
 
-  // Handle user actions (data-bw-action elements)
-  client.on('greet', function() { client.patch('#status', 'Hello!'); });
+  // Handle user actions (bw_act_* class elements)
+  client.on('greet', function() { client.patch('#status', { text: 'Hello!' }); });
 
-  // Register + call client-side functions
-  client.register('showAlert', 'function(msg) { alert(msg); }');
-  client.call('showAlert', 'Server says hi!');
+  // Call built-in client-side functions
+  client.call('scrollTo', '#bottom');
+  client.call('focus', '#search-input');
 });
 app.listen();
 ```
 
-**Protocol**: `replace`, `patch`, `append`, `remove`, `batch`, `message`, `register`, `call`, `exec`.
+**Protocol (v2.1)**: `mount`, `patch`, `append`, `remove`, `batch`, `call`, `message`, `listen`, `unlisten`. All messages stamped `v: 1`. Wire fields: `ref` (not `target`), `taco` (not `node`).
 **Language-agnostic**: any server that writes SSE works (Python, Go, Rust, C, shell scripts).
 
 ---
@@ -580,7 +583,7 @@ bwcli serve                                   # dev server (port 7902)
 | Function | Description |
 |----------|-------------|
 | `bw.html(taco)` | TACO to HTML string |
-| `bw.createDOM(taco)` | TACO to detached DOM element |
+| `bw.create(taco)` | TACO to detached DOM element |
 | `bw.DOM(sel, taco)` | Mount TACO into existing element |
 | `bw.mount(sel, taco)` | Like DOM() but returns root element (for el.bw access) |
 | `bw.h(tag, a?, c?, o?)` | TACO constructor from positional args |
@@ -597,20 +600,27 @@ bwcli serve                                   # dev server (port 7902)
 | `bw.loadStyles()` | Load structural CSS (no args) or generate+apply theme (with config) |
 | `bw.makeStyles(cfg)` | Generate styles from seed colors (returns styles object) |
 | `bw.applyStyles(styles)` | Inject generated styles into document |
-| `bw.toggleStyles()` | Switch primary/alternate palettes |
 
 ### State and Lifecycle
 | Function | Description |
 |----------|-------------|
 | `o.state` | Initial state (copied to `el._bw_state`) |
-| `o.render(el, state)` | Render function, called on mount and `bw.update()` |
+| `o.render(el, state)` | Render function, called on mount and `bw.refresh()` |
 | `o.handle` | Methods attached to `el.bw` namespace |
 | `o.slots` | `{name: '.selector'}` => auto `el.bw.setName()`/`el.bw.getName()` |
 | `o.mounted(el)` | After DOM insertion (NOT for event handlers) |
 | `o.unmount(el)` | Before DOM removal |
-| `bw.update(el)` | Re-invoke render function |
+| `bw.refresh(ref)` | Re-invoke render function |
+| `bw.update(ref, data)` | Dispatch to `el.bw.update(data)` |
 | `bw.mount(sel, taco)` | Mount + return root element |
-| `bw.cleanup(el)` | Run unmount hooks, clear subscriptions |
+| `bw.unmount(el)` | Tear down subtree lifecycle |
+| `bw.mountTree(el)` | Register an inserted subtree |
+| `bw.unmountChildren(el)` | Unmount descendants only |
+| `bw.detach(el)` | Keep-alive disconnect |
+| `bw.hydrate(el, taco)` | Wire lifecycle onto existing DOM |
+| `bw.append(target, taco)` | Add child without removing existing |
+| `bw.replace(ref, taco)` | Swap element at DOM position |
+| `bw.remove(ref)` | Unmount + remove from DOM |
 | `bw.patch(id, content)` | Update element by id or UUID |
 | `bw.inspect(el, depth)` | Introspect DOM subtree with bitwrench metadata |
 
@@ -639,9 +649,8 @@ bwcli serve                                   # dev server (port 7902)
 | `bw.escapeHTML(str)` | Escape HTML special chars |
 | `bw.deriveShades(hex)` | 8 shade variants from one color |
 | `bw.textOnColor(hex)` | Contrast-safe text color ('#fff' or '#000') |
-| `bw.random(min, max)` | Random integer (or array variant) |
 | `bw.loremIpsum(n)` | Placeholder text |
-| `bw.parseRJSON(str)` | Relaxed JSON (unquoted keys, trailing commas) |
+| `bw.parseJSONFlex(str)` | Relaxed JSON (single-quoted keys, trailing commas, r-prefix) |
 | `bw.saveClientFile(name, data)` | Browser file download |
 
 ---
@@ -651,12 +660,12 @@ bwcli serve                                   # dev server (port 7902)
 1. **Events in `a: { onclick: fn }`** -- never in `o.mounted`. This is the #1 mistake.
 2. **Call `bw.loadStyles()`** before rendering. Use `bw.loadStyles(config)` for themed colors.
 3. **Content is escaped by default.** Use `bw.raw(str)` for trusted HTML only.
-4. **All `make*()` return Level 0 TACOs** -- pass to `bw.DOM()` or `bw.html()`.
+4. **All `make*()` return static TACOs** -- pass to `bw.DOM()` or `bw.html()`.
 5. **TACO is computation** -- every field is a JS expression. Use variables, `.map()`, ternaries.
 6. **CSS is just strings** -- store in variables, compose with `bw.s()`, generate with `bw.css()`.
-7. **Three levels are explicit** -- you always know if you have data (L0), DOM (L1), or stateful (L2).
+7. **TACO forms are explicit** -- you always know if you have a static TACO, a mounted TACO, or a stateful TACO.
 8. **No raw DOM** -- use `bw.DOM()`, not `innerHTML` or `document.querySelector`.
-9. **CSS classes use `bw-` prefix**: `bw-card`, `bw-btn`, `bw-container`.
+9. **CSS classes use `bw_` prefix**: `bw_bccl_card`, `bw_bccl_btn`, `bw_container`.
 10. **Routing is built in** -- `bw.router()` for SPAs. Hash mode by default, history mode optional.
 11. **Use `bw.mount()` + `el.bw`** for targeted updates. `o.handle` for methods, `o.slots` for content areas. Avoids re-render side effects (lost focus, scroll reset).
 12. **Debug**: `bw.inspect(el, 0)`, `el._bw_state`, `bwcli attach` for remote REPL.
@@ -690,11 +699,12 @@ See [TypeScript Usage Guide](bitwrench_typescript_usage.md) for full details.
 
 ---
 
-## Removed APIs (v2.0.19)
+## Removed APIs (v2.1)
 
-`bw.component()`, `bw.compile()`, `bw.when()`, `bw.each()` -- all throw Error.
+`bw.component()`, `bw.when()`, `bw.each()` -- removed (undefined).
+`bw.compile()` -- throws Error with migration message.
 Replaced by `o.handle` + `o.slots` + `bw.mount()`. See Step 4.
 
 ---
 
-*Bitwrench: 40KB gzipped, zero dependencies, no build step. [github.com/deftio/bitwrench](https://github.com/deftio/bitwrench)*
+*Bitwrench: ~45KB gzipped, zero dependencies, no build step. [github.com/deftio/bitwrench](https://github.com/deftio/bitwrench)*

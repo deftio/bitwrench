@@ -52,7 +52,7 @@ Each boundary crossing has overhead: type marshaling, memory copying, function d
 
 ### An alternative: batch the boundary
 
-A different approach is to cross the boundary **once per render, not once per DOM operation.** The WASM module builds a TACO object (a JSON-serializable data structure) and sends it across the boundary as a single message. The JS-side library materializes the entire tree in one shot using `bw.createDOM()` or `bw.DOM()`.
+A different approach is to cross the boundary **once per render, not once per DOM operation.** The WASM module builds a TACO object (a JSON-serializable data structure) and sends it across the boundary as a single message. The JS-side library materializes the entire tree in one shot using `bw.create()` or `bw.DOM()`.
 
 ```
 WASM side                           JS side (bitwrench)
@@ -72,7 +72,7 @@ Serialize to JSON string            |
 
 100 elements = 1 crossing, not 300+. The DOM operations happen inside JS where they're native function calls with zero marshaling overhead.
 
-For incremental updates, the same principle applies. Instead of diffing an entire virtual tree across the boundary, the WASM module sends a targeted patch message: `{type: 'patch', target: '#counter', content: '42'}`. One crossing, one DOM mutation.
+For incremental updates, the same principle applies. Instead of diffing an entire virtual tree across the boundary, the WASM module sends a targeted patch message: `{v: 1, type: 'patch', ref: '#counter', text: '42'}`. One crossing, one DOM mutation.
 
 ---
 
@@ -117,7 +117,7 @@ The fourth key, `o:`, contains JavaScript-specific concerns: lifecycle hooks (`m
 
 For WASM, this split is a natural fit: the **specification** (what to render) crosses the boundary as data, while the **behavior** (DOM event handling, lifecycle management) stays in JS where DOM access is native.
 
-For cases where the WASM module needs to define behavior, bwserve provides `register` and `call` -- send a function string once, invoke it by name later. This keeps the boundary thin while allowing the WASM side to install client-side logic when needed.
+For cases where the WASM module needs to invoke client-side behavior, bwserve provides `call` -- invoke a named built-in function (e.g., `scrollTo`, `focus`, `download`). Code-bearing verbs (`register`, `exec`) were removed in v2.1; client-side logic should be pre-installed via the JS glue or BCCL component handles.
 
 ---
 
@@ -127,19 +127,18 @@ bwserve is bitwrench's server-driven UI protocol. It was originally designed for
 
 ### The protocol
 
-Nine message types. Five for DOM operations, three for code execution, one for component dispatch:
+All messages are stamped with `v: 1`. The v2.1 protocol has the following verb set (code-bearing verbs `exec`, `register`, and `query` were removed):
 
 | Type | What it does | Example |
 |------|-------------|---------|
-| `replace` | Replace element subtree | `{type:'replace', target:'#app', node:{t:'div', c:'Hello'}}` |
-| `patch` | Update text or attributes | `{type:'patch', target:'counter', content:'42'}` |
-| `append` | Add child element | `{type:'append', target:'#list', node:{t:'li', c:'New'}}` |
-| `remove` | Delete element | `{type:'remove', target:'#old'}` |
-| `batch` | Multiple operations | `{type:'batch', ops:[...]}` |
-| `register` | Send named function | `{type:'register', name:'scroll', body:'function(s){...}'}` |
-| `call` | Invoke function by name | `{type:'call', name:'scroll', args:['#chat']}` |
-| `exec` | Run arbitrary JS | `{type:'exec', code:'document.title="Hi"'}` |
-| `message` | Component dispatch | `{type:'message', target:'#card', action:'setTitle', data:'New'}` |
+| `mount` | Mount TACO at selector | `{v:1, type:'mount', ref:'#app', taco:{t:'div', c:'Hello'}}` |
+| `patch` | Update text or attributes (discriminated fields) | `{v:1, type:'patch', ref:'counter', text:'42'}` |
+| `append` | Add child element | `{v:1, type:'append', ref:'#list', taco:{t:'li', c:'New'}}` |
+| `remove` | Delete element | `{v:1, type:'remove', ref:'#old'}` |
+| `batch` | Multiple operations | `{v:1, type:'batch', ops:[...]}` |
+| `call` | Invoke a named built-in function | `{v:1, type:'call', name:'scrollTo', args:['#chat']}` |
+| `message` | Component dispatch | `{v:1, type:'message', ref:'#card', action:'setTitle', data:'New'}` |
+| `listen` | Subscribe to a pub/sub topic | `{v:1, type:'listen', topic:'bw:lifecycle'}` |
 
 ### The full loop
 
@@ -148,12 +147,12 @@ WASM Module (application)           Browser (display server)
 -------------------------           -----------------------
 State + logic                       bitwrench + bwserve client
   |                                   |
-  |-- replace: full render -------->  bw.apply() -> bw.DOM()
+  |-- mount: full render ---------->  bw.apply() -> bw.mount()
   |-- patch: targeted update ------>  bw.apply() -> bw.patch()
   |-- call: scroll, focus, etc. --->  bw.apply() -> invoke function
   |-- batch: multiple ops --------->  bw.apply() -> sequential
   |                                   |
-  <-- event: {target, type, data} --  subscribed listener fires
+  <-- event: {ref, type, data} ----  subscribed listener fires
   <-- screenshot: PNG buffer -------  html2canvas -> POST-back
 ```
 
@@ -292,7 +291,7 @@ WASM server binary                  Browser
   |                                   |
   |-- GET / -> HTML shell ---------->|
   |-- GET /bw/events -> SSE -------->|
-  |-- SSE: replace/patch/etc ------->| bw.apply() -> DOM
+  |-- SSE: mount/patch/etc -------->| bw.apply() -> DOM
   |<-- POST /bw/return/action -------|
   |<-- POST /bw/return/screenshot ---|
 ```
@@ -319,16 +318,16 @@ use serde_json::json;
 
 fn render_dashboard(state: &AppState) -> String {
     json!({
-        "t": "div", "a": {"class": "bw-container"}, "c": [
+        "t": "div", "a": {"class": "bw_container"}, "c": [
             {"t": "h1", "c": &state.title},
-            {"t": "div", "a": {"class": "bw-row"}, "c": [
+            {"t": "div", "a": {"class": "bw_row"}, "c": [
                 stat_card("Users", &state.users.to_string(), "primary"),
                 stat_card("Revenue", &format!("${}", state.revenue), "success"),
                 stat_card("Orders", &state.orders.to_string(), "info")
             ]},
             {"t": "button", "a": {
                 "id": "refresh-btn",
-                "class": "bw-btn bw-btn-primary"
+                "class": "bw_bccl_btn bw_primary"
             }, "c": "Refresh"}
         ]
     }).to_string()
@@ -336,9 +335,9 @@ fn render_dashboard(state: &AppState) -> String {
 
 fn stat_card(label: &str, value: &str, variant: &str) -> serde_json::Value {
     json!({
-        "t": "div", "a": {"class": format!("bw-stat-card bw-stat-card-{}", variant)}, "c": [
-            {"t": "div", "a": {"class": "bw-stat-card-value"}, "c": value},
-            {"t": "div", "a": {"class": "bw-stat-card-label"}, "c": label}
+        "t": "div", "a": {"class": format!("bw_bccl_stat_card bw_{}", variant)}, "c": [
+            {"t": "div", "a": {"class": "bw_bccl_stat_card_value"}, "c": value},
+            {"t": "div", "a": {"class": "bw_bccl_stat_card_label"}, "c": label}
         ]
     })
 }
@@ -372,22 +371,22 @@ pub fn div(attrs: Value, children: Vec<Value>) -> Value {
 pub fn button(label: &str, id: &str) -> Value {
     json!({
         "t": "button",
-        "a": {"id": id, "class": "bw-btn bw-btn-primary"},
+        "a": {"id": id, "class": "bw_bccl_btn bw_primary"},
         "c": label
     })
 }
 
-// bwserve protocol messages
-pub fn msg_replace(target: &str, node: Value) -> Value {
-    json!({"type": "replace", "target": target, "node": node})
+// bwserve v2.1 protocol messages (all stamped v:1)
+pub fn msg_mount(r: &str, taco: Value) -> Value {
+    json!({"v": 1, "type": "mount", "ref": r, "taco": taco})
 }
 
-pub fn msg_patch(target: &str, content: &str) -> Value {
-    json!({"type": "patch", "target": target, "content": content})
+pub fn msg_patch(r: &str, text: &str) -> Value {
+    json!({"v": 1, "type": "patch", "ref": r, "text": text})
 }
 
 pub fn msg_batch(ops: Vec<Value>) -> Value {
-    json!({"type": "batch", "ops": ops})
+    json!({"v": 1, "type": "batch", "ops": ops})
 }
 ```
 
@@ -397,7 +396,7 @@ With this helper:
 use taco::*;
 
 fn render(state: &AppState) -> String {
-    msg_replace("#app", div(
+    msg_mount("#app", div(
         json!({"class": "container"}),
         vec![
             text("h1", &state.title),
@@ -487,14 +486,14 @@ Standard JSON in C requires escaping every double quote:
 
 ```c
 // Standard JSON -- escape nightmare
-char msg[] = "{\"type\":\"patch\",\"target\":\"temp\",\"content\":\"23.5 C\"}";
+char msg[] = "{\"v\":1,\"type\":\"patch\",\"ref\":\"temp\",\"text\":\"23.5 C\"}";
 ```
 
 Bitwrench's r-prefix format uses single quotes:
 
 ```c
 // r-prefix relaxed JSON -- natural C strings
-char msg[] = "r{'type':'patch','target':'temp','content':'23.5 C'}";
+char msg[] = "r{'v':1,'type':'patch','ref':'temp','text':'23.5 C'}";
 ```
 
 `bw.parseJSONFlex()` on the browser side converts single quotes to double quotes before parsing. The `r` prefix signals the format.
@@ -505,16 +504,16 @@ char msg[] = "r{'type':'patch','target':'temp','content':'23.5 C'}";
 #include <stdio.h>
 #include <string.h>
 
-// Simple TACO builder macros for fixed-size buffers
-#define BW_PATCH(buf, target, content) \
+// Simple TACO builder macros for fixed-size buffers (v2.1 wire protocol)
+#define BW_PATCH(buf, ref, text) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'patch','target':'%s','content':'%s'}", \
-        target, content)
+        "r{'v':1,'type':'patch','ref':'%s','text':'%s'}", \
+        ref, text)
 
-#define BW_REPLACE(buf, target, taco) \
+#define BW_MOUNT(buf, ref, taco) \
     snprintf(buf, sizeof(buf), \
-        "r{'type':'replace','target':'%s','node':%s}", \
-        target, taco)
+        "r{'v':1,'type':'mount','ref':'%s','taco':%s}", \
+        ref, taco)
 
 // TACO builders
 #define TACO_TEXT(buf, tag, text) \
@@ -557,11 +556,11 @@ const char* render() {
     float temp = read_sensor();
 
     snprintf(buf, sizeof(buf),
-        "r{'type':'replace','target':'#app','node':"
+        "r{'v':1,'type':'mount','ref':'#app','taco':"
         "{'t':'div','c':["
             "{'t':'h1','c':'Sensor Dashboard'},"
             "{'t':'p','a':{'id':'temp'},'c':'%.1f C'},"
-            "{'t':'button','a':{'id':'toggle-btn','class':'bw-btn'},"
+            "{'t':'button','a':{'id':'toggle-btn','class':'bw_bccl_btn'},"
                 "'c':'Toggle LED'}"
         "]}}", temp);
 
@@ -601,7 +600,7 @@ AI models typically output structured data -- JSON, function calls, tool use. TA
 {"t": "div", "c": [
   {"t": "h2", "c": "Analysis Results"},
   {"t": "p", "c": "Found 3 anomalies in the dataset."},
-  {"t": "div", "a": {"class": "bw-card"}, "c": [
+  {"t": "div", "a": {"class": "bw_bccl_card"}, "c": [
     {"t": "h3", "c": "Anomaly #1"},
     {"t": "p", "c": "Temperature spike at 14:32 UTC"}
   ]},
@@ -619,7 +618,7 @@ bwserve's screenshot capability closes the loop. The AI generates UI, the browse
 AI Model (WASM)                     Browser
 -----------                         -------
 Generate TACO spec                  |
-  |-- replace: render UI -------->  bw.DOM() -> visible page
+  |-- mount: render UI ---------->  bw.apply() -> visible page
   |                                 |
   |-- screenshot request -------->  html2canvas -> capture
   <-- PNG image data -------------|
@@ -629,7 +628,7 @@ Evaluate screenshot                 |
    text overflow? wrong layout?)    |
   |                                 |
 Generate refined TACO spec          |
-  |-- replace: updated UI ------->  bw.DOM() -> improved page
+  |-- mount: updated UI --------->  bw.apply() -> improved page
 ```
 
 bwserve implements `client.screenshot()` for this purpose -- it sends a `call` message that triggers `html2canvas` on the client, which captures the DOM to a canvas, converts to PNG, and POSTs the image data back to the server. The server resolves a Promise with the image buffer.
@@ -673,10 +672,10 @@ fn agent_step(state: &AgentState) -> Vec<Value> {
     let mut messages = vec![];
 
     // Main content area -- task-specific UI
-    messages.push(msg_replace("#main", render_task_ui(&state.current_task)));
+    messages.push(msg_mount("#main", render_task_ui(&state.current_task)));
 
     // Sidebar -- agent's reasoning visible to user
-    messages.push(msg_replace("#sidebar", render_reasoning_log(&state.log)));
+    messages.push(msg_mount("#sidebar", render_reasoning_log(&state.log)));
 
     // Status bar -- progress and controls
     messages.push(msg_patch("status", &format!(
@@ -730,7 +729,7 @@ One patch message, one DOM mutation. The WASM module communicates what it alread
 
 Desktop UI toolkits (MFC, Swing, Qt, Cocoa) used targeted updates rather than tree diffing. In MFC, `SetWindowText("New Title")` repainted the control's title. In Swing, `label.setText("43")` updated one label. In Qt, signal-slot connections trigger specific updates. The application tracked what changed and told the framework directly.
 
-bitwrench follows the same pattern: `el.bw.setTitle('New')` updates one component, `bw.patch('#counter', '43')` updates one element, `client.patch('counter', '43')` sends one message. The application (or the WASM module) is the source of truth about what changed.
+bitwrench follows the same pattern: `el.bw.setTitle('New')` updates one component, `bw.patch('#counter', '43')` updates one element, `client.patch('counter', {text: '43'})` sends one message. The application (or the WASM module) is the source of truth about what changed.
 
 React's diffing approach solved a real problem -- in large JS applications with shared mutable state, manually tracking dependencies is error-prone. Whether that tradeoff applies to a given WASM application depends on the application's complexity and state management approach.
 
@@ -740,7 +739,7 @@ If your WASM module genuinely doesn't know what changed -- for example, if it re
 
 1. Diff the **data** in WASM (compare old state to new state)
 2. Emit targeted patches for what changed
-3. Or, for small enough UIs, just re-render with `replace` -- `bw.DOM()` is fast enough for most subtrees
+3. Or, for small enough UIs, just re-render with `mount` -- `bw.DOM()` is fast enough for most subtrees
 
 Diffing data in WASM (where you have typed structs and linear memory) is cheaper than diffing virtual DOM trees in JS (where everything is heap-allocated objects with GC pressure).
 
@@ -762,7 +761,7 @@ These are the most direct alternatives. They run a component framework inside WA
 | Accessibility | Manual | Browser-native (real HTML) |
 | Server rendering | Framework-specific SSR | bw.html() or bwserve |
 | Learning curve | Rust + framework | Rust + TACO (4 keys) |
-| Bundle size | ~200KB+ (framework + app) | ~40KB (bitwrench) + app WASM |
+| Bundle size | ~200KB+ (framework + app) | ~45KB (bitwrench) + app WASM |
 
 The fundamental difference is where the component model lives. Yew/Leptos/Dioxus place it in WASM (Rust macros, reactive primitives, virtual DOM). The bitwrench approach places it in JS (TACO rendering, CSS generation, component handles) and uses JSON as the interface between the application language and the renderer.
 
@@ -770,7 +769,7 @@ The fundamental difference is where the component model lives. Yew/Leptos/Dioxus
 
 | Concern | Blazor | bitwrench + WASM |
 |---------|--------|------------------|
-| Runtime payload | 2-5MB (.NET in WASM) | ~40KB (bitwrench) |
+| Runtime payload | 2-5MB (.NET in WASM) | ~45KB (bitwrench) |
 | Component model | Razor templates (.NET) | TACO JSON |
 | DOM access | JS interop bridge | Batched via bw.apply() |
 | Language | C# only | Any (Rust, C, C++, Go, ...) |
@@ -786,7 +785,7 @@ Blazor bundles a language runtime in WASM. The bitwrench approach does not requi
 | Backend | Native process (Rust/Node) | WASM (in-browser or server) |
 | Frontend | You write JS/React/Vue | TACO from any language |
 | Distribution | App store / download | Link sharing |
-| Bundle size | 10-100MB+ | Page weight (~40KB + WASM) |
+| Bundle size | 10-100MB+ | Page weight (~45KB + WASM) |
 
 Tauri and Electron are designed for desktop application distribution. If the UI can be served as a web page, the packaging and distribution step is not needed -- the tradeoff is losing native OS integration (system tray, menus, file system access without permissions).
 
@@ -811,8 +810,8 @@ Canvas-based approaches bypass the browser's built-in UI capabilities. Generatin
 
 - Browser-native UI (real HTML/CSS) from any language that produces JSON
 - Batched boundary crossing -- one message per render, not one per DOM op
-- 9-verb protocol (bwserve) for remote UI control including screenshots
-- ~40KB client library with 30+ components, CSS generation, theming
+- Structured protocol (bwserve, v:1 stamped) for remote UI control including screenshots
+- ~45KB client library with 30+ components, CSS generation, theming
 - No build step on the JS side
 - Same application code can target in-page WASM, Worker, or native server
 - Browser capabilities preserved: accessibility, text selection, CSS layout, forms
@@ -823,7 +822,7 @@ Canvas-based approaches bypass the browser's built-in UI capabilities. Generatin
 
 - **No automatic change detection.** You must know what changed and say so. (This is usually trivial in WASM where you just ran the mutation.)
 - **No type-safe TACO builder in Rust/C** -- you're building JSON. A helper crate/header can add convenience, but there's no compile-time guarantee that your TACO is valid. (bitwrench is lenient -- invalid fields are silently ignored.)
-- **No client-side routing from WASM.** The browser-side `bw.router()` exists for JS, but a WASM server would manage navigation via bwserve's `replace` messages.
+- **No client-side routing from WASM.** The browser-side `bw.router()` exists for JS, but a WASM server would manage navigation via bwserve's `mount` messages.
 - **No two-way data binding.** User events come back as structured messages (element ID, event type, value). You update your state and send a patch. This is the expected pattern for a boundary architecture.
 - **No animation primitives from WASM.** CSS animations and transitions work (they're in the browser), but you'd define them via `bw.css()` on the JS side or in a stylesheet, not from WASM.
 

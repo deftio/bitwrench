@@ -29,8 +29,8 @@ Usage:
 Description:
   Starts a bwserve instance and waits for a browser to connect via the
   drop-in attach script. Once connected, you get an interactive REPL
-  where you can evaluate JS expressions, inspect the DOM, take
-  screenshots, and listen to events — all from your terminal.
+  for inspecting the DOM, mounting components, taking screenshots,
+  and listening to events — all from your terminal.
 
   To connect a page, either:
   1. Add <script src="http://localhost:<port>/bw/attach.js"></script>
@@ -44,7 +44,6 @@ Options:
   -h, --help                 Print this help
 
 REPL Commands:
-  <expression>               Evaluate JS in the connected browser (e.g., document.title)
   /help                      Show command reference
   /quit, /q                  Exit
   /inspect [selector] [depth] Show DOM tree summary (default: body, depth 3)
@@ -55,7 +54,6 @@ REPL Commands:
   /listen <sel> <event>      Start listening for DOM events (e.g., /listen button click)
   /unlisten <sel> <event>    Stop listening for a previously added listener
   /clients                   List connected clients
-  /exec <code>               Execute JS without capturing return value
 
 Examples:
   bwcli attach                            Start on default port 7902
@@ -64,8 +62,6 @@ Examples:
   bwcli attach -v                         Verbose mode (shows protocol)
 
   # In the REPL:
-  bw> document.title
-  bw> bw.$('.bw-card').length
   bw> /inspect #app 2
   bw> /screenshot body page.png
   bw> /listen .bw-btn click
@@ -80,21 +76,7 @@ Examples:
   bw> /listen .bw-btn click
 `.trim();
 
-/**
- * Wrap a JS expression for client.query().
- * Statements (var, let, const, if, for, etc.) are sent as-is.
- * Expressions are wrapped in return() so the result comes back.
- *
- * @param {string} code - User input
- * @returns {string} Code suitable for new Function()
- */
-export function wrapExpression(code) {
-  code = code.trim();
-  if (/^(var |let |const |if |for |while |function |try |switch |throw |class |\{)/.test(code)) {
-    return code;
-  }
-  return 'return (' + code + ')';
-}
+// v2.1: wrapExpression and bare JS eval removed — no code-over-wire.
 
 /**
  * Run the attach subcommand.
@@ -160,7 +142,6 @@ export function startAttach(bwserve, opts) {
   var app = bwserve.create({
     port: opts.port,
     title: 'bwcli attach',
-    allowExec: true,
     allowScreenshot: opts.allowScreenshot
   });
 
@@ -266,33 +247,9 @@ export function startAttach(bwserve, opts) {
       return;
     }
 
-    // JS expression — requires active client
-    if (!activeClient) {
-      console.log('No client connected. Add the attach script to a page first.');
-      safePrompt();
-      return;
-    }
-
-    var code = wrapExpression(line);
-    if (opts.verbose) {
-      console.log('[query] ' + code);
-    }
-
-    activeClient.query(code, { timeout: 10000 }).then(function(result) {
-      if (result !== undefined && result !== null) {
-        try {
-          console.log(typeof result === 'string' ? result : JSON.stringify(result, null, 2));
-        } catch (e) {
-          console.log(String(result));
-        }
-      } else {
-        console.log('undefined');
-      }
-      safePrompt();
-    }).catch(function(err) {
-      console.error('[error] ' + err.message);
-      safePrompt();
-    });
+    // Non-slash input: show hint (no more bare JS eval)
+    console.log('Unknown input. Type /help for available commands.');
+    safePrompt();
   });
 
   rl.on('close', function() {
@@ -417,13 +374,13 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
           break;
         }
       }
-      activeClient.mount(mountSel, mountComp, mountProps, { timeout: 10000 }).then(function() {
-        console.log('Mounted ' + mountComp + ' at ' + mountSel);
-        rl.prompt();
-      }).catch(function(err) {
-        console.error('[error] ' + err.message);
-        rl.prompt();
+      activeClient.call('_bw_mount', {
+        target: mountSel,
+        factory: mountComp,
+        props: mountProps
       });
+      console.log('Mounted ' + mountComp + ' at ' + mountSel);
+      rl.prompt();
       break;
 
     case '/render':
@@ -508,22 +465,6 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
       rl.prompt();
       break;
 
-    case '/exec':
-      if (!activeClient) {
-        console.log('No client connected.');
-        rl.prompt();
-        break;
-      }
-      if (parts.length < 2) {
-        console.log('Usage: /exec <code>');
-        rl.prompt();
-        break;
-      }
-      activeClient.exec(parts.slice(1).join(' '));
-      console.log('Executed.');
-      rl.prompt();
-      break;
-
     default:
       console.log('Unknown command: ' + cmd + '. Type /help for available commands.');
       rl.prompt();
@@ -558,9 +499,6 @@ export function printHelp() {
     '',
     'bwcli attach — REPL Commands',
     '',
-    '  <expression>               Evaluate JS in the browser and print result',
-    '                             Examples: document.title, bw.$(".card").length',
-    '',
     '  /help, /h                  Show this help',
     '  /quit, /q                  Exit',
     '',
@@ -577,7 +515,6 @@ export function printHelp() {
     '  /listen <sel> <event>      Listen for DOM events (prints inline)',
     '                             Example: /listen button click',
     '  /unlisten <sel> <event>    Remove a listener',
-    '  /exec <code>               Execute JS without capturing return value',
     '  /clients                   List connected clients',
     '',
     '  Workflow — build and push a component:',

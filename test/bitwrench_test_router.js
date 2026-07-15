@@ -632,3 +632,409 @@ describe("Router: edge cases", function() {
     assert.strictEqual(document.getElementById('app').textContent, 'OK');
   });
 });
+
+
+// =========================================================================
+// Router: catch-all with param prefix (lines 51-58, 67)
+// =========================================================================
+
+describe("Router: catch-all with param prefix segments", function() {
+  beforeEach(function() { freshDOM(); });
+  var matchRoute = bw._router.matchRoute;
+
+  function routes(obj) {
+    var arr = [];
+    var keys = Object.keys(obj);
+    for (var i = 0; i < keys.length; i++) {
+      arr.push({ pattern: keys[i], handler: obj[keys[i]] });
+    }
+    return arr;
+  }
+
+  var handler = function(p) { return p; };
+
+  it("should match catch-all with :param prefix and extract param (line 56-57)", function() {
+    var r = routes({ '/:section/*': handler });
+    var m = matchRoute(r, '/docs/api/colors');
+    assert.ok(m);
+    assert.strictEqual(m.params.section, 'docs');
+    assert.strictEqual(m.params._rest, 'api/colors');
+  });
+
+  it("should fail catch-all prefix mismatch (line 52, 58-59)", function() {
+    var r = routes({ '/admin/panel/*': handler });
+    var m = matchRoute(r, '/other/thing/stuff');
+    assert.strictEqual(m, null);
+  });
+
+  it("should fail catch-all when fewer segs than prefix (line 52)", function() {
+    var r = routes({ '/admin/panel/*': handler });
+    var m = matchRoute(r, '/admin');
+    assert.strictEqual(m, null);
+  });
+
+  it("should skip catch-all on prefix mismatch and continue (line 67)", function() {
+    var exactHandler = function() { return 'exact'; };
+    var catchHandler = function() { return 'catch'; };
+    var r = routes({ '/wrong/*': catchHandler, '/correct': exactHandler });
+    var m = matchRoute(r, '/correct');
+    assert.ok(m);
+    assert.strictEqual(m.handler(), 'exact');
+  });
+});
+
+
+// =========================================================================
+// Router: before guard returning false (line 107)
+// =========================================================================
+
+describe("Router: before guard returns false", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should block navigation when before returns false (line 107)", function() {
+    var handlerCalled = false;
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/blocked': function() { handlerCalled = true; return { t: 'div', c: 'Blocked' }; }
+      },
+      before: function(to) {
+        if (to === '/blocked') return false;
+      }
+    });
+    bw.navigate('/blocked');
+    assert.strictEqual(handlerCalled, false, "handler should not have been called");
+    assert.strictEqual(document.getElementById('app').textContent, 'Home');
+  });
+});
+
+
+// =========================================================================
+// Router: history mode getPath with base stripping (line 127)
+// =========================================================================
+
+describe("Router: history mode base path stripping", function() {
+  beforeEach(function() { freshDOM('http://localhost/myapp/dashboard'); });
+
+  it("should strip base from pathname in history mode (line 126-127)", function() {
+    var captured = null;
+    bw.router({
+      target: '#app',
+      mode: 'history',
+      base: '/myapp',
+      routes: {
+        '/dashboard': function(params) {
+          captured = 'dashboard';
+          return { t: 'div', c: 'Dashboard' };
+        },
+        '/': function() {
+          captured = 'root';
+          return { t: 'div', c: 'Root' };
+        }
+      }
+    });
+    assert.strictEqual(captured, 'dashboard');
+  });
+});
+
+
+// =========================================================================
+// Router: handleRoute destroyed check (line 134)
+// =========================================================================
+
+describe("Router: handleRoute destroyed check", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should not handle route after destroy (line 134)", function() {
+    var count = 0;
+    var r = bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { count++; return { t: 'div', c: 'Home' }; },
+        '/test': function() { count++; return { t: 'div', c: 'Test' }; }
+      }
+    });
+    assert.strictEqual(count, 1); // initial render
+    r.destroy();
+    // Manually trigger hashchange — should be no-op
+    var evt = new dom.window.Event('hashchange');
+    window.dispatchEvent(evt);
+    assert.strictEqual(count, 1, "count should not have increased after destroy");
+  });
+});
+
+
+// =========================================================================
+// Router: history mode navigate with replace (line 183)
+// =========================================================================
+
+describe("Router: history mode replace navigation", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should use replaceState in history mode with opts.replace (line 189-190)", function() {
+    var r = bw.router({
+      target: '#app',
+      mode: 'history',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/replaced': function() { return { t: 'div', c: 'Replaced' }; }
+      }
+    });
+    r.navigate('/replaced', { replace: true });
+    assert.strictEqual(document.getElementById('app').textContent, 'Replaced');
+    assert.strictEqual(window.location.pathname, '/replaced');
+  });
+});
+
+
+// =========================================================================
+// Router: onHashChange and onPopState destroyed checks (lines 199, 204)
+// =========================================================================
+
+describe("Router: event handlers after destroy", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should ignore hashchange after destroy (line 199)", function() {
+    var count = 0;
+    var r = bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { count++; return { t: 'div', c: 'Home' }; }
+      }
+    });
+    r.destroy();
+    // Fire hashchange manually
+    var evt = new dom.window.Event('hashchange');
+    window.dispatchEvent(evt);
+    assert.strictEqual(count, 1, "should not re-render after destroy");
+  });
+
+  it("should ignore popstate after destroy in history mode (line 204)", function() {
+    var count = 0;
+    var r = bw.router({
+      target: '#app',
+      mode: 'history',
+      routes: {
+        '/': function() { count++; return { t: 'div', c: 'Home' }; }
+      }
+    });
+    r.destroy();
+    var evt = new dom.window.Event('popstate');
+    window.dispatchEvent(evt);
+    assert.strictEqual(count, 1, "should not re-render after destroy in history mode");
+  });
+});
+
+
+// =========================================================================
+// Router: destroy in history mode removes popstate listener (line 225)
+// =========================================================================
+
+describe("Router: destroy in history mode", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should remove popstate listener on destroy (line 233-234)", function() {
+    var r = bw.router({
+      target: '#app',
+      mode: 'history',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/page': function() { return { t: 'div', c: 'Page' }; }
+      }
+    });
+    r.destroy();
+    // Navigate should be no-op after destroy
+    r.navigate('/page');
+    assert.strictEqual(document.getElementById('app').textContent, 'Home');
+  });
+});
+
+
+// =========================================================================
+// Router: bare catch-all /* pattern (line 51 — prefix === '' branch)
+// =========================================================================
+describe("Router: bare catch-all /* pattern (line 51)", function() {
+  var matchRoute = bw._router.matchRoute;
+
+  function routes(obj) {
+    var arr = [];
+    var keys = Object.keys(obj);
+    for (var i = 0; i < keys.length; i++) {
+      arr.push({ pattern: keys[i], handler: obj[keys[i]] });
+    }
+    return arr;
+  }
+
+  var handler = function(p) { return p; };
+
+  it("should match /* catch-all with empty prefix (line 51 true branch)", function() {
+    var r = routes({ '/*': handler });
+    var m = matchRoute(r, '/anything/at/all');
+    assert.ok(m);
+    assert.strictEqual(m.params._rest, 'anything/at/all');
+  });
+
+  it("should match /* for root path", function() {
+    var r = routes({ '/*': handler });
+    var m = matchRoute(r, '/');
+    assert.ok(m);
+    assert.strictEqual(m.params._rest, '');
+  });
+});
+
+
+// =========================================================================
+// Router: base with trailing slash (line 107)
+// =========================================================================
+describe("Router: base with trailing slash (line 107)", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should strip trailing slash from base config", function() {
+    var r = bw.router({
+      target: '#app',
+      mode: 'hash',
+      base: '/myapp/',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; }
+      }
+    });
+    // Should work — the trailing slash is removed internally
+    assert.strictEqual(document.getElementById('app').textContent, 'Home');
+  });
+});
+
+
+// =========================================================================
+// Router: history mode getPath where path equals base exactly (line 127)
+// =========================================================================
+describe("Router: history mode path equals base (line 127 || '/' fallback)", function() {
+  beforeEach(function() { freshDOM('http://localhost/myapp'); });
+
+  it("should normalize to / when pathname equals base exactly", function() {
+    var captured = null;
+    bw.router({
+      target: '#app',
+      mode: 'history',
+      base: '/myapp',
+      routes: {
+        '/': function() {
+          captured = 'root';
+          return { t: 'div', c: 'Root' };
+        }
+      }
+    });
+    // pathname is /myapp, base is /myapp, so p.substring(base.length) = '' -> '/'
+    assert.strictEqual(captured, 'root');
+  });
+});
+
+
+// =========================================================================
+// Router: hash mode navigate to same path (line 183)
+// =========================================================================
+describe("Router: hash mode same-path navigation (line 183)", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should re-render when navigating to same hash (line 183)", function() {
+    var count = 0;
+    var r = bw.router({
+      target: '#app',
+      routes: {
+        '/page': function() { count++; return { t: 'div', c: 'Page ' + count }; }
+      }
+    });
+    r.navigate('/page');
+    var countAfterFirst = count;
+    // Navigate to same path again — should trigger manually since hash won't change
+    r.navigate('/page');
+    assert.ok(count > countAfterFirst, 'should re-render on same-path navigate');
+  });
+});
+
+
+// =========================================================================
+// Router: current() with no matching route (line 225 false branch)
+// =========================================================================
+describe("Router: current() with no matching route (line 225)", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should return empty params when no route matches", function() {
+    var r = bw.router({
+      target: '#app',
+      routes: {
+        '/known': function() { return { t: 'div', c: 'Known' }; }
+      }
+    });
+    // Navigate to an unknown path
+    r.navigate('/unknown-path');
+    var c = r.current();
+    assert.deepStrictEqual(c.params, {}, 'params should be empty when no route matches');
+  });
+});
+
+
+// =========================================================================
+// Router: bw.link() onclick handler invocation (lines 268-269)
+// =========================================================================
+describe("Router: bw.link() onclick handler (lines 268-269)", function() {
+  beforeEach(function() { freshDOM(); });
+
+  it("should call e.preventDefault() and bw.navigate() when link is clicked", function() {
+    var renderCount = 0;
+    var r = bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/about': function() { renderCount++; return { t: 'div', c: 'About' }; }
+      }
+    });
+
+    // Create a link TACO and render it to DOM
+    var linkTaco = bw.link('/about', 'About Us');
+    assert.ok(linkTaco, 'should return a TACO');
+    assert.strictEqual(linkTaco.t, 'a');
+
+    var linkEl = bw.create(linkTaco);
+    document.body.appendChild(linkEl);
+
+    // Simulate click — the onclick handler should call e.preventDefault() and bw.navigate()
+    var preventDefaultCalled = false;
+    var fakeEvent = new window.Event('click', { bubbles: true, cancelable: true });
+    // Override preventDefault to track if it was called
+    var origPreventDefault = fakeEvent.preventDefault.bind(fakeEvent);
+    fakeEvent.preventDefault = function() {
+      preventDefaultCalled = true;
+      origPreventDefault();
+    };
+
+    linkEl.dispatchEvent(fakeEvent);
+
+    assert.ok(preventDefaultCalled, 'should call preventDefault');
+    assert.ok(renderCount > 0, 'should have navigated to /about');
+
+    r.destroy();
+    document.body.removeChild(linkEl);
+  });
+
+  it("should generate link with no active router and still fire onclick (line 264-265)", function() {
+    // Reset active router
+    bw._router.resetActiveRouter();
+
+    var linkTaco = bw.link('/test', 'Test Link');
+    assert.ok(linkTaco);
+    assert.strictEqual(linkTaco.a.href, '/test', 'href should be the raw path when no router');
+
+    // Create and click it — onclick calls bw.navigate which warns but doesn't throw
+    var linkEl = bw.create(linkTaco);
+    document.body.appendChild(linkEl);
+
+    var fakeEvent = new window.Event('click', { bubbles: true, cancelable: true });
+    fakeEvent.preventDefault = function() {};
+    linkEl.dispatchEvent(fakeEvent);
+
+    // Should not throw
+    assert.ok(true, 'clicking link with no active router should not throw');
+    document.body.removeChild(linkEl);
+  });
+});

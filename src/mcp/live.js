@@ -1,5 +1,5 @@
 /**
- * MCP live rendering -- bwserve integration for render_live, screenshot, query_dom.
+ * MCP live rendering -- bwserve integration for render_live, screenshot, inspect_dom.
  *
  * Starts a bwserve instance that serves a shell page. The MCP agent pushes
  * TACO to the browser via SSE, captures screenshots, and queries DOM state.
@@ -34,7 +34,7 @@ export function startLive(opts) {
   // Register the default page handler
   _app.page('/', function(client) {
     // Render an initial placeholder
-    client.render('#app', {
+    client.mount('#app', {
       t: 'div',
       a: { class: 'bw_container', style: 'padding: 2rem; text-align: center; color: #888;' },
       c: { t: 'p', c: 'bwmcp ready -- waiting for agent to render UI...' }
@@ -50,6 +50,7 @@ export function startLive(opts) {
         if (opts.open) {
           import('child_process').then(function(cp) {
             var url = 'http://localhost:' + port;
+            /* c8 ignore next 2 -- platform-dependent; only darwin in CI */
             var cmd = process.platform === 'darwin' ? 'open'
               : process.platform === 'win32' ? 'start' : 'xdg-open';
             cp.exec(cmd + ' ' + url);
@@ -58,6 +59,7 @@ export function startLive(opts) {
 
         resolve(_app);
       });
+    /* c8 ignore next 3 -- defensive catch for synchronous listen errors */
     } catch (e) {
       reject(e);
     }
@@ -129,15 +131,15 @@ export var liveToolDefs = [
     }
   },
   {
-    name: 'query_dom',
-    title: 'Query DOM State',
-    description: 'Execute JavaScript in the browser and return the result. Use this to inspect DOM state, read text content, count elements, etc.',
+    name: 'inspect_dom',
+    title: 'Inspect DOM Tree',
+    description: 'Inspect the DOM tree in the connected browser. Returns a structured tree with tag names, IDs, classes, and children.',
     inputSchema: {
       type: 'object',
       properties: {
-        code: { type: 'string', description: 'JavaScript code to evaluate in the browser. The return value is sent back.' }
-      },
-      required: ['code']
+        selector: { type: 'string', description: 'CSS selector of root element to inspect (default: "body")' },
+        depth: { type: 'number', description: 'Maximum depth to traverse (default: 3)' }
+      }
     }
   }
 ];
@@ -149,7 +151,7 @@ export var liveHandlers = {
     if (!_app) {
       return { content: [{ type: 'text', text: 'Error: bwserve not started. Live rendering not available.' }], isError: true };
     }
-    var client = getClient();
+    getClient();
     var target = args.target || '#app';
     var action = args.action || 'replace';
 
@@ -204,7 +206,7 @@ export var liveHandlers = {
       });
   },
 
-  query_dom: function(args) {
+  inspect_dom: function(args) {
     var client = getClient();
     if (!client) {
       return Promise.resolve({
@@ -213,14 +215,20 @@ export var liveHandlers = {
       });
     }
 
-    return client.query(args.code, { timeout: 5000 })
+    var pend = client._pend(5000);
+    client.call('_bw_tree', {
+      selector: args.selector || 'body',
+      depth: args.depth || 3,
+      requestId: pend.requestId
+    });
+    return pend.promise
       .then(function(result) {
-        var text = typeof result === 'string' ? result : JSON.stringify(result);
+        var text = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
         return { content: [{ type: 'text', text: text }] };
       })
       .catch(function(e) {
         return {
-          content: [{ type: 'text', text: 'Query error: ' + e.message }],
+          content: [{ type: 'text', text: 'Inspect error: ' + e.message }],
           isError: true
         };
       });

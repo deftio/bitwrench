@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "bwserve protocol helpers for embedded Rust (ESP32, no_std compatible)"
 license = "BSD-2-Clause"
-repository = "https://github.com/nicktackes/bitwrench"
+repository = "https://github.com/deftio/bitwrench"
 keywords = ["embedded", "esp32", "sse", "ui"]
 
 [features]

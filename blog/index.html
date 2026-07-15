@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench Blog</title>
+  <meta name="description" content="Stories and how-tos for Bitwrench — embedded UIs, server-driven pages, and UI as data.">
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="../pages/site.js"></script>
+  <script src="blog-posts.js"></script>
+  <script src="blog-nav.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    var styles = initBlogPage('index.html', '..');
+    var p = styles.palette;
+
+    bw.injectCSS(bw.css({
+      '.blog-post-list': {
+        display: 'flex',
+        'flex-direction': 'column',
+        gap: '1rem',
+        'margin-top': '0.5rem'
+      },
+      '.blog-post-card': {
+        display: 'block',
+        'text-decoration': 'none',
+        color: 'inherit',
+        background: p.surface,
+        border: '1px solid ' + p.light.border,
+        'border-radius': '8px',
+        padding: '1.25rem 1.5rem',
+        'box-shadow': '0 1px 3px rgba(0,0,0,0.06)',
+        transition: 'border-color 0.15s, box-shadow 0.15s'
+      },
+      '.blog-post-card:hover': {
+        'border-color': p.primary.base,
+        'box-shadow': '0 2px 8px rgba(0,0,0,0.08)'
+      },
+      '.blog-post-meta': {
+        'font-size': '0.75rem',
+        color: '#666',
+        'margin-bottom': '0.35rem',
+        'letter-spacing': '0.02em'
+      },
+      '.blog-post-card h2': {
+        margin: '0 0 0.4rem',
+        'font-size': '1.2rem',
+        'font-weight': '600',
+        color: p.dark.base
+      },
+      '.blog-post-card p': {
+        margin: '0',
+        'font-size': '0.95rem',
+        'line-height': '1.5',
+        color: p.dark.base
+      },
+      '.blog-badge': {
+        display: 'inline-block',
+        'font-size': '0.65rem',
+        'font-weight': '600',
+        'text-transform': 'uppercase',
+        'letter-spacing': '0.04em',
+        padding: '0.15rem 0.45rem',
+        'border-radius': '4px',
+        'margin-right': '0.5rem',
+        background: p.primary.light,
+        color: p.primary.darkText || p.primary.base
+      },
+      '.blog-badge-draft': {
+        background: '#fef3c7',
+        color: '#92400e'
+      }
+    }), { id: 'blog-index-styles' });
+
+    var posts = window.BLOG_POSTS || [];
+    var postCards = posts.map(function(post) {
+      return {
+        t: 'a',
+        a: { href: post.href, class: 'blog-post-card' },
+        c: [
+          {
+            t: 'div',
+            a: { class: 'blog-post-meta' },
+            c: [
+              {
+                t: 'span',
+                a: {
+                  class: 'blog-badge' + (post.status === 'draft' ? ' blog-badge-draft' : '')
+                },
+                c: post.audience || 'general'
+              },
+              post.date || '',
+              post.status === 'draft' ? ' · draft' : ''
+            ]
+          },
+          { t: 'h2', c: post.title },
+          { t: 'p', c: post.dek }
+        ]
+      };
+    });
+
+    bw.DOM('#app', {
+      t: 'div',
+      c: [
+        site.makePageHeader(
+          'Bitwrench Blog',
+          'How-tos and stories. Docs stay in pages/ — this track is for builds you can finish on a weekend.'
+        ),
+        {
+          t: 'div',
+          a: { class: 'content-container wide' },
+          c: [
+            {
+              t: 'div',
+              a: { class: 'bw_site_pages_demo' },
+              c: [
+                {
+                  t: 'div',
+                  a: { class: 'bw_site_pages_demo_body' },
+                  c: [
+                    {
+                      t: 'p',
+                      a: { class: 'bw_site_pages_demo_desc' },
+                      c: 'First audience: embedded developers. UI as data fits a microcontroller: serve one HTML shell and a ~40KB library from flash, push JSON patches, get button presses back — no cloud required.'
+                    },
+                    {
+                      t: 'div',
+                      a: { class: 'blog-post-list' },
+                      c: postCards.length
+                        ? postCards
+                        : [{ t: 'p', c: 'No posts yet.' }]
+                    },
+                    {
+                      t: 'p',
+                      a: { style: 'margin-top:1.5rem;font-size:0.9rem' },
+                      c: [
+                        'Looking for the API and tutorials? See the ',
+                        {
+                          t: 'a',
+                          a: { href: '../pages/index.html' },
+                          c: 'docs site'
+                        },
+                        ' or clone the repo and read ',
+                        { t: 'code', c: 'docs/' },
+                        '.'
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+  </script>
+</body>
+</html>

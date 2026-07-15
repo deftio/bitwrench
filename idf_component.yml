@@ -1,0 +1,20 @@
+version: "2.1.0"
+description: "Header-only bwserve protocol helpers for serving bitwrench web dashboards from ESP-IDF projects."
+url: "https://github.com/deftio/bitwrench"
+repository: "https://github.com/deftio/bitwrench.git"
+targets:
+  - esp32
+  - esp32s2
+  - esp32s3
+  - esp32c3
+  - esp32c6
+  - esp32h2
+files:
+  exclude:
+    - "**/*"
+  include:
+    - "embedded_c/**/*"
+    - "CMakeLists.txt"
+    - "idf_component.yml"
+    - "LICENSE.txt"
+    - "README.md"

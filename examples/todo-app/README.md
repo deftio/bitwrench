@@ -1,10 +1,9 @@
 # Todo App
 
-Classic reactive todo application with filter bar and pub/sub state management.
+Classic stateful todo application with filter bar and pub/sub state management.
 
 ## What This Demonstrates
 
-- `bw.component()` Level 2 with template bindings
 - `bw.pub()` / `bw.sub()` for `todos:changed` events
 - `bw.makeButton()` with dynamic variant switching (active filter)
 - `bw.makeCheckbox()`, `bw.makeInput()` for form elements
@@ -12,7 +11,7 @@ Classic reactive todo application with filter bar and pub/sub state management.
 
 ## Audience
 
-**Beginner** — The best starting point for understanding bitwrench reactive patterns.
+**Beginner** — The best starting point for understanding bitwrench stateful patterns.
 
 ## Theme
 

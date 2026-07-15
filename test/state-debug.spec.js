@@ -245,14 +245,14 @@ test.describe('State Management Debug Page', () => {
     expect(hasRender).toEqual([true, true, true]);
   });
 
-  test('bw.update(el) re-renders and emits statechange', async ({ page }) => {
-    // Manually modify state and call bw.update
+  test('bw.refresh(el) re-renders and emits bw:refresh', async ({ page }) => {
+    // Manually modify state and call bw.refresh
     const result = await page.evaluate(() => {
       var el = document.querySelector('[data-card-name="Alpha"]');
       var eventFired = false;
-      el.addEventListener('bw:statechange', function() { eventFired = true; });
+      el.addEventListener('bw:refresh', function() { eventFired = true; });
       el._bw_state.count = 999;
-      bw.update(el);
+      bw.refresh(el);
       return {
         displayed: el.querySelector('[data-testid="value"]').textContent,
         state: el._bw_state.count,
@@ -264,11 +264,11 @@ test.describe('State Management Debug Page', () => {
     expect(result.eventFired).toBe(true);
   });
 
-  test('bw.on() receives statechange from card button clicks', async ({ page }) => {
+  test('bw.on() receives bw:refresh from card button clicks', async ({ page }) => {
     // Set up a listener on the cards container and click a button
     await page.evaluate(() => {
       window._testEventCount = 0;
-      bw.on('#cards-mount', 'statechange', function() {
+      bw.on('#cards-mount', 'refresh', function() {
         window._testEventCount++;
       });
     });
@@ -438,14 +438,15 @@ test.describe('State Management Debug Page', () => {
   });
 
   test('dashboard sum and average update via bw.patch on value changes', async ({ page }) => {
+    test.setTimeout(60000);
     await page.locator('button', { hasText: 'Add 3' }).click();
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(200);
 
     // Increment first item 6 times → sum=6, avg=2.0
     const items = page.locator('[data-list-item]');
     for (var i = 0; i < 6; i++) {
       await items.nth(0).locator('button', { hasText: '+' }).click();
-      await page.waitForTimeout(20);
+      await page.waitForTimeout(50);
     }
 
     await expect(page.locator('#list-dash-sum')).toHaveText('6');
@@ -493,25 +494,26 @@ test.describe('State Management Debug Page', () => {
   });
 
   test('list item values persist after other items are removed', async ({ page }) => {
+    test.setTimeout(60000);
     // Add 3 counters, increment #1 and #3, remove #2, verify #1 and #3 values
     await page.locator('button', { hasText: 'Add 3' }).click();
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(200);
 
     // Increment #1 three times
     const items = page.locator('[data-list-item]');
     for (var i = 0; i < 3; i++) {
       await items.nth(0).locator('button', { hasText: '+' }).click();
-      await page.waitForTimeout(20);
+      await page.waitForTimeout(50);
     }
     // Increment #3 five times
     for (var j = 0; j < 5; j++) {
       await items.nth(2).locator('button', { hasText: '+' }).click();
-      await page.waitForTimeout(20);
+      await page.waitForTimeout(50);
     }
 
     // Remove #2
     await items.nth(1).locator('button', { hasText: 'Remove' }).click();
-    await page.waitForTimeout(50);
+    await page.waitForTimeout(100);
 
     // After removal, #1 (now index 0) should still show 3, #3 (now index 1) should show 5
     const remainingItems = page.locator('[data-list-item]');

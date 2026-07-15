@@ -1,0 +1,7 @@
+{
+  "exclude": {
+    "reactive-self": [
+      "docs/bitwrench-northstar-principles.md"
+    ]
+  }
+}

@@ -1,8 +1,14 @@
 # Bitwrench Client-Server Protocol Design
 2026-03-06
 
+> **SUPERSEDED (2026-07).** Pre-implementation design exploration for what
+> became bwserve. The wire protocol described here (`target`/`node`/`content`
+> fields, `exec`, `data-bw-action`) is the old 2.0.x shape; the shipped v2.1
+> protocol (`v:1`, `ref`, `taco`, discriminated patch fields, `bw_act_*`) is
+> documented in `docs/bwserve.md`. Kept for design history only.
+
 ## Status
-Discussion document. Not yet implemented. See also `dev/bitwrench-serve-and-protocol.md` for the original design exploration.
+Discussion document. Not yet implemented. See also `bitwrench-serve-and-protocol.md` (also archived) for the original design exploration.
 
 ## Overview
 

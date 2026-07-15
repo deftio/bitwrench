@@ -49,17 +49,17 @@
   //
   // Architecture:
   //   - Cart state managed via bw.pub('cart:updated') — navbar subscribes
-  //   - Coffee filter uses o.mounted + manual re-render
+  //   - Coffee filter uses inline onclick + manual re-render
   //   - Contact form uses o.state + o.render with status display
   //   - Counter uses o.state + o.render with closures for methods
-  //   - Toast notification system uses bw.createDOM() for append pattern
-  //   - Theme: bw.loadStyles({ '#8B4513', '#D2691E', '#2F4F2F' })
+  //   - Toast notification system uses bw.create() for append pattern
+  //   - Theme: bw.loadStyles({ primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' })
   //
   // Key Patterns to Study:
   //   1. Pub/sub cart: cartAdd() -> bw.pub('cart:updated') -> bw.sub()
-  //   2. o.state + o.render: el._bw_state access + bw.update(el)
+  //   2. o.state + o.render: el._bw_state access + bw.refresh(el)
   //   3. Filter pattern: renderCoffeeSection() re-renders on filter change
-  //   4. Toast append: bw.createDOM() + DOM insertion for transient UI
+  //   4. Toast append: bw.create() + DOM insertion for transient UI
   //   5. Theme tokens: All colors derived from 3 seed hex values
   //
   // No build step. No framework. Just bitwrench.
@@ -240,16 +240,16 @@
     ];
     var FILTERS = ['All', 'Africa', 'Americas', 'Asia', 'Light', 'Medium', 'Dark'];
 
-    // ─── Toast — uses bw.createDOM() for append pattern ─────────────────────
+    // ─── Toast — uses bw.create() for append pattern ─────────────────────
     function toast(title, msg, type) {
       var wraps = bw.$('#eo-toasts');
       var wrap = wraps.length ? wraps[0] : null;
       if (!wrap) {
-        wrap = bw.createDOM({ t: 'div', a: { id: 'eo-toasts', class: 'eo-toasts' } });
+        wrap = bw.create({ t: 'div', a: { id: 'eo-toasts', class: 'eo-toasts' } });
         bw.$('body')[0].appendChild(wrap);
       }
       var icons = { success: '\u2713', warning: '\u26A0', info: '\u2139' };
-      var toastEl = bw.createDOM({
+      var toastEl = bw.create({
         t: 'div', a: { class: 'eo-toast ' + (type || 'info') },
         c: [
           { t: 'span', a: { style: 'font-size:1.3rem' }, c: icons[type] || icons.info },
@@ -300,9 +300,7 @@
             ]},
             { t: 'div', a: { style: 'display:flex;align-items:center;gap:.35rem' }, c: [
               { t: 'span', a: { class: 'eo-cart-rprice' }, c: '$' + item.price.toFixed(2) },
-              { t: 'button', a: { class: 'eo-cart-rm', 'aria-label': 'Remove' }, c: '×',
-                o: { mounted: function(btn) { var idx = i; btn.addEventListener('click', function() { cartRemove(idx); }); } }
-              }
+              { t: 'button', a: { class: 'eo-cart-rm', 'aria-label': 'Remove', onclick: (function(idx) { return function() { cartRemove(idx); }; })(i) }, c: '×' }
             ]}
           ]};
         })});
@@ -313,9 +311,7 @@
               { t: 'span', c: 'Total' },
               { t: 'span', c: '$' + total.toFixed(2) }
             ]},
-            { t: 'button', a: { class: 'eo-checkout', 'data-testid': 'button-checkout' }, c: 'Proceed to Checkout →',
-              o: { mounted: function(el) { el.addEventListener('click', function() { cartClose(); toast('Checkout', 'Redirecting to secure checkout…', 'info'); }); } }
-            }
+            { t: 'button', a: { class: 'eo-checkout', 'data-testid': 'button-checkout', onclick: function() { cartClose(); toast('Checkout', 'Redirecting to secure checkout…', 'info'); } }, c: 'Proceed to Checkout →' }
           ]});
         }
       }
@@ -366,7 +362,7 @@
         mounted: function(el) {
           bw.sub('cart:updated', function(d) {
             el._bw_state.cartCount = d.count;
-            bw.update(el);
+            bw.refresh(el);
           });
           window.addEventListener('scroll', function() {
             var n = bw.$('#eo-navbar')[0];
@@ -378,7 +374,7 @@
       }
     };
 
-    // ─── COFFEE SECTION — Level 1: o.state + o.render ───────────────────────
+    // ─── COFFEE SECTION — o.mounted with search + filter re-render ──────────
     var csFilter = 'All', csSearch = '';
 
     function renderCoffeeSection(el) {
@@ -391,9 +387,7 @@
       var fb = bw.$('#eo-fb')[0];
       if (fb) {
         bw.DOM(fb, { t: 'div', a: { class: 'eo-filter-bar' }, c: FILTERS.map(function(f) {
-          return { t: 'button', a: { class: 'eo-fb' + (csFilter === f ? ' active' : ''), 'data-testid': 'filter-' + f.toLowerCase() }, c: f,
-            o: { mounted: function(btn) { var ff = f; btn.addEventListener('click', function() { csFilter = ff; renderCoffeeSection(el); }); } }
-          };
+          return { t: 'button', a: { class: 'eo-fb' + (csFilter === f ? ' active' : ''), 'data-testid': 'filter-' + f.toLowerCase(), onclick: (function(ff) { return function() { csFilter = ff; renderCoffeeSection(el); }; })(f) }, c: f };
         })});
       }
       // Grid
@@ -418,9 +412,7 @@
               { t: 'p', a: { class: 'eo-desc' }, c: c.desc },
               { t: 'div', a: { class: 'eo-foot' }, c: [
                 { t: 'span', a: { class: 'eo-price' }, c: '$' + c.price.toFixed(2) },
-                { t: 'button', a: { class: 'eo-add', 'data-testid': 'button-add-' + c.id }, c: '+ Add to Cart',
-                  o: { mounted: function(btn) { var coffee = c; btn.addEventListener('click', function() { cartAdd(coffee); }); } }
-                }
+                { t: 'button', a: { class: 'eo-add', 'data-testid': 'button-add-' + c.id, onclick: (function(coffee) { return function() { cartAdd(coffee); }; })(c) }, c: '+ Add to Cart' }
               ]}
             ]}
           ]};
@@ -604,14 +596,14 @@
                 { value: '', text: 'Choose a topic...' }, { value: 'order', text: 'Order Inquiry' }, { value: 'wholesale', text: 'Wholesale' }, { value: 'visit', text: 'Tasting Room' }, { value: 'other', text: 'Other' }
               ]}) }),
               bw.makeFormGroup({ label: 'Message', id: 'cmsg', input: bw.makeTextarea({ id: 'cmsg', placeholder: 'Tell us what\'s on your mind...', rows: 5 }) }),
-              bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw-btn-lg' })
+              bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw_bccl_btn_lg' })
             ], onsubmit: function(e) {
               e.preventDefault();
               var cEl = bw.$('#' + contactFormId)[0];
               if (cEl) {
                 cEl._bw_state.statusMsg = 'Message sent! We\'ll reply within 24 hours.';
                 cEl._bw_state.statusVisible = 'block';
-                bw.update(cEl);
+                bw.refresh(cEl);
               }
               e.target.reset();
               toast('Message Sent', 'We\'ll get back to you within 24 hours.', 'success');
@@ -644,9 +636,7 @@
       ]}
     };
 
-    // ─── NEWSLETTER — Level 1 TACO with direct DOM handler ───────────────────
-    // Newsletter uses o.mounted + direct DOM handler for the subscribe button
-    // (other sections use o.state + o.render for reactive updates)
+    // ─── NEWSLETTER ─────────────────────────────────────────────────────────
     var newsletter = {
       t: 'section', a: { class: 'eo-dark', style: 'text-align:center', 'data-testid': 'section-newsletter' },
       c: { t: 'div', a: { style: 'max-width:600px;margin:0 auto' }, c: [
@@ -655,21 +645,18 @@
         { t: 'p', a: { style: 'color:rgba(250,248,245,.55);margin-bottom:2rem;line-height:1.65' }, c: 'First access to new arrivals, brewing tips, and 10% off your first order.' },
         { t: 'div', a: { class: 'eo-nl-row' }, c: [
           { t: 'input', a: { type: 'email', id: 'nl-email', class: 'eo-nl-in', placeholder: 'your@email.com', 'data-testid': 'input-newsletter' } },
-          { t: 'button', a: { class: 'eo-nl-btn', 'data-testid': 'button-subscribe' }, c: 'Subscribe',
-            o: { mounted: function(el) {
-              el.addEventListener('click', function() {
+          { t: 'button', a: { class: 'eo-nl-btn', 'data-testid': 'button-subscribe', onclick: function(e) {
+                var btn = e.target;
                 var inp = bw.$('#nl-email')[0];
                 if (!inp || !inp.value || inp.value.indexOf('@') < 0) {
                   toast('Oops', 'Please enter a valid email address.', 'warning');
                   return;
                 }
-                el.textContent = '✓ Subscribed!';
-                el.disabled = true;
+                btn.textContent = '✓ Subscribed!';
+                btn.disabled = true;
                 toast('Welcome aboard!', 'Check your inbox for your 10% off code.', 'success');
                 inp.value = '';
-              });
-            }}
-          }
+            } }, c: 'Subscribe' }
         ]},
         { t: 'p', a: { style: 'color:rgba(250,248,245,.3);font-size:.78rem;margin-top:1rem' }, c: 'No spam. Unsubscribe any time.' }
       ]}
@@ -681,7 +668,7 @@
 
     function counterSet(val) {
       var el = bw.$('#' + counterIdStr)[0];
-      if (el) { el._bw_state.count = val; bw.update(el); }
+      if (el) { el._bw_state.count = val; bw.refresh(el); }
     }
     function counterGet() {
       var el = bw.$('#' + counterIdStr)[0];
@@ -700,13 +687,13 @@
               { t: 'div', a: { class: 'eo-ctr-lbl' }, c: 'Counter Value' },
               { t: 'div', a: { class: 'eo-ctr-disp' }, c: String(s.count) },
               { t: 'div', a: { class: 'eo-ctr-btns' }, c: [
-                bw.makeButton({ text: '\u22125', variant: 'outline-secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 5)); } }),
+                bw.makeButton({ text: '\u22125', variant: 'outline_secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 5)); } }),
                 bw.makeButton({ text: '\u22121', variant: 'secondary', size: 'sm', onclick: function() { counterSet(Math.max(0, counterGet() - 1)); } }),
                 bw.makeButton({ text: 'Reset', variant: 'warning', size: 'sm', onclick: function() { counterSet(0); } }),
                 bw.makeButton({ text: '+1', variant: 'primary', size: 'sm', onclick: function() { counterSet(counterGet() + 1); } }),
-                bw.makeButton({ text: '+5', variant: 'outline-primary', size: 'sm', onclick: function() { counterSet(counterGet() + 5); } })
+                bw.makeButton({ text: '+5', variant: 'outline_primary', size: 'sm', onclick: function() { counterSet(counterGet() + 5); } })
               ]},
-              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.update(el)' }
+              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.refresh(el)' }
             ]
           });
         }
@@ -721,7 +708,7 @@
       if (el) {
         el._bw_state.roastLabel = label;
         el._bw_state.progress = pct;
-        bw.update(el);
+        bw.refresh(el);
       }
     }
 
@@ -736,8 +723,8 @@
             { t: 'div', a: { style: 'margin-bottom:.5rem;font-size:.88rem;color:#2d2017' }, c: 'Roast Stage: ' + s.roastLabel },
             bw.makeProgress({ value: p, max: 100, variant: p >= 100 ? 'success' : p >= 72 ? 'warning' : 'primary', striped: p < 100, animated: p < 100, label: p + '%' }),
             { t: 'div', a: { style: 'display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap' }, c: [
-              bw.makeButton({ text: 'Drying Phase', variant: 'outline-primary', size: 'sm', onclick: function() { progressSet('Drying Phase (0-150\u00B0C)', 25); } }),
-              bw.makeButton({ text: 'Maillard', variant: 'outline-primary', size: 'sm', onclick: function() { progressSet('Maillard Reaction (150-190\u00B0C)', 50); } }),
+              bw.makeButton({ text: 'Drying Phase', variant: 'outline_primary', size: 'sm', onclick: function() { progressSet('Drying Phase (0-150\u00B0C)', 25); } }),
+              bw.makeButton({ text: 'Maillard', variant: 'outline_primary', size: 'sm', onclick: function() { progressSet('Maillard Reaction (150-190\u00B0C)', 50); } }),
               bw.makeButton({ text: 'First Crack', variant: 'warning', size: 'sm', onclick: function() { progressSet('First Crack (195\u00B0C)', 72); } }),
               bw.makeButton({ text: 'Drop', variant: 'success', size: 'sm', onclick: function() { progressSet('Drop & Cool (205\u00B0C)', 100); } })
             ]}
@@ -747,7 +734,7 @@
     };
 
     var codeExample = [
-      '// o.state + o.render = reactive component pattern',
+      '// o.state + o.render = stateful component pattern',
       'var counter = {',
       "  t: 'div',",
       '  o: {',
@@ -764,7 +751,7 @@
       '// Update state and re-render:',
       "var el = bw.$('#app')[0];",
       'el._bw_state.count = 42;',
-      'bw.update(el);',
+      'bw.refresh(el);',
       '',
       '// Cross-component messaging:',
       "bw.pub('data:updated', { value: 42 });",
@@ -776,14 +763,14 @@
       c: { t: 'div', a: { class: 'eo-inner' }, c: [
         { t: 'div', a: { class: 'eo-sec-hd' }, c: [
           { t: 'div', a: { class: 'eo-label' }, c: 'Built with Bitwrench v2.0.23' },
-          { t: 'h2', a: { class: 'eo-h2' }, c: 'Reactive State. No Build Step.' },
-          { t: 'p', a: { class: 'eo-sub' }, c: 'This entire site uses o.state + o.render for reactive state. No React. No Vite. One CDN script.' }
+          { t: 'h2', a: { class: 'eo-h2' }, c: 'Explicit State. No Build Step.' },
+          { t: 'p', a: { class: 'eo-sub' }, c: 'This entire site uses o.state + o.render for stateful components. No React. No Vite. One CDN script.' }
         ]},
         { t: 'div', a: { class: 'eo-demo-grid' }, c: [
           { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Live Counter -- o.state + o.render' }, counter ] },
           { t: 'div', a: { class: 'eo-box' }, c: [ { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Roast Progress -- o.state + o.render' }, progressComp ] },
           { t: 'div', a: { class: 'eo-box', style: 'grid-column:1/-1' }, c: [
-            { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Reactive Pattern (o.state + o.render)' },
+            { t: 'div', a: { class: 'eo-demo-ttl' }, c: 'Stateful Pattern (o.state + o.render)' },
             bw.makeCodeDemo({ title: '', description: '', code: codeExample, language: 'javascript' })
           ]}
         ]},
@@ -792,10 +779,10 @@
           bw.makeTableFromArray({ headerRow: true, striped: true, hover: true, data: [
             ['API', 'Level', 'Used For'],
             ['o.state + o.render', 'Core', 'Navbar cart count, contact status, counter, progress'],
-            ['el._bw_state + bw.update()', 'Core', 'State access and re-render triggers'],
+            ['el._bw_state + bw.refresh()', 'Core', 'State access and re-render triggers'],
             ['bw.pub() / bw.sub()', 'Core', 'Cart state broadcast, cross-component messaging'],
             ['o.mounted lifecycle', 'Core', 'Initial renders, scroll listeners'],
-            ['o.mounted lifecycle', 'Level 1', 'Initial renders, scroll listeners'],
+            ['o.mounted lifecycle', 'Lifecycle', 'Initial renders, scroll listeners'],
             ['bw.DOM()', 'Core', 'Mounting all sections + sub-tree updates'],
             ['bw.makeStatCard()', 'BCCL', 'Impact section (new in v2.0.23)'],
             ['bw.makeTimeline()', 'BCCL', 'Our Story milestones'],
@@ -807,7 +794,7 @@
             ['bw.makeTable()', 'BCCL', 'Coffee menu sortable table'],
             ['bw.makeTableFromArray()', 'BCCL', 'This feature table'],
             ['bw.makeAlert()', 'BCCL', 'Wholesale info in contact section'],
-            ['bw.makeCodeDemo()', 'BCCL', 'Reactive pattern code example'],
+            ['bw.makeCodeDemo()', 'BCCL', 'Stateful pattern code example'],
             ['bw.makeProgress()', 'BCCL', 'Roast progress demo'],
             ['bw.makeButton() variants', 'BCCL', 'CTAs, filter buttons, counter controls'],
             ['bw.makeBadge() + makeTooltip()', 'BCCL', 'SCA score pills + hover info'],
@@ -819,7 +806,7 @@
         { t: 'div', a: { style: 'display:flex;gap:.65rem;flex-wrap:wrap;justify-content:center;margin-top:1.5rem' }, c: [
           bw.makeTooltip({ content: bw.makeBadge({ text: 'Zero Dependencies', variant: 'success', pill: true }), text: 'No npm install for the frontend', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'No Build Step', variant: 'primary', pill: true }), text: 'Works directly in the browser via CDN', placement: 'top' }),
-          bw.makeTooltip({ content: bw.makeBadge({ text: 'o.state + o.render', variant: 'info', pill: true }), text: 'el._bw_state + bw.update() for reactive DOM updates', placement: 'top' }),
+          bw.makeTooltip({ content: bw.makeBadge({ text: 'o.state + o.render', variant: 'info', pill: true }), text: 'el._bw_state + bw.refresh() for explicit DOM updates', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'SSR Ready', variant: 'warning', pill: true }), text: 'bw.html() renders TACO to string in Node.js', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'IE11 Compatible', variant: 'secondary', pill: true }), text: 'Use bitwrench.es5.min.js for legacy browsers', placement: 'top' }),
           bw.makeTooltip({ content: bw.makeBadge({ text: 'MIT License', variant: 'dark', pill: true }), text: 'Free for commercial and personal use', placement: 'top' })
@@ -868,11 +855,11 @@
     var cartDOM = {
       t: 'div', a: { id: 'eo-cart-shell' },
       c: [
-        { t: 'div', a: { class: 'eo-bdrop', id: 'eo-bdrop' }, o: { mounted: function(el) { el.addEventListener('click', cartClose); } } },
+        { t: 'div', a: { class: 'eo-bdrop', id: 'eo-bdrop', onclick: cartClose } },
         { t: 'div', a: { class: 'eo-cart-panel', id: 'eo-cart' }, c: [
           { t: 'div', a: { class: 'eo-cart-hdr' }, c: [
             { t: 'h3', c: '🛒 Your Cart' },
-            { t: 'button', a: { class: 'eo-cart-x', 'aria-label': 'Close cart' }, c: '×', o: { mounted: function(el) { el.addEventListener('click', cartClose); } } }
+            { t: 'button', a: { class: 'eo-cart-x', 'aria-label': 'Close cart', onclick: cartClose }, c: '×' }
           ]},
           { t: 'div', a: { id: 'eo-cart-body', class: 'eo-cart-body' } },
           { t: 'div', a: { id: 'eo-cart-ftr', class: 'eo-cart-ftr' } }
@@ -889,9 +876,7 @@
         ourStory, teamSection, testimonials, impactSection,
         faqSection, contactSection, newsletter, showcase,
         footer, cartDOM,
-        { t: 'button', a: { class: 'eo-scroll-top', id: 'eo-scroll-top', 'data-testid': 'button-scroll-top', 'aria-label': 'Scroll to top' }, c: '↑',
-          o: { mounted: function(el) { el.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); }); } }
-        }
+        { t: 'button', a: { class: 'eo-scroll-top', id: 'eo-scroll-top', 'data-testid': 'button-scroll-top', 'aria-label': 'Scroll to top', onclick: function() { window.scrollTo({ top: 0, behavior: 'smooth' }); } }, c: '↑' }
       ]
     });
 

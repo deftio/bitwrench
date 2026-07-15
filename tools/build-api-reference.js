@@ -456,7 +456,7 @@ const pageCssObj = `{
       '.api-entry': {
         'background': '#fff', 'border': '1px solid #e4e4e4', 'border-radius': '8px',
         'padding': '1.25rem 1.5rem', 'margin-bottom': '1rem',
-        'transition': 'box-shadow 0.15s'
+        'transition': 'box-shadow 0.15s', 'overflow': 'hidden'
       },
       '.api-entry:hover': { 'box-shadow': '0 2px 8px rgba(0,0,0,0.06)' },
       '.api-entry.hidden': { 'display': 'none' },
@@ -480,7 +480,7 @@ const pageCssObj = `{
         'font-size': '0.8rem', 'color': '#006666', 'background': '#e8f5f3',
         'padding': '0.1em 0.4em', 'border-radius': '3px', 'font-family': "'SF Mono', monospace"
       },
-      '.api-param-desc': { 'font-size': '0.875rem', 'color': '#555' },
+      '.api-param-desc': { 'font-size': '0.875rem', 'color': '#555', 'overflow-wrap': 'anywhere', 'min-width': '0' },
       '.api-returns': { 'font-size': '0.875rem', 'color': '#555', 'margin': '0.5rem 0' },
       '.api-returns-type': {
         'background': '#e8f5f3', 'color': '#006666', 'padding': '0.1em 0.4em',

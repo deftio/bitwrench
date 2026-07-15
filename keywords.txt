@@ -1,0 +1,50 @@
+#######################################
+# Syntax coloring for bitwrench library
+# (Arduino IDE)
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+bw_batch_t	KEYWORD1
+
+#######################################
+# Functions (KEYWORD2)
+#######################################
+bw_escape_string	KEYWORD2
+bw_format_bytes	KEYWORD2
+bw_batch_begin	KEYWORD2
+bw_batch_add	KEYWORD2
+bw_batch_end	KEYWORD2
+
+#######################################
+# Macros (LITERAL1)
+#######################################
+BW_TACO	LITERAL1
+BW_TACO_CLS	LITERAL1
+BW_TACO_ID	LITERAL1
+BW_TACO_ATTR	LITERAL1
+BW_TACO_NUM	LITERAL1
+BW_ARRAY_START	LITERAL1
+BW_ARRAY_ITEM	LITERAL1
+BW_ARRAY_END	LITERAL1
+BW_BUF_SIZE	LITERAL1
+BW_TACO_BUF_SIZE	LITERAL1
+BW_MOUNT	LITERAL1
+BW_PATCH	LITERAL1
+BW_PATCH_NUM	LITERAL1
+BW_PATCH_SAFE	LITERAL1
+BW_PATCH_ATTR	LITERAL1
+BW_APPEND	LITERAL1
+BW_REMOVE	LITERAL1
+BW_BATCH	LITERAL1
+BW_MESSAGE	LITERAL1
+BW_REPLACE	LITERAL1
+BW_SSE_FRAME	LITERAL1
+BW_SSE_KEEPALIVE	LITERAL1
+BW_SSE_HEADERS	LITERAL1
+BW_BOOTSTRAP_HTML	LITERAL1
+BW_HTTP_RESPONSE	LITERAL1
+BW_HTTP_OK_JSON	LITERAL1
+BW_HTTP_OK_HTML	LITERAL1
+BW_HTTP_404	LITERAL1

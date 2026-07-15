@@ -56,14 +56,13 @@
             t: 'div', a: { class: 'bw_site_pages_snippet_wrap' },
             c: [
               {
-                t: 'button', a: { class: 'bw_site_pages_snippet_copy' }, c: 'Copy',
-                o: { mounted: function(el) {
-                  el.addEventListener('click', function() {
-                    navigator.clipboard.writeText(code).then(function() {
-                      el.textContent = 'Copied!';
-                      el.classList.add('copied');
-                      setTimeout(function() { el.textContent = 'Copy'; el.classList.remove('copied'); }, 1500);
-                    });
+                t: 'button', c: 'Copy',
+                a: { class: 'bw_site_pages_snippet_copy', onclick: function(e) {
+                  var el = e.target;
+                  navigator.clipboard.writeText(code).then(function() {
+                    el.textContent = 'Copied!';
+                    el.classList.add('copied');
+                    setTimeout(function() { el.textContent = 'Copy'; el.classList.remove('copied'); }, 1500);
                   });
                 }}
               },
@@ -95,21 +94,21 @@
         bw.DOM(targetId, {
           t: 'div', a: { class: 'bw_site_pages_tablecard' },
           c: {
-            t: 'table', a: { class: 'bw_table' },
+            t: 'table', a: { class: 'bw_bccl_table' },
             c: [
               { t: 'thead', c: { t: 'tr', c: headers.map(function(h, i) {
                 var arrow = state.col === i ? (state.dir === 'asc' ? ' \u25B2' : ' \u25BC') : '';
                 return {
                   t: 'th',
-                  a: Object.assign({ style: 'cursor:pointer;user-select:none' }, h.sz ? { class: 'sz' } : {}),
-                  c: h.label + arrow,
-                  o: { mounted: function(el) {
-                    el.addEventListener('click', function() {
+                  a: Object.assign(
+                    { style: 'cursor:pointer;user-select:none', onclick: function() {
                       if (state.col === i) { state.dir = state.dir === 'asc' ? 'desc' : 'asc'; }
                       else { state.col = i; state.dir = 'asc'; }
                       render();
-                    });
-                  }}
+                    }},
+                    h.sz ? { class: 'sz' } : {}
+                  ),
+                  c: h.label + arrow
                 };
               })}},
               { t: 'tbody', c: sorted.map(function(row) {
@@ -335,7 +334,7 @@
                   { t: 'p', c: [
                     'ESPAsyncWebServer serves ', { t: 'code', c: '.gz' },
                     ' files transparently. Store ', { t: 'code', c: 'bitwrench.umd.min.js.gz' },
-                    ' (~40KB) on flash and request ', { t: 'code', c: '/bitwrench.umd.min.js' },
+                    ' (~45KB) on flash and request ', { t: 'code', c: '/bitwrench.umd.min.js' },
                     ' from your HTML.'
                   ]}
                 ]},
@@ -398,7 +397,7 @@
                 codeSnippet('CommonJS require', "const bw = require('bitwrench');", 'js'),
                 codeSnippet('GitHub', 'git clone https://github.com/deftio/bitwrench.git', 'bash'),
                 codeSnippet('ES5 (legacy browsers)', '<script src="dist/bitwrench.es5.min.js"><\/script>', 'html'),
-                codeSnippet('bwserve (server-driven UI)', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.render('#app', { t: 'h1', c: 'Hello from the server!' });\n});\napp.listen();", 'js'),
+                codeSnippet('bwserve (server-driven UI)', "import { create } from 'bitwrench/bwserve';\nconst app = create({ port: 7902 });\napp.page('/', (client) => {\n  client.mount('#app', { t: 'h1', c: 'Hello from the server!' });\n});\napp.listen();", 'js'),
                 codeSnippet('bwcli (convert files)', 'npx bwcli README.md -o readme.html --theme ocean --standalone', 'bash'),
                 codeSnippet('bwcli (dev server)', 'npx bwcli serve --port 8080', 'bash')
               ]
@@ -464,7 +463,7 @@
 
       bw.DOM('#pick-table', {
         t: 'div', a: { class: 'bw_site_pages_tablecard' },
-        c: { t: 'table', a: { class: 'bw_table' }, c: [
+        c: { t: 'table', a: { class: 'bw_bccl_table' }, c: [
           { t: 'thead', c: { t: 'tr', c: [
             { t: 'th', c: 'I want to...' },
             { t: 'th', c: 'Use this file' },
@@ -496,7 +495,7 @@
         {
           t: 'div', a: { class: 'bw_site_pages_tablecard', style: 'margin-top: 1rem' },
           c: {
-            t: 'table', a: { class: 'bw_table' },
+            t: 'table', a: { class: 'bw_bccl_table' },
             c: [
               { t: 'thead', c: { t: 'tr', c: [
                 { t: 'th', c: 'Flag' },
@@ -771,22 +770,19 @@
               {
                 t: 'div', a: { class: 'bw_site_pages_snippet_wrap' }, c: [
                   {
-                    t: 'button', a: { class: 'bw_site_pages_snippet_copy' },
+                    t: 'button',
                     c: 'Copy',
-                    o: {
-                      mounted: function(el) {
-                        el.addEventListener('click', function() {
-                          navigator.clipboard.writeText(tag).then(function() {
-                            el.textContent = 'Copied!';
-                            el.classList.add('copied');
-                            setTimeout(function() {
-                              el.textContent = 'Copy';
-                              el.classList.remove('copied');
-                            }, 1500);
-                          });
-                        });
-                      }
-                    }
+                    a: { class: 'bw_site_pages_snippet_copy', onclick: function(e) {
+                      var el = e.target;
+                      navigator.clipboard.writeText(tag).then(function() {
+                        el.textContent = 'Copied!';
+                        el.classList.add('copied');
+                        setTimeout(function() {
+                          el.textContent = 'Copy';
+                          el.classList.remove('copied');
+                        }, 1500);
+                      });
+                    }}
                   },
                   { t: 'div', a: { class: 'sri-tag-block' }, c: tag }
                 ]

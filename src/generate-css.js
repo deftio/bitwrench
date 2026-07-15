@@ -3,7 +3,7 @@
  * Creates class-based CSS to prevent collisions with other frameworks
  */
 
-import { getAllStyles, getStructuralStyles, generateThemedCSS,
+import { getStructuralStyles, generateThemedCSS,
          resolveLayout, DEFAULT_PALETTE_CONFIG } from './bitwrench-styles.js';
 import { derivePalette } from './bitwrench-color-utils.js';
 import fs from 'fs';

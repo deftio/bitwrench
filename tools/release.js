@@ -42,6 +42,22 @@ function step(label) {
   console.log(`\n${'─'.repeat(60)}\n  ${label}\n${'─'.repeat(60)}`);
 }
 
+function ask(question) {
+  while (true) {
+    try {
+      const answer = execSync(`/bin/sh -c 'printf "${question}" >&2 && read ans && echo "$ans"'`, {
+        stdio: ['inherit', 'pipe', 'inherit'],
+        encoding: 'utf8'
+      }).trim().toLowerCase();
+      if (answer === 'y' || answer === 'yes') return 'y';
+      if (answer === 'n' || answer === 'no') return 'n';
+      console.log('  Please answer y or n.');
+    } catch {
+      fail('Interactive terminal required for release confirmation.');
+    }
+  }
+}
+
 function fileSize(filePath) {
   return statSync(join(root, filePath)).size;
 }
@@ -59,13 +75,15 @@ function kb(bytes) {
 
 step('1. Pre-flight checks');
 
-// Warn if not on main — release runs on feature branches before merge
 const branch = runQuiet('git rev-parse --abbrev-ref HEAD');
-if (branch === 'main') {
-  console.log(`  Branch: main`);
-} else {
-  console.log(`  ⚠ Branch: ${branch} (not main — remember to merge to main after release)`);
+if (branch === 'main' || branch === 'master') {
+  fail(
+    `Cannot release from ${branch} directly.\n` +
+    `  Use: npm run start-release -- "feature name"\n` +
+    `  Then develop on the feature branch and run npm run release there.`
+  );
 }
+console.log(`  Branch: ${branch}`);
 
 // Clean working tree (allow untracked in dev/)
 const status = runQuiet('git status --porcelain');
@@ -125,6 +143,19 @@ step('4. Tests');
 run('npm test');
 run('npm run test:cli');
 
+// E2E gate: containerized by default (Linux browsers, reproducible env).
+// BW_E2E_NATIVE=1 npm run release  → use the native suite instead (e.g. no Docker).
+if (process.env.BW_E2E_NATIVE === '1') {
+  console.log('  Running E2E tests (native — BW_E2E_NATIVE=1)...');
+  run('npm run test:e2e');
+} else {
+  console.log('  Running E2E tests (Docker gate)...');
+  run('npm run test:e2e:docker');
+}
+
+console.log('  Running drift-lint...');
+run('node tools/drift-lint.js');
+
 // Update coverage badge in README from json-summary produced by npm test
 run('node tools/update-coverage-badge.js');
 
@@ -143,13 +174,34 @@ const bannerLine = readFileSync(join(root, 'dist/bitwrench.umd.js'), 'utf8')
 const bannerMatch = bannerLine.match(/bitwrench v([^\s|]+)/);
 const distVersion = bannerMatch ? bannerMatch[1] : null;
 
-if (pkgVersion !== srcVersion || pkgVersion !== distVersion) {
+// Embedded registry manifests at repo root (Arduino / PlatformIO / ESP-IDF)
+const libProps = readFileSync(join(root, 'library.properties'), 'utf8');
+const libPropsMatch = libProps.match(/^version=(.+)$/m);
+const arduinoVersion = libPropsMatch ? libPropsMatch[1].trim() : null;
+
+const libJson = JSON.parse(readFileSync(join(root, 'library.json'), 'utf8'));
+const pioVersion = libJson.version;
+
+const idfYml = readFileSync(join(root, 'idf_component.yml'), 'utf8');
+const idfMatch = idfYml.match(/^version:\s*["']?([^"'\s]+)["']?/m);
+const idfVersion = idfMatch ? idfMatch[1] : null;
+
+if (
+  pkgVersion !== srcVersion || pkgVersion !== distVersion ||
+  pkgVersion !== arduinoVersion || pkgVersion !== pioVersion ||
+  pkgVersion !== idfVersion
+) {
   fail(
     `Version mismatch!\n` +
-    `  package.json:     ${pkgVersion}\n` +
-    `  src/version.js:   ${srcVersion}\n` +
-    `  dist banner:      ${distVersion}\n` +
-    `  Run: npm run generate-version && npm run build`
+    `  package.json:       ${pkgVersion}\n` +
+    `  src/version.js:     ${srcVersion}\n` +
+    `  dist banner:        ${distVersion}\n` +
+    `  library.properties: ${arduinoVersion}\n` +
+    `  library.json:       ${pioVersion}\n` +
+    `  idf_component.yml:  ${idfVersion}\n` +
+    `  Run: npm run generate-version && npm run build\n` +
+    `  Then bump the version line in library.properties, library.json,\n` +
+    `  and idf_component.yml (repo root) to match package.json.`
   );
 }
 console.log(`  ✓ All sources agree: v${pkgVersion}`);
@@ -162,42 +214,92 @@ const rawSize = fileSize('dist/bitwrench.umd.js');
 const minSize = fileSize('dist/bitwrench.umd.min.js');
 const gzipped = gzSize('dist/bitwrench.umd.min.js');
 
-console.log(`  Bundle: ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped`);
+const esmMinSize = fileSize('dist/bitwrench.esm.min.js');
+const esmGzipped = gzSize('dist/bitwrench.esm.min.js');
+
+console.log(`  UMD: ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped`);
+console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 
 const BUDGET = 45 * 1024; // 45KB
 if (gzipped > BUDGET) {
-  fail(`Gzipped bundle (${kb(gzipped)}) exceeds 45KB budget!`);
+  fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 45KB budget!`);
 }
-console.log('  ✓ Under 45KB budget');
+if (esmGzipped > BUDGET) {
+  fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 45KB budget!`);
+}
+console.log('  ✓ UMD + ESM both under 45KB budget');
 
-// ── 7. Archive release snapshot ─────────────────────────────────────────
+// ── 7. Docker clean-room install test ──────────────────────────────────
 
-step('7. Archive release snapshot');
+step('7. Docker clean-room test');
+
+try {
+  runQuiet('docker info');
+  console.log('  Docker available — running clean-room install test');
+
+  // Pack the tarball
+  const packOut = runQuiet('npm pack --pack-destination tmp/');
+  const tarball = packOut.split('\n').pop().trim();
+  console.log(`  Packed: ${tarball}`);
+
+  // CJS require test
+  const cjsScript = `
+    const bw = require('bitwrench');
+    if (typeof bw.html !== 'function') { process.exit(1); }
+    if (typeof bw.version !== 'string') { process.exit(1); }
+    console.log('CJS OK: bitwrench v' + bw.version);
+  `.trim().replace(/\n/g, ' ');
+
+  // ESM import test
+  const esmScript = `
+    import bw from 'bitwrench';
+    if (typeof bw.html !== 'function') { process.exit(1); }
+    console.log('ESM OK: bitwrench v' + bw.version);
+  `.trim().replace(/\n/g, ' ');
+
+  // Build a single docker command that installs from tarball and tests both formats
+  const dockerCmd = [
+    'docker run --rm',
+    `-v "${join(root, 'tmp')}:/pkg"`,
+    'node:22-slim',
+    'sh -c "' + [
+      'mkdir /test && cd /test',
+      `npm init -y > /dev/null 2>&1`,
+      `npm install /pkg/${tarball} --silent 2>&1 | tail -1`,
+      // CJS test
+      `node -e "${cjsScript}"`,
+      // ESM test (needs type:module in a subdir)
+      `mkdir /test/esm && cd /test/esm`,
+      `echo '{"type":"module"}' > package.json`,
+      `ln -s /test/node_modules node_modules`,
+      `node -e "${esmScript}"`
+    ].join(' && ') + '"'
+  ].join(' ');
+
+  run(dockerCmd);
+  console.log('  ✓ Clean-room install: CJS + ESM verified');
+} catch (e) {
+  if (e.message && e.message.includes('docker')) {
+    console.log('  ⚠ Docker not available — skipping clean-room test');
+    console.log('    Install Docker to enable this gate');
+  } else {
+    fail('Docker clean-room install test failed: ' + e.message);
+  }
+}
+
+// ── 8. Archive release snapshot ─────────────────────────────────────────
+
+step('8. Archive release snapshot');
 
 run('node tools/build-release.js');
 
-// ── 8. Git commit and push ──────────────────────────────────────────────
+// ── 9. Git commit and push ──────────────────────────────────────────────
 
-step('8. Git commit and push');
+step('9. Git commit and push');
 
-const filesToStage = [
-  'package.json',
-  'src/version.js',
-  'dist/',
-  'releases/v2/',
-  'readme.html',
-  'pages/08-api-reference.html',
-  'README.md'
-];
-
-// Stage only files that exist and have changes
-for (const f of filesToStage) {
-  try {
-    run(`git add ${f}`, { stdio: 'pipe' });
-  } catch {
-    // file may not exist (e.g. readme.html), that's OK
-  }
-}
+// Stage all build outputs — tree was verified clean in step 1,
+// so everything modified since then is a build artifact.
+run('git add .');
 
 // Check if there's anything to commit
 const staged = runQuiet('git diff --cached --name-only');
@@ -208,33 +310,73 @@ if (staged.length === 0) {
   run(`git commit -m "v${version} release"`);
 }
 
-// ── 9. Summary ──────────────────────────────────────────────────────────
+// ── 10. Merge to main ───────────────────────────────────────────────────
 
-step('Done!');
+step('10. Merge to main');
 
-if (branch === 'main') {
-  console.log(`
-  Version:  ${version}
-  Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
+// Derive description from branch name: feature/lifecycle-refactor -> lifecycle refactor
+const branchDesc = branch
+  .replace(/^feature\//, '')
+  .replace(/[-_]/g, ' ');
+const mergeMsg = `v${version}: ${branchDesc}`;
 
-  Committed on main. Push when ready — CI will:
-    • Run tests on Node 20/22/24
-    • Create git tag v${version}
-    • Create GitHub Release with dist assets
-    • Publish to npm with provenance
-
-  Watch CI: https://github.com/deftio/bitwrench/actions
-`);
-} else {
-  console.log(`
+console.log(`
+  All gates passed.
   Version:  ${version}
   Branch:   ${branch}
   Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
 
-  Committed on ${branch}. Next steps:
-    git checkout main && git merge --squash ${branch} && git commit -m "v${version}: <description>" && git push origin main
+  Ready to squash-merge to main and push.
+  Commit message: "${mergeMsg}"
+`);
 
-  After push to main, CI will handle tagging + npm publish.
+const answer = ask('Squash-merge to main and push? (y/n) ');
+
+if (answer === 'n') {
+  console.log(`
+  Skipped. You can merge manually later:
+    git checkout main && git merge --squash ${branch}
+    git commit -m "${mergeMsg}"
+    git push origin main
+`);
+  process.exit(0);
+}
+
+try {
+  run('git checkout main');
+  run('git pull --ff-only origin main');
+  run(`git merge --squash ${branch}`);
+  run(`git commit -m "${mergeMsg}"`);
+  execSync('git push origin main', {
+    cwd: root,
+    stdio: 'inherit',
+    env: { ...process.env, BW_RELEASE_PUSH: '1' }
+  });
+  console.log('\n  → git push origin main (BW_RELEASE_PUSH=1)');
+} catch (e) {
+  console.error(`\n✗ Merge/push failed. You are now on main with a partial merge.`);
+  console.error(`  Inspect the state, then either:`);
+  console.error(`    git merge --abort   (undo and go back)`);
+  console.error(`    git checkout ${branch}   (return to feature branch)`);
+  process.exit(1);
+}
+
+// Return to feature branch
+try { runQuiet(`git checkout ${branch}`); } catch { /* stay on main if checkout fails */ }
+
+// ── Done ────────────────────────────────────────────────────────────────
+
+step('Done!');
+
+console.log(`
+  Version:  ${version}
+  Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
+
+  Pushed to main. CI will:
+    - Run tests on Node 20/22/24
+    - Create git tag v${version}
+    - Create GitHub Release with dist assets
+    - Publish to npm with provenance
+
   Watch CI: https://github.com/deftio/bitwrench/actions
 `);
-}

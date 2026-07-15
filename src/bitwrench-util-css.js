@@ -220,6 +220,7 @@ function install(bw) {
 }
 
 // Auto-install if bw is on window (script tag usage)
+/* c8 ignore next 3 -- module-level auto-install; only runs at import time in browser */
 if (typeof window !== 'undefined' && window.bw) {
   install(window.bw);
 }
