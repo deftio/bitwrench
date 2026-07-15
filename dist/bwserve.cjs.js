@@ -1,4 +1,4 @@
-/*! bwserve v2.1.0 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bwserve v2.1.1 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -14,7 +14,7 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.1.0';
+const VERSION = '2.1.1';
 
 /**
  * BwServeClient — per-client connection for bwserve.

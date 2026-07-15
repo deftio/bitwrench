@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"description": "Zero-dependency JavaScript UI library. Describe UI as plain objects (TACO), render to DOM or HTML strings. Theming, components, pub/sub, server-driven UI (bwserve). No build step.",
 	"main": "./dist/bitwrench.umd.js",
 	"repository": {

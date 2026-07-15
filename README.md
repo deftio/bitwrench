@@ -423,3 +423,4 @@ npm run cleanbuild   # full production build with SRI hashes
 ## License
 
 [BSD-2-Clause](./LICENSE.txt) -- (c) M. A. Chatterjee / [deftio](https://github.com/deftio) -- use it in your own projects or commercially.
+
