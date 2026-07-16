@@ -3440,6 +3440,14 @@ bw.inspect = function(target, depth) {
     // Refs
     if (node._bw_refs) info.refs = _keys(node._bw_refs);
 
+    // Direct text content (immediate text nodes only, truncated)
+    var directText = '';
+    for (var tc = node.firstChild; tc; tc = tc.nextSibling) {
+      if (tc.nodeType === 3) directText += tc.textContent;
+    }
+    directText = directText.trim();
+    if (directText) info.text = directText.length > 120 ? directText.slice(0, 120) + '...' : directText;
+
     // Children (recurse up to depth limit, max 50 children per level)
     if (d < depth && node.children && node.children.length > 0) {
       info.children = [];

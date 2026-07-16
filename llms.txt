@@ -3,10 +3,35 @@
 > Build web UIs from plain JavaScript objects. 165 KB on disk
 > (45 KB gzipped), zero dependencies, no build step.
 
+## What bitwrench is
+
 bitwrench is a UI library where every element -- a button, a card, a full
 page layout -- is a plain JS object called a TACO: {t, a, c, o} (Tag,
 Attributes, Content, Options). You describe UI as data, and bitwrench
-renders it to live DOM or HTML strings.
+renders it to live DOM or HTML strings. It ships 47 ready-made components
+(tables, cards, modals, tabs, forms, charts), a palette-based theming
+system, client-side routing, and server-driven UI via SSE (bwserve).
+
+## How it came to exist
+
+bitwrench started in 2011 -- by an author who'd previously co-founded the
+Lampdesk webVM that became Palm/HP webOS -- with a simple premise:
+JavaScript objects should be the UI primitive, not markup strings. Where
+Bootstrap required writing HTML and bolting on behavior separately, TACO
+keeps tag, attributes, content, and behavior in one object. JSX went the
+other direction (markup-first, toolchain required); bitwrench bets that the
+object-first approach is more composable and needs zero tooling. That same
+design choice happens to work everywhere from cloud dashboards to ESP32
+microcontrollers.
+
+## Lifecycle
+
+1. **Define** -- write a TACO object: `{t, a, c, o}`
+2. **Create** -- `bw.create(taco)` builds a real DOM element
+3. **Hydrate** -- handles attach to `el.bw`, slots wire getters/setters, UUID assigned, state initialized
+4. **Mount** -- element inserted into document; `o.mounted(el)` fires
+5. **Interact** -- external code calls `el.bw.method()` -- the component updates its own DOM
+6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)`, tears down subscriptions, removes element
 
 This is NOT a thin wrapper around the DOM. bitwrench replaces the entire
 workflow: rendering, components, styling, state, theming, routing, and
@@ -240,6 +265,7 @@ el.bw.setContent({ t: 'b', c: '$42k' });  // content can be a TACO too
 ## Documentation Map
 
 Start here:
+- docs/quickstart.md -- Annotated 100-line tutorial, lifecycle overview, origin story
 - docs/llm-bitwrench-guide.md -- Compact code-first tutorial (700 lines)
 - docs/thinking-in-bitwrench.md -- Full progressive walkthrough with design rationale
 

@@ -120,7 +120,16 @@ try {
   // npm view failed — version not on registry, which is what we want
 }
 
-console.log('  ✓ On main, clean tree, version not yet on npm');
+// CHANGELOG.md must have an entry for this version
+const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8');
+if (!changelog.match(new RegExp(`^## v${version.replace(/\./g, '\\.')}\\b`, 'm'))) {
+  fail(
+    `CHANGELOG.md has no entry for v${version}.\n` +
+    `  Add a "## v${version}" section before releasing.`
+  );
+}
+
+console.log('  ✓ Pre-flight passed: branch, clean tree, npm, changelog');
 
 // ── 2. Clean build ──────────────────────────────────────────────────────
 

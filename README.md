@@ -285,6 +285,20 @@ bwcli serve --port 8080 --input-port 9000
 curl -X POST http://localhost:9000 -d '{"type":"patch","ref":"temp","content":"23.5 C"}'
 ```
 
+### Dev Server & Debugging
+
+`bwcli serve` doubles as a dev server with remote debugging. Attach a REPL, inspect DOM state, and capture screenshots -- all from the terminal:
+
+```bash
+bwcli serve --allow-screenshot          # start with screenshot support
+bw> /inspect #app 2                     # DOM tree summary (depth 2)
+bw> /screenshot body page.png           # full-page capture
+bw> /screenshot .my-card card.png       # element-level capture
+bw> /tree                               # full DOM tree as JSON
+```
+
+No browser extensions needed -- `bwcli serve` injects a lightweight client script that handles inspect, screenshot, and live patching over SSE. See [bw-attach docs](docs/bw-attach.md) for the full REPL command reference.
+
 ## Coming from Other Frameworks
 
 | You're using | For | Bitwrench equivalent |
@@ -349,6 +363,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 
 **Start here:**
 
+- **[Quick Start](docs/quickstart.md)** -- annotated 100-line tutorial covering the full lifecycle
 - **[Thinking in Bitwrench](docs/thinking-in-bitwrench.md)** -- the complete guide: TACO format, styling, composition, events, the component model, bwserve, and common patterns
 - **[LLM Guide](docs/llm-bitwrench-guide.md)** -- compact single-file reference with all APIs, patterns, and rules
 
@@ -360,6 +375,7 @@ All formats include source maps. A separate CSS file (`bitwrench.css`) is also a
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) -- palette-driven theme generation, presets, design tokens
 - [CLI](docs/cli.md) -- the `bwcli` command for file conversion and pipe server
+- [Dev Server & Attach](docs/bw-attach.md) -- REPL, DOM inspection, and screenshots from the terminal
 - [bwserve](docs/bwserve.md) -- server-driven UI protocol (SSE, actions, embedded devices)
 
 **Tutorials:**
@@ -421,6 +437,6 @@ npm run cleanbuild   # full production build with SRI hashes
 ```
 
 ## License
-
+  
 [BSD-2-Clause](./LICENSE.txt) -- (c) M. A. Chatterjee / [deftio](https://github.com/deftio) -- use it in your own projects or commercially.
-
+   

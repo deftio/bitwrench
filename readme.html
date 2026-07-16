@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.1.1">
+  <meta name="generator" content="bitwrench v2.1.2">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.min.js"></script>
@@ -263,7 +263,12 @@ bwcli doc.md -o doc.html --standalone --theme ocean
 # Custom colors
 bwcli doc.md -o doc.html --standalone --theme &quot;#336699,#cc6633&quot;</code></pre><p>Flags: <code class="quikdown-code">--output/-o</code>, <code class="quikdown-code">--standalone/-s</code>, <code class="quikdown-code">--cdn</code>, <code class="quikdown-code">--theme/-t</code>, <code class="quikdown-code">--css/-c</code>, <code class="quikdown-code">--title</code>, <code class="quikdown-code">--favicon/-f</code>, <code class="quikdown-code">--highlight</code>, <code class="quikdown-code">--verbose/-v</code></p><h3 class="quikdown-h3">Pipe Server</h3>
 <p><code class="quikdown-code">bwcli serve</code> turns any language into a bwserve backend -- send JSON protocol messages via HTTP POST or stdin, and connected browsers update in real time:</p><pre class="quikdown-pre"><code class="language-bash">bwcli serve --port 8080 --input-port 9000
-curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&quot;ref&quot;:&quot;temp&quot;,&quot;content&quot;:&quot;23.5 C&quot;}&#39;</code></pre><h2 class="quikdown-h2">Coming from Other Frameworks</h2>
+curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&quot;ref&quot;:&quot;temp&quot;,&quot;content&quot;:&quot;23.5 C&quot;}&#39;</code></pre><h3 class="quikdown-h3">Dev Server &amp; Debugging</h3>
+<p><code class="quikdown-code">bwcli serve</code> doubles as a dev server with remote debugging. Attach a REPL, inspect DOM state, and capture screenshots -- all from the terminal:</p><pre class="quikdown-pre"><code class="language-bash">bwcli serve --allow-screenshot          # start with screenshot support
+bw&gt; /inspect #app 2                     # DOM tree summary (depth 2)
+bw&gt; /screenshot body page.png           # full-page capture
+bw&gt; /screenshot .my-card card.png       # element-level capture
+bw&gt; /tree                               # full DOM tree as JSON</code></pre><p>No browser extensions needed -- <code class="quikdown-code">bwcli serve</code> injects a lightweight client script that handles inspect, screenshot, and live patching over SSE. See <a class="quikdown-a" href="docs/bw-attach.md">bw-attach docs</a> for the full REPL command reference.</p><h2 class="quikdown-h2">Coming from Other Frameworks</h2>
 <table class="quikdown-table">
 <thead class="quikdown-thead">
 <tr class="quikdown-tr">
@@ -466,6 +471,7 @@ curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&
 </tbody>
 </table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><h2 class="quikdown-h2">Documentation</h2>
 <strong class="quikdown-strong">Start here:</strong></p><ul class="quikdown-ul">
+<li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/quickstart.md">Quick Start</a></strong> -- annotated 100-line tutorial covering the full lifecycle</li>
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/thinking-in-bitwrench.md">Thinking in Bitwrench</a></strong> -- the complete guide: TACO format, styling, composition, events, the component model, bwserve, and common patterns</li>
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/llm-bitwrench-guide.md">LLM Guide</a></strong> -- compact single-file reference with all APIs, patterns, and rules</li>
 </ul><p><strong class="quikdown-strong">Reference guides</strong> (in <code class="quikdown-code">docs/</code>):</p><ul class="quikdown-ul">
@@ -475,6 +481,7 @@ curl -X POST http://localhost:9000 -d &#39;{&quot;type&quot;:&quot;patch&quot;,&
 <li class="quikdown-li"><a class="quikdown-a" href="docs/component-library.md">Component Library</a> -- all <code class="quikdown-code">make*()</code> functions with signatures and examples</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/theming.md">Theming</a> -- palette-driven theme generation, presets, design tokens</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/cli.md">CLI</a> -- the <code class="quikdown-code">bwcli</code> command for file conversion and pipe server</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/bw-attach.md">Dev Server &amp; Attach</a> -- REPL, DOM inspection, and screenshots from the terminal</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/bwserve.md">bwserve</a> -- server-driven UI protocol (SSE, actions, embedded devices)</li>
 </ul><p><strong class="quikdown-strong">Tutorials:</strong></p><ul class="quikdown-ul">
 <li class="quikdown-li"><a class="quikdown-a" href="docs/tutorial-website.md">Build a Website</a> -- multi-section landing page from TACO objects</li>
@@ -507,7 +514,8 @@ npm run test:cli     # run CLI tests
 npm run test:e2e     # run Playwright browser tests
 npm run lint         # run ESLint
 npm run cleanbuild   # full production build with SRI hashes</code></pre></p><h2 class="quikdown-h2">License</h2>
-<a class="quikdown-a" href="./LICENSE.txt">BSD-2-Clause</a> -- (c) M. A. Chatterjee / <a class="quikdown-a" href="https://github.com/deftio" rel="noopener noreferrer">deftio</a> -- use it in your own projects or commercially.</p>
+<a class="quikdown-a" href="./LICENSE.txt">BSD-2-Clause</a> -- (c) M. A. Chatterjee / <a class="quikdown-a" href="https://github.com/deftio" rel="noopener noreferrer">deftio</a> -- use it in your own projects or commercially.
+ <br class="quikdown-br"></p>
         </div>
       </div>
     </div>

@@ -145,11 +145,6 @@ var RULES = [
     message: 'client.exec() removed in v2.1'
   },
   {
-    id: 'client.query',
-    pattern: /client\.query\s*\(/g,
-    message: 'client.query() removed in v2.1'
-  },
-  {
     id: 'client.register',
     pattern: /client\.register\s*\(/g,
     message: 'client.register() removed in v2.1'

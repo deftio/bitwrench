@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.1.1 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-lean v2.1.2 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -190,10 +190,10 @@
    */
 
   var VERSION_INFO = {
-    version: '2.1.1',
+    version: '2.1.2',
     name: 'bitwrench',
     license: 'BSD-2-Clause',
-    buildDate: '2026-07-15T06:38:39.078Z'
+    buildDate: '2026-07-16T08:11:38.704Z'
   };
 
   /**
@@ -8953,6 +8953,14 @@
 
       // Refs
       if (node._bw_refs) info.refs = _keys(node._bw_refs);
+
+      // Direct text content (immediate text nodes only, truncated)
+      var directText = '';
+      for (var tc = node.firstChild; tc; tc = tc.nextSibling) {
+        if (tc.nodeType === 3) directText += tc.textContent;
+      }
+      directText = directText.trim();
+      if (directText) info.text = directText.length > 120 ? directText.slice(0, 120) + '...' : directText;
 
       // Children (recurse up to depth limit, max 50 children per level)
       if (d < depth && node.children && node.children.length > 0) {

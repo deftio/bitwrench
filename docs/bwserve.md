@@ -113,7 +113,7 @@ These modify the browser's DOM tree:
 | `unlisten` | Unsubscribe from topic | (automatic on disconnect) | Stop forwarding events |
 | `hello` | Handshake | (automatic on connect) | Establish connection |
 
-> **Note:** `exec` and `register` were removed in v2.1 for security reasons (arbitrary server-defined code should never cross the wire). `query` remains as a safe eval of caller-supplied expressions. Use `bw_act_*` class patterns for user actions, and `client.call()` for built-in client-side operations like scrollTo, focus, download, clipboard, and redirect.
+> **Note:** `exec` and `register` were removed in v2.1 for security reasons (arbitrary server-defined code should never cross the wire). `client.query()` evaluates caller-supplied expressions and returns the result (see [Query](#query)). Use `bw_act_*` class patterns for user actions, and `client.call()` for built-in client-side operations like scrollTo, focus, download, clipboard, and redirect.
 
 ### Message Schemas
 
@@ -284,6 +284,7 @@ app.broadcast({
 | Method | Protocol Type | Description |
 |--------|--------------|-------------|
 | `client.call(name, ...args)` | `call` | Invoke built-in function |
+| `client.query(code, opts?)` | `call` | Evaluate expression on client and return the result |
 | `client.message(ref, action, data)` | `message` | Dispatch to el.bw[action] |
 | `client.listen(topic, handler)` | `listen` | Subscribe to client-side topic |
 
@@ -293,6 +294,24 @@ app.broadcast({
 |--------|-------------|
 | `client.on(action, handler)` | Register handler for client actions |
 | `client.close()` | Disconnect this client |
+
+## Query
+
+Evaluate a JavaScript expression on the client and return the result. Uses the `_bw_query` built-in with a request-response mechanism over SSE.
+
+### `client.query(code, opts?)`
+
+```javascript
+var title = await client.query('document.title');
+var count = await client.query('document.querySelectorAll(".item").length');
+var data  = await client.query('({ name: document.getElementById("name").value })');
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `timeout` | number | `10000` | Timeout in ms before the promise rejects |
+
+Returns a Promise that resolves with the evaluated result. Rejects on timeout or client-side error.
 
 ## Screenshots
 

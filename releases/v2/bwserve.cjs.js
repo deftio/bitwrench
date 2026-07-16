@@ -1,4 +1,4 @@
-/*! bwserve v2.1.1 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bwserve v2.1.2 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -14,7 +14,7 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.1.1';
+const VERSION = '2.1.2';
 
 /**
  * BwServeClient — per-client connection for bwserve.
@@ -47,7 +47,9 @@ class BwServeClient {
     constructor(id, res) {
         this.id = id;
         this._res = res;       // SSE response stream (null in stub)
-        this._handlers = {};   // action name → handler
+        this._handlers = {};   // action name -> handler
+        this._pending = {};    // requestId -> { resolve, timer }
+        this._pendCounter = 0;
         this._closed = false;
     }
 
@@ -165,6 +167,55 @@ class BwServeClient {
     on(action, handler) {
         this._handlers[action] = handler;
         return this;
+    }
+
+    /**
+     * Run JavaScript on the client and return the result.
+     *
+     * @param {string} code - JavaScript expression to evaluate
+     * @param {Object} [opts]
+     * @param {number} [opts.timeout=10000] - Timeout in ms
+     * @returns {Promise<*>} Resolved with the evaluation result
+     */
+    query(code, opts) {
+        var o = opts || {};
+        var pend = this._pend(o.timeout || 10000);
+        this.call('_bw_query', { code: code, requestId: pend.requestId });
+        return pend.promise;
+    }
+
+    /**
+     * Create a pending request that resolves when the client responds.
+     * @param {number} timeout - Timeout in ms
+     * @returns {{ requestId: string, promise: Promise }}
+     * @private
+     */
+    _pend(timeout) {
+        var self = this;
+        var requestId = 'req_' + (++this._pendCounter);
+        var promise = new Promise(function(res, rej) {
+            var timer = setTimeout(function() {
+                delete self._pending[requestId];
+                rej(new Error('Request ' + requestId + ' timed out after ' + timeout + 'ms'));
+            }, timeout);
+            self._pending[requestId] = { resolve: res, timer: timer };
+        });
+        return { requestId: requestId, promise: promise };
+    }
+
+    /**
+     * Resolve a pending request by its requestId.
+     * @param {string} requestId
+     * @param {*} data - Response data from the client
+     * @private
+     */
+    _resolvePending(requestId, data) {
+        var entry = this._pending[requestId];
+        if (entry) {
+            clearTimeout(entry.timer);
+            delete this._pending[requestId];
+            entry.resolve(data);
+        }
     }
 
     /**
@@ -969,9 +1020,12 @@ class BwServeApp {
       }
     }
 
+    // Normalize trailing slash for page route lookup (except root '/')
+    var pagePath = (path$1.length > 1 && path$1.endsWith('/')) ? path$1.slice(0, -1) : path$1;
+
     // Registered page routes — serve bwserve shell HTML (fallback when no
     // static file matched, e.g. pipe/SSE driven pages)
-    if (method === 'GET' && this._pages.has(path$1)) {
+    if (method === 'GET' && this._pages.has(pagePath)) {
       var clientId2 = 'c' + (++this._clientCounter);
       var shell = generateShell({
         clientId: clientId2,
@@ -979,8 +1033,8 @@ class BwServeApp {
         theme: this.theme,
         injectBitwrench: this.injectBitwrench
       });
-      // Store the page path for this client so SSE knows which handler to call
-      this._clients.set(clientId2, { pagePath: path$1, client: null });
+      // Store the normalized page path so SSE handler lookup matches
+      this._clients.set(clientId2, { pagePath: pagePath, client: null });
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(shell);
       return;

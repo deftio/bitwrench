@@ -477,15 +477,10 @@ describe("BwServeClient", function() {
 });
 
 // ===================================================================================
-// 2.1 removed APIs — query, exec, register are GONE
+// 2.1 removed APIs — exec, register, inspect, screenshot are GONE
 // ===================================================================================
 
 describe("BwServeClient removed 2.0.x APIs", function() {
-  it("query is removed", function() {
-    var client = new BwServeClient('rm-1', null);
-    assert.strictEqual(client.query, undefined);
-  });
-
   it("exec is removed", function() {
     var client = new BwServeClient('rm-2', null);
     assert.strictEqual(client.exec, undefined);
@@ -505,15 +500,49 @@ describe("BwServeClient removed 2.0.x APIs", function() {
     var client = new BwServeClient('rm-5', null);
     assert.strictEqual(client.screenshot, undefined);
   });
+});
 
-  it("_pend is removed", function() {
-    var client = new BwServeClient('rm-6', null);
-    assert.strictEqual(client._pend, undefined);
+// ===================================================================================
+// client.query() — 2.1.2 (restored, uses _pend/_resolvePending)
+// ===================================================================================
+
+describe("client.query()", function() {
+  it("sends _bw_query call with code and requestId", function() {
+    var client = new BwServeClient('q-1', null);
+    client.query('document.title');
+    assert.strictEqual(client._sent.length, 1);
+    var msg = client._sent[0];
+    assert.strictEqual(msg.type, 'call');
+    assert.strictEqual(msg.name, '_bw_query');
+    assert.strictEqual(msg.args[0].code, 'document.title');
+    assert.ok(msg.args[0].requestId);
   });
 
-  it("_resolvePending is removed", function() {
-    var client = new BwServeClient('rm-7', null);
-    assert.strictEqual(client._resolvePending, undefined);
+  it("returns a promise that resolves when _resolvePending is called", async function() {
+    var client = new BwServeClient('q-2', null);
+    var promise = client.query('1+1');
+    var requestId = client._sent[0].args[0].requestId;
+    client._resolvePending(requestId, { result: 2 });
+    var result = await promise;
+    assert.deepStrictEqual(result, { result: 2 });
+  });
+
+  it("uses custom timeout", function() {
+    var client = new BwServeClient('q-3', null);
+    client.query('x', { timeout: 5000 });
+    assert.ok(client._sent[0].args[0].requestId);
+  });
+
+  it("_pend returns requestId and promise", function() {
+    var client = new BwServeClient('q-4', null);
+    var pend = client._pend(5000);
+    assert.ok(pend.requestId);
+    assert.ok(pend.promise instanceof Promise);
+  });
+
+  it("_resolvePending ignores unknown requestId", function() {
+    var client = new BwServeClient('q-5', null);
+    client._resolvePending('nonexistent', { data: 1 });
   });
 });
 
@@ -2200,6 +2229,46 @@ describe("BwServeApp._handleRequest — default URL/method", function() {
   });
 });
 
+
+// =========================================================================
+// app.page() trailing slash normalization (#77)
+// =========================================================================
+
+describe("BwServeApp — trailing slash normalization", function() {
+  it("should match /app/ when handler registered for /app", function(done) {
+    this.timeout(5000);
+    var app2 = bwserve.create({ port: 0 });
+    app2.page('/app', function() {});
+    app2.listen(function() {
+      var fakeRes = {
+        _statusCode: null,
+        _body: null,
+        writeHead: function(code) { this._statusCode = code; },
+        end: function(body) { this._body = body; }
+      };
+      app2._handleRequest({ url: '/app/', method: 'GET' }, fakeRes);
+      assert.strictEqual(fakeRes._statusCode, 200);
+      app2.close().then(function() { done(); });
+    });
+  });
+
+  it("should not strip slash from root /", function(done) {
+    this.timeout(5000);
+    var app2 = bwserve.create({ port: 0 });
+    app2.page('/', function() {});
+    app2.listen(function() {
+      var fakeRes = {
+        _statusCode: null,
+        _body: null,
+        writeHead: function(code) { this._statusCode = code; },
+        end: function(body) { this._body = body; }
+      };
+      app2._handleRequest({ url: '/', method: 'GET' }, fakeRes);
+      assert.strictEqual(fakeRes._statusCode, 200);
+      app2.close().then(function() { done(); });
+    });
+  });
+});
 
 // =========================================================================
 // bwserve/index.js — _serveDistFile MIME type fallback (line 358)

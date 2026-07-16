@@ -1,4 +1,4 @@
-/*! bitwrench-util-color v2.1.1 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-util-color v2.1.2 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :

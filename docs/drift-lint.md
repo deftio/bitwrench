@@ -231,7 +231,7 @@ When you remove, rename, or re-decide something user-facing:
 
 | Rule | Catches | Correct form |
 |------|---------|--------------|
-| `client.render` / `client.exec` / `client.query` / `client.register` | 2.0 bwserve client APIs | `client.mount()`; exec/query/register removed |
+| `client.render` / `client.exec` / `client.register` | 2.0 bwserve client APIs | `client.mount()`; exec/register removed. `client.query()` restored in v2.1.2 |
 | `bw.createDOM` | 2.0 name | `bw.create()` |
 | `bw.cleanup` | 2.0 name | `bw.unmount()` |
 | `bw.component` | removed API | TACO `o:` options |

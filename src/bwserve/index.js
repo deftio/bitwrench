@@ -331,9 +331,12 @@ class BwServeApp {
       }
     }
 
+    // Normalize trailing slash for page route lookup (except root '/')
+    var pagePath = (path.length > 1 && path.endsWith('/')) ? path.slice(0, -1) : path;
+
     // Registered page routes — serve bwserve shell HTML (fallback when no
     // static file matched, e.g. pipe/SSE driven pages)
-    if (method === 'GET' && this._pages.has(path)) {
+    if (method === 'GET' && this._pages.has(pagePath)) {
       var clientId2 = 'c' + (++this._clientCounter);
       var shell = generateShell({
         clientId: clientId2,
@@ -341,8 +344,8 @@ class BwServeApp {
         theme: this.theme,
         injectBitwrench: this.injectBitwrench
       });
-      // Store the page path for this client so SSE knows which handler to call
-      this._clients.set(clientId2, { pagePath: path, client: null });
+      // Store the normalized page path so SSE handler lookup matches
+      this._clients.set(clientId2, { pagePath: pagePath, client: null });
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(shell);
       return;

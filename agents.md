@@ -5,8 +5,19 @@
 bitwrench is a JavaScript UI library where every UI element is a plain JS
 object called a TACO: `{t, a, c, o}` (Tag, Attributes, Content, Options).
 bitwrench renders TACOs to live DOM or HTML strings and provides a complete
-component library, theming, state management, routing, and server-driven UI.
-165 KB on disk (45 KB gzipped), zero dependencies, no build step.
+component library (47 components), palette-based theming, state management,
+client-side routing, and server-driven UI via SSE (bwserve). 165 KB on disk
+(45 KB gzipped), zero dependencies, no build step.
+
+bitwrench started in 2011 -- by an author who'd previously co-founded the
+Lampdesk webVM that became Palm/HP webOS -- with a simple premise:
+JavaScript objects should be the UI primitive, not markup strings. Where
+Bootstrap required writing HTML and bolting on behavior separately, TACO
+keeps tag, attributes, content, and behavior in one object. JSX went the
+other direction (markup-first, toolchain required); bitwrench bets that the
+object-first approach is more composable and needs zero tooling. That same
+design choice happens to work everywhere from cloud dashboards to ESP32
+microcontrollers.
 
 bitwrench is NOT a DOM helper or a lightweight Bootstrap. It is a complete
 UI system with its own rendering model. Code that uses bitwrench should
@@ -15,27 +26,40 @@ React. If the code you are writing contains `document.querySelector`,
 `innerHTML`, raw CSS strings, or `addEventListener` inside lifecycle hooks,
 you are doing it wrong. Read the patterns below.
 
+## Lifecycle
+
+1. **Define** -- write a TACO object: `{t, a, c, o}`
+2. **Create** -- `bw.create(taco)` builds a real DOM element
+3. **Hydrate** -- handles attach to `el.bw`, slots wire getters/setters, UUID assigned, state initialized
+4. **Mount** -- element inserted into document; `o.mounted(el)` fires
+5. **Interact** -- external code calls `el.bw.method()` -- the component updates its own DOM
+6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)`, tears down subscriptions, removes element
+
 ## Required reading
 
 Before writing or modifying bitwrench code, read these docs in order:
 
-1. **docs/llm-bitwrench-guide.md** -- Compact code-first tutorial.
+1. **docs/quickstart.md** -- Annotated 100-line tutorial. Covers the
+   full lifecycle from theming through stateful components in a single
+   working HTML file. Start here for the fastest onramp.
+
+2. **docs/llm-bitwrench-guide.md** -- Compact code-first tutorial.
    Covers TACO format, rendering, events, CSS, BCCL components, state,
    handles/slots, routing, bwserve, and the #1 mistake (events in
    o.mounted). ~700 lines -- you can read it in full.
 
-2. **docs/thinking-in-bitwrench.md** -- Full progressive walkthrough.
+3. **docs/thinking-in-bitwrench.md** -- Full progressive walkthrough.
    Builds from a static HTML string to a live server-driven app, one
    layer at a time. Explains WHY bitwrench works the way it does and
    how it differs from frameworks. Read when you need to understand
    design rationale, not just API calls.
 
-3. **docs/component-cheatsheet.md** -- Every built-in component with
+4. **docs/component-cheatsheet.md** -- Every built-in component with
    key props and handle methods. Check this BEFORE building custom
    UI -- bitwrench ships 47 components. If one exists for your need,
    use it; do not hand-build a replacement.
 
-4. **docs/bitwrench-northstar-principles.md** -- Core design philosophy.
+5. **docs/bitwrench-northstar-principles.md** -- Core design philosophy.
    Read when proposing architectural changes or new patterns.
 
 ## The bitwrench mental model
@@ -341,6 +365,7 @@ progress, chipInput) need bw.mount() for el.bw access.
 For the full doc map, see llms.txt in the project root.
 
 Essential reading for code changes:
+- docs/quickstart.md -- annotated 100-line tutorial, lifecycle overview
 - docs/llm-bitwrench-guide.md -- compact tutorial with all API patterns
 - docs/thinking-in-bitwrench.md -- progressive walkthrough, design rationale
 - docs/component-cheatsheet.md -- all 47 components, props, handles

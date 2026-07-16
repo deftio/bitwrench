@@ -15,7 +15,7 @@
  */
 
 import { execSync } from 'child_process';
-import { statSync } from 'fs';
+import { readFileSync, writeFileSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -135,6 +135,23 @@ const version = pkg.version;
 
 run('npm run generate-version');
 
+// Bump embedded registry manifests (Arduino, PlatformIO, ESP-IDF)
+const manifests = [
+  { file: 'library.properties', re: /^version=.+$/m, to: `version=${version}` },
+  { file: 'library.json', re: /"version":\s*"[^"]+"/, to: `"version": "${version}"` },
+  { file: 'idf_component.yml', re: /^version:\s*"[^"]+"/m, to: `version: "${version}"` }
+];
+for (const m of manifests) {
+  const p = join(root, m.file);
+  try {
+    const content = readFileSync(p, 'utf8');
+    writeFileSync(p, content.replace(m.re, m.to));
+    console.log(`  ✓ ${m.file} → ${version}`);
+  } catch {
+    // file may not exist in all repos
+  }
+}
+
 console.log(`\n  ✓ Version bumped to ${version}\n`);
 
 // ── 4. Create feature branch ────────────────────────────────────────────
@@ -143,7 +160,7 @@ run(`git checkout -b ${branchName}`);
 
 // ── 5. Commit and push ──────────────────────────────────────────────────
 
-run('git add package.json package-lock.json src/version.js');
+run('git add package.json package-lock.json src/version.js library.properties library.json idf_component.yml');
 run(`git commit -m "start v${version}: ${featureName}"`);
 
 // ── Summary ──────────────────────────────────────────────────────────────

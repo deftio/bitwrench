@@ -3,7 +3,32 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
-## v2.1.0 (unreleased)
+## v2.1.2 (unreleased)
+
+### Fixes
+
+- **`bw.inspect()` includes text content** -- walk function now extracts direct text nodes from elements, truncated to 120 chars. Useful for automated testing, accessibility auditing, and AI agents that need to "read" a page. (#74)
+- **`client.query()` restored** -- execute a JavaScript expression on the client and return the result via the `_bw_query` built-in. Uses `_pend`/`_resolvePending` request-response mechanism over SSE. Accepts `{ timeout }` option. (#75)
+- **Trailing slash normalization in `app.page()` route matching** -- `/app/` now matches a handler registered for `/app`. Root `/` is unchanged. (#77)
+
+### Tooling
+
+- **`start-release.js` auto-bumps embedded manifests** -- `library.properties`, `library.json`, and `idf_component.yml` are now updated automatically when starting a release, preventing version drift with ESP32/Arduino/PlatformIO packages.
+
+### Docs
+
+- **`docs/quickstart.md`** -- new annotated 100-line tutorial covering the full lifecycle (theming, static TACO, BCCL, stateful component with handles, mount, interact).
+- **README.md** -- added "Dev Server & Debugging" subsection with bwcli serve/inspect/screenshot examples. Added quickstart.md and bw-attach.md links to Documentation section.
+- **`llms.txt` / `agents.md`** -- added origin story, lifecycle bullets, and quickstart links for agent discoverability.
+- **`docs/bwserve.md`** -- added `client.query()` section and method table entry.
+- **`docs/bitwrench_api.md`** -- added `text` field to `bw.inspect()` return documentation.
+- **`docs/drift-lint.md`** -- removed `client.query` from banned patterns (restored in this release).
+
+## v2.1.1 (2026-07-15)
+
+Dependency updates only (dependabot dev deps).
+
+## v2.1.0 (2026-07-14)
 
 v2.1.0 is a lifecycle and rendering refactor. The core rendering pipeline
 (`create`, `mount`, `unmount`) is redesigned around composable atomic

@@ -103,6 +103,9 @@ export declare class BwServeClient {
   /** Register handler for client action. Returns this for chaining. */
   on(action: string, handler: (data: any, client: BwServeClient) => void): BwServeClient;
 
+  /** Run JavaScript on the client and return the result. */
+  query(code: string, opts?: { timeout?: number }): Promise<any>;
+
   /** Close SSE connection */
   close(): void;
 }

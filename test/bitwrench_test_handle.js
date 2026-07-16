@@ -300,6 +300,28 @@ describe("bw.inspect()", function() {
     var result = bw.inspect('#nonexistent');
     assert.strictEqual(result, null);
   });
+
+  it("should include direct text content", function() {
+    bw.mount('#app', {
+      t: 'button', a: { id: 'btn-text' }, c: 'Click Me'
+    });
+    var info = bw.inspect('#btn-text', 0);
+    assert.strictEqual(info.text, 'Click Me');
+  });
+
+  it("should truncate long text content at 120 chars", function() {
+    var longText = 'A'.repeat(200);
+    bw.mount('#app', { t: 'p', a: { id: 'long-text' }, c: bw.raw(longText) });
+    var info = bw.inspect('#long-text', 0);
+    assert.strictEqual(info.text.length, 123);
+    assert.ok(info.text.endsWith('...'));
+  });
+
+  it("should omit text property for elements with no text nodes", function() {
+    bw.mount('#app', { t: 'div', a: { id: 'no-text' }, c: [{ t: 'span' }] });
+    var info = bw.inspect('#no-text', 0);
+    assert.strictEqual(info.text, undefined);
+  });
 });
 
 // =========================================================================

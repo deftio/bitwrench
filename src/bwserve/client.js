@@ -30,7 +30,9 @@ export class BwServeClient {
     constructor(id, res) {
         this.id = id;
         this._res = res;       // SSE response stream (null in stub)
-        this._handlers = {};   // action name → handler
+        this._handlers = {};   // action name -> handler
+        this._pending = {};    // requestId -> { resolve, timer }
+        this._pendCounter = 0;
         this._closed = false;
     }
 
@@ -148,6 +150,55 @@ export class BwServeClient {
     on(action, handler) {
         this._handlers[action] = handler;
         return this;
+    }
+
+    /**
+     * Run JavaScript on the client and return the result.
+     *
+     * @param {string} code - JavaScript expression to evaluate
+     * @param {Object} [opts]
+     * @param {number} [opts.timeout=10000] - Timeout in ms
+     * @returns {Promise<*>} Resolved with the evaluation result
+     */
+    query(code, opts) {
+        var o = opts || {};
+        var pend = this._pend(o.timeout || 10000);
+        this.call('_bw_query', { code: code, requestId: pend.requestId });
+        return pend.promise;
+    }
+
+    /**
+     * Create a pending request that resolves when the client responds.
+     * @param {number} timeout - Timeout in ms
+     * @returns {{ requestId: string, promise: Promise }}
+     * @private
+     */
+    _pend(timeout) {
+        var self = this;
+        var requestId = 'req_' + (++this._pendCounter);
+        var promise = new Promise(function(res, rej) {
+            var timer = setTimeout(function() {
+                delete self._pending[requestId];
+                rej(new Error('Request ' + requestId + ' timed out after ' + timeout + 'ms'));
+            }, timeout);
+            self._pending[requestId] = { resolve: res, timer: timer };
+        });
+        return { requestId: requestId, promise: promise };
+    }
+
+    /**
+     * Resolve a pending request by its requestId.
+     * @param {string} requestId
+     * @param {*} data - Response data from the client
+     * @private
+     */
+    _resolvePending(requestId, data) {
+        var entry = this._pending[requestId];
+        if (entry) {
+            clearTimeout(entry.timer);
+            delete this._pending[requestId];
+            entry.resolve(data);
+        }
     }
 
     /**
