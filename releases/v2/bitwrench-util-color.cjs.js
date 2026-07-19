@@ -1,4 +1,4 @@
-/*! bitwrench-util-color v2.1.2 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-util-color v2.1.3 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });

@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.2 |
-| Generated | 2026-07-16 |
+| Version | 2.1.3 |
+| Generated | 2026-07-19 |
 | Total APIs | 112 |
 | Categories | 14 |
-| bitwrench.js | 5114 lines |
+| bitwrench.js | 5119 lines |
 | bitwrench-bccl.js | 3954 lines |
 
 ## Table of Contents

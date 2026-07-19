@@ -3,7 +3,14 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
-## v2.1.2 (unreleased)
+## v2.1.3 (2026-07-18)
+
+### Fixes
+
+- **`_applyTo()` lifecycle pipeline** -- `bw.el(sel, taco)` and `bw.$(sel, taco)` now properly call `bw.unmountChildren()` before clearing content and `bw.mountTree()` after appending, so replaced TACO children fire their unmount/mounted hooks and stay registered in `_nodeMap`. (#90)
+- **`bw.unmountChildren()` selector leak** -- added `[id]` to the descendant selector so elements registered in `_nodeMap` by id alone (no UUID, no lifecycle hooks) are properly deregistered on teardown. (#90)
+
+## v2.1.2 (2026-07-16)
 
 ### Fixes
 

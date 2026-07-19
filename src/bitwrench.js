@@ -406,6 +406,7 @@ function _applyTo(el, apply) {
   if (_is(apply, 'function')) {
     apply(el);
   } else if (_isA(apply)) {
+    bw.unmountChildren(el);
     el.innerHTML = '';
     apply.forEach(function(item) {
       if (item != null) {
@@ -416,10 +417,14 @@ function _applyTo(el, apply) {
         }
       }
     });
+    bw.mountTree(el);
   } else if (_is(apply, 'object') && apply !== null && apply.t) {
+    bw.unmountChildren(el);
     el.innerHTML = '';
     el.appendChild(bw.create(apply));
+    bw.mountTree(el);
   } else {
+    bw.unmountChildren(el);
     el.textContent = String(apply);
   }
 }
@@ -1509,7 +1514,7 @@ bw.unmountChildren = function(el) {
   if (!el || el.nodeType !== 1) return;
 
   // Find all direct and nested lifecycle/addressable nodes inside children
-  var childNodes = el.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"]');
+  var childNodes = el.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"], [id]');
   for (var i = 0; i < childNodes.length; i++) {
     _unmountNode(childNodes[i]);
   }

@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.1.2 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-lean v2.1.3 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
@@ -8,10 +8,10 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  */
 
 const VERSION_INFO = {
-  version: '2.1.2',
+  version: '2.1.3',
   name: 'bitwrench',
   license: 'BSD-2-Clause',
-  buildDate: '2026-07-16T08:11:38.704Z'
+  buildDate: '2026-07-19T06:40:04.089Z'
 };
 
 /**
@@ -4038,6 +4038,7 @@ function _applyTo(el, apply) {
   if (_is(apply, 'function')) {
     apply(el);
   } else if (_isA(apply)) {
+    bw.unmountChildren(el);
     el.innerHTML = '';
     apply.forEach(function(item) {
       if (item != null) {
@@ -4048,10 +4049,14 @@ function _applyTo(el, apply) {
         }
       }
     });
+    bw.mountTree(el);
   } else if (_is(apply, 'object') && apply !== null && apply.t) {
+    bw.unmountChildren(el);
     el.innerHTML = '';
     el.appendChild(bw.create(apply));
+    bw.mountTree(el);
   } else {
+    bw.unmountChildren(el);
     el.textContent = String(apply);
   }
 }
@@ -5141,7 +5146,7 @@ bw.unmountChildren = function(el) {
   if (!el || el.nodeType !== 1) return;
 
   // Find all direct and nested lifecycle/addressable nodes inside children
-  var childNodes = el.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"]');
+  var childNodes = el.querySelectorAll('.' + _BW_LC + ', [class*="bw_uuid_"], [id]');
   for (var i = 0; i < childNodes.length; i++) {
     _unmountNode(childNodes[i]);
   }
