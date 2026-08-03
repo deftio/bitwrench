@@ -1,149 +1,160 @@
 {
-  "version": "2.1.3",
-  "buildDate": "2026-07-19",
+  "version": "2.1.4",
+  "buildDate": "2026-08-03",
   "files": [
     {
-      "file": "bitwrench-bccl.cjs.js",
+      "file": "bitwrench-bccl.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "bccl",
       "minified": false,
-      "raw": 127822,
-      "gzipped": 27230,
+      "raw": 127819,
+      "gzipped": 27227,
       "sourceMap": true,
-      "integrity": "sha384-5FXKCjG8ocunxLw3GY6n+JPkBlalrXY9K6EH+9L5IYJ86oOVKpkCvIDJuKGyGU6X"
+      "integrity": "sha384-AtSUluWUph/N7FXU4Oc7hZzodmrNhY2zUa/s8pXzccAxOn+y3wvsy/PUbxszfSe4"
     },
     {
-      "file": "bitwrench-code-edit.cjs.js",
+      "file": "bitwrench-code-edit.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "code-edit",
       "minified": false,
-      "raw": 24027,
-      "gzipped": 6212,
+      "raw": 24024,
+      "gzipped": 6209,
       "sourceMap": true,
-      "integrity": "sha384-2JId9QgLY1oVGoTFEE8nI7kVqo299ORT7xAgyQFJF7AvJR+pcfHWSeE8p6MEg2SL"
+      "integrity": "sha384-Fe/gjtWJ7Brojs4iaWCorMNDJkH6VC7JloV80I4C56c6e2fMxSf/622Kz5ArZuM5"
     },
     {
-      "file": "bitwrench-lean.cjs.js",
+      "file": "bitwrench-debug.cjs",
+      "format": "CJS",
+      "ver": "2.x",
+      "component": "debug",
+      "minified": false,
+      "raw": 9483,
+      "gzipped": 2883,
+      "sourceMap": true,
+      "integrity": "sha384-ebi315TSwGhY18G/18zWeImitrvFh+yMsFN/bXp3o6a0kA6SnFOsDBCyaG+zoTtI"
+    },
+    {
+      "file": "bitwrench-lean.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "lean",
       "minified": false,
-      "raw": 315296,
-      "gzipped": 80042,
+      "raw": 315284,
+      "gzipped": 80036,
       "sourceMap": true,
-      "integrity": "sha384-o3ClY/7xtXIya9GSGp3UstI1azvzSN36HYsfRaFBdR2Eibudya/Z5h04Wxntc9ne"
+      "integrity": "sha384-yylnPwNAL5gllSa2g7pcvCP5NVfUBuiRZpR1hjqgb6FZFioqPVRphFkAuxSfGrFy"
     },
     {
-      "file": "bitwrench-util-color.cjs.js",
+      "file": "bitwrench-util-color.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "core",
       "minified": false,
-      "raw": 6971,
-      "gzipped": 2483,
+      "raw": 6968,
+      "gzipped": 2480,
       "sourceMap": true,
-      "integrity": "sha384-xhsZv38QNjxqbRDHRxgiV1E6My55r9JNCOY61bB35GS4P+dz/ZeqmxLL4PHhu89/"
+      "integrity": "sha384-WPFzgEheM2jt1d0+A50faHorM0l0SDAptvqApRybKfjdhfu3rHfu4sXYyRTbeRHn"
     },
     {
-      "file": "bitwrench-util-css.cjs.js",
+      "file": "bitwrench-util-css.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "core",
       "minified": false,
-      "raw": 8185,
-      "gzipped": 2668,
+      "raw": 8182,
+      "gzipped": 2665,
       "sourceMap": true,
-      "integrity": "sha384-qP580kxozuW4YuVS9xUotSvkCvQbY4TOyKTowjhBApsOBr/4cXGLoPILE9/nICBX"
+      "integrity": "sha384-G0ECCKhPQow50GHayWM/g3OVGZQ9dNP+LQkYQz1Sl2q3vNl+s1t8nbBBGfDeUi9h"
     },
     {
-      "file": "bitwrench.cjs.js",
+      "file": "bitwrench.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "core",
       "minified": false,
-      "raw": 440428,
-      "gzipped": 106316,
+      "raw": 440416,
+      "gzipped": 106312,
       "sourceMap": true,
-      "integrity": "sha384-xypb02T+aoq1/Sg5cA/Esfj2M13lwB/dS3paXQrixrLMvGMxSTsttANp476xyvqa"
+      "integrity": "sha384-vQxdx3QOVS1qiFN8nyPqtz+07pQScGBgG0MooevZoAOZ3eCL69FSIG2oayiLsnRD"
     },
     {
-      "file": "bwserve.cjs.js",
+      "file": "bwserve.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "bwserve",
       "minified": false,
-      "raw": 47436,
-      "gzipped": 13283,
+      "raw": 47430,
+      "gzipped": 13282,
       "sourceMap": true,
-      "integrity": "sha384-SuFQmLX/9Xd+OeN+RhzijByo0JdIJFHKHeNexIU00LyI12w+/AMXdAfPvohyRlzt"
+      "integrity": "sha384-mlVjWu/45xHwwQi74iGl/ytP6vyS2u+hC65XtYjdD9gqWsQbLDBiTEhmBBXymDRl"
     },
     {
-      "file": "bitwrench-bccl.cjs.min.js",
+      "file": "bitwrench-bccl.min.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "bccl",
       "minified": true,
-      "raw": 40629,
-      "gzipped": 11069,
+      "raw": 40626,
+      "gzipped": 11067,
       "sourceMap": true,
-      "integrity": "sha384-2tmBFXV7s4l6bd3gVfh7QA4CEUO0Ntqqk9sbiLVxWXGihTYijdSTEHePkS2wlGcM"
+      "integrity": "sha384-PQKfnwmezKbYUV5EVjZzog5vluNz2U2pjvt/hnnqJtx26CXlwZV91aGGc4fpnDJb"
     },
     {
-      "file": "bitwrench-code-edit.cjs.min.js",
+      "file": "bitwrench-code-edit.min.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "code-edit",
       "minified": true,
-      "raw": 11301,
+      "raw": 11298,
       "gzipped": 4021,
       "sourceMap": true,
-      "integrity": "sha384-l8rrLzc+GBxOTMG/cZt3acYhf/vXPvolDHm5rgYZeFKi3Rvq6f4ut73EsDy1IfDI"
+      "integrity": "sha384-baaMMjclC+GCtQqgouE+IyK6rgPxB6f8D41BWkr+NCkq993179086vRi3+/KCs4m"
     },
     {
-      "file": "bitwrench-lean.cjs.min.js",
+      "file": "bitwrench-lean.min.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "lean",
       "minified": true,
-      "raw": 129259,
-      "gzipped": 35642,
+      "raw": 129247,
+      "gzipped": 35639,
       "sourceMap": true,
-      "integrity": "sha384-Ep2vHWagH1hvZ5WV1rH3Tec8Lf+kjHwY4mc40aAy05CcBdOx5WLn1BhC+Npg3Xrv"
+      "integrity": "sha384-N+VgRgMWqsSpKYEigVyjvgjwnZogESddTvOkHdKzayr7T9VoY1x9XVvMMEAe0Cap"
     },
     {
-      "file": "bitwrench-util-color.cjs.min.js",
+      "file": "bitwrench-util-color.min.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "core",
       "minified": true,
-      "raw": 2809,
-      "gzipped": 1360,
+      "raw": 2806,
+      "gzipped": 1359,
       "sourceMap": true,
-      "integrity": "sha384-XM65LKa1mwotSBn+SDBtYlf5dYqMfGMCWXgN6jtoIpt0PHieHJaUFs6kgibHWL2K"
+      "integrity": "sha384-3WLfWb6rBGYHj+7anl9l4181Kh5xdZz9qZ2lbhQaixeSpXwOamR6HNMn5jGNJaq0"
     },
     {
-      "file": "bitwrench-util-css.cjs.min.js",
+      "file": "bitwrench-util-css.min.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "core",
       "minified": true,
-      "raw": 3406,
+      "raw": 3403,
       "gzipped": 1303,
       "sourceMap": true,
-      "integrity": "sha384-SihnZcURZTpm5kESGXjn2YCppI/SPavQPNH8tKB2BQPwDkNJXIx8KlMg5QYFQIcK"
+      "integrity": "sha384-B9RXtQj75UC2aK2tn6hCpYolhwr92sDNkoh5vhTyfVOqkUuN1pf+Jb6CV3Eec7U0"
     },
     {
-      "file": "bitwrench.cjs.min.js",
+      "file": "bitwrench.min.cjs",
       "format": "CJS",
       "ver": "2.x",
       "component": "core",
       "minified": true,
-      "raw": 169656,
-      "gzipped": 45811,
+      "raw": 169644,
+      "gzipped": 45807,
       "sourceMap": true,
-      "integrity": "sha384-gz4QgaWQ70wjl6I/bX0KBtV+gfqxLkN651DgTu7lWYC5gf11w+M+IY9b1PZ2KoqF"
+      "integrity": "sha384-DVLlT1Wkq5LK9Bbr5c/p3lNuOBS1xl7bua7vWKZQ53aWY5Su2j/FOK5t153p1BNz"
     },
     {
       "file": "bitwrench.css",
@@ -154,7 +165,7 @@
       "raw": 79476,
       "gzipped": 12759,
       "sourceMap": false,
-      "integrity": "sha384-5Trgd0dK5/u+AL28TRV/YvyhXsjsPlf4tVbv+IFdoHSv6mTkkJwqiTICVrw/94rF"
+      "integrity": "sha384-UnxE2yZ2p1JCxeOtdKZJT03bdgVHX3v7vQ7devONVDexgoso+roUJXulBwZ7GefF"
     },
     {
       "file": "bitwrench.min.css",
@@ -176,7 +187,7 @@
       "raw": 28732,
       "gzipped": 6563,
       "sourceMap": true,
-      "integrity": "sha384-x/CONLk76Bj2O9y5KpgKIosoe/utu9q0nibTGJrlslPiex0MQ2qqUr/T/CCl0+cN"
+      "integrity": "sha384-FImeOFsF/weFXnUbcKCAvyvMAK3Vl+MeoGQbFmnDDyc4a5JUWqN1gYhthaERS1cj"
     },
     {
       "file": "bitwrench-lean.es5.js",
@@ -187,7 +198,7 @@
       "raw": 357448,
       "gzipped": 84039,
       "sourceMap": true,
-      "integrity": "sha384-Hndi0/Dlv+LaBFG64jrFgzk3eBZPymVLQqbZpebPVkrlxmx6aHxHKu8tZXqJ2/M9"
+      "integrity": "sha384-8nBIgyRMrtmac7OfsuudwHNSK7j/nYoAEQspJAQc1bV4OnfY7xZZWHDlsSa+iqTj"
     },
     {
       "file": "bitwrench-util-color.es5.js",
@@ -198,7 +209,7 @@
       "raw": 7886,
       "gzipped": 2620,
       "sourceMap": true,
-      "integrity": "sha384-fZQleZXSceVJD7DaJUFMjssHfzdOiOTOVUjkZU73BjSanBQIkILhjlXxM3nqYT2x"
+      "integrity": "sha384-2QiKZjit/+Vtwb2eHd1BqrEyegN5CfvCSt2qtr7ka6fD+mi5TYzNOK37fAo1rB1k"
     },
     {
       "file": "bitwrench-util-css.es5.js",
@@ -209,7 +220,7 @@
       "raw": 10170,
       "gzipped": 2997,
       "sourceMap": true,
-      "integrity": "sha384-7sV253eoWV87hcGOHlubJCP5ch4pcnfg0ajBVJDZ0a78d3SAEIXnTb1oZKhTYnjv"
+      "integrity": "sha384-o858+SWaAvT+Rb3+LDgs20EQ4Zb8BR8LzsTZYZ2f0eX7eEN4Z6KAQzjJ1mbYXMGi"
     },
     {
       "file": "bitwrench.es5.js",
@@ -220,7 +231,7 @@
       "raw": 514111,
       "gzipped": 113383,
       "sourceMap": true,
-      "integrity": "sha384-BWG09GwXwr/g209PXdK4NaaaDqN5TnHW9mRV7H/J438H9Kd82VvuVsWUB6RMtlxw"
+      "integrity": "sha384-qfnXEkiQ1/F2b7ltH18YZRZMSeXVTuo4GwncJyaOhHdTTm+ABBK33zp5tKt8sUJf"
     },
     {
       "file": "bitwrench-code-edit.es5.min.js",
@@ -231,7 +242,7 @@
       "raw": 11477,
       "gzipped": 4075,
       "sourceMap": true,
-      "integrity": "sha384-34aypydIAmxgW6N6iVFiW+DjxdY20BB3SSL8ilpNlF68DzGEwnpLwIXOjtAMozFB"
+      "integrity": "sha384-4fPSicGqbK9uFdgoK4Cjm7go6epClvc6Un0BS13CjnQTobCP5Mmigwa36B18eOqB"
     },
     {
       "file": "bitwrench-lean.es5.min.js",
@@ -242,7 +253,7 @@
       "raw": 135540,
       "gzipped": 37398,
       "sourceMap": true,
-      "integrity": "sha384-ZkFta2k9K7E0tuOLpbXTjSv4UqPIh29jbS3S0xossBG25PZc8q86JBWkOIItke3j"
+      "integrity": "sha384-6Grjant782KK89wwRA9T4yagBJ0iAz1LMpqr4Bh802lmJwJMI3a9LP3/Jlv+IRX1"
     },
     {
       "file": "bitwrench-util-color.es5.min.js",
@@ -253,7 +264,7 @@
       "raw": 2992,
       "gzipped": 1432,
       "sourceMap": true,
-      "integrity": "sha384-I0N57Rv536zXDxLnJkId27uTtfSC5vvZZuB1h8Fo8eEp2LgO3uru8J0l3ZVQqRe3"
+      "integrity": "sha384-aqrRst0cKjM6n7nQE0qDqs+skrYoafa4bFUxtoDq2tvHXiqmRTEdfffzNVtt6aqq"
     },
     {
       "file": "bitwrench-util-css.es5.min.js",
@@ -264,7 +275,7 @@
       "raw": 3838,
       "gzipped": 1441,
       "sourceMap": true,
-      "integrity": "sha384-LqnyuP8mfWC8WBhidXF3BhgESvylg7kO3RqJ3ALMxeROcJffPpnh8yUOS2d8G0ao"
+      "integrity": "sha384-Q/ZPZ4IVylyRRzl82Q3JqNm7VqOp8lO7AMGKNiX9CM/5zShpzd9WYbZgKA6DGXEJ"
     },
     {
       "file": "bitwrench.es5.min.js",
@@ -275,7 +286,7 @@
       "raw": 182146,
       "gzipped": 48239,
       "sourceMap": true,
-      "integrity": "sha384-BueeQcUsg5ocKPoCiHBrfA89o1uzZPI+lSvHUQo0NFa1CAL/GVKBTsvajbjozHVr"
+      "integrity": "sha384-bEBYrqWNu6EjgfqIm0et1pa0l6+2fSOglYsIl7nxsEIfvH4Xakwj5Ttpedpy5oz6"
     },
     {
       "file": "bitwrench-bccl.esm.js",
@@ -286,7 +297,7 @@
       "raw": 127742,
       "gzipped": 27215,
       "sourceMap": true,
-      "integrity": "sha384-080txrm4/fT5W53e37QD1oOqfWGsNy4lv3XBDYmlF4BV0MpaSKOaEZZwrbqQ5tRQ"
+      "integrity": "sha384-Psv+lpI4NVH4CaNF6Mh0rCnconMN+P0J+qzrAhcIIg0upOvPm6aNekNVy9MB7EEI"
     },
     {
       "file": "bitwrench-code-edit.esm.js",
@@ -297,7 +308,7 @@
       "raw": 23808,
       "gzipped": 6132,
       "sourceMap": true,
-      "integrity": "sha384-Qx0U98X/p2nmYVrRGgFtrmCVeJkd411zNL/6d9cZvvLnZGzCgthYdekuszKP6Zlt"
+      "integrity": "sha384-DPRWH7QKrjJYKPFlkCkMHZL6otxgLcn+HG7flYKfiTb/dgZesMd66upb3EkuaR48"
     },
     {
       "file": "bitwrench-lean.esm.js",
@@ -306,9 +317,9 @@
       "component": "lean",
       "minified": false,
       "raw": 314433,
-      "gzipped": 79865,
+      "gzipped": 79864,
       "sourceMap": true,
-      "integrity": "sha384-MPnYflRfAWy9HQpQRJXSaxbUcx+ibo9lC/b9uasze56bcM9D8IZRrCruhXEYMslP"
+      "integrity": "sha384-+F29l1NXtdHy/KDgO5ZuNEw4wYaOJgai2jF4LEkNkteZZPPRU/9SEiuP3p1XF9m3"
     },
     {
       "file": "bitwrench-util-color.esm.js",
@@ -319,7 +330,7 @@
       "raw": 6767,
       "gzipped": 2424,
       "sourceMap": true,
-      "integrity": "sha384-Z5s42VdbaAKfiNieeCIBOSTwvkxO9bKdRGpT7TTFdryLo45kQbL/+z/OUU4HgCA6"
+      "integrity": "sha384-aOlFLLSJ6JrZ9vf16/EPyhJDJLyNaC4foEmUNw2dYHyBzY6u9DLzz+XxXJMyFkCG"
     },
     {
       "file": "bitwrench-util-css.esm.js",
@@ -330,7 +341,7 @@
       "raw": 8085,
       "gzipped": 2618,
       "sourceMap": true,
-      "integrity": "sha384-yiiI/mWceWjRmJjSulWB6kWHwshD8xx4l8Pn6x7H83abdLozREplpqxSBFC1Us8g"
+      "integrity": "sha384-xwRenjwOzvKtcEah5cOpgG/0ASQJgUs9PfBtKN185/CKeiw3BDc81frp9jmOnIge"
     },
     {
       "file": "bitwrench.esm.js",
@@ -341,7 +352,7 @@
       "raw": 440212,
       "gzipped": 106397,
       "sourceMap": true,
-      "integrity": "sha384-SzTksKUkQgPSvdC+tTzAYSsp29cUL6WiQ3vfXlctO4uMPjcF7yOg/qrlIrgke5aF"
+      "integrity": "sha384-nNcmXpef+K8x2WiIdRNQ2tT/ZzPAPyRu8xvJL548YgfftG1hBsT2JfV1BaQazrnQ"
     },
     {
       "file": "bwserve.esm.js",
@@ -352,7 +363,7 @@
       "raw": 46851,
       "gzipped": 13101,
       "sourceMap": true,
-      "integrity": "sha384-fbtylbmhS12ib3gtGqclkVqqDSbqqFZOmjw2ccI9BERi/gjSIXXeRnclZiqPTi09"
+      "integrity": "sha384-+T5K5WIKd6VX4vsPY5EOk1fmEmOwZ9edpU2g+KOOYpEo99cpPBdgU83IV4129tkr"
     },
     {
       "file": "bitwrench-bccl.esm.min.js",
@@ -361,9 +372,9 @@
       "component": "bccl",
       "minified": true,
       "raw": 40604,
-      "gzipped": 11071,
+      "gzipped": 11070,
       "sourceMap": true,
-      "integrity": "sha384-ipDZTsGIioGM4cpt3CxXy4CqnTQxnMueMtNiOU7ZbFnSP61i+EBjdJmfQgTxdfGJ"
+      "integrity": "sha384-hCRzMglNav84RysxQrDjNyRTqYtv6a1pYjxSoZtYq7gHjubi6v0HwJ0iCqs4a9jR"
     },
     {
       "file": "bitwrench-code-edit.esm.min.js",
@@ -374,7 +385,7 @@
       "raw": 11201,
       "gzipped": 3980,
       "sourceMap": true,
-      "integrity": "sha384-xrryl8uGIQKD19u2wntTkY8Y6GVyFXIxJV98vbVgHSGKeQi3jk1Vuxiuzof2w5Vk"
+      "integrity": "sha384-3R20uZAU0KkDa9kumItjygjB46l/CFijY9VXKohQaMigEjJFs2tlG9J7ztn6GCKa"
     },
     {
       "file": "bitwrench-lean.esm.min.js",
@@ -385,7 +396,7 @@
       "raw": 128672,
       "gzipped": 35505,
       "sourceMap": true,
-      "integrity": "sha384-ZTRNujSMfmq76qU0TAGqJk1Z1JlcqwiUlNzrQrZxWMxtduTZv+fSS6e8Svy+8tVS"
+      "integrity": "sha384-9q4c8/OY8jINhQFBAaS9Y0I69RnK7de++2atNe6iniA30OJbYDEknIwWcgSDnwJ0"
     },
     {
       "file": "bitwrench-util-color.esm.min.js",
@@ -394,9 +405,9 @@
       "component": "core",
       "minified": true,
       "raw": 2714,
-      "gzipped": 1322,
+      "gzipped": 1323,
       "sourceMap": true,
-      "integrity": "sha384-BbrKQfhMdeX24/x2j4tM5rXleXypT4Wl8jjBy+w7yBTwdvulVZyGTBw06xBA6ixI"
+      "integrity": "sha384-R8INgvKSZXVyDQ2AsPEgKPrFqUv0aMpEVaUurtHVMLGTIo4X5HztsJhByRIqhsJk"
     },
     {
       "file": "bitwrench-util-css.esm.min.js",
@@ -407,7 +418,7 @@
       "raw": 3331,
       "gzipped": 1263,
       "sourceMap": true,
-      "integrity": "sha384-xVL8sgHOULUtfW07ofDmRRFog4rAjBH+oeQ5VoFhI0nWNLZXa4IsQsG/IFSnvAOT"
+      "integrity": "sha384-HvU262UChPo0zwVDjvZN2BUiRLIgeVqwf1Sm9ZdKPRk9bIaLgAFrxYHn55oR6CYd"
     },
     {
       "file": "bitwrench.esm.min.js",
@@ -418,7 +429,7 @@
       "raw": 169966,
       "gzipped": 46012,
       "sourceMap": true,
-      "integrity": "sha384-Nwcv3yhfc89+7XzqUENeIkNBNU7zmY8oSXF82DlOEwlq78Wny6YnpLsXUjYqmSKw"
+      "integrity": "sha384-n37nAEjGARj6jwKQXvDq6k73rbw07szgbmXCAJAbCzqXCp3AHZZX3kBaYNviFwr3"
     },
     {
       "file": "bitwrench-bccl.umd.js",
@@ -427,9 +438,9 @@
       "component": "bccl",
       "minified": false,
       "raw": 135940,
-      "gzipped": 27770,
+      "gzipped": 27771,
       "sourceMap": true,
-      "integrity": "sha384-C55FMmglFX5Nh13y/uTgtHistUXpplKJDezVpJQfzflSyj64yjCijjJ9fGzEhtZp"
+      "integrity": "sha384-bHmVHeiWOYpJ5I7AdL2wbTSVbdzxEFC2u5EHgxd3tm43NN7o6/0jFli4aCK5cwOE"
     },
     {
       "file": "bitwrench-code-edit.umd.js",
@@ -440,7 +451,7 @@
       "raw": 25633,
       "gzipped": 6381,
       "sourceMap": true,
-      "integrity": "sha384-XvqDjWJanaJZHOcB6bWLrvnkUTZ84QUdA9dXT5zUuBm9cpOID+CxAdwko2+rN35Y"
+      "integrity": "sha384-K+Me6lHMvBuDDTcT/BzM6mMQOOPbetUYZuJ+kAASLXpq/wZ45Z9wFdWoOFJ5yzcd"
     },
     {
       "file": "bitwrench-debug.js",
@@ -448,10 +459,10 @@
       "ver": "2.x",
       "component": "debug",
       "minified": false,
-      "raw": 9622,
-      "gzipped": 2948,
+      "raw": 10029,
+      "gzipped": 3001,
       "sourceMap": true,
-      "integrity": "sha384-Srh+9PWjuiOEebAztYRe89Zi9Urlc9JgPGeEI0zjE/RpPCNf9YjXSbyAX/LFJ73J"
+      "integrity": "sha384-Agam7NlLQjMZ4oRMOiy0QDdOoS2XSrKDi401DMyAgUW09kJKsfC38VdPvigfIljV"
     },
     {
       "file": "bitwrench-lean.umd.js",
@@ -462,7 +473,7 @@
       "raw": 331909,
       "gzipped": 81518,
       "sourceMap": true,
-      "integrity": "sha384-7uhzHngzom61KQKFGIx0V0NyGZmYY/IkpWFpqSbTAWGu8w5DDpK+tYBIwzeivWIs"
+      "integrity": "sha384-Fs6uzp4Y5HkcpmjYcsafVDZO61Ob3GSK2lClI5+fJakGUOX2F+3ltCKyq7wYdPx7"
     },
     {
       "file": "bitwrench-util-color.umd.js",
@@ -473,7 +484,7 @@
       "raw": 7740,
       "gzipped": 2621,
       "sourceMap": true,
-      "integrity": "sha384-qEcj1R0XDJ8jMAvrF5egYyNJYjginjlwDicc0/26rLuXRUbjd43TfOUrpxK3p3Cp"
+      "integrity": "sha384-+clCP8AH/k47jzfwZhfagveZx0VMDqm+2CKzhyLjBiQeN3E+pbinjYy8n5YyVXGP"
     },
     {
       "file": "bitwrench-util-css.umd.js",
@@ -484,7 +495,7 @@
       "raw": 8942,
       "gzipped": 2802,
       "sourceMap": true,
-      "integrity": "sha384-eueTqN7+PN892OtkGKD4CUscXPCMTflwpVWz5b7oJvI8ktRorWkY/DjyY0TZ5PdE"
+      "integrity": "sha384-glWODe9ueji6SuJOMQD9nm0YE/27Ct0kSucKe1WFP1Jtm+TEfmyPOVNUA7FCQbpY"
     },
     {
       "file": "bitwrench.umd.js",
@@ -495,7 +506,7 @@
       "raw": 464667,
       "gzipped": 107916,
       "sourceMap": true,
-      "integrity": "sha384-Hno/ZbLRUqa1mGRaZBuLvfAxWvQyBI9Q/FnsY1BHef/h2iwdm6PBuhP4lLay68Bc"
+      "integrity": "sha384-6OSgtnvmykYWkJD3QHOlqeeCoKKAxRrzj/SDtc/6pUciumaf875tCvWKzJCx7wKF"
     },
     {
       "file": "bitwrench-bccl.umd.min.js",
@@ -506,7 +517,7 @@
       "raw": 40831,
       "gzipped": 11115,
       "sourceMap": true,
-      "integrity": "sha384-rpiVuQGD/8Rs3sgZUqmszgfVcZVbATDMgD+aBd8au3l4wSjwAgFYlGqQE6hJ+9eN"
+      "integrity": "sha384-vm4NzScVwqjynGCUp+f0tvbw3UOwmSgdA5LuNo1KlK2SN095DruxVDitq/rwmLpO"
     },
     {
       "file": "bitwrench-code-edit.umd.min.js",
@@ -515,9 +526,9 @@
       "component": "code-edit",
       "minified": true,
       "raw": 11477,
-      "gzipped": 4074,
+      "gzipped": 4075,
       "sourceMap": true,
-      "integrity": "sha384-UwajhEetYBa6LwD+xnWq+Ly/YPDY9kTFImDTRq8M1pY6JV+keMWB1Xta3AP94Gpm"
+      "integrity": "sha384-W7kTvli1WBHRxNxb5ZiSz6lAevTn6o6KzmR6jd3QqVntUDSvst0DwbV3mdrF4Ic0"
     },
     {
       "file": "bitwrench-debug.min.js",
@@ -525,10 +536,10 @@
       "ver": "2.x",
       "component": "debug",
       "minified": true,
-      "raw": 4270,
-      "gzipped": 1738,
+      "raw": 4283,
+      "gzipped": 1749,
       "sourceMap": true,
-      "integrity": "sha384-7ByanXHd7cfQNPGSYz1t64SCbEcJGLPU4t8xByj2/bbowhQ15G5zyOOAheYAxVST"
+      "integrity": "sha384-gqWRtH6jEGKEF8WhYnXilwA4J7KyjNmvfqQhKjQkZIU/FGjdUiow1g/RRn1GJ+lK"
     },
     {
       "file": "bitwrench-lean.umd.min.js",
@@ -539,7 +550,7 @@
       "raw": 129685,
       "gzipped": 35729,
       "sourceMap": true,
-      "integrity": "sha384-gG4miJzEP+4ChvrBKiCTApz9szCKZAKNgaP1Fxs4fS1l0pBvAohRYjqjkuruemg2"
+      "integrity": "sha384-CzJNDVWNYl1CwEj99RA18h942oQC/6nFJ3P3hMhTXj2MleuZaO8pfwkbtQl3ryVa"
     },
     {
       "file": "bitwrench-util-color.umd.min.js",
@@ -548,9 +559,9 @@
       "component": "core",
       "minified": true,
       "raw": 2992,
-      "gzipped": 1432,
+      "gzipped": 1433,
       "sourceMap": true,
-      "integrity": "sha384-JRLGb3JOojNTKQxoSorg0CTYaM1MzUwacgi0gKiixPXWyIWufTq7/Tu9Y5v2npoI"
+      "integrity": "sha384-4lssJU6QWXPteUi+4aIq9RyiHKzufmHsTOBdmkM1N8sOUOUfAg35NeLdFyjUZvrj"
     },
     {
       "file": "bitwrench-util-css.umd.min.js",
@@ -561,7 +572,7 @@
       "raw": 3611,
       "gzipped": 1380,
       "sourceMap": true,
-      "integrity": "sha384-OTFbC2hL9TAI7NW8nOmH9OlJxUMkh2T0JS1fxy9TmS+A6uvRIihHFlwhOvIW/oDy"
+      "integrity": "sha384-D9iQHD1p5faKWTTev5hJUYrmi9Q/u2XplqqBrP4m8APgK56uodqqFuOBbiZotrMv"
     },
     {
       "file": "bitwrench.umd.min.js",
@@ -572,7 +583,7 @@
       "raw": 170082,
       "gzipped": 45903,
       "sourceMap": true,
-      "integrity": "sha384-d/JRBLTBGq4I1l6XNiumIfSP1PBm/Swr+sOlfQc1TuEm4+c18tYKrA8cwCxNOGzS"
+      "integrity": "sha384-VqPflPDnnsg/EWzlphzWrNMsRuvgvVfj4l784drTGLFj9Wm19nOpMHKdsXVuJIh7"
     }
   ]
 }

@@ -24,7 +24,7 @@ const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8
 const files = readdirSync(distDir).filter(f => {
   if (f === 'builds.json' || f === 'sri.json') return false;
   if (f.endsWith('.map')) return false;
-  return f.endsWith('.js') || f.endsWith('.css');
+  return f.endsWith('.js') || f.endsWith('.cjs') || f.endsWith('.css');
 });
 
 // Hash each file

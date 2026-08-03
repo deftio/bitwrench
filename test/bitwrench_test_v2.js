@@ -25,7 +25,8 @@ describe("Core Type Functions", function() {
       {args: ["test string"], expected: "string"},
       {args: [undefined], expected: "undefined"},
       {args: [null], expected: "null"},
-      {args: [new Date()], expected: "date"},
+      // Constructor-derived types keep their capitalization (see bitwrench_ci.js).
+      {args: [new Date()], expected: "Date"},
       {args: [function(){}], expected: "function"},
     ];
     
@@ -54,7 +55,9 @@ describe("Utility Functions", function() {
 
   describe("#escapeHTML()", function() {
     const tests = [
-      {args: ["<div>test</div>"], expected: "&lt;div&gt;test&lt;/div&gt;"},
+      // escapeHTML also escapes '/' to &#x2F; -- deliberate, which is why it
+      // must not be used on URL or path attribute values.
+      {args: ["<div>test</div>"], expected: "&lt;div&gt;test&lt;&#x2F;div&gt;"},
       {args: ["'quotes'"], expected: "&#39;quotes&#39;"},
       {args: ['"double"'], expected: "&quot;double&quot;"},
       {args: ["&amp;"], expected: "&amp;amp;"},
@@ -219,15 +222,20 @@ describe("TACO and HTML Generation", function() {
 // Table generation
 // ================================================================
 describe("Table Functions", function() {
-  describe("#htmlTable()", function() {
-    it("should generate table HTML", function() {
-      const data = [
-        ["Name", "Age"],
-        ["John", 30],
-        ["Jane", 25]
-      ];
-      const html = bw.htmlTable(data, { firstRowHeader: true });
-      assert.ok(html.includes("<table"));
+  // v1's bw.htmlTable() (HTML string) is gone; v2 builders emit TACO.
+  describe("#makeTableFromArray()", function() {
+    it("should build a table TACO from row arrays", function() {
+      const taco = bw.makeTableFromArray({
+        data: [
+          ["Name", "Age"],
+          ["John", 30],
+          ["Jane", 25]
+        ],
+        headerRow: true
+      });
+      assert.strictEqual(taco.t, "table");
+
+      const html = bw.html(taco);
       assert.ok(html.includes("<thead>"));
       assert.ok(html.includes("Name"));
       assert.ok(html.includes("John"));

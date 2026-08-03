@@ -54,16 +54,16 @@ var BUNDLE_FILES = [
   'bitwrench.umd.min.js',
   'bitwrench.esm.js',
   'bitwrench.esm.min.js',
-  'bitwrench.cjs.js',
-  'bitwrench.cjs.min.js',
+  'bitwrench.cjs',
+  'bitwrench.min.cjs',
   'bitwrench.es5.js',
   'bitwrench.es5.min.js',
   'bitwrench-lean.umd.js',
   'bitwrench-lean.umd.min.js',
   'bitwrench-lean.esm.js',
   'bitwrench-lean.esm.min.js',
-  'bitwrench-lean.cjs.js',
-  'bitwrench-lean.cjs.min.js',
+  'bitwrench-lean.cjs',
+  'bitwrench-lean.min.cjs',
   'bitwrench-lean.es5.js',
   'bitwrench-lean.es5.min.js',
   'bitwrench-code-edit.umd.js',
@@ -74,9 +74,9 @@ var BUNDLE_FILES = [
   'bitwrench-bccl.umd.min.js',
   'bitwrench-bccl.esm.js',
   'bitwrench-bccl.esm.min.js',
-  'bitwrench-bccl.cjs.js',
-  'bitwrench-bccl.cjs.min.js',
-  'bwserve.cjs.js',
+  'bitwrench-bccl.cjs',
+  'bitwrench-bccl.min.cjs',
+  'bwserve.cjs',
   'bwserve.esm.js',
   'bitwrench.css'
 ];
@@ -184,8 +184,10 @@ async function main() {
         bytes: bundleBuf.length,
         gzipBytes: gzBuf.length
       });
-      // Write .gz file for minified JS bundles (useful for embedded/SPIFFS)
-      if (bundleFile.indexOf('.min.js') !== -1) {
+      // Write .gz file for minified bundles (useful for embedded/SPIFFS).
+      // CJS builds end in .min.cjs, not .min.js -- a bare '.min.js' substring
+      // test silently skipped every one of them.
+      if (bundleFile.indexOf('.min.js') !== -1 || bundleFile.indexOf('.min.cjs') !== -1) {
         fs.writeFileSync(bundlePath + '.gz', gzBuf);
         gzCount++;
       }

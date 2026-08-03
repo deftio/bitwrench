@@ -33,7 +33,7 @@ const allFiles = readdirSync(distDir).filter(f => {
   if (f === 'builds.json' || f === 'sri.json') return false;
   if (f.endsWith('.map')) return false;
   if (f.endsWith('_sri.txt')) return false;
-  return f.endsWith('.js') || f.endsWith('.css');
+  return f.endsWith('.js') || f.endsWith('.cjs') || f.endsWith('.css');
 });
 
 // Determine which files have source maps
@@ -52,7 +52,10 @@ const files = allFiles.map(file => {
     format = 'ES5 (UMD)';
   } else if (file.includes('.esm.')) {
     format = 'ESM';
-  } else if (file.includes('.cjs.')) {
+  } else if (file.endsWith('.cjs')) {
+    // CJS builds use a bare .cjs extension: package.json sets
+    // "type": "module", so a .js file would be parsed as ESM and break
+    // require(). The extension is what forces CommonJS parsing.
     format = 'CJS';
   } else if (file.includes('.umd.')) {
     format = 'UMD';

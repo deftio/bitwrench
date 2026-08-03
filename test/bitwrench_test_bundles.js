@@ -147,8 +147,8 @@ const BWSERVE_EXPORTS = [
 const MAIN_BUNDLES = {
   esm:     'dist/bitwrench.esm.js',
   esmMin:  'dist/bitwrench.esm.min.js',
-  cjs:     'dist/bitwrench.cjs.js',
-  cjsMin:  'dist/bitwrench.cjs.min.js',
+  cjs:     'dist/bitwrench.cjs',
+  cjsMin:  'dist/bitwrench.min.cjs',
   umd:     'dist/bitwrench.umd.js',
   umdMin:  'dist/bitwrench.umd.min.js',
   es5:     'dist/bitwrench.es5.js',
@@ -158,8 +158,8 @@ const MAIN_BUNDLES = {
 const LEAN_BUNDLES = {
   esm:     'dist/bitwrench-lean.esm.js',
   esmMin:  'dist/bitwrench-lean.esm.min.js',
-  cjs:     'dist/bitwrench-lean.cjs.js',
-  cjsMin:  'dist/bitwrench-lean.cjs.min.js',
+  cjs:     'dist/bitwrench-lean.cjs',
+  cjsMin:  'dist/bitwrench-lean.min.cjs',
   umd:     'dist/bitwrench-lean.umd.js',
   umdMin:  'dist/bitwrench-lean.umd.min.js',
   es5:     'dist/bitwrench-lean.es5.js',
@@ -169,8 +169,8 @@ const LEAN_BUNDLES = {
 const BCCL_BUNDLES = {
   esm:     'dist/bitwrench-bccl.esm.js',
   esmMin:  'dist/bitwrench-bccl.esm.min.js',
-  cjs:     'dist/bitwrench-bccl.cjs.js',
-  cjsMin:  'dist/bitwrench-bccl.cjs.min.js',
+  cjs:     'dist/bitwrench-bccl.cjs',
+  cjsMin:  'dist/bitwrench-bccl.min.cjs',
   umd:     'dist/bitwrench-bccl.umd.js',
   umdMin:  'dist/bitwrench-bccl.umd.min.js',
 };
@@ -178,8 +178,8 @@ const BCCL_BUNDLES = {
 const CODE_EDIT_BUNDLES = {
   esm:     'dist/bitwrench-code-edit.esm.js',
   esmMin:  'dist/bitwrench-code-edit.esm.min.js',
-  cjs:     'dist/bitwrench-code-edit.cjs.js',
-  cjsMin:  'dist/bitwrench-code-edit.cjs.min.js',
+  cjs:     'dist/bitwrench-code-edit.cjs',
+  cjsMin:  'dist/bitwrench-code-edit.min.cjs',
   umd:     'dist/bitwrench-code-edit.umd.js',
   umdMin:  'dist/bitwrench-code-edit.umd.min.js',
   es5:     'dist/bitwrench-code-edit.es5.js',
@@ -189,8 +189,8 @@ const CODE_EDIT_BUNDLES = {
 const UTIL_CSS_BUNDLES = {
   esm:     'dist/bitwrench-util-css.esm.js',
   esmMin:  'dist/bitwrench-util-css.esm.min.js',
-  cjs:     'dist/bitwrench-util-css.cjs.js',
-  cjsMin:  'dist/bitwrench-util-css.cjs.min.js',
+  cjs:     'dist/bitwrench-util-css.cjs',
+  cjsMin:  'dist/bitwrench-util-css.min.cjs',
   umd:     'dist/bitwrench-util-css.umd.js',
   umdMin:  'dist/bitwrench-util-css.umd.min.js',
   es5:     'dist/bitwrench-util-css.es5.js',
@@ -200,8 +200,8 @@ const UTIL_CSS_BUNDLES = {
 const UTIL_COLOR_BUNDLES = {
   esm:     'dist/bitwrench-util-color.esm.js',
   esmMin:  'dist/bitwrench-util-color.esm.min.js',
-  cjs:     'dist/bitwrench-util-color.cjs.js',
-  cjsMin:  'dist/bitwrench-util-color.cjs.min.js',
+  cjs:     'dist/bitwrench-util-color.cjs',
+  cjsMin:  'dist/bitwrench-util-color.min.cjs',
   umd:     'dist/bitwrench-util-color.umd.js',
   umdMin:  'dist/bitwrench-util-color.umd.min.js',
   es5:     'dist/bitwrench-util-color.es5.js',
@@ -210,7 +210,7 @@ const UTIL_COLOR_BUNDLES = {
 
 const BWSERVE_BUNDLES = {
   esm:     'dist/bwserve.esm.js',
-  cjs:     'dist/bwserve.cjs.js',
+  cjs:     'dist/bwserve.cjs',
 };
 
 // ---------------------------------------------------------------------------
@@ -721,7 +721,7 @@ describe('Dist Bundle Smoke Tests', function () {
       });
     });
 
-    describe('CJS (bwserve.cjs.js)', function () {
+    describe('CJS (bwserve.cjs)', function () {
       let info;
       before(function () {
         info = probeCJS(BWSERVE_BUNDLES.cjs);

@@ -135,6 +135,7 @@ describe('bw.getUUID()', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
+    bw.mountTree(el);
     assert.strictEqual(bw.getUUID(el), uuid);
     el.remove();
   });
@@ -150,6 +151,7 @@ describe('create() UUID registration', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
+    bw.mountTree(el);
     assert.strictEqual(bw._nodeMap[uuid], el, 'element should be cached under UUID');
     el.remove();
   });
@@ -172,19 +174,25 @@ describe('bw.el() UUID fallback', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
+    bw.mountTree(el);
     assert.strictEqual(bw.el(uuid), el);
     el.remove();
   });
 
-  it('should find element by UUID via class selector fallback', function() {
+  it('should NOT resurrect a UUID by class selector once deregistered', function() {
     var taco = { t: 'div' };
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
-    // Remove from cache to force class-based fallback
+    bw.mountTree(el);
+    // UUID strings are registry-only by design -- bw.el() deliberately does
+    // not fall back to querySelector for them (§3.2). Dropping the registry
+    // entry must therefore make the UUID unresolvable, even though the
+    // element is still in the DOM carrying its bw_uuid_ class.
     delete bw._nodeMap[uuid];
-    var found = bw.el(uuid);
-    assert.strictEqual(found, el, 'should find via querySelector class fallback');
+    assert.strictEqual(bw.el(uuid), null, 'bare UUID must not resurrect via querySelector');
+    // The explicit class selector still works -- that is a normal CSS lookup.
+    assert.strictEqual(bw.el('.' + uuid), el, 'explicit class selector still resolves');
     el.remove();
   });
 });
@@ -199,6 +207,7 @@ describe('bw.patch() via UUID', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
+    bw.mountTree(el);
     bw.patch(uuid, 'updated');
     assert.strictEqual(el.textContent, 'updated');
     el.remove();
@@ -209,6 +218,7 @@ describe('bw.patch() via UUID', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
+    bw.mountTree(el);
     // bw.patch(id, value, attrName) — attr is the attribute name string
     bw.patch(uuid, '42', 'data-value');
     assert.strictEqual(el.getAttribute('data-value'), '42');
@@ -226,10 +236,14 @@ describe('bw.apply() via UUID', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
+    bw.mountTree(el);
+    // bwserve wire protocol: every message carries v, and addresses the
+    // element with ref/text -- not target/content.
     var result = bw.apply({
+      v: 1,
       type: 'patch',
-      target: uuid,
-      content: '99'
+      ref: uuid,
+      text: '99'
     });
     assert.strictEqual(result, true);
     assert.strictEqual(el.textContent, '99');
@@ -244,14 +258,21 @@ describe('bw.apply() via UUID', function() {
     var el1 = bw.create(taco1);
     var el2 = bw.create(taco2);
     document.body.appendChild(el1);
+    bw.mountTree(el1);
     document.body.appendChild(el2);
-    bw.apply({
+    bw.mountTree(el2);
+    // Each op inside a batch is a complete message and must carry its own v.
+    // This mirrors what the embedded C helpers emit: bw_batch_add() accumulates
+    // whole messages built by BW_PATCH, each of which includes 'v':1.
+    var result = bw.apply({
+      v: 1,
       type: 'batch',
       ops: [
-        { type: 'patch', target: uuid1, content: 'A' },
-        { type: 'patch', target: uuid2, content: 'B' }
+        { v: 1, type: 'patch', ref: uuid1, text: 'A' },
+        { v: 1, type: 'patch', ref: uuid2, text: 'B' }
       ]
     });
+    assert.strictEqual(result, true);
     assert.strictEqual(el1.textContent, 'A');
     assert.strictEqual(el2.textContent, 'B');
     el1.remove();
@@ -269,6 +290,7 @@ describe('bw.unmount() UUID deregistration', function() {
     var uuid = bw.assignUUID(taco);
     var el = bw.create(taco);
     document.body.appendChild(el);
+    bw.mountTree(el);
     assert.ok(bw._nodeMap[uuid], 'UUID should be in cache before cleanup');
     bw.unmount(el);
     assert.strictEqual(bw._nodeMap[uuid], undefined, 'UUID should be removed after cleanup');
@@ -281,6 +303,7 @@ describe('bw.unmount() UUID deregistration', function() {
     var parent = { t: 'div', c: [child] };
     var parentEl = bw.create(parent);
     document.body.appendChild(parentEl);
+    bw.mountTree(parentEl);
     assert.ok(bw._nodeMap[childUuid], 'child UUID should be cached');
     // cleanup parent — UUID cleanup scans [class*="bw_uuid_"]
     bw.unmount(parentEl);

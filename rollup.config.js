@@ -78,7 +78,7 @@ const babelConfig = {
         },
         // CommonJS
         {
-          file: 'dist/bitwrench.cjs.js',
+          file: 'dist/bitwrench.cjs',
           format: 'cjs',
           exports: 'auto',
           banner,
@@ -86,7 +86,7 @@ const babelConfig = {
         },
         // CommonJS (minified)
         {
-          file: 'dist/bitwrench.cjs.min.js',
+          file: 'dist/bitwrench.min.cjs',
           format: 'cjs',
           exports: 'auto',
           banner,
@@ -178,14 +178,14 @@ const babelConfig = {
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-code-edit.cjs.js',
+          file: 'dist/bitwrench-code-edit.cjs',
           format: 'cjs',
           exports: 'named',
           banner,
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-code-edit.cjs.min.js',
+          file: 'dist/bitwrench-code-edit.min.cjs',
           format: 'cjs',
           exports: 'named',
           banner,
@@ -274,14 +274,14 @@ const babelConfig = {
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-lean.cjs.js',
+          file: 'dist/bitwrench-lean.cjs',
           format: 'cjs',
           exports: 'auto',
           banner: leanBanner,
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-lean.cjs.min.js',
+          file: 'dist/bitwrench-lean.min.cjs',
           format: 'cjs',
           exports: 'auto',
           banner: leanBanner,
@@ -347,14 +347,14 @@ const babelConfig = {
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-bccl.cjs.js',
+          file: 'dist/bitwrench-bccl.cjs',
           format: 'cjs',
           exports: 'named',
           banner: bcclBanner,
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-bccl.cjs.min.js',
+          file: 'dist/bitwrench-bccl.min.cjs',
           format: 'cjs',
           exports: 'named',
           banner: bcclBanner,
@@ -403,14 +403,14 @@ const babelConfig = {
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-util-css.cjs.js',
+          file: 'dist/bitwrench-util-css.cjs',
           format: 'cjs',
           exports: 'named',
           banner: utilCssBanner,
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-util-css.cjs.min.js',
+          file: 'dist/bitwrench-util-css.min.cjs',
           format: 'cjs',
           exports: 'named',
           banner: utilCssBanner,
@@ -488,14 +488,14 @@ const babelConfig = {
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-util-color.cjs.js',
+          file: 'dist/bitwrench-util-color.cjs',
           format: 'cjs',
           exports: 'named',
           banner: utilColorBanner,
           sourcemap: true,
         },
         {
-          file: 'dist/bitwrench-util-color.cjs.min.js',
+          file: 'dist/bitwrench-util-color.min.cjs',
           format: 'cjs',
           exports: 'named',
           banner: utilColorBanner,
@@ -556,7 +556,7 @@ const babelConfig = {
       input: 'src/bwserve/index.js',
       output: [
         {
-          file: 'dist/bwserve.cjs.js',
+          file: 'dist/bwserve.cjs',
           format: 'cjs',
           exports: 'named',
           banner: bwserveBanner,
@@ -575,7 +575,10 @@ const babelConfig = {
       ],
     },
 
-    // Debug toolkit — standalone IIFE (UMD only, no ESM/CJS needed)
+    // Debug toolkit — UMD for browsers, plus a .cjs so require() works.
+    // A UMD .js file cannot serve require() here: package.json sets
+    // "type": "module", so Node parses any .js as ESM and the UMD wrapper
+    // resolves to its global branch, handing the caller an empty namespace.
     {
       input: 'src/bitwrench-debug.js',
       output: [
@@ -592,6 +595,12 @@ const babelConfig = {
           name: 'bwd',
           banner: debugBanner,
           plugins: [terser({ format: { comments: /^!/ } })],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-debug.cjs',
+          format: 'cjs',
+          banner: debugBanner,
           sourcemap: true,
         },
       ],

@@ -3,6 +3,7 @@
  * Bulletproof release script for bitwrench.
  *
  * Usage:  npm run release
+ *         npm run release:dry     (or: npm run release -- --dry-run)
  *
  * Pre-conditions (done manually at start of dev cycle):
  *   npm version patch --no-git-tag-version
@@ -11,16 +12,29 @@
  *
  * This script validates, builds, tests, commits dist, and pushes.
  * CI then handles: git tag, GitHub Release, npm publish.
+ *
+ * --dry-run runs every gate (build, lint, tests, E2E, version consistency,
+ * bundle budget, Docker clean-room) but performs NO mutations: no release
+ * archive, no git commit, no merge, no push. Use it to rehearse a release.
+ * Note that dist/ is still rebuilt, so the working tree will be dirty after.
  */
 
 import { execSync } from 'child_process';
-import { readFileSync, statSync } from 'fs';
+import { readFileSync, statSync, writeFileSync } from 'fs';
 import { gzipSync } from 'zlib';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = join(__dirname, '..');
+
+const argv = process.argv.slice(2);
+const DRY_RUN = argv.includes('--dry-run') || argv.includes('-n');
+
+// Minimum Node for the dev toolchain. c8 >=12 and mocha >=11 need require(esm),
+// which landed in Node 22.12. This is a BUILD-time floor only -- the published
+// library itself has no runtime dependencies and runs on far older engines.
+const MIN_NODE = [22, 12, 0];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -40,6 +54,11 @@ function fail(msg) {
 
 function step(label) {
   console.log(`\n${'─'.repeat(60)}\n  ${label}\n${'─'.repeat(60)}`);
+}
+
+// In a dry run, describe the mutation instead of performing it.
+function skipped(what) {
+  console.log(`  ⤷ DRY RUN — skipped: ${what}`);
 }
 
 function ask(question) {
@@ -74,6 +93,29 @@ function kb(bytes) {
 // ── 1. Pre-flight checks ────────────────────────────────────────────────
 
 step('1. Pre-flight checks');
+
+if (DRY_RUN) {
+  console.log('  *** DRY RUN — all gates run, no mutations, nothing pushed ***');
+}
+
+// Node version floor. Without this, an old local Node fails deep inside the
+// build with an opaque ERR_REQUIRE_ESM instead of a clear message here.
+const nodeParts = process.versions.node.split('.').map(Number);
+const nodeOk =
+  nodeParts[0] > MIN_NODE[0] ||
+  (nodeParts[0] === MIN_NODE[0] &&
+    (nodeParts[1] > MIN_NODE[1] ||
+      (nodeParts[1] === MIN_NODE[1] && nodeParts[2] >= MIN_NODE[2])));
+if (!nodeOk) {
+  fail(
+    `Node ${process.versions.node} is too old for the build toolchain.\n` +
+    `  Minimum: v${MIN_NODE.join('.')} (c8 and mocha need require(esm)).\n` +
+    `  See .nvmrc — this repo builds on Node 24 (matches the CI matrix).\n` +
+    `  brew:  brew install node@24 && export PATH="$(brew --prefix node@24)/bin:$PATH"\n` +
+    `  nvm:   nvm use`
+  );
+}
+console.log(`  Node:   ${process.versions.node}`);
 
 const branch = runQuiet('git rev-parse --abbrev-ref HEAD');
 if (branch === 'main' || branch === 'master') {
@@ -242,8 +284,21 @@ console.log('  ✓ UMD + ESM both under 45KB budget');
 
 step('7. Docker clean-room test');
 
+// Probe for Docker separately from running the test. Folding the two together
+// meant any test failure was misread as "Docker missing" -- the failed command
+// string contains the word "docker", so the old substring check always matched
+// and a genuinely broken gate reported itself as merely skipped.
+let dockerAvailable = true;
 try {
   runQuiet('docker info');
+} catch {
+  dockerAvailable = false;
+}
+
+if (!dockerAvailable) {
+  console.log('  ⚠ Docker not available — skipping clean-room test');
+  console.log('    Install Docker to enable this gate');
+} else {
   console.log('  Docker available — running clean-room install test');
 
   // Pack the tarball
@@ -251,72 +306,89 @@ try {
   const tarball = packOut.split('\n').pop().trim();
   console.log(`  Packed: ${tarball}`);
 
-  // CJS require test
-  const cjsScript = `
-    const bw = require('bitwrench');
-    if (typeof bw.html !== 'function') { process.exit(1); }
-    if (typeof bw.version !== 'string') { process.exit(1); }
-    console.log('CJS OK: bitwrench v' + bw.version);
-  `.trim().replace(/\n/g, ' ');
+  // Write the probes to real files rather than inlining them as `node -e`
+  // inside an already-quoted `sh -c`. That nesting put double quotes inside
+  // double quotes and the shell died on the first parenthesis.
+  writeFileSync(join(root, 'tmp/cleanroom-cjs.cjs'), [
+    "const bw = require('bitwrench');",
+    "if (typeof bw.html !== 'function') { console.error('CJS: bw.html missing'); process.exit(1); }",
+    "if (typeof bw.version !== 'string') { console.error('CJS: bw.version missing'); process.exit(1); }",
+    "console.log('CJS OK: bitwrench v' + bw.version);",
+    ''
+  ].join('\n'));
 
-  // ESM import test
-  const esmScript = `
-    import bw from 'bitwrench';
-    if (typeof bw.html !== 'function') { process.exit(1); }
-    console.log('ESM OK: bitwrench v' + bw.version);
-  `.trim().replace(/\n/g, ' ');
+  writeFileSync(join(root, 'tmp/cleanroom-esm.mjs'), [
+    "import bw from 'bitwrench';",
+    "if (typeof bw.html !== 'function') { console.error('ESM: bw.html missing'); process.exit(1); }",
+    "if (typeof bw.version !== 'string') { console.error('ESM: bw.version missing'); process.exit(1); }",
+    "console.log('ESM OK: bitwrench v' + bw.version);",
+    ''
+  ].join('\n'));
 
-  // Build a single docker command that installs from tarball and tests both formats
+  // Single-quote the inner script so the outer double quotes stay balanced.
+  // The probes must live beside node_modules: Node resolves bare specifiers
+  // from the script's own directory upward, so running them from /pkg would
+  // never find the package installed into /test.
+  // Do NOT pipe the install through tail: a pipeline reports the exit status
+  // of its LAST command, so a failed install was swallowed and only resurfaced
+  // later as a baffling MODULE_NOT_FOUND from the probe. Let npm's own error
+  // text through and let a non-zero status fail the step directly.
+  const innerScript = [
+    'mkdir /test && cd /test',
+    'npm init -y > /dev/null 2>&1',
+    `npm install /pkg/${tarball} --no-audit --no-fund --loglevel=error`,
+    'cp /pkg/cleanroom-cjs.cjs /pkg/cleanroom-esm.mjs /test/',
+    'node /test/cleanroom-cjs.cjs',
+    'node /test/cleanroom-esm.mjs'
+  ].join(' && ');
+
   const dockerCmd = [
     'docker run --rm',
     `-v "${join(root, 'tmp')}:/pkg"`,
     'node:22-slim',
-    'sh -c "' + [
-      'mkdir /test && cd /test',
-      `npm init -y > /dev/null 2>&1`,
-      `npm install /pkg/${tarball} --silent 2>&1 | tail -1`,
-      // CJS test
-      `node -e "${cjsScript}"`,
-      // ESM test (needs type:module in a subdir)
-      `mkdir /test/esm && cd /test/esm`,
-      `echo '{"type":"module"}' > package.json`,
-      `ln -s /test/node_modules node_modules`,
-      `node -e "${esmScript}"`
-    ].join(' && ') + '"'
+    `sh -c '${innerScript}'`
   ].join(' ');
 
-  run(dockerCmd);
-  console.log('  ✓ Clean-room install: CJS + ESM verified');
-} catch (e) {
-  if (e.message && e.message.includes('docker')) {
-    console.log('  ⚠ Docker not available — skipping clean-room test');
-    console.log('    Install Docker to enable this gate');
-  } else {
+  try {
+    run(dockerCmd);
+  } catch (e) {
     fail('Docker clean-room install test failed: ' + e.message);
   }
+  console.log('  ✓ Clean-room install: CJS + ESM verified');
 }
 
 // ── 8. Archive release snapshot ─────────────────────────────────────────
 
 step('8. Archive release snapshot');
 
-run('node tools/build-release.js');
+if (DRY_RUN) {
+  skipped('node tools/build-release.js (would archive to releases/v2/)');
+} else {
+  run('node tools/build-release.js');
+}
 
 // ── 9. Git commit and push ──────────────────────────────────────────────
 
 step('9. Git commit and push');
 
-// Stage all build outputs — tree was verified clean in step 1,
-// so everything modified since then is a build artifact.
-run('git add .');
-
-// Check if there's anything to commit
-const staged = runQuiet('git diff --cached --name-only');
-if (staged.length === 0) {
-  console.log('  Nothing to commit — dist is already up to date');
+if (DRY_RUN) {
+  const wouldStage = runQuiet('git status --porcelain')
+    .split('\n').filter(l => l.trim() !== '');
+  console.log(`  Would stage ${wouldStage.length} file(s) and commit "v${version} release"`);
+  skipped('git add . && git commit');
 } else {
-  console.log(`  Staging: ${staged.split('\n').length} files`);
-  run(`git commit -m "v${version} release"`);
+  // Stage all build outputs — tree was verified clean in step 1,
+  // so everything modified since then is a build artifact.
+  run('git add .');
+
+  // Check if there's anything to commit
+  const staged = runQuiet('git diff --cached --name-only');
+  if (staged.length === 0) {
+    console.log('  Nothing to commit — dist is already up to date');
+  } else {
+    console.log(`  Staging: ${staged.split('\n').length} files`);
+    run(`git commit -m "v${version} release"`);
+  }
 }
 
 // ── 10. Merge to main ───────────────────────────────────────────────────
@@ -338,6 +410,24 @@ console.log(`
   Ready to squash-merge to main and push.
   Commit message: "${mergeMsg}"
 `);
+
+if (DRY_RUN) {
+  skipped(`git merge --squash ${branch} && git commit && git push origin main`);
+  step('Dry run complete');
+  console.log(`
+  Every gate passed. NOTHING was archived, committed, merged, or pushed.
+
+  A real release would now:
+    1. Archive a snapshot to releases/v2/
+    2. Commit dist artifacts as "v${version} release"
+    3. Squash-merge ${branch} -> main as "${mergeMsg}"
+    4. Push main, after which CI tags, releases, and publishes to npm
+
+  dist/ was rebuilt, so your working tree is dirty. That is expected.
+  When you are ready:  npm run release
+`);
+  process.exit(0);
+}
 
 const answer = ask('Squash-merge to main and push? (y/n) ');
 
@@ -382,7 +472,7 @@ console.log(`
   Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
 
   Pushed to main. CI will:
-    - Run tests on Node 20/22/24
+    - Run tests on Node 22/24
     - Create git tag v${version}
     - Create GitHub Release with dist assets
     - Publish to npm with provenance

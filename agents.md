@@ -299,10 +299,10 @@ docs/                         Documentation
 
 ```bash
 npm run build          # Rollup -> dist/ (UMD, ESM, CJS, ES5)
-npm run test           # Mocha + nyc coverage (80% min)
+npm run test           # Mocha + c8 coverage (80% min)
 npm run lint           # ESLint on src/
 npm run lint:drift     # Doc/API consistency checker
-npm run testkarma      # Browser tests
+npm run test:e2e       # Browser tests (Playwright)
 npm run cleanbuild     # Full build + SRI hashes + README
 ```
 

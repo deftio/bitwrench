@@ -3,14 +3,14 @@
 [<img class="quikdown-img" src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License" data-qd-alt="License" data-qd-src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" data-qd="!">](https://opensource.org/licenses/BSD-2-Clause)
 [<img class="quikdown-img" src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version" data-qd-alt="NPM version" data-qd-src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" data-qd="!">](https://www.npmjs.com/package/bitwrench)
 [<img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI" data-qd-alt="CI" data-qd-src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" data-qd="!">](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-99.1%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-99.1%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
+[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-97.7%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-97.7%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
 
 [<img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench" data-qd-alt="bitwrench" data-qd-src="./images/bitwrench-logo-med.png" data-qd="!">](https://deftio.github.io/bitwrench/pages/)
 
 Bitwrench is a UI library that builds interfaces from plain JavaScript objects -- one format for components, styling, state, and server rendering, with no build step and zero dependencies.
 
 ```javascript
-// A "TACO" -- Tag, Attributes, Content, Options
+// A "TACO" -- Tag, Attributes, Content, Options object can hold a component or even an entire page
 var page = {
   t: 'div', a: { class: 'card' },
   c: [
@@ -20,8 +20,10 @@ var page = {
   ]
 };
 
-bw.mount('#app', page);        // -> live DOM
-bw.html(page);                 // -> HTML string (Node.js, emails, SSR)
+bw.mount('#app', page);        // -> live DOM see it rendered now
+
+// or create just html page, css, js and all using 
+bw.html(page);                 // -> HTML string (Node.js, emails, SSR).  use server or client side
 ```
 
 Each object has four keys: **t** (tag), **a** (attributes, including event handlers like `onclick`), **c** (content -- a string, array, or nested TACO), and **o** (options for state and lifecycle). Nest them, loop them, build them with functions -- they are ordinary JavaScript values.
@@ -354,7 +356,7 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 | --- | --- | --- |
 | UMD | bitwrench.umd.min.js | Browsers and Node.js |
 | ESM | bitwrench.esm.min.js | Modern bundlers (Vite, webpack, etc.) |
-| CJS | bitwrench.cjs.min.js | Node.js require() |
+| CJS | bitwrench.min.cjs | Node.js require() |
 | ES5 | bitwrench.es5.min.js | Legacy browsers (IE11) |
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.

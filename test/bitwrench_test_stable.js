@@ -186,18 +186,28 @@ describe("TACO and HTML Generation", function() {
 // Table generation
 // ================================================================
 describe("Table Functions", function() {
-  describe("#htmlTable()", function() {
-    it("should generate table HTML", function() {
-      const data = [
-        ["Name", "Age"],
-        ["John", 30],
-        ["Jane", 25]
-      ];
-      const html = bw.htmlTable(data, { firstRowHeader: true });
+  // bw.htmlTable() was a v1 API that returned an HTML string. It no longer
+  // exists: v2 builders emit TACO, which the caller renders with bw.html()
+  // or mounts with bw.DOM(). makeTableFromArray takes a single config object.
+  describe("#makeTableFromArray()", function() {
+    it("should build a table TACO from row arrays", function() {
+      const taco = bw.makeTableFromArray({
+        data: [
+          ["Name", "Age"],
+          ["John", 30],
+          ["Jane", 25]
+        ],
+        headerRow: true
+      });
+      assert.strictEqual(typeof taco, "object");
+      assert.strictEqual(taco.t, "table");
+
+      const html = bw.html(taco);
       assert.ok(html.includes("<table"));
       assert.ok(html.includes("<thead>"));
       assert.ok(html.includes("Name"));
       assert.ok(html.includes("John"));
+      assert.strictEqual((html.match(/<td/g) || []).length, 4, "two body rows of two cells");
     });
   });
 });

@@ -16,13 +16,18 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # karma-firefox-launcher: Firefox not installed locally, not used in CI
-      - dependency-name: "karma-firefox-launcher"
-      # karma-ie-launcher: IE testing is legacy, no longer relevant
-      - dependency-name: "karma-ie-launcher"
       # jsdom: v27+ is ESM-only, breaks jsdom-global/register (CJS)
       - dependency-name: "jsdom"
         versions: [">=27.0.0"]
+      # @babel/*: v8 is blocked by @rollup/plugin-babel, whose latest (7.1.0)
+      # still peer-requires @babel/core ^7.0.0. Revisit when plugin-babel
+      # ships Babel 8 support.
+      - dependency-name: "@babel/core"
+        versions: [">=8.0.0"]
+      - dependency-name: "@babel/preset-env"
+        versions: [">=8.0.0"]
+      - dependency-name: "@babel/preset-react"
+        versions: [">=8.0.0"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

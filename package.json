@@ -1,8 +1,8 @@
 {
 	"name": "bitwrench",
-	"version": "2.1.3",
+	"version": "2.1.4",
 	"description": "Zero-dependency JavaScript UI library. Describe UI as plain objects (TACO), render to DOM or HTML strings. Theming, components, pub/sub, server-driven UI (bwserve). No build step.",
-	"main": "./dist/bitwrench.umd.js",
+	"main": "./dist/bitwrench.cjs",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/deftio/bitwrench.git"
@@ -31,38 +31,38 @@
 		".": {
 			"types": "./dist/bitwrench.d.ts",
 			"import": "./dist/bitwrench.esm.js",
-			"require": "./dist/bitwrench.cjs.js",
+			"require": "./dist/bitwrench.cjs",
 			"default": "./dist/bitwrench.umd.js"
 		},
 		"./lean": {
 			"types": "./dist/bitwrench.d.ts",
 			"import": "./dist/bitwrench-lean.esm.js",
-			"require": "./dist/bitwrench-lean.cjs.js",
+			"require": "./dist/bitwrench-lean.cjs",
 			"default": "./dist/bitwrench-lean.umd.js"
 		},
 		"./bccl": {
 			"types": "./dist/bitwrench.d.ts",
 			"import": "./dist/bitwrench-bccl.esm.js",
-			"require": "./dist/bitwrench-bccl.cjs.js",
+			"require": "./dist/bitwrench-bccl.cjs",
 			"default": "./dist/bitwrench-bccl.umd.js"
 		},
 		"./bwserve": {
 			"types": "./dist/bwserve.d.ts",
 			"import": "./dist/bwserve.esm.js",
-			"require": "./dist/bwserve.cjs.js"
+			"require": "./dist/bwserve.cjs"
 		},
 		"./util-css": {
 			"import": "./dist/bitwrench-util-css.esm.js",
-			"require": "./dist/bitwrench-util-css.cjs.js",
+			"require": "./dist/bitwrench-util-css.cjs",
 			"default": "./dist/bitwrench-util-css.umd.js"
 		},
 		"./code-edit": {
 			"import": "./dist/bitwrench-code-edit.esm.js",
-			"require": "./dist/bitwrench-code-edit.cjs.js",
+			"require": "./dist/bitwrench-code-edit.cjs",
 			"default": "./dist/bitwrench-code-edit.umd.js"
 		},
 		"./debug": {
-			"require": "./dist/bitwrench-debug.js",
+			"require": "./dist/bitwrench-debug.cjs",
 			"default": "./dist/bitwrench-debug.js"
 		},
 		"./mcp": {
@@ -73,6 +73,8 @@
 	"files": [
 		"dist/*.js",
 		"dist/*.js.gz",
+		"dist/*.cjs",
+		"dist/*.cjs.gz",
 		"dist/*.css",
 		"dist/*.json",
 		"dist/*.d.ts",
@@ -86,31 +88,21 @@
 		"url": "https://github.com/deftio/bitwrench/issues"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.25.2",
-		"@babel/preset-env": "^7.29.2",
-		"@babel/preset-react": "^7.24.7",
+		"@babel/core": "^7.29.7",
+		"@babel/preset-env": "^7.29.7",
+		"@babel/preset-react": "^7.27.1",
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.59.1",
-		"@rollup/plugin-babel": "^6.0.4",
-		"@rollup/plugin-commonjs": "^26.0.1",
-		"@rollup/plugin-node-resolve": "^15.2.3",
+		"@rollup/plugin-babel": "^7.1.0",
+		"@rollup/plugin-commonjs": "^29.0.3",
+		"@rollup/plugin-node-resolve": "^16.0.3",
 		"@rollup/plugin-terser": "^1.0.0",
-		"c8": "^8.0.1",
-		"chai": "^3.0.0",
+		"c8": "^12.0.0",
 		"comment-parser": "^1.4.6",
 		"eslint": "^10.2.0",
 		"globals": "^17.4.0",
 		"jsdom": "^26.1.0",
 		"jsdom-global": "3.0.2",
-		"karma": "^6.3.16",
-		"karma-chai": "^0.1.0",
-		"karma-chrome-launcher": "^3.1.0",
-		"karma-cli": "^2.0.0",
-		"karma-coverage": "^2.0.3",
-		"karma-coverage-istanbul-reporter": "^3.0.3",
-		"karma-firefox-launcher": "^1.3.0",
-		"karma-ie-launcher": "^1.0.0",
-		"karma-mocha": "^2.0.1",
 		"mocha": "^11.0.0",
 		"pixelmatch": "^7.1.0",
 		"pngjs": "^7.0.0",
@@ -132,17 +124,15 @@
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js -r jsdom-global/register --exit && npm run test:bundles",
+		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_cli.js ./test/bitwrench_test_util_color.js ./test/bitwrench_test_uuid.js ./test/bitwrench_test_stable.js ./test/bitwrench_test_v2.js -r jsdom-global/register --exit && npm run test:bundles",
 		"posttest": "node tools/drift-lint.js",
 		"test:bundles": "mocha ./test/bitwrench_test_bundles.js -r jsdom-global/register --exit",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
 		"test:attach": "mocha ./test/bitwrench_test_attach.js -r jsdom-global/register",
 		"test:serve": "mocha ./test/bitwrench_test_serve.js -r jsdom-global/register --exit",
 		"test:components": "mocha ./test/bitwrench_test_components.js -r jsdom-global/register",
-		"test:v1": "c8 --reporter=text mocha ./test/bitwrench_test.js -r jsdom-global/",
 		"test:pending": "mocha ./test/bitwrench_test_pending.js -r jsdom-global/",
 		"test:all-unit": "c8 --reporter=text mocha './test/bitwrench_test*.js' -r jsdom-global/",
-		"testkarma": "./node_modules/karma/bin/karma start karma.conf.js",
 		"clean": "rm -rf dist/* bitwrench*.tgz",
 		"lint": "./node_modules/.bin/eslint src/",
 		"lint:drift": "node tools/drift-lint.js",
@@ -150,7 +140,6 @@
 		"serve": "node server.js",
 		"dev": "npm run build && npm run serve",
 		"instrument-bw": "echo 'deprecated: use c8 instead'",
-		"export_chrome": "export CHROME_BIN=/usr/bin/chromium-browser",
 		"generate-sri": "node tools/generate-sri.js",
 		"test:nodemap": "mocha ./test/bitwrench_test_nodemap.js -r jsdom-global/register",
 		"test:cli": "mocha ./test/bitwrench_test_cli.js",
@@ -174,6 +163,7 @@
 		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference && npm run build:api-md",
 		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js",
 		"release": "node tools/release.js",
+		"release:dry": "node tools/release.js --dry-run",
 		"start-release": "node tools/start-release.js"
 	},
 	"homepage": "https://deftio.github.io/bitwrench/pages",
@@ -184,11 +174,20 @@
 		}
 	},
 	"c8": {
+		"all": true,
 		"include": [
 			"src/**"
 		],
-		"exclude": [],
-		"check-coverage": false,
+		"exclude": [
+			"src/vendor/**",
+			"src/**/*.d.ts",
+			"src/bitwrench-esm-entry.js",
+			"src/bitwrench-bccl-entry.js",
+			"src/bitwrench-lean.js",
+			"src/bitwrench-components-stub.js",
+			"src/generate-css.js"
+		],
+		"check-coverage": true,
 		"branches": 80,
 		"lines": 80,
 		"functions": 80,

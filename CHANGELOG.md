@@ -3,6 +3,114 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.4 (2026-08-03)
+
+No library source changes -- the API and runtime behavior are identical to
+v2.1.3. This release repairs CommonJS packaging and modernizes the build.
+
+### Fixes
+
+- **`require('bitwrench')` was broken for CommonJS consumers.** package.json
+  declares `"type": "module"`, which makes Node parse every `.js` file in the
+  package as ESM -- including the CommonJS builds, which were named
+  `*.cjs.js`. Requiring one threw
+  `ReferenceError: module is not defined in ES module scope`. Every `require`
+  target was affected: the main entry plus `./lean`, `./bccl`, `./bwserve`,
+  `./util-css`, and `./code-edit`. ESM `import` was never affected.
+
+  CommonJS builds now use a bare `.cjs` extension (`bitwrench.cjs`,
+  `bitwrench.min.cjs`, and so on), which forces CommonJS parsing regardless
+  of the `"type"` field. `main` now points at `./dist/bitwrench.cjs` rather
+  than the UMD bundle, which had the same defect.
+
+  If you consume bitwrench via `import`, nothing changes. If you reference a
+  dist file by path, `dist/bitwrench.cjs.js` is now `dist/bitwrench.cjs` and
+  `dist/bitwrench.cjs.min.js` is now `dist/bitwrench.min.cjs`.
+
+- **`require('bitwrench/debug')` returned an empty object.** The `./debug`
+  subpath mapped `require` to a UMD `.js` bundle; parsed as ESM, its wrapper
+  fell through to the global branch and exported nothing. A real CommonJS
+  build (`dist/bitwrench-debug.cjs`) is now emitted and mapped.
+
+- **`.cjs` files were missing from the npm tarball.** The `files` allowlist
+  matched only `dist/*.js`, so the renamed builds would not have shipped.
+
+- **Pre-gzipped `.gz` companions were not emitted for the CommonJS bundles.**
+  The build's bundle list still named the old `*.cjs.js` paths, so those
+  reads failed silently, and the gzip step tested for a `.min.js` substring
+  which cannot match `.min.cjs`. `bitwrench.min.cjs.gz` and friends are
+  generated and shipped again -- these matter for embedded/SPIFFS use, where
+  the pre-compressed file is served directly from flash.
+
+### CI
+
+- Bumped GitHub Actions: `actions/checkout` v6 -> v7, `actions/setup-node`
+  v6 -> v7, `github/codeql-action` v4 -> v4.37.3.
+- Node test matrix narrowed to 22 and 24. Node 20 reached end-of-life in
+  April 2026.
+- `npm run release` gained `--dry-run` (also `npm run release:dry`), which
+  runs every gate but performs no archive, commit, merge, or push.
+- `npm run release` now fails fast with a clear message if the local Node
+  is older than 22.12, instead of dying inside the build with
+  `ERR_REQUIRE_ESM`. Added `.nvmrc` pinning the dev toolchain to Node 24.
+- **Repaired the Docker clean-room release gate, which had never run.** Its
+  probes were inlined as `node -e "..."` inside an already double-quoted
+  `sh -c "..."`, so the shell aborted on the first parenthesis; the error
+  handler then misreported that as "Docker not available" because it tested
+  whether the message contained the string `docker` -- which the failing
+  command always did. The gate now writes its probes to files and separates
+  Docker detection from test execution, so a failure fails the release.
+  Repairing it is what surfaced the CommonJS bug above.
+- The clean-room step piped its `npm install` through `tail`, and a shell
+  pipeline reports the exit status of its last command -- so a failed
+  install returned 0 and only resurfaced later as a confusing
+  `MODULE_NOT_FOUND`. The install now runs unpiped so npm's own diagnostics
+  reach the log and a non-zero status fails the release.
+
+### Testing
+
+- **Coverage was being measured dishonestly.** c8 ran without `all`, so any
+  source file the suite never loaded was omitted from the report rather than
+  counted as 0%. `bwcli` reported 99.91% while only 2 of its 6 files were
+  measured at all. `all` is now enabled, with deliberate exclusions for
+  vendored code, `.d.ts` files, Rollup entry shims, and the build-time CSS
+  generator.
+- **The documented 80% coverage gate had never been enforced** --
+  `check-coverage` was `false`. It is now `true`, so falling below the
+  threshold fails the build.
+- **Five test suites existed on disk but were never run by `npm test`:**
+  cli, util_color, uuid, stable, and v2. `bitwrench-util-color.js` (240
+  lines) read as 0% covered purely because its 32 tests were never invoked.
+  All five are now part of the measured suite.
+- Repaired stale expectations in those suites. Each asserted a contract the
+  library had deliberately moved away from; none were product bugs. Notably:
+  UUID registration happens at mount rather than in `bw.create()`; the
+  bwserve wire protocol addresses elements with `ref`/`text` and a per-message
+  `v`, not `target`/`content`; `bw.el()` deliberately refuses to resurrect a
+  deregistered UUID via `querySelector`; and `bw.htmlTable()` is a v1 API
+  replaced by `makeTableFromArray`, which emits TACO.
+- Test count: 2911 -> 3074. Coverage across 28 measured files: 97.74% lines,
+  95.57% functions, 98.70% branches (bwserve 99.85, bwcli 98.84, mcp 99.55).
+- Known gap: `bitwrench-debug.js` sits at 0%. It is a self-executing IIFE
+  that falls back to fetching bitwrench from a CDN on import, so it cannot be
+  tested without restructuring. It is counted rather than excluded so the
+  debt stays visible.
+
+### Development dependencies
+
+- Upgraded `@rollup/plugin-babel` 6 -> 7, `@rollup/plugin-commonjs` 26 -> 29,
+  `@rollup/plugin-node-resolve` 15 -> 16, `c8` 8 -> 12.
+- `@babel/*` held at 7.x. `@rollup/plugin-babel@7.1.0` (its latest release)
+  still peer-requires `@babel/core ^7.0.0`, so Babel 8 cannot be installed
+  alongside it. Recorded as dependabot ignore rules.
+- Removed Karma and its eight `karma-*` packages plus `chai`. Karma was
+  deprecated upstream in 2023, was never run in CI, and carried the repo's
+  only security advisory. Browser testing is covered by Playwright.
+- Removed `test/karma-test.js`, and `test/bitwrench_test.js` (which imported
+  a `nyc` package absent from devDependencies and asserted v1-era APIs such
+  as `bw.logExport` that no longer exist in the source).
+- Dev dependency tree: 785 -> 466 packages, 1 high-severity advisory -> 0.
+
 ## v2.1.3 (2026-07-18)
 
 ### Fixes
