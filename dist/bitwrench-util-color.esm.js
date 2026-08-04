@@ -1,4 +1,4 @@
-/*! bitwrench-util-color v2.1.4 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-util-color v2.1.5 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * bitwrench-util-color.js - Legacy color parsing and conversion utilities
  *

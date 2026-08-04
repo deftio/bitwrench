@@ -3,6 +3,59 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.5 (2026-08-03)
+
+Release tooling and CI stabilization. No library source changes -- the API,
+bundles, and runtime behavior are identical to v2.1.4.
+
+### CI and release tooling
+
+- **GitHub Release assets now include the CommonJS builds.** The asset glob
+  was `dist/*.js`, which does not match `.cjs` -- so the v2.1.4 release
+  attached 76 files and not one CommonJS bundle, despite that release
+  existing to repair CommonJS packaging. Now also attaches `*.cjs`,
+  `*.cjs.map`, `*.gz` (used by embedded targets that serve pre-compressed
+  files from flash) and `*.d.ts`.
+- **Release notes come from the CHANGELOG.** The GitHub Release body is the
+  matching version section rather than a list of commit subjects, falling
+  back to generated notes when no section exists.
+- **`npm run release` no longer guesses the merge commit message.** It
+  derives a subject from the CHANGELOG, accepts `--squash-msg="..."` as an
+  override, and confirms the message in a step separate from confirming the
+  release itself. Previously the subject came from the branch name, which is
+  how v2.1.4 -- a CommonJS packaging fix -- nearly landed as "dependabot
+  deps".
+- **`npm run start-release` now rebuilds `dist` before committing.** Bumping
+  the version without rebuilding left every bundle banner stamped with the
+  previous version, so a freshly created branch failed 58 bundle assertions
+  before any work had been done.
+- **drift-lint rejects bitwrench repository URLs that do not point at
+  `github.com/deftio`.** A fabricated owner sat in the embedded C headers
+  and the Rust manifest from 2026-03 until v2.1.0 removed it. It never
+  reached npm, but nothing would have caught it, and the embedded registries
+  render this URL on the package page.
+
+### Notes
+
+<!-- drift-lint:ignore-start: migration note must name the retired attribute -->
+- **`data-bw-action` / `data-bw-id` were removed in v2.1.0** and this was not
+  called out at the time. bitwrench does not use `data-*` attributes anywhere;
+  bwserve had been an unintended exception. Server-driven apps written against
+  v2.0.x that annotated markup for click binding should move to `bw_act_*`
+  class tokens, which the thin client delegates on identically:
+
+  ```
+  // v2.0.x
+  { t: 'button', a: { 'data-bw-action': 'save' }, c: 'Save' }
+
+  // v2.1.x
+  { t: 'button', a: { class: 'bw_act_save' }, c: 'Save' }
+  ```
+
+  BCCL factories emit these automatically -- `makeButton({ action: 'save' })`
+  produces `bw_act_save`.
+<!-- drift-lint:ignore-end -->
+
 ## v2.1.4 (2026-08-03)
 
 No library source changes -- the API and runtime behavior are identical to

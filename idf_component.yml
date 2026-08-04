@@ -1,4 +1,4 @@
-version: "2.1.4"
+version: "2.1.5"
 description: "Header-only bwserve protocol helpers for serving bitwrench web dashboards from ESP-IDF projects."
 url: "https://github.com/deftio/bitwrench"
 repository: "https://github.com/deftio/bitwrench.git"

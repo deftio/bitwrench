@@ -158,9 +158,20 @@ console.log(`\n  ✓ Version bumped to ${version}\n`);
 
 run(`git checkout -b ${branchName}`);
 
-// ── 5. Commit and push ──────────────────────────────────────────────────
+// ── 5. Rebuild dist for the new version ─────────────────────────────────
 
-run('git add package.json package-lock.json src/version.js library.properties library.json idf_component.yml');
+// Bumping the version without rebuilding leaves dist/ stamped with the old
+// one, and test:bundles asserts every banner matches package.json -- so the
+// branch would start red and `npm test` would report dozens of failures that
+// have nothing to do with the developer's work. Rebuild here so a fresh
+// branch is green from its first commit.
+
+console.log('\n  Rebuilding dist so the new branch starts green...\n');
+run('npm run build');
+
+// ── 6. Commit ───────────────────────────────────────────────────────────
+
+run('git add package.json package-lock.json src/version.js library.properties library.json idf_component.yml dist');
 run(`git commit -m "start v${version}: ${featureName}"`);
 
 // ── Summary ──────────────────────────────────────────────────────────────

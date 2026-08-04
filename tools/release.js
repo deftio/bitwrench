@@ -31,6 +31,21 @@ const root = join(__dirname, '..');
 const argv = process.argv.slice(2);
 const DRY_RUN = argv.includes('--dry-run') || argv.includes('-n');
 
+// Squash-merge subject line. Accept both spellings, because
+//   npm run release -- --squash-msg="..."   lands in argv, and
+//   npm run release --squash-msg="..."      is swallowed by npm into
+//                                           npm_config_squash_msg
+// and the second is what people naturally type. Silently ignoring it would
+// mean the release lands on main under the wrong message.
+function squashMsgFromArgs() {
+  const hit = argv.find(a => a.startsWith('--squash-msg='));
+  if (hit) return hit.slice('--squash-msg='.length).trim();
+  const i = argv.indexOf('--squash-msg');
+  if (i !== -1 && argv[i + 1]) return argv[i + 1].trim();
+  return (process.env.npm_config_squash_msg || '').trim();
+}
+const SQUASH_MSG_ARG = squashMsgFromArgs();
+
 // Minimum Node for the dev toolchain. c8 >=12 and mocha >=11 need require(esm),
 // which landed in Node 22.12. This is a BUILD-time floor only -- the published
 // library itself has no runtime dependencies and runs on far older engines.
@@ -75,6 +90,69 @@ function ask(question) {
       fail('Interactive terminal required for release confirmation.');
     }
   }
+}
+
+// Read a free-text line from the operator. Kept separate from ask(), which
+// only understands y/n.
+function askLine(question) {
+  try {
+    return execSync(
+      `/bin/sh -c 'printf "%s" "${question}" >&2 && read ans && printf "%s" "$ans"'`,
+      { stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' }
+    ).trim();
+  } catch {
+    fail('Interactive terminal required to enter a commit message.');
+  }
+}
+
+// Prompt for one of several single-letter choices.
+function askChoice(question, choices) {
+  while (true) {
+    const a = askLine(question).toLowerCase();
+    if (choices.includes(a)) return a;
+    console.log(`  Please answer one of: ${choices.join(', ')}`);
+  }
+}
+
+// The CHANGELOG section for a version: everything after the "## vX.Y.Z"
+// heading up to the next "## v" heading.
+function changelogSection(v) {
+  const lines = readFileSync(join(root, 'CHANGELOG.md'), 'utf8').split('\n');
+  const start = lines.findIndex(l => l.startsWith(`## v${v} `) || l.trim() === `## v${v}`);
+  if (start === -1) return '';
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex(l => /^## v/.test(l));
+  return (end === -1 ? rest : rest.slice(0, end)).join('\n').trim();
+}
+
+// A commit subject derived from that section: first sentence of the first
+// prose line, trimmed to something a git log can display. Bullets and
+// sub-headings are skipped -- they read badly as a subject.
+function subjectFromChangelog(section) {
+  // Prose means: not a heading, list item, quote, table row, code fence, or
+  // HTML comment. drift-lint pragmas are HTML comments and would otherwise be
+  // picked up as the summary.
+  // Must also start at column 0: an indented line is the wrapped continuation
+  // of a list item, which reads as a sentence fragment if used as a subject.
+  const isProse = (l) => {
+    if (l === '' || /^\s/.test(l)) return false;
+    return !/^[#\-*>|`]/.test(l) && !l.startsWith('<');
+  };
+
+  const lines = section.split('\n');
+  let i = lines.findIndex(isProse);
+  if (i === -1) return '';
+
+  // Take the whole paragraph, not one line -- sentences wrap in this file, so
+  // a single line usually ends mid-clause with no period to cut at.
+  const block = [];
+  while (i < lines.length && isProse(lines[i])) block.push(lines[i].trim()), i++;
+
+  let s = block.join(' ').replace(/\s+/g, ' ');
+  const stop = s.search(/\.(\s|$)/);
+  if (stop !== -1) s = s.slice(0, stop);
+  s = s.replace(/\*\*/g, '').trim();
+  return s.length > 65 ? s.slice(0, 62).trimEnd() + '...' : s;
 }
 
 function fileSize(filePath) {
@@ -191,8 +269,8 @@ run('npm run lint');
 
 step('4. Tests');
 
+// test:cli is part of `npm test` as of v2.1.4 -- no separate invocation.
 run('npm test');
-run('npm run test:cli');
 
 // E2E gate: containerized by default (Linux browsers, reproducible env).
 // BW_E2E_NATIVE=1 npm run release  → use the native suite instead (e.g. no Docker).
@@ -395,23 +473,37 @@ if (DRY_RUN) {
 
 step('10. Merge to main');
 
-// Derive description from branch name: feature/lifecycle-refactor -> lifecycle refactor
+// Subject precedence: --squash-msg, then the CHANGELOG, then the branch name.
+// The branch name is a poor last resort -- it is how v2.1.4 nearly landed as
+// "dependabot deps" when its real content was a CommonJS packaging fix.
 const branchDesc = branch
   .replace(/^feature\//, '')
   .replace(/[-_]/g, ' ');
-const mergeMsg = `v${version}: ${branchDesc}`;
+
+const section = changelogSection(version);
+const changelogSubject = subjectFromChangelog(section);
+
+let msgSource = 'branch name';
+let subject = `v${version}: ${branchDesc}`;
+if (changelogSubject) {
+  msgSource = 'CHANGELOG';
+  subject = `v${version}: ${changelogSubject}`;
+}
+if (SQUASH_MSG_ARG) {
+  msgSource = '--squash-msg';
+  subject = SQUASH_MSG_ARG;
+}
 
 console.log(`
   All gates passed.
   Version:  ${version}
   Branch:   ${branch}
   Bundle:   ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped
-
-  Ready to squash-merge to main and push.
-  Commit message: "${mergeMsg}"
 `);
 
 if (DRY_RUN) {
+  console.log(`  Commit subject: "${subject}"   (source: ${msgSource})`);
+  console.log(`  Commit body:    ${section ? section.split('\n').length + ' lines from the CHANGELOG' : '(none -- no CHANGELOG section found)'}`);
   skipped(`git merge --squash ${branch} && git commit && git push origin main`);
   step('Dry run complete');
   console.log(`
@@ -420,8 +512,9 @@ if (DRY_RUN) {
   A real release would now:
     1. Archive a snapshot to releases/v2/
     2. Commit dist artifacts as "v${version} release"
-    3. Squash-merge ${branch} -> main as "${mergeMsg}"
-    4. Push main, after which CI tags, releases, and publishes to npm
+    3. Prompt to accept or edit the subject above
+    4. Squash-merge ${branch} -> main and push, after which CI tags,
+       releases, and publishes to npm
 
   dist/ was rebuilt, so your working tree is dirty. That is expected.
   When you are ready:  npm run release
@@ -429,13 +522,43 @@ if (DRY_RUN) {
   process.exit(0);
 }
 
-const answer = ask('Squash-merge to main and push? (y/n) ');
+// ── Step A: settle the message, separately from deciding to release ──────
+// An explicit --squash-msg is taken as already decided; otherwise confirm.
+if (!SQUASH_MSG_ARG) {
+  while (true) {
+    console.log(`\n  Commit subject: "${subject}"   (source: ${msgSource})`);
+    const choice = askChoice('  [a]ccept  [e]dit  [q]uit ? ', ['a', 'e', 'q']);
+    if (choice === 'q') {
+      console.log('\n  Stopped before merging. Nothing was pushed.\n');
+      process.exit(0);
+    }
+    if (choice === 'a') break;
+    const entered = askLine('  New subject: ');
+    if (!entered) {
+      console.log('  Subject cannot be empty.');
+      continue;
+    }
+    subject = entered;
+    msgSource = 'entered';
+  }
+} else {
+  console.log(`\n  Commit subject: "${subject}"   (source: --squash-msg)`);
+}
+
+// Full CHANGELOG section becomes the commit body, so `git show` on main
+// explains the release without leaving the terminal. Written to a file
+// rather than passed via -m: the section contains backticks and quotes.
+const msgPath = join(root, '.git', 'SQUASH_MSG');
+writeFileSync(msgPath, section ? `${subject}\n\n${section}\n` : `${subject}\n`);
+
+// ── Step B: decide whether to actually release ───────────────────────────
+const answer = ask('  Squash-merge to main and push? (y/n) ');
 
 if (answer === 'n') {
   console.log(`
   Skipped. You can merge manually later:
     git checkout main && git merge --squash ${branch}
-    git commit -m "${mergeMsg}"
+    git commit -F .git/SQUASH_MSG
     git push origin main
 `);
   process.exit(0);
@@ -445,7 +568,7 @@ try {
   run('git checkout main');
   run('git pull --ff-only origin main');
   run(`git merge --squash ${branch}`);
-  run(`git commit -m "${mergeMsg}"`);
+  run('git commit -F .git/SQUASH_MSG');
   execSync('git push origin main', {
     cwd: root,
     stdio: 'inherit',

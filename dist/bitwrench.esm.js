@@ -1,14 +1,14 @@
-/*! bitwrench v2.1.4 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench v2.1.5 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * Auto-generated version file from package.json
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
 const VERSION_INFO = {
-  version: '2.1.4',
+  version: '2.1.5',
   name: 'bitwrench',
   license: 'BSD-2-Clause',
-  buildDate: '2026-08-03T16:17:50.793Z'
+  buildDate: '2026-08-04T05:17:06.653Z'
 };
 
 /**

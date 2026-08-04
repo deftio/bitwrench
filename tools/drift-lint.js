@@ -173,6 +173,15 @@ var RULES = [
     message: 'data-bw-action → bw_act_* CSS class'
   },
   {
+    // A fabricated owner (github.com/nicktackes/bitwrench) sat in the embedded
+    // C headers and the Rust Cargo.toml from 2026-03 until v2.1.0 removed it.
+    // It never shipped, but nothing would have caught it if it had -- and the
+    // embedded registries display these URLs on the package page.
+    id: 'foreign-repo-url',
+    pattern: /github\.com\/(?!deftio\/)[A-Za-z0-9_.-]+\/bitwrench/g,
+    message: 'bitwrench repo URL must point at github.com/deftio/bitwrench'
+  },
+  {
     id: 'allowExec',
     pattern: /allowExec/g,
     message: 'allowExec removed in v2.1'

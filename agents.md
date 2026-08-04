@@ -223,6 +223,14 @@ bw.makeButton({ text: 'Save', onclick: save })
 o.mounted is only for non-event setup: IntersectionObserver, measuring
 dimensions, third-party library initialization.
 
+<!-- drift-lint:ignore-start: naming the retired attribute is the point of this note -->
+No `data-*` attributes anywhere, including bwserve. Declarative attribute
+binding (`data-bw-action` and similar) is a framework pattern, not a
+bitwrench one; bwserve carried it by mistake until v2.1.0. Server-driven
+click handling uses `bw_act_*` class tokens instead, which the thin client
+delegates on: `{ t: 'button', a: { class: 'bw_act_save' } }`.
+<!-- drift-lint:ignore-end -->
+
 ### 5. Explicit state, not hand-coded reactivity
 
 Do not manually track state in outer variables and update DOM nodes by

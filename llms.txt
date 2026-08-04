@@ -158,6 +158,14 @@ building from scratch.
 bw.makeButton({ text: 'Save', onclick: save })
 ```
 
+### Mistake 6: `data-*` attributes for binding
+
+<!-- drift-lint:ignore-start: migration note must name the retired attribute -->
+bitwrench uses no `data-*` attributes. `data-bw-action` existed in bwserve by
+mistake and was removed in v2.1.0. Server-driven click handling uses
+`bw_act_*` class tokens: `{ t: 'button', a: { class: 'bw_act_save' } }`.
+<!-- drift-lint:ignore-end -->
+
 ## Quick Start
 
 ```html
