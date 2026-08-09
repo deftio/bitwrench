@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.1.5 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-lean v2.1.6 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -190,10 +190,10 @@
    */
 
   var VERSION_INFO = {
-    version: '2.1.5',
+    version: '2.1.6',
     name: 'bitwrench',
     license: 'BSD-2-Clause',
-    buildDate: '2026-08-04T05:17:06.653Z'
+    buildDate: '2026-08-09T06:26:21.813Z'
   };
 
   /**
@@ -1240,6 +1240,23 @@
     rules[_sx(scope, 'body')] = baseReset;
     return rules;
   }
+  function generateProseThemed(scope, palette) {
+    var rules = {};
+    // Bare hr draws a rule now (see structuralRules.base), so it needs the
+    // palette colour too -- otherwise it falls back to the UA's grey currentColor.
+    rules[_sx(scope, 'hr, .bw_hr')] = {
+      'border-top-color': palette.light.border
+    };
+    rules[_sx(scope, '.bw_quote')] = {
+      'border-left-color': palette.primary.base,
+      'color': palette.dark.base
+    };
+    rules[_sx(scope, '.bw_code')] = {
+      'background-color': palette.surfaceAlt,
+      'color': palette.danger.darkText
+    };
+    return rules;
+  }
   function generateBreadcrumbThemed(scope, palette, layout) {
     var rules = {},
       mo = layout.motion;
@@ -1816,7 +1833,7 @@
    * @returns {Object} CSS rules object
    */
   function generateThemedCSS(scopeName, palette, layout) {
-    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette, layout), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette, layout), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette, layout), generateProgress(scopeName, palette, layout), generateBreadcrumbThemed(scopeName, palette, layout), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette, layout), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette, layout), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette, layout), generateFileUploadThemed(scopeName, palette, layout), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette, layout), generateTooltipThemed(scopeName, palette, layout), generatePopoverThemed(scopeName, palette, layout), generateCodeDemoThemed(scopeName, palette, layout), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
+    return Object.assign({}, generateResetThemed(scopeName, palette), generateTypographyThemed(scopeName, palette, layout), generateButtons(scopeName, palette, layout), generateAlerts(scopeName, palette, layout), generateCards(scopeName, palette, layout), generateForms(scopeName, palette, layout), generateNavigation(scopeName, palette, layout), generateTables(scopeName, palette, layout), generateTabs(scopeName, palette, layout), generateListGroups(scopeName, palette, layout), generatePagination(scopeName, palette, layout), generateProgress(scopeName, palette, layout), generateProseThemed(scopeName, palette), generateBreadcrumbThemed(scopeName, palette, layout), generateCloseButtonThemed(scopeName, palette), generateSectionsThemed(scopeName, palette), generateAccordionThemed(scopeName, palette, layout), generateCarouselThemed(scopeName, palette), generateModalThemed(scopeName, palette, layout), generateToastThemed(scopeName, palette, layout), generateDropdownThemed(scopeName, palette, layout), generateSwitchThemed(scopeName, palette), generateSkeletonThemed(scopeName, palette), generateStatCardThemed(scopeName, palette, layout), generateTimelineThemed(scopeName, palette), generateStepperThemed(scopeName, palette), generateChipInputThemed(scopeName, palette, layout), generateFileUploadThemed(scopeName, palette, layout), generateRangeThemed(scopeName, palette), generateSearchThemed(scopeName, palette, layout), generateTooltipThemed(scopeName, palette, layout), generatePopoverThemed(scopeName, palette, layout), generateCodeDemoThemed(scopeName, palette, layout), generateNavPillsThemed(scopeName, palette, layout), generatePaletteClasses(scopeName, palette));
   }
 
   // =========================================================================
@@ -1862,6 +1879,19 @@
         'margin': '0',
         'padding': '0'
       },
+      // The reset above zeroes padding on everything, which leaves a list with
+      // list-style-position: outside rendering its markers to the LEFT of its own
+      // content box -- overlapping whatever contains it. Put the indent back here
+      // rather than in a class, so the reset replaces what it destroys instead of
+      // leaving the damage for an opt-in to repair. 1em lands the marker on the
+      // body-text edge, so a list lines up with the paragraphs around it.
+      'ul, ol': {
+        'padding-left': '1em',
+        'margin-bottom': '1rem'
+      },
+      'ul ul, ul ol, ol ol, ol ul': {
+        'margin-bottom': '0'
+      },
       'html': {
         'font-size': '16px',
         'line-height': '1.5',
@@ -1891,12 +1921,18 @@
       'main': {
         'display': 'block'
       },
+      // border: 0 is a normalize-style reset that expects a border added back.
+      // Without the two longhands below, a bare <hr> is 1px tall with no border
+      // and no background -- it occupies space and paints nothing. The longhands
+      // follow the shorthand so they win; colour comes from generateProseThemed.
       'hr': {
         'box-sizing': 'content-box',
         'height': '0',
         'overflow': 'visible',
         'margin': '1rem 0',
-        'border': '0'
+        'border': '0',
+        'border-top-width': '1px',
+        'border-top-style': 'solid'
       },
       'hr:not([size])': {
         'height': '1px'
@@ -1933,6 +1969,37 @@
         'margin-top': '0',
         'margin-bottom': '1rem'
       },
+      // ---- Prose elements ----
+      // ul/ol and hr are repaired in structuralRules.base, where the reset that
+      // broke them lives -- these two classes are kept for compatibility and now
+      // just restate the default. .bw_quote and .bw_code are different: the reset
+      // never touched them, they simply have no opinion, so they stay opt-in.
+      '.bw_list': {
+        'padding-left': '1em',
+        'margin-bottom': '1rem'
+      },
+      '.bw_list .bw_list': {
+        'margin-bottom': '0'
+      },
+      '.bw_hr': {
+        'height': '0',
+        'margin': '1.5rem 0',
+        'border': '0',
+        'border-top-width': '1px',
+        'border-top-style': 'solid'
+      },
+      '.bw_quote': {
+        'margin': '0 0 1rem',
+        'padding': '0.5rem 0 0.5rem 1rem',
+        'border-left-width': '3px',
+        'border-left-style': 'solid'
+      },
+      '.bw_code': {
+        'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+        'font-size': '0.875em',
+        'padding': '0.15em 0.4em',
+        'border-radius': '4px'
+      },
       'small': {
         'font-size': '0.875rem'
       },
@@ -1957,7 +2024,7 @@
     },
     // ---- Grid ----
     grid: _objectSpread2({
-      '.bw_bccl_container': {
+      '.bw_bccl_container, .bw_container': {
         'width': '100%',
         'padding-right': '0.75rem',
         'padding-left': '0.75rem',
@@ -1965,22 +2032,22 @@
         'margin-left': 'auto'
       },
       '@media (min-width: 576px)': {
-        '.bw_bccl_container': {
+        '.bw_bccl_container, .bw_container': {
           'max-width': '540px'
         }
       },
       '@media (min-width: 768px)': {
-        '.bw_bccl_container': {
+        '.bw_bccl_container, .bw_container': {
           'max-width': '720px'
         }
       },
       '@media (min-width: 992px)': {
-        '.bw_bccl_container': {
+        '.bw_bccl_container, .bw_container': {
           'max-width': '960px'
         }
       },
       '@media (min-width: 1200px)': {
-        '.bw_bccl_container': {
+        '.bw_bccl_container, .bw_container': {
           'max-width': '1140px'
         }
       },
@@ -2525,6 +2592,15 @@
         'margin-bottom': '1rem',
         'list-style': 'none'
       },
+      // The <ol> inside the <nav>. Without this it renders as a numbered list,
+      // because the flex/list-style rules above land on the wrapping <nav>.
+      '.bw_bccl_breadcrumb_list': {
+        'display': 'flex',
+        'flex-wrap': 'wrap',
+        'list-style': 'none',
+        'margin': '0',
+        'padding': '0'
+      },
       '.bw_bccl_breadcrumb_item': {
         'display': 'flex'
       },
@@ -2651,7 +2727,11 @@
         'height': '3rem',
         'border-width': '0.3em'
       },
-      '.bw_spinner_border_md': {},
+      '.bw_spinner_border_md': {
+        'width': '2rem',
+        'height': '2rem',
+        'border-width': '0.25em'
+      },
       '.bw_spinner_grow': {
         'display': 'inline-block',
         'width': '2rem',
@@ -5527,6 +5607,15 @@
     var r = _to(x);
     return r === t || r.toLowerCase() === t;
   };
+  // camelCase -> hyphenated CSS property name. Vendor-prefixed keys keep their
+  // leading dash (WebkitTransform -> -webkit-transform).
+  var _cssProp = function _cssProp(k) {
+    if (k.indexOf('--') === 0) return k; // custom property, leave alone
+    var out = k.replace(/[A-Z]/g, function (c) {
+      return '-' + c.toLowerCase();
+    });
+    return out;
+  };
   // Console aliases use thin wrappers (not direct references) so that test
   // code can monkey-patch console.warn/log/error and the patches take effect.
   var _cw = function _cw() {
@@ -6011,13 +6100,37 @@
    * HTML snippets. Content is HTML-escaped by default; pass `{ raw: true }`
    * to insert raw HTML.
    *
+   * **Event handlers.** Give an `on*` attribute a function and it is registered
+   * with `bw.funcRegister` automatically; the attribute becomes a
+   * `bw.funcGetById('bw_fn_N')(event)` dispatch call. The string therefore
+   * carries a working handler with no binding step — it fires as soon as the
+   * HTML is in the document, however it got there, and still works after a
+   * clone or re-insert. The registry holds a live reference, so closures and
+   * bound functions are fine.
+   *
+   * Pass `options.fns` when the output must satisfy a strict CSP: handlers go
+   * into that per-render object and the element gets a `bw_fn_N` class instead
+   * of an inline attribute, leaving nothing executable in the markup. You bind
+   * them yourself; `bw.htmlPage` takes this path and emits the binder.
+   *
+   * Note that auto-registered handlers persist in the global registry for the
+   * life of the process — see `bw.funcUnregister`. This is not a concern
+   * for live UI, which uses `bw.create` and attaches real listeners
+   * without touching the registry.
+   *
    * @param {Object|Array|string} taco - TACO object, array of TACOs, or string
    * @param {Object} [options] - Rendering options
    * @param {boolean} [options.raw=false] - If true, skip HTML escaping on content
+   * @param {Object} [options.fns] - Per-render handler registry. When supplied,
+   *   `on*` functions are collected here as `{id: {fn, event}}` and emitted as a
+   *   `bw_fn_N` class rather than an inline attribute (CSP-safe). Omit it for
+   *   the auto-registered dispatch-string form.
    * @returns {string} HTML string
    * @category DOM Generation
    * @see bw.create
    * @see bw.DOM
+   * @see bw.htmlPage
+   * @see bw.funcRegister
    * @example
    * bw.html({ t: 'h1', c: 'Hello' })
    * // => '<h1>Hello</h1>'
@@ -6026,6 +6139,15 @@
    *   { t: 'p', c: 'Content here' }
    * ]})
    * // => '<div class="card"><p>Content here</p></div>'
+   *
+   * // Handlers just work — nothing to wire up afterwards
+   * bw.html({ t: 'button', a: { onclick: function() { alert('hi'); } }, c: 'Go' })
+   * // => '<button onclick="bw.funcGetById(\'bw_fn_0\')(event)">Go</button>'
+   *
+   * // CSP-safe variant: no inline handler, you bind the class yourself
+   * var fns = {};
+   * bw.html({ t: 'button', a: { onclick: function() {} }, c: 'Go' }, { fns: fns })
+   * // => '<button class="bw_fn_0">Go</button>'   fns = { bw_fn_0: {fn, event:'click'} }
    */
   bw.html = function (taco) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
@@ -6116,14 +6238,26 @@
             fnMarkers.push(fnId);
             // No inline on* attribute emitted
           } else {
-            // No {fns} registry → skip function attrs, warn once per render
-            if (!options._fnSkipWarned) {
-              bw.pub('bw:diag', {
-                code: 'fn_skipped',
-                msg: 'function attrs skipped without {fns} option'
-              });
-              options._fnSkipWarned = true;
-            }
+            // No {fns} registry → auto-register and emit a dispatch string.
+            //
+            // This is the 1.x/2.0 behaviour. bw.html(taco) has to just work:
+            // hand it a function and you get HTML whose handler fires, with no
+            // binding pass to remember. v2.1.0 replaced this with a silent drop
+            // unless the caller passed {fns}, which quietly broke every bare
+            // bw.html() carrying a handler. 1.x had already settled this question
+            // the other way -- it auto-registered by default and offered
+            // o.atrOnEventRegister:false as the opt-out.
+            //
+            // The dispatch string also survives things the {fns} class-marker
+            // cannot: it works the moment the HTML lands in the DOM, however it
+            // got there, and keeps working after a clone or a re-insert, because
+            // there is no separate binding step to re-run. It holds a live
+            // reference too, so bound and native functions work here even though
+            // {fns} has to reject them.
+            //
+            // fnId is always 'bw_fn_N' from funcRegister, so it needs no escaping.
+            var autoId = bw.funcRegister(value);
+            attrStr += ' ' + key + '="' + bw.funcGetDispatchStr(autoId, 'event') + '"';
           }
           continue;
         } else if (_is(value, 'string')) {
@@ -6132,6 +6266,10 @@
         continue;
       }
       if (key === 'style' && _is(value, 'object')) {
+        // Property names must be hyphenated inside a style attribute. The DOM
+        // path gets this free (el.style.paddingLeft is valid JS), but the string
+        // path used the key verbatim and emitted style="paddingLeft:1rem", which
+        // browsers ignore -- so server-rendered pages silently lost their styles.
         var styleStr = Object.entries(value).filter(function (_ref) {
           var _ref2 = _slicedToArray(_ref, 2),
             v = _ref2[1];
@@ -6140,7 +6278,7 @@
           var _ref4 = _slicedToArray(_ref3, 2),
             k = _ref4[0],
             v = _ref4[1];
-          return "".concat(k, ":").concat(v);
+          return "".concat(_cssProp(k), ":").concat(v);
         }).join(';');
         if (styleStr) {
           attrStr += " style=\"".concat(bw.escapeHTML(styleStr), "\"");
@@ -9402,6 +9540,7 @@
       alternateRules: altRawRules,
       palette: palette,
       alternatePalette: altPalette,
+      layout: layout,
       isLightPrimary: lightPrimary
     };
   };
@@ -10057,6 +10196,16 @@
             thAttrs.style = {
               cursor: 'pointer',
               userSelect: 'none'
+            };
+            // Wire the header to the table's own sort handle. Without this the
+            // headers only *look* sortable: o.handle.sort does the work, but
+            // nothing ever called it, so clicking a header did nothing.
+            thAttrs.onclick = function (e) {
+              var th = e.currentTarget;
+              var tableEl = th.closest ? th.closest('table') : null;
+              if (tableEl && tableEl.bw && typeof tableEl.bw.sort === 'function') {
+                tableEl.bw.sort(col.key);
+              }
             };
           }
           if (currentSortColumn === col.key) {

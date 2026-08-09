@@ -243,52 +243,68 @@ var brand = '#336699', radius = '12px';
 { t: 'div', a: { style: bw.s({ padding: '1rem' }, isActive ? { fontWeight: '700' } : null) } }
 ```
 
-### bw.css() -- generate stylesheet from JS objects
+### Theme tokens -- palette + layout from seeds
 
 ```javascript
+var styles = bw.loadStyles({
+  primary: '#336699', secondary: '#cc6633',
+  spacing: 'normal',    // 'compact'|'normal'|'spacious'
+  radius: 'md',         // 'none'|'sm'|'md'|'lg'|'pill'
+  elevation: 'md',      // 'flat'|'sm'|'md'|'lg'
+  motion: 'standard',   // 'reduced'|'standard'|'expressive'
+  harmonize: 0.20       // hue shift semantics toward primary (0-1)
+});
+var p = styles.palette;  // color roles
+var L = styles.layout;   // spacing, radius, typeScale, elevation, motion
+
+// Custom CSS uses tokens -- not hex literals, not var(--bw_*)
 bw.injectCSS(bw.css({
-  '.bw_bccl_card': { borderRadius: '12px', padding: '1.5rem', border: '1px solid #ddd' },
-  '.bw_bccl_card:hover': { boxShadow: '0 4px 12px rgba(0,0,0,.1)' },
+  '.panel': {
+    background: p.surface,
+    color: p.dark.base,
+    border: '1px solid ' + p.light.border,
+    borderRadius: L.radius.card,
+    padding: L.spacing.card,
+    boxShadow: L.elevation.sm
+  },
+  '.panel:hover': { boxShadow: L.elevation.md },
   '@keyframes fadeIn': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-  '@media (max-width: 768px)': { '.bw_bccl_card': { padding: '0.75rem' } }
+  '@media (max-width: 768px)': { '.panel': { padding: L.spacing.alert } }
 }));
 ```
 
 CamelCase auto-converts to kebab-case. All `@`-prefix keys nest recursively.
 
+Useful palette fields: `p.primary.base` / `.hover` / `.light` / `.border` / `.textOn`,
+plus `p.surface`, `p.surfaceAlt`, `p.background` (plain strings).  
+Useful layout fields: `L.spacing.card|btn|alert|cell|input`, `L.radius.card|btn|…`,
+`L.elevation.sm|md|lg|xl`, `L.typeScale.sm|base|lg|xl|…` (px numbers), `L.motion`.
+
 ### Functions as CSS generators (like Sass mixins)
 
 ```javascript
-function cardStyles(accent) {
-  var s = bw.deriveShades(accent);
+// Accent families: derive shades from a seed, then use the shade object
+function cardStyles(seed) {
+  var s = bw.deriveShades(seed);
   return { background: s.light, border: '1px solid ' + s.border, color: s.darkText };
 }
-bw.injectCSS(bw.css({ '.warn': cardStyles('#e67e22'), '.ok': cardStyles('#27ae60') }));
+var styles = bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
+var p = styles.palette;
+bw.injectCSS(bw.css({
+  '.warn': cardStyles(p.warning.base),
+  '.ok': cardStyles(p.success.base)
+}));
 ```
 
-### Theme system -- complete palette from 2 colors
+### Theme switching and presets
 
 ```javascript
-bw.loadStyles();  // structural CSS only (call once)
-
-bw.loadStyles({
-  primary: '#336699', secondary: '#cc6633',
-  spacing: 'normal',    // 'compact'|'normal'|'spacious'
-  radius: 'md',         // 'none'|'sm'|'md'|'lg'|'pill'
-  elevation: 'md',      // 'flat'|'sm'|'md'|'lg'
-  harmonize: 0.20       // hue shift semantics toward primary (0-1)
-});
-
 // Theme switching: generate both themes and manually re-apply
 var primary = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
 var dark = bw.makeStyles({ primary: '#1a1a2e', secondary: '#e94560' });
 bw.applyStyles(primary);  // apply primary theme
 // To switch: bw.applyStyles(dark);
-
-// Or generate separately:
-var theme = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
-bw.applyStyles(theme);
-// Use tokens: theme.palette.primary.base, theme.palette.secondary.light, etc.
+// Or: bw.toggleThemeMode() after loadStyles()
 
 // 12 built-in presets:
 bw.loadStyles(bw.THEME_PRESETS.ocean);
@@ -314,8 +330,8 @@ bw.u('flex gap4 p4 alignCenter')       // => { display:'flex', gap:'1rem', ... }
 bw.u.css('flex gap4 p4 alignCenter')   // => "display:flex;gap:1rem;padding:1rem;..."
 bw.u.cls('flex gap4 p4')               // => "bw_flex bw_gap_4 bw_p_4"
 
-// Compose with bw.s()
-a: { style: bw.s(bw.u('flex gap4'), { borderBottom: '2px solid #336699' }) }
+// Compose with bw.s() and palette tokens
+a: { style: bw.s(bw.u('flex gap4'), { borderBottom: '2px solid ' + p.primary.base }) }
 
 // Scale: {n} = n * 0.25rem. p4 = 1rem, gap8 = 2rem, m1 = 0.25rem
 // Tokens: p/m/pt/pb/pl/pr/px/py/mt/mb/ml/mr/mx/my + {n}, gap{n}, w{n}, h{n}
@@ -583,9 +599,11 @@ bwcli serve                                   # dev server (port 7902)
 | Function | Description |
 |----------|-------------|
 | `bw.html(taco)` | TACO to HTML string |
-| `bw.create(taco)` | TACO to detached DOM element |
-| `bw.DOM(sel, taco)` | Mount TACO into existing element |
-| `bw.mount(sel, taco)` | Like DOM() but returns root element (for el.bw access) |
+| `bw.create(taco)` | TACO to detached DOM (hydrates; does **not** fire `o.mounted`) |
+| `bw.DOM(sel, taco)` | Mount TACO into existing element (`mountTree`) |
+| `bw.mount(sel, taco)` | Alias of DOM(); returns root element (for el.bw access) |
+| `bw.append(target, taco)` | Add child + `mountTree` (prefer over `create`+`appendChild`) |
+| `bw.replace(el, taco)` | Replace node + `mountTree` |
 | `bw.h(tag, a?, c?, o?)` | TACO constructor from positional args |
 | `bw.raw(str)` | Mark string as pre-escaped HTML |
 | `bw.htmlPage(opts)` | TACO to complete HTML document |

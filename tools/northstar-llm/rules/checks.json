@@ -1,0 +1,66 @@
+[
+  {
+    "id": "raw-dom",
+    "severity": "high",
+    "cite": "agents.md §1 TACO objects, not DOM calls; northstar — TACO is the UI primitive",
+    "description": "App UI built with document.querySelector / getElementById / createElement / innerHTML instead of bw.DOM / bw.mount / bw.create / TACO trees.",
+    "badHint": "document.getElementById('app').innerHTML = '...'; el.querySelector('.x').textContent = ...",
+    "goodHint": "bw.DOM('#app', taco); bw.mount('#app', taco); update via el.bw handles or bw.refresh"
+  },
+  {
+    "id": "mounted-listeners",
+    "severity": "high",
+    "cite": "agents.md §4 Events in attributes, not addEventListener",
+    "description": "Interactive handlers attached with addEventListener inside o.mounted (lost on re-render).",
+    "badHint": "o: { mounted: function(el) { el.querySelector('button').addEventListener('click', fn); } }",
+    "goodHint": "{ t: 'button', a: { onclick: fn }, c: 'Save' } or bw.makeButton({ onclick: fn })"
+  },
+  {
+    "id": "palette-bypass",
+    "severity": "high",
+    "cite": "agents.md §3 CSS from palette; northstar Quick drift — hardcoding hex",
+    "description": "Theme-role colors (surfaces, borders, text, accents) hardcoded as hex/rgb instead of styles.palette / styles.layout tokens from loadStyles/makeStyles.",
+    "badHint": "background: '#f5f5f5'; color: '#333'; injectCSS with literal hex for theme roles",
+    "goodHint": "var p = styles.palette; background: p.surfaceAlt; color: p.dark.base; spacing from styles.layout"
+  },
+  {
+    "id": "css-var-bw",
+    "severity": "high",
+    "cite": "agents.md §3 — bitwrench does not use var(--bw_*) as the design-system path",
+    "description": "Teaching or using var(--bw_*) / var(--bw-*) as the primary theming path instead of palette objects.",
+    "badHint": "background: var(--bw_surface); color: var(--bw-primary)",
+    "goodHint": "background: p.surface; color: p.primary.base from styles.palette"
+  },
+  {
+    "id": "bccl-reinvent",
+    "severity": "medium",
+    "cite": "agents.md §2 BCCL components first; docs/component-cheatsheet.md",
+    "description": "Hand-built table, modal, navbar, tabs, toast, form controls, etc. when a bw.make* BCCL component exists.",
+    "badHint": "Hand-rolled { t: 'table', ... } or custom modal overlay TACO",
+    "goodHint": "bw.makeTable(...); bw.makeModal(...); bw.makeNavbar(...)"
+  },
+  {
+    "id": "refresh-gravity",
+    "severity": "medium",
+    "cite": "agents.md — Components own their DOM; handles/slots for targeted updates",
+    "description": "Full remount / full-page rebuild / bw.DOM wipe where el.bw handles, slots, bw.patch, or bw.refresh on a small stateful root would fit.",
+    "badHint": "Every click rebuilds the entire page via bw.DOM('#app', ...)",
+    "goodHint": "el.bw.setTitle(...); slots; bw.refresh(statefulRoot) for local state"
+  },
+  {
+    "id": "outer-state-react-shape",
+    "severity": "medium",
+    "cite": "agents.md §5 Explicit state, not hand-coded reactivity",
+    "description": "Outer mutable variables + manual DOM sync mimicking React/jQuery reactivity instead of o.state + bw.refresh, handles, or bw.pub/sub.",
+    "badHint": "var count = 0; function render() { el.textContent = count; }",
+    "goodHint": "o.state + o.render + bw.refresh; or el.bw.handle methods"
+  },
+  {
+    "id": "look-feel-drift",
+    "severity": "low",
+    "cite": "northstar — shared tokens; BCCL visual language",
+    "description": "One-off styling that ignores shared palette/layout tokens and looks inconsistent with BCCL (ad-hoc radii, spacing, type) without a documented demo reason.",
+    "badHint": "Random magic spacing/colors unrelated to styles.layout / palette",
+    "goodHint": "Use styles.layout spacing/radius/typeScale and palette roles"
+  }
+]

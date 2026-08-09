@@ -250,6 +250,7 @@ When you remove, rename, or re-decide something user-facing:
 | `getHandle` | removed API | handles live on `el.bw` directly |
 | `update-as-rerender` | prose claiming `bw.update()` re-renders | `bw.update()` dispatches; re-render is `bw.refresh()` |
 | `mounted-event-wiring` | structural: DOM event handlers wired in `o.mounted` | `a: { onclick: fn }` |
+| `css-var-bw` | `var(--bw_*)` / `var(--bw-*)` as theming path | `styles.palette` / `styles.layout` (or `.bw_bg_*` / `.bw_text_*`) |
 | `stale-api` | `bw.XXX()` in docs where XXX is not in the public API | auto-detected from `src/` -- no manual rule needed |
 
 <!-- drift-lint:ignore-end -->

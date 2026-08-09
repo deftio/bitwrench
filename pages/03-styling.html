@@ -21,6 +21,16 @@
 
     // ── Inject the media query CSS that was previously in <style> ──
     bw.injectCSS(bw.css({
+      // Grid already stretches the three cards to equal height. Making each a
+      // flex column lets the code block claim the leftover space with
+      // margin-top:auto, so the blocks end flush at the bottom even though the
+      // paragraphs above them run to different lengths.
+      '.demo-grid > .bw_site_pages_callout': {
+        display: 'flex', 'flex-direction': 'column'
+      },
+      '.demo-grid > .bw_site_pages_callout pre': {
+        'margin-top': 'auto', 'margin-bottom': '0'
+      },
       '@media (max-width: 768px)': {
         '.demo-grid': { 'grid-template-columns': '1fr !important' }
       }
@@ -33,7 +43,7 @@
       t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Three Ways to Style Bitwrench Elements' },
-        { t: 'p', a: { style: 'padding: 0 0.25rem;' },
+        { t: 'p',
           c: bw.raw('Bitwrench generates DOM elements with <code>class</code> and <code>style</code> attributes. Whatever CSS you use &mdash; your own stylesheet, Bootstrap, Tailwind, <code>bitwrench.css</code>, or no CSS file at all &mdash; it just works. You can mix all three approaches on the same element:') },
         { t: 'div', a: { class: 'demo-grid', style: 'display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.25rem; margin: 1.5rem 0;' },
           c: [
@@ -68,7 +78,7 @@
       t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: bw.raw('Inline Styles &mdash; No CSS File Needed') },
-        { t: 'p', a: { style: 'padding: 0 0.25rem;' },
+        { t: 'p',
           c: bw.raw('<code>bw.s()</code> merges style objects (like <code>Object.assign</code>). Pass any number of plain objects and they get merged left-to-right. This replaces CSS variables, preprocessors, and utility class frameworks &mdash; because <strong>JavaScript variables ARE your variables</strong>.') },
         { t: 'div', a: { id: 'tryit-style-objects' } },
         { t: 'div', a: { style: 'margin-top: 1.5rem;' }, c: site.makeCallout('concept', [
@@ -275,8 +285,8 @@
           t: 'div', a: { class: 'content-container wide' },
           c: [
             { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
-                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'CSS Is Just Strings' },
-                { t: 'p', c: ['Bitwrench doesn\'t own your CSS. Use inline styles, bw.css() generation, any CSS file, or all three. CSS values are JS variables \u2014 compose them with Object.assign, generate them with functions. ', { t: 'a', a: { href: '../docs/thinking-in-bitwrench.md' }, c: 'Thinking in Bitwrench' }] }
+                { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Styles Are Composable JavaScript' },
+                { t: 'p', c: ['A style in bitwrench is ordinary JavaScript \u2014 an inline string, an object of properties, a class name, or any of those computed on the fly. Being plain strings and objects, they compose the way the rest of your code does: keep them in variables, reuse them across elements, build them with functions. Helpers like bw.s() are conveniences rather than magic; it merges style objects, and bitwrench renders the result to a CSS string when the element is created. And because it all resolves to a string in the end, styles can be written as you author, generated at build time, or produced live in the page. Your own stylesheets and utility-class frameworks keep working alongside. ', { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench' }] }
             ]},
             section1, section2, section3, section4, section5, section6, section7, separator1, section8, separator2, section9, section10
           ]

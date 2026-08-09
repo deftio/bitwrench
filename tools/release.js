@@ -20,7 +20,7 @@
  */
 
 import { execSync } from 'child_process';
-import { readFileSync, statSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { gzipSync } from 'zlib';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -159,9 +159,22 @@ function fileSize(filePath) {
   return statSync(join(root, filePath)).size;
 }
 
+// Measure the artifact that actually ships.
+//
+// build:metrics writes the .gz files at level 9, and that is what reaches a
+// browser: either served pre-compressed off disk (how the embedded targets do
+// it) or re-compressed by nginx/a CDN at a comparable level. This function used
+// to re-gzip the .js with zlib's default, which is level 6 -- about 146 bytes
+// heavier on the core bundle, and measured against a file nobody is ever sent.
+// That was enough to fail the budget gate on bitwrench.umd.min.js while the
+// artifact actually being shipped was 50 bytes under it.
+//
+// Falls back to an explicit level 9 when no .gz is present, so the number still
+// matches what the build would have written rather than drifting back to 6.
 function gzSize(filePath) {
-  const buf = readFileSync(join(root, filePath));
-  return gzipSync(buf).length;
+  const gzPath = join(root, filePath + '.gz');
+  if (existsSync(gzPath)) return statSync(gzPath).size;
+  return gzipSync(readFileSync(join(root, filePath)), { level: 9 }).length;
 }
 
 function kb(bytes) {
@@ -548,7 +561,11 @@ if (!SQUASH_MSG_ARG) {
 // Full CHANGELOG section becomes the commit body, so `git show` on main
 // explains the release without leaving the terminal. Written to a file
 // rather than passed via -m: the section contains backticks and quotes.
-const msgPath = join(root, '.git', 'SQUASH_MSG');
+//
+// NOT .git/SQUASH_MSG -- git writes that file itself during `merge --squash`,
+// overwriting whatever is there with "Squashed commit of the following:".
+// v2.1.5 landed on main under that default subject for exactly this reason.
+const msgPath = join(root, '.git', 'BW_RELEASE_MSG');
 writeFileSync(msgPath, section ? `${subject}\n\n${section}\n` : `${subject}\n`);
 
 // ── Step B: decide whether to actually release ───────────────────────────
@@ -558,7 +575,7 @@ if (answer === 'n') {
   console.log(`
   Skipped. You can merge manually later:
     git checkout main && git merge --squash ${branch}
-    git commit -F .git/SQUASH_MSG
+    git commit -F .git/BW_RELEASE_MSG
     git push origin main
 `);
   process.exit(0);
@@ -568,7 +585,7 @@ try {
   run('git checkout main');
   run('git pull --ff-only origin main');
   run(`git merge --squash ${branch}`);
-  run('git commit -F .git/SQUASH_MSG');
+  run('git commit -F .git/BW_RELEASE_MSG');
   execSync('git push origin main', {
     cwd: root,
     stdio: 'inherit',

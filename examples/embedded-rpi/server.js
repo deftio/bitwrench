@@ -391,8 +391,8 @@ function buildCpuBars(cpuUsage) {
                 { t: 'span', c: 'Core ' + i },
                 { t: 'span', c: pct + '%' }
               ]},
-              { t: 'div', a: { style: 'background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden' }, c:
-                { t: 'div', a: { style: 'height:100%;border-radius:4px;width:' + pct + '%;background:var(--bw-' + variant + ',#2563eb);transition:width 0.5s' } }
+              { t: 'div', a: { class: 'bw_bg_light', style: 'border-radius:4px;height:8px;overflow:hidden' }, c:
+                { t: 'div', a: { class: 'bw_bg_' + variant, style: 'height:100%;border-radius:4px;width:' + pct + '%;transition:width 0.5s' } }
               }
             ]
           };
@@ -410,14 +410,14 @@ function buildMemCard(memUsedMB, memTotalMB, swapUsedMB, swapTotalMB) {
       { t: 'h3', a: { style: 'margin:0 0 0.5rem;font-size:1rem' }, c: 'Memory' },
       { t: 'div', a: { style: 'margin-bottom:0.5rem' }, c: [
         { t: 'div', a: { style: 'font-size:0.75rem;margin-bottom:2px' }, c: 'RAM: ' + memUsedMB + ' / ' + memTotalMB + ' MB' },
-        { t: 'div', a: { style: 'background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden' }, c:
-          { t: 'div', a: { style: 'height:100%;border-radius:4px;width:' + memPct + '%;background:var(--bw-primary,#2563eb);transition:width 0.5s' } }
+        { t: 'div', a: { class: 'bw_bg_light', style: 'border-radius:4px;height:8px;overflow:hidden' }, c:
+          { t: 'div', a: { class: 'bw_bg_primary', style: 'height:100%;border-radius:4px;width:' + memPct + '%;transition:width 0.5s' } }
         }
       ]},
       { t: 'div', c: [
         { t: 'div', a: { style: 'font-size:0.75rem;margin-bottom:2px' }, c: 'Swap: ' + swapUsedMB + ' / ' + swapTotalMB + ' MB' },
-        { t: 'div', a: { style: 'background:#e2e8f0;border-radius:4px;height:8px;overflow:hidden' }, c:
-          { t: 'div', a: { style: 'height:100%;border-radius:4px;width:' + swapPct + '%;background:var(--bw-info,#0ea5e9);transition:width 0.5s' } }
+        { t: 'div', a: { class: 'bw_bg_light', style: 'border-radius:4px;height:8px;overflow:hidden' }, c:
+          { t: 'div', a: { class: 'bw_bg_info', style: 'height:100%;border-radius:4px;width:' + swapPct + '%;transition:width 0.5s' } }
         }
       ]}
     ]

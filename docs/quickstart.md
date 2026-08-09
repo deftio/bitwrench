@@ -47,14 +47,29 @@ Copy this into a file and open it in a browser. Every section is commented.
 
 // --- 1. Theming -----------------------------------------------------------
 // loadStyles() with seed colors generates a full palette (hover, active,
-// focus, dark-text, border variants for each color) plus structural CSS
+// focus, dark-text, border variants for each color), layout tokens
+// (spacing, radius, typeScale, elevation, motion), plus structural CSS
 // for all built-in components. Returns the styles object.
-var styles = bw.loadStyles({ primary: '#2d6a4f', secondary: '#d4a373' });
-var p = styles.palette;  // use palette values in custom CSS -- never hex literals
+var styles = bw.loadStyles({
+  primary: '#2d6a4f',
+  secondary: '#d4a373',
+  spacing: 'normal',   // 'compact' | 'normal' | 'spacious'
+  radius: 'md',        // 'none' | 'sm' | 'md' | 'lg' | 'pill'
+  elevation: 'md'      // 'flat' | 'sm' | 'md' | 'lg'
+});
+var p = styles.palette;  // color roles -- use these in custom CSS, not hex literals
+var L = styles.layout;   // spacing / radius / type / elevation / motion
 
-// Custom CSS: always bw.css() with palette values, never raw strings.
+// Custom CSS: bw.css() with palette + layout tokens (not var(--bw_*), not raw hex).
 bw.injectCSS(bw.css({
-  '.task-done': { textDecoration: 'line-through', opacity: '0.5' }
+  '.task-done': { textDecoration: 'line-through', opacity: '0.5' },
+  '.task-card': {
+    background: p.surface,
+    border: '1px solid ' + p.light.border,
+    'border-radius': L.radius.card,
+    padding: L.spacing.card,
+    'box-shadow': L.elevation.sm
+  }
 }));
 
 // --- 2. A static TACO -----------------------------------------------------

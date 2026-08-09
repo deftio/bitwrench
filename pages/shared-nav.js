@@ -410,11 +410,11 @@
       // Insert sub-nav + mobile menu as siblings after the nav container
       var navEls = bw.$(selector);
       var navEl = navEls.length ? navEls[0] : null;
-      if (navEl && parts.belowNav.length) {
-        var belowWrapper = bw.create({
+      if (navEl && parts.belowNav.length && navEl.parentNode) {
+        // bw.append(…, { before }) runs mountTree — required since v2.1.0
+        bw.append(navEl.parentNode, {
           t: 'div', a: { class: 'bw_site_nav_wrapper' }, c: parts.belowNav
-        });
-        navEl.parentNode.insertBefore(belowWrapper, navEl.nextSibling);
+        }, { before: navEl.nextSibling });
       }
 
       // Restore saved theme preference from cookie — only if styles
@@ -448,9 +448,8 @@
         t: 'footer', a: { class: 'bw_site_pages_footer' },
         c: { t: 'p', a: { class: 'bw_site_pages_footer_text' }, c: 'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause' }
       };
-      var body = bw.$('body');
-      if (body.length) {
-        body[0].appendChild(bw.create(footerTaco));
+      if (bw.$('body').length) {
+        bw.append('body', footerTaco);
       }
     }
   }

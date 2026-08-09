@@ -378,7 +378,7 @@
       var time = new Date(entry.ts);
       var timeStr = time.toLocaleTimeString() + '.' + String(time.getMilliseconds()).padStart(3, '0');
 
-      var div = bw.create({
+      bw.append(logEl, {
         t: 'div', a: {
           class: 'log-entry',
           style: 'border-left:3px solid ' + borderColor + ';background:' + bgColor +
@@ -406,7 +406,6 @@
           }
         }] : [])
       });
-      logEl.appendChild(div);
       logEl.scrollTop = logEl.scrollHeight;
     }
 
@@ -415,8 +414,7 @@
       if (!el) return;
       function fmt(bytes) { return bytes < 1024 ? bytes + ' B' : (bytes / 1024).toFixed(1) + ' KB'; }
       function avg(total, count) { return count === 0 ? '0 B' : fmt(Math.round(total / count)); }
-      el.innerHTML = '';
-      el.appendChild(bw.create({
+      bw.DOM(el, {
         t: 'span', c: [
           { t: 'span', a: { style: 'color:#1a7a6e;font-weight:600' }, c: 'S\u2192C: ' },
           logStats.serverMsgs + ' msgs, ' + fmt(logStats.serverBytes) + ', avg ' + avg(logStats.serverBytes, logStats.serverMsgs) + '/msg',
@@ -424,7 +422,7 @@
           { t: 'span', a: { style: 'color:#c45a2a;font-weight:600' }, c: 'C\u2192S: ' },
           logStats.clientMsgs + ' msgs, ' + fmt(logStats.clientBytes) + ', avg ' + avg(logStats.clientBytes, logStats.clientMsgs) + '/msg'
         ]
-      }));
+      });
     }
 
     function clearLog() {
@@ -432,11 +430,10 @@
       logStats = { serverMsgs: 0, clientMsgs: 0, serverBytes: 0, clientBytes: 0 };
       var logEl = bw.$('#protocol-log')[0];
       if (logEl) {
-        logEl.innerHTML = '';
-        logEl.appendChild(bw.create({
+        bw.DOM(logEl, {
           t: 'div', a: { class: 'log-placeholder', style: 'color:#666;font-size:0.8rem' },
           c: '// Protocol messages will appear here after you click Run...'
-        }));
+        });
       }
       updateLogStats();
     }
@@ -508,38 +505,49 @@
     }
 
     // Fallback: apply protocol messages without bw.apply
-    // (handles the case before bw.apply is available)
+    // (handles the case before bw.apply is available).
+    // Must use bw.DOM / bw.append / bw.remove — not create+appendChild —
+    // so o.mounted fires (v2.1 lifecycle).
     function applyFallback(win, msg) {
       var doc = win.document;
-      if (!doc) return;
+      if (!doc || !win.bw) return;
 
       if (msg.type === 'mount') {
         var target = doc.querySelector(msg.ref);
-        if (target && win.bw) {
-          var el = win.bw.create(msg.taco);
-          target.innerHTML = '';
-          target.appendChild(el);
-        }
+        if (target) win.bw.DOM(target, msg.taco);
       } else if (msg.type === 'patch') {
-        var el2 = doc.getElementById(msg.ref) || doc.querySelector(msg.ref);
-        if (el2) {
-          if (msg.text !== undefined && msg.text !== null) el2.textContent = msg.text;
-          if (msg.attrs) {
-            for (var k in msg.attrs) {
-              if (msg.attrs[k] === null) el2.removeAttribute(k);
-              else el2.setAttribute(k, msg.attrs[k]);
+        // Mirror bw.apply patch discrimination (text / attrs / content)
+        if (typeof win.bw.patch === 'function' && typeof win.bw.el === 'function') {
+          var patchEl = win.bw.el(msg.ref);
+          if (patchEl) {
+            if (msg.text !== undefined) win.bw.patch(patchEl, msg.text);
+            else if (msg.attrs) win.bw.patch(patchEl, msg.attrs);
+            else if (msg.content) win.bw.patch(patchEl, msg.content);
+          }
+        } else {
+          var el2 = doc.getElementById(msg.ref) || doc.querySelector(msg.ref);
+          if (el2) {
+            if (msg.text !== undefined && msg.text !== null) el2.textContent = msg.text;
+            if (msg.attrs) {
+              for (var k in msg.attrs) {
+                if (msg.attrs[k] === null) el2.removeAttribute(k);
+                else el2.setAttribute(k, msg.attrs[k]);
+              }
             }
           }
         }
       } else if (msg.type === 'append') {
         var parent = doc.querySelector(msg.ref);
-        if (parent && win.bw) {
-          var child = win.bw.create(msg.taco);
-          parent.appendChild(child);
-        }
+        if (parent) win.bw.append(parent, msg.taco);
       } else if (msg.type === 'remove') {
-        var toRemove = doc.querySelector(msg.ref);
-        if (toRemove) toRemove.remove();
+        if (typeof win.bw.remove === 'function') win.bw.remove(msg.ref);
+        else {
+          var toRemove = doc.querySelector(msg.ref);
+          if (toRemove) {
+            if (win.bw.unmount) win.bw.unmount(toRemove);
+            toRemove.remove();
+          }
+        }
       } else if (msg.type === 'batch' && msg.ops) {
         msg.ops.forEach(function(op) { applyFallback(win, op); });
       }
@@ -629,10 +637,29 @@
     var actionHandlers = {};
     var currentPreset = 'counter';
 
+    function resolveEditorApi(editorEl) {
+      if (!editorEl) return null;
+      if (editorEl._bwCodeEdit) return editorEl._bwCodeEdit;
+      var inner = editorEl.querySelector('.bw_ce');
+      if (inner && inner._bwCodeEdit) {
+        editorEl._bwCodeEdit = inner._bwCodeEdit;
+        return editorEl._bwCodeEdit;
+      }
+      return null;
+    }
+
     function runCode() {
       var editorEl = bw.$('#sandbox-editor')[0];
-      if (!editorEl || !editorEl._bwCodeEdit) return;
-      var code = editorEl._bwCodeEdit.getValue();
+      var api = resolveEditorApi(editorEl);
+      if (!api) {
+        var statusEl0 = bw.$('#sandbox-status')[0];
+        if (statusEl0) {
+          statusEl0.textContent = 'Error: code editor not ready (mounted hook never fired)';
+          statusEl0.style.color = '#f44336';
+        }
+        return;
+      }
+      var code = api.getValue();
       var iframe = bw.$('#client-frame')[0];
       if (!iframe) return;
 
@@ -701,13 +728,13 @@
       if (!preset) return;
       currentPreset = name;
       var editorEl = bw.$('#sandbox-editor')[0];
-      if (editorEl && editorEl._bwCodeEdit) {
-        editorEl._bwCodeEdit.setValue(preset.code);
-      }
-      // Update active state on preset buttons
+      var api = resolveEditorApi(editorEl);
+      if (api) api.setValue(preset.code);
+      // Update active state on preset buttons (BCCL classes, not legacy bw_btn_*)
       bw.$('.preset-btn').forEach(function(btn) {
-        btn.classList.toggle('bw_btn_primary', btn.getAttribute('data-preset') === name);
-        btn.classList.toggle('bw_btn_outline_secondary', btn.getAttribute('data-preset') !== name);
+        var active = btn.getAttribute('data-preset') === name;
+        btn.className = 'preset-btn bw_bccl_btn bw_bccl_btn_sm ' +
+          (active ? 'bw_primary' : 'bw_bccl_btn_outline bw_secondary');
       });
       // Clear protocol log immediately so stale entries don't linger
       // while the iframe reinitializes
@@ -724,16 +751,16 @@
 
     var presetButtons = Object.keys(PRESETS).map(function(key) {
       var p = PRESETS[key];
-      return {
-        t: 'button',
-        a: {
-          class: 'preset-btn bw_btn bw_btn_sm ' + (key === 'counter' ? 'bw_btn_primary' : 'bw_btn_outline_secondary'),
-          title: p.desc,
-          'data-preset': key,
-          onclick: function() { loadPreset(key); }
-        },
-        c: p.label
-      };
+      var btn = bw.makeButton({
+        text: p.label,
+        variant: key === 'counter' ? 'primary' : 'outline_secondary',
+        size: 'sm',
+        className: 'preset-btn',
+        onclick: function() { loadPreset(key); }
+      });
+      btn.a.title = p.desc;
+      btn.a['data-preset'] = key;
+      return btn;
     });
 
     // Page header — same pattern as all other pages
@@ -781,19 +808,18 @@
                           t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#e0f2f1;border-bottom:1px solid #d8d8d8' }, c: [
                             { t: 'span', a: { style: 'font-weight:600;font-size:0.85rem;color:#004d4d' }, c: 'Server Code' },
                             { t: 'div', a: { style: 'display:flex;gap:4px' }, c: [
-                              {
-                                t: 'button',
-                                a: { class: 'bw_btn bw_btn_sm bw_btn_primary', onclick: function() { runCode(); } },
-                                c: '\u25B6 Run'
-                              },
-                              {
-                                t: 'button',
-                                a: {
-                                  class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
-                                  onclick: function() { loadPreset(currentPreset); }
-                                },
-                                c: 'Reset'
-                              }
+                              bw.makeButton({
+                                text: '\u25B6 Run',
+                                variant: 'primary',
+                                size: 'sm',
+                                onclick: function() { runCode(); }
+                              }),
+                              bw.makeButton({
+                                text: 'Reset',
+                                variant: 'outline_secondary',
+                                size: 'sm',
+                                onclick: function() { loadPreset(currentPreset); }
+                              })
                             ]}
                           ]
                         },
@@ -802,25 +828,21 @@
                           c: 'Loading editor...',
                           o: {
                             mounted: function(el) {
-                              var editor = bw.codeEditor({
+                              // Must use bw.DOM / bw.mount (not create+appendChild):
+                              // since v2.1.0, bw.create() hydrates but does not fire
+                              // o.mounted — and codeEditor attaches _bwCodeEdit only
+                              // inside its mounted hook (via mountTree).
+                              bw.DOM(el, bw.codeEditor({
                                 code: PRESETS.counter.code,
                                 lang: 'js',
                                 lineNumbers: true,
                                 height: '100%',
                                 onChange: function() {}
-                              });
-                              var dom = bw.create(editor);
-                              el.innerHTML = '';
-                              el.appendChild(dom);
-                              // The inner .bw_ce mounted hook sets _bwCodeEdit via rAF.
-                              // Poll until it's available (typically 1-2 frames).
-                              var editorPoll = setInterval(function() {
-                                var inner = el.querySelector('.bw_ce');
-                                if (inner && inner._bwCodeEdit) {
-                                  clearInterval(editorPoll);
-                                  el._bwCodeEdit = inner._bwCodeEdit;
-                                }
-                              }, 50);
+                              }));
+                              var inner = el.querySelector('.bw_ce');
+                              if (inner && inner._bwCodeEdit) {
+                                el._bwCodeEdit = inner._bwCodeEdit;
+                              }
                             }
                           }
                         }
@@ -864,14 +886,18 @@
                   t: 'div', a: { style: 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:0.8rem' }, c: [
                     { t: 'span', a: { id: 'log-stats', style: 'color:#666' }, c: 'No messages yet' },
                     { t: 'div', a: { style: 'display:flex;gap:4px' }, c: [
-                      { t: 'button', a: {
-                        class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
+                      bw.makeButton({
+                        text: 'Clear',
+                        variant: 'outline_secondary',
+                        size: 'sm',
                         onclick: function() { clearLog(); }
-                      }, c: 'Clear' },
-                      { t: 'button', a: {
-                        class: 'bw_btn bw_btn_sm bw_btn_outline_secondary',
+                      }),
+                      bw.makeButton({
+                        text: 'Export JSONL',
+                        variant: 'outline_secondary',
+                        size: 'sm',
                         onclick: function() { exportLogAsJSONL(); }
-                      }, c: 'Export JSONL' }
+                      })
                     ]}
                   ]
                 },

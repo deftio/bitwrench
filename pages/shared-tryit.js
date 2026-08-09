@@ -12,6 +12,10 @@
    * @param {string} opts.code - Initial code to display
    * @param {string} [opts.height] - Height of textarea (default '180px')
    * @param {string} [opts.label] - Label above editor (default 'Edit & Run')
+   * @param {string} [opts.outputId] - id for the output panel, so demo code can
+   *   target it by selector (e.g. bw.DOM('#demo', ...)) instead of using `target`
+   * @param {boolean} [opts.lineNumbers] - show the editor's line-number gutter
+   * @param {string} [opts.className] - extra class on the container, for page-level styling
    * @returns {Object} TACO object
    */
   function makeTryIt(opts) {
@@ -21,11 +25,14 @@
     var label = opts.label || 'Edit & Run';
     var lang = opts.lang || 'js';
 
+    var outputAttrs = { class: 'tryit-output' };
+    if (opts.outputId) outputAttrs.id = opts.outputId;
+
     // Use syntax-highlighted editor if bw.codeEditor is available, else fallback to textarea
     var useCE = typeof bw.codeEditor === 'function';
 
     var editorTACO = useCE
-      ? bw.codeEditor({ code: code, lang: lang, height: height })
+      ? bw.codeEditor({ code: code, lang: lang, height: height, lineNumbers: !!opts.lineNumbers })
       : {
           t: 'textarea',
           a: {
@@ -38,7 +45,7 @@
 
     return {
       t: 'div',
-      a: { class: 'tryit-container', id: id },
+      a: { class: 'tryit-container' + (opts.className ? ' ' + opts.className : ''), id: id },
       o: {
         mounted: function(el) {
           var output = el.querySelector('.tryit-output');
@@ -51,6 +58,13 @@
 
           function getCode() {
             if (ceEl && ceEl._bwCodeEdit) return ceEl._bwCodeEdit.getValue();
+            if (ceEl) {
+              // The auto-run below fires from this container's mounted hook, which
+              // runs before the nested editor's own mounted hook attaches
+              // _bwCodeEdit. The highlighted source is already in the DOM by then.
+              var codeEl = ceEl.querySelector('.bw_ce_code');
+              if (codeEl) return codeEl.textContent || '';
+            }
             if (textarea) return textarea.value;
             return '';
           }
@@ -99,7 +113,7 @@
               a: { class: 'tryit-output-col' },
               c: [
                 { t: 'div', a: { class: 'tryit-label tryit-label-result' }, c: 'Result' },
-                { t: 'div', a: { class: 'tryit-output' }, c: '' }
+                { t: 'div', a: outputAttrs, c: '' }
               ]
             }
           ]

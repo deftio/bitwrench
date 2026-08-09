@@ -52,15 +52,15 @@
   //   - Coffee filter uses inline onclick + manual re-render
   //   - Contact form uses o.state + o.render with status display
   //   - Counter uses o.state + o.render with closures for methods
-  //   - Toast notification system uses bw.create() for append pattern
+  //   - Toast notification system uses bw.append() (mountTree)
   //   - Theme: bw.loadStyles({ primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' })
   //
   // Key Patterns to Study:
   //   1. Pub/sub cart: cartAdd() -> bw.pub('cart:updated') -> bw.sub()
   //   2. o.state + o.render: el._bw_state access + bw.refresh(el)
   //   3. Filter pattern: renderCoffeeSection() re-renders on filter change
-  //   4. Toast append: bw.create() + DOM insertion for transient UI
-  //   5. Theme tokens: All colors derived from 3 seed hex values
+  //   4. Toast append: bw.append() for transient UI
+  //   5. Theme tokens: page CSS from styles.palette (seeds only in loadStyles)
   //
   // No build step. No framework. Just bitwrench.
   // =====================================================================
@@ -68,188 +68,201 @@
   (function() {
     'use strict';
 
-    bw.loadStyles({ primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' });
+    var styles = bw.loadStyles({ primary: '#8B4513', secondary: '#D2691E', tertiary: '#2F4F2F' });
+    var p = styles.palette;
+    var ink = p.dark.base;
+    var muted = p.secondary.hover;
+    var cream = p.background;
+    var paper = p.surface;
+    var warm = p.primary.light;
+    var onDark = p.primary.textOn;
+    var gradPri = 'linear-gradient(135deg,' + p.primary.base + ',' + p.secondary.base + ')';
+    var gradPriAlt = 'linear-gradient(135deg,' + p.primary.base + ',' + p.primary.hover + ')';
+    var gradSec = 'linear-gradient(135deg,' + p.secondary.base + ',' + p.primary.base + ')';
+    var gradHero = 'linear-gradient(135deg,' + p.primary.active + ' 0%,' + p.dark.active + ' 45%,' + p.primary.hover + ' 100%)';
+    var gradAccent = 'linear-gradient(135deg,' + p.secondary.base + ',' + p.warning.base + ')';
 
-    // ─── CSS ──────────────────────────────────────────────────────────────────
+    // ─── CSS from palette tokens (seed hex only in loadStyles above) ─────────
     bw.injectCSS(bw.css({
-      'body': { fontFamily: "'Inter', sans-serif", color: '#2d2017', background: '#faf8f5', overflowX: 'hidden' },
+      'body': { fontFamily: "'Inter', sans-serif", color: ink, background: cream, overflowX: 'hidden' },
       'h1,h2,h3,h4': { fontFamily: "'Playfair Display', serif" },
       // Navbar
-      '.eo-nav': { position: 'fixed', top: '0', left: '0', right: '0', zIndex: '1000', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.75rem 2rem', background: 'rgba(250,248,245,.96)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(139,69,19,.1)', transition: 'box-shadow .3s' },
-      '.eo-nav.scrolled': { boxShadow: '0 2px 20px rgba(139,69,19,.1)' },
-      '.eo-brand': { display: 'flex', alignItems: 'center', gap: '.75rem', textDecoration: 'none', color: '#2d2017' },
-      '.eo-brand-icon': { width: '40px', height: '40px', background: 'linear-gradient(135deg,#8B4513,#D2691E)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: '#fff' },
+      '.eo-nav': { position: 'fixed', top: '0', left: '0', right: '0', zIndex: '1000', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.75rem 2rem', background: cream, backdropFilter: 'blur(14px)', borderBottom: '1px solid ' + p.primary.border, transition: 'box-shadow .3s', opacity: '0.98' },
+      '.eo-nav.scrolled': { boxShadow: '0 2px 20px ' + p.primary.focus },
+      '.eo-brand': { display: 'flex', alignItems: 'center', gap: '.75rem', textDecoration: 'none', color: ink },
+      '.eo-brand-icon': { width: '40px', height: '40px', background: gradPri, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: onDark },
       '.eo-brand-name': { fontFamily: "'Playfair Display', serif", fontSize: '1.35rem', fontWeight: '700' },
       '.eo-nav-links': { display: 'flex', alignItems: 'center', gap: '2rem', listStyle: 'none', margin: '0', padding: '0' },
-      '.eo-nav-links a': { textDecoration: 'none', color: '#6b5443', fontWeight: '500', fontSize: '.88rem', letterSpacing: '.04em', textTransform: 'uppercase', transition: 'color .2s' },
-      '.eo-nav-links a:hover': { color: '#8B4513' },
-      '.eo-cart-btn': { display: 'flex', alignItems: 'center', gap: '.5rem', background: 'linear-gradient(135deg,#8B4513,#A0522D)', color: '#fff', border: 'none', borderRadius: '8px', padding: '.45rem 1.1rem', fontWeight: '600', fontSize: '.85rem', cursor: 'pointer', transition: 'transform .2s, box-shadow .2s' },
-      '.eo-cart-btn:hover': { transform: 'translateY(-1px)', boxShadow: '0 4px 14px rgba(139,69,19,.35)' },
-      '.eo-cart-badge': { background: '#D2691E', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.75rem', fontWeight: '700' },
+      '.eo-nav-links a': { textDecoration: 'none', color: muted, fontWeight: '500', fontSize: '.88rem', letterSpacing: '.04em', textTransform: 'uppercase', transition: 'color .2s' },
+      '.eo-nav-links a:hover': { color: p.primary.base },
+      '.eo-cart-btn': { display: 'flex', alignItems: 'center', gap: '.5rem', background: gradPriAlt, color: onDark, border: 'none', borderRadius: '8px', padding: '.45rem 1.1rem', fontWeight: '600', fontSize: '.85rem', cursor: 'pointer', transition: 'transform .2s, box-shadow .2s' },
+      '.eo-cart-btn:hover': { transform: 'translateY(-1px)', boxShadow: '0 4px 14px ' + p.primary.focus },
+      '.eo-cart-badge': { background: p.secondary.base, color: onDark, borderRadius: '50%', width: '20px', height: '20px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.75rem', fontWeight: '700' },
       // Hero
-      '.eo-hero': { minHeight: '100vh', background: 'linear-gradient(135deg,#1a0f08 0%,#2d1810 45%,#3d2214 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8rem 2rem 5rem', position: 'relative', overflow: 'hidden' },
-      '.eo-hero::before': { content: '""', position: 'absolute', inset: '0', background: 'radial-gradient(circle at 30% 50%,rgba(139,69,19,.15) 0%,transparent 60%),radial-gradient(circle at 70% 30%,rgba(210,105,30,.1) 0%,transparent 50%)', pointerEvents: 'none' },
+      '.eo-hero': { minHeight: '100vh', background: gradHero, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8rem 2rem 5rem', position: 'relative', overflow: 'hidden' },
+      '.eo-hero::before': { content: '""', position: 'absolute', inset: '0', background: 'radial-gradient(circle at 30% 50%,' + p.primary.focus + ' 0%,transparent 60%),radial-gradient(circle at 70% 30%,' + p.secondary.focus + ' 0%,transparent 50%)', pointerEvents: 'none' },
       '.eo-hero-inner': { maxWidth: '820px', textAlign: 'center', position: 'relative', zIndex: '1' },
-      '.eo-hero-pill': { display: 'inline-block', padding: '.4rem 1.2rem', background: 'rgba(210,105,30,.14)', border: '1px solid rgba(210,105,30,.28)', borderRadius: '50px', color: '#D2691E', fontWeight: '600', fontSize: '.78rem', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '2rem' },
-      '.eo-hero-title': { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2.4rem,6vw,4.5rem)', fontWeight: '800', color: '#faf8f5', lineHeight: '1.1', marginBottom: '1.5rem' },
-      '.eo-hero-title span': { background: 'linear-gradient(135deg,#D2691E,#DAA520)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' },
-      '.eo-hero-sub': { fontSize: 'clamp(.95rem,2vw,1.25rem)', color: 'rgba(250,248,245,.68)', maxWidth: '600px', margin: '0 auto 2.5rem', lineHeight: '1.75', fontWeight: '300' },
+      '.eo-hero-pill': { display: 'inline-block', padding: '.4rem 1.2rem', background: p.secondary.focus, border: '1px solid ' + p.secondary.border, borderRadius: '50px', color: p.secondary.base, fontWeight: '600', fontSize: '.78rem', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '2rem' },
+      '.eo-hero-title': { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(2.4rem,6vw,4.5rem)', fontWeight: '800', color: cream, lineHeight: '1.1', marginBottom: '1.5rem' },
+      '.eo-hero-title span': { background: gradAccent, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' },
+      '.eo-hero-sub': { fontSize: 'clamp(.95rem,2vw,1.25rem)', color: p.light.border, maxWidth: '600px', margin: '0 auto 2.5rem', lineHeight: '1.75', fontWeight: '300' },
       '.eo-hero-actions': { display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' },
-      '.eo-btn-p': { background: 'linear-gradient(135deg,#D2691E,#8B4513)', color: '#fff', padding: '1rem 2.5rem', borderRadius: '12px', border: 'none', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all .3s', textDecoration: 'none', display: 'inline-block' },
-      '.eo-btn-p:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 25px rgba(210,105,30,.4)' },
-      '.eo-btn-s': { background: 'rgba(250,248,245,.08)', color: '#faf8f5', padding: '1rem 2.5rem', borderRadius: '12px', border: '1px solid rgba(250,248,245,.2)', fontWeight: '500', fontSize: '1rem', cursor: 'pointer', transition: 'all .3s', textDecoration: 'none', display: 'inline-block' },
-      '.eo-btn-s:hover': { background: 'rgba(250,248,245,.14)' },
-      '.eo-hero-stats': { display: 'flex', justifyContent: 'center', gap: '3rem', marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid rgba(250,248,245,.1)', flexWrap: 'wrap' },
-      '.eo-stat-num': { display: 'block', fontFamily: "'Playfair Display', serif", fontSize: '2.5rem', fontWeight: '700', color: '#D2691E' },
-      '.eo-stat-lbl': { fontSize: '.82rem', color: 'rgba(250,248,245,.5)', textTransform: 'uppercase', letterSpacing: '.09em', marginTop: '.25rem' },
+      '.eo-btn-p': { background: gradSec, color: onDark, padding: '1rem 2.5rem', borderRadius: '12px', border: 'none', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all .3s', textDecoration: 'none', display: 'inline-block' },
+      '.eo-btn-p:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 25px ' + p.secondary.focus },
+      '.eo-btn-s': { background: p.dark.focus, color: cream, padding: '1rem 2.5rem', borderRadius: '12px', border: '1px solid ' + p.dark.border, fontWeight: '500', fontSize: '1rem', cursor: 'pointer', transition: 'all .3s', textDecoration: 'none', display: 'inline-block' },
+      '.eo-btn-s:hover': { background: p.primary.focus },
+      '.eo-hero-stats': { display: 'flex', justifyContent: 'center', gap: '3rem', marginTop: '4rem', paddingTop: '3rem', borderTop: '1px solid ' + p.dark.border, flexWrap: 'wrap' },
+      '.eo-stat-num': { display: 'block', fontFamily: "'Playfair Display', serif", fontSize: '2.5rem', fontWeight: '700', color: p.secondary.base },
+      '.eo-stat-lbl': { fontSize: '.82rem', color: p.light.border, textTransform: 'uppercase', letterSpacing: '.09em', marginTop: '.25rem' },
       // Sections
       '.eo-section': { padding: 'clamp(3rem,8vw,6rem) 2rem', maxWidth: '1200px', margin: '0 auto' },
-      '.eo-dark': { background: '#1a0f08', padding: 'clamp(3rem,8vw,6rem) 2rem' },
-      '.eo-warm': { background: '#f5ede4', padding: 'clamp(3rem,8vw,6rem) 2rem' },
+      '.eo-dark': { background: p.primary.active, padding: 'clamp(3rem,8vw,6rem) 2rem' },
+      '.eo-warm': { background: warm, padding: 'clamp(3rem,8vw,6rem) 2rem' },
       '.eo-inner': { maxWidth: '1200px', margin: '0 auto' },
       '.eo-sec-hd': { textAlign: 'center', marginBottom: '3.5rem' },
-      '.eo-label': { display: 'inline-block', color: '#D2691E', fontWeight: '600', fontSize: '.78rem', letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '.65rem' },
-      '.eo-h2': { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.75rem,4vw,2.75rem)', fontWeight: '700', color: '#2d2017', marginBottom: '.65rem' },
-      '.eo-h2-light': { color: '#faf8f5 !important' },
-      '.eo-sub': { color: '#8b7355', fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto', lineHeight: '1.65' },
-      '.eo-sub-light': { color: 'rgba(250,248,245,.52) !important' },
+      '.eo-label': { display: 'inline-block', color: p.secondary.base, fontWeight: '600', fontSize: '.78rem', letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '.65rem' },
+      '.eo-h2': { fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.75rem,4vw,2.75rem)', fontWeight: '700', color: ink, marginBottom: '.65rem' },
+      '.eo-h2-light': { color: cream + ' !important' },
+      '.eo-sub': { color: muted, fontSize: '1.05rem', maxWidth: '600px', margin: '0 auto', lineHeight: '1.65' },
+      '.eo-sub-light': { color: p.light.border + ' !important' },
       // Filter bar
       '.eo-filter-bar': { display: 'flex', gap: '.6rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '2rem' },
-      '.eo-fb': { padding: '.38rem 1rem', borderRadius: '50px', border: '1.5px solid rgba(139,69,19,.2)', background: 'transparent', color: '#8b7355', fontWeight: '500', fontSize: '.85rem', cursor: 'pointer', transition: 'all .2s' },
-      '.eo-fb:hover': { borderColor: '#8B4513', color: '#8B4513' },
-      '.eo-fb.active': { background: '#8B4513', color: '#fff', borderColor: '#8B4513' },
+      '.eo-fb': { padding: '.38rem 1rem', borderRadius: '50px', border: '1.5px solid ' + p.primary.border, background: 'transparent', color: muted, fontWeight: '500', fontSize: '.85rem', cursor: 'pointer', transition: 'all .2s' },
+      '.eo-fb:hover': { borderColor: p.primary.base, color: p.primary.base },
+      '.eo-fb.active': { background: p.primary.base, color: onDark, borderColor: p.primary.base },
       // Coffee cards
       '.eo-grid': { display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: '1.5rem' },
-      '.eo-card': { background: '#fff', borderRadius: '16px', border: '1px solid rgba(139,69,19,.08)', overflow: 'hidden', transition: 'all .3s' },
-      '.eo-card:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 40px rgba(139,69,19,.13)' },
+      '.eo-card': { background: paper, borderRadius: '16px', border: '1px solid ' + p.primary.border, overflow: 'hidden', transition: 'all .3s' },
+      '.eo-card:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 40px ' + p.primary.focus },
       '.eo-card-img': { height: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3.5rem' },
       '.eo-card-body': { padding: '1.4rem' },
-      '.eo-origin': { fontSize: '.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '.12em', color: '#D2691E', marginBottom: '.3rem' },
-      '.eo-cname': { fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', fontWeight: '700', marginBottom: '.4rem', color: '#2d2017', display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' },
+      '.eo-origin': { fontSize: '.72rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '.12em', color: p.secondary.base, marginBottom: '.3rem' },
+      '.eo-cname': { fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', fontWeight: '700', marginBottom: '.4rem', color: ink, display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' },
       '.eo-tags': { display: 'flex', gap: '.35rem', flexWrap: 'wrap', marginBottom: '.9rem' },
-      '.eo-tag': { fontSize: '.7rem', padding: '.18rem .55rem', borderRadius: '50px', background: 'rgba(139,69,19,.07)', color: '#8B4513', fontWeight: '500' },
-      '.eo-desc': { color: '#8b7355', fontSize: '.88rem', lineHeight: '1.55', marginBottom: '1rem' },
+      '.eo-tag': { fontSize: '.7rem', padding: '.18rem .55rem', borderRadius: '50px', background: p.primary.light, color: p.primary.base, fontWeight: '500' },
+      '.eo-desc': { color: muted, fontSize: '.88rem', lineHeight: '1.55', marginBottom: '1rem' },
       '.eo-foot': { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-      '.eo-price': { fontFamily: "'Playfair Display', serif", fontSize: '1.35rem', fontWeight: '700', color: '#8B4513' },
-      '.eo-add': { background: 'linear-gradient(135deg,#8B4513,#A0522D)', color: '#fff', border: 'none', borderRadius: '8px', padding: '.45rem 1.15rem', fontWeight: '600', fontSize: '.83rem', cursor: 'pointer', transition: 'all .2s' },
-      '.eo-add:hover': { transform: 'scale(1.04)', boxShadow: '0 4px 12px rgba(139,69,19,.3)' },
-      '.eo-noresult': { textAlign: 'center', color: '#8b7355', padding: '3rem 0', fontSize: '1rem', gridColumn: '1/-1' },
+      '.eo-price': { fontFamily: "'Playfair Display', serif", fontSize: '1.35rem', fontWeight: '700', color: p.primary.base },
+      '.eo-add': { background: gradPriAlt, color: onDark, border: 'none', borderRadius: '8px', padding: '.45rem 1.15rem', fontWeight: '600', fontSize: '.83rem', cursor: 'pointer', transition: 'all .2s' },
+      '.eo-add:hover': { transform: 'scale(1.04)', boxShadow: '0 4px 12px ' + p.primary.focus },
+      '.eo-noresult': { textAlign: 'center', color: muted, padding: '3rem 0', fontSize: '1rem', gridColumn: '1/-1' },
       // Steps
       '.eo-steps': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '2rem' },
       '.eo-step': { textAlign: 'center', padding: '1.5rem 1rem' },
-      '.eo-step-n': { width: '56px', height: '56px', background: 'linear-gradient(135deg,#8B4513,#D2691E)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: '#fff', fontFamily: "'Playfair Display', serif", fontWeight: '700', margin: '0 auto 1rem' },
-      '.eo-step-t': { fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: '700', marginBottom: '.4rem', color: '#2d2017' },
-      '.eo-step-d': { color: '#8b7355', fontSize: '.88rem', lineHeight: '1.55' },
+      '.eo-step-n': { width: '56px', height: '56px', background: gradPri, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', color: onDark, fontFamily: "'Playfair Display', serif", fontWeight: '700', margin: '0 auto 1rem' },
+      '.eo-step-t': { fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: '700', marginBottom: '.4rem', color: ink },
+      '.eo-step-d': { color: muted, fontSize: '.88rem', lineHeight: '1.55' },
       // Team
       '.eo-team': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.5rem', maxWidth: '900px', margin: '0 auto' },
-      '.eo-tcard': { background: '#fff', borderRadius: '16px', padding: '2rem 1.5rem', textAlign: 'center', border: '1px solid rgba(139,69,19,.08)' },
-      '.eo-tav': { width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: '#fff', fontWeight: '700', margin: '0 auto 1rem' },
-      '.eo-tname': { fontFamily: "'Playfair Display', serif", fontSize: '1.1rem', fontWeight: '700', marginBottom: '.25rem', color: '#2d2017' },
-      '.eo-trole': { color: '#D2691E', fontSize: '.82rem', fontWeight: '600', marginBottom: '.5rem' },
-      '.eo-tbio':  { color: '#8b7355', fontSize: '.85rem', lineHeight: '1.55' },
+      '.eo-tcard': { background: paper, borderRadius: '16px', padding: '2rem 1.5rem', textAlign: 'center', border: '1px solid ' + p.primary.border },
+      '.eo-tav': { width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.75rem', color: onDark, fontWeight: '700', margin: '0 auto 1rem' },
+      '.eo-tname': { fontFamily: "'Playfair Display', serif", fontSize: '1.1rem', fontWeight: '700', marginBottom: '.25rem', color: ink },
+      '.eo-trole': { color: p.secondary.base, fontSize: '.82rem', fontWeight: '600', marginBottom: '.5rem' },
+      '.eo-tbio':  { color: muted, fontSize: '.85rem', lineHeight: '1.55' },
       // Testimonials
       '.eo-testgrid': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '1.5rem' },
-      '.eo-test': { background: 'rgba(250,248,245,.06)', border: '1px solid rgba(250,248,245,.09)', borderRadius: '16px', padding: '2rem' },
-      '.eo-test-stars': { color: '#DAA520', fontSize: '1.1rem', marginBottom: '1rem' },
-      '.eo-test-text': { color: 'rgba(250,248,245,.8)', fontSize: '.98rem', lineHeight: '1.7', fontStyle: 'italic', marginBottom: '1.5rem' },
+      '.eo-test': { background: p.dark.focus, border: '1px solid ' + p.dark.border, borderRadius: '16px', padding: '2rem' },
+      '.eo-test-stars': { color: p.warning.base, fontSize: '1.1rem', marginBottom: '1rem' },
+      '.eo-test-text': { color: p.light.border, fontSize: '.98rem', lineHeight: '1.7', fontStyle: 'italic', marginBottom: '1.5rem' },
       '.eo-test-auth': { display: 'flex', alignItems: 'center', gap: '.7rem' },
-      '.eo-test-av': { width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: '#fff', fontWeight: '600' },
-      '.eo-test-name': { color: '#faf8f5', fontWeight: '600', fontSize: '.88rem' },
-      '.eo-test-loc':  { color: 'rgba(250,248,245,.42)', fontSize: '.78rem' },
+      '.eo-test-av': { width: '42px', height: '42px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: onDark, fontWeight: '600' },
+      '.eo-test-name': { color: cream, fontWeight: '600', fontSize: '.88rem' },
+      '.eo-test-loc':  { color: p.dark.border, fontSize: '.78rem' },
       // Stats + charts
       '.eo-stat-row': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '1.5rem', marginBottom: '2.5rem' },
       '.eo-chart-row': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(350px,1fr))', gap: '2rem' },
-      '.eo-box': { background: '#fff', borderRadius: '16px', padding: '2rem', border: '1px solid rgba(139,69,19,.08)' },
-      '.eo-box-title': { fontFamily: "'Playfair Display', serif", fontSize: '1.05rem', fontWeight: '700', marginBottom: '1.25rem', color: '#2d2017' },
+      '.eo-box': { background: paper, borderRadius: '16px', padding: '2rem', border: '1px solid ' + p.primary.border },
+      '.eo-box-title': { fontFamily: "'Playfair Display', serif", fontSize: '1.05rem', fontWeight: '700', marginBottom: '1.25rem', color: ink },
       // Contact
       '.eo-cgrid': { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '3rem', alignItems: 'start' },
-      '.eo-cinfo h3': { fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: '#2d2017' },
-      '.eo-cinfo p': { color: '#8b7355', lineHeight: '1.7', marginBottom: '1.5rem' },
-      '.eo-crow': { display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem', color: '#6b5443' },
-      '.eo-cicon': { width: '40px', height: '40px', flexShrink: '0', background: 'rgba(139,69,19,.08)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' },
+      '.eo-cinfo h3': { fontFamily: "'Playfair Display', serif", fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: ink },
+      '.eo-cinfo p': { color: muted, lineHeight: '1.7', marginBottom: '1.5rem' },
+      '.eo-crow': { display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '1rem', color: muted },
+      '.eo-cicon': { width: '40px', height: '40px', flexShrink: '0', background: p.primary.light, borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' },
       // Cart panel
-      '.eo-cart-panel': { position: 'fixed', top: '0', right: '0', bottom: '0', zIndex: '2000', width: '360px', background: '#faf8f5', boxShadow: '-4px 0 30px rgba(0,0,0,.12)', transform: 'translateX(100%)', transition: 'transform .35s cubic-bezier(.4,0,.2,1)', display: 'flex', flexDirection: 'column' },
+      '.eo-cart-panel': { position: 'fixed', top: '0', right: '0', bottom: '0', zIndex: '2000', width: '360px', background: cream, boxShadow: '-4px 0 30px rgba(0,0,0,.12)', transform: 'translateX(100%)', transition: 'transform .35s cubic-bezier(.4,0,.2,1)', display: 'flex', flexDirection: 'column' },
       '.eo-cart-panel.open': { transform: 'translateX(0)' },
-      '.eo-cart-hdr': { padding: '1.5rem', borderBottom: '1px solid rgba(139,69,19,.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
-      '.eo-cart-hdr h3': { fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', fontWeight: '700', color: '#2d2017', margin: '0' },
-      '.eo-cart-x': { background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#8b7355', lineHeight: '1' },
+      '.eo-cart-hdr': { padding: '1.5rem', borderBottom: '1px solid ' + p.primary.border, display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+      '.eo-cart-hdr h3': { fontFamily: "'Playfair Display', serif", fontSize: '1.2rem', fontWeight: '700', color: ink, margin: '0' },
+      '.eo-cart-x': { background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: muted, lineHeight: '1' },
       '.eo-cart-body': { flex: '1', overflowY: 'auto', padding: '1.5rem' },
-      '.eo-cart-row': { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '.75rem 0', borderBottom: '1px solid rgba(139,69,19,.07)' },
-      '.eo-cart-rname': { fontWeight: '600', fontSize: '.9rem', color: '#2d2017' },
-      '.eo-cart-rprice': { color: '#8B4513', fontWeight: '700', fontSize: '.9rem' },
-      '.eo-cart-rm': { background: 'none', border: 'none', color: '#c0a898', cursor: 'pointer', fontSize: '1.1rem', marginLeft: '.5rem' },
-      '.eo-cart-ftr': { padding: '1.5rem', borderTop: '1px solid rgba(139,69,19,.1)' },
-      '.eo-cart-total': { display: 'flex', justifyContent: 'space-between', fontFamily: "'Playfair Display', serif", fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: '#2d2017' },
-      '.eo-checkout': { width: '100%', padding: '1rem', background: 'linear-gradient(135deg,#8B4513,#D2691E)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all .2s' },
+      '.eo-cart-row': { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '.75rem 0', borderBottom: '1px solid ' + p.primary.border },
+      '.eo-cart-rname': { fontWeight: '600', fontSize: '.9rem', color: ink },
+      '.eo-cart-rprice': { color: p.primary.base, fontWeight: '700', fontSize: '.9rem' },
+      '.eo-cart-rm': { background: 'none', border: 'none', color: p.primary.border, cursor: 'pointer', fontSize: '1.1rem', marginLeft: '.5rem' },
+      '.eo-cart-ftr': { padding: '1.5rem', borderTop: '1px solid ' + p.primary.border },
+      '.eo-cart-total': { display: 'flex', justifyContent: 'space-between', fontFamily: "'Playfair Display', serif", fontSize: '1.1rem', fontWeight: '700', marginBottom: '1rem', color: ink },
+      '.eo-checkout': { width: '100%', padding: '1rem', background: gradPri, color: onDark, border: 'none', borderRadius: '10px', fontWeight: '600', fontSize: '1rem', cursor: 'pointer', transition: 'all .2s' },
       '.eo-checkout:hover': { transform: 'translateY(-1px)' },
-      '.eo-cart-empty': { textAlign: 'center', padding: '3rem 0', color: '#8b7355', fontSize: '.95rem' },
+      '.eo-cart-empty': { textAlign: 'center', padding: '3rem 0', color: muted, fontSize: '.95rem' },
       '.eo-bdrop': { position: 'fixed', inset: '0', background: 'rgba(0,0,0,.4)', zIndex: '1999', opacity: '0', pointerEvents: 'none', transition: 'opacity .3s' },
       '.eo-bdrop.open': { opacity: '1', pointerEvents: 'all' },
       // Newsletter
       '.eo-nl-row': { display: 'flex', gap: '.75rem', maxWidth: '450px', margin: '0 auto' },
-      '.eo-nl-in': { flex: '1', padding: '.85rem 1.25rem', borderRadius: '10px', border: '1px solid rgba(250,248,245,.15)', background: 'rgba(250,248,245,.07)', color: '#faf8f5', fontSize: '.94rem', outline: 'none' },
-      '.eo-nl-in::placeholder': { color: 'rgba(250,248,245,.4)' },
-      '.eo-nl-btn': { padding: '.85rem 1.75rem', borderRadius: '10px', background: 'linear-gradient(135deg,#D2691E,#8B4513)', color: '#fff', border: 'none', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '.94rem', transition: 'all .2s' },
+      '.eo-nl-in': { flex: '1', padding: '.85rem 1.25rem', borderRadius: '10px', border: '1px solid ' + p.dark.border, background: p.dark.focus, color: cream, fontSize: '.94rem', outline: 'none' },
+      '.eo-nl-in::placeholder': { color: p.dark.border },
+      '.eo-nl-btn': { padding: '.85rem 1.75rem', borderRadius: '10px', background: gradSec, color: onDark, border: 'none', fontWeight: '600', cursor: 'pointer', whiteSpace: 'nowrap', fontSize: '.94rem', transition: 'all .2s' },
       '.eo-nl-btn:hover': { transform: 'translateY(-1px)' },
       // Demo
       '.eo-demo-grid': { display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: '2rem' },
-      '.eo-demo-ttl': { fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: '700', marginBottom: '1.25rem', color: '#2d2017', borderBottom: '2px solid rgba(139,69,19,.1)', paddingBottom: '.5rem' },
-      '.eo-ctr-disp': { fontFamily: "'Playfair Display', serif", fontSize: '3rem', fontWeight: '700', color: '#8B4513', minWidth: '80px', textAlign: 'center', lineHeight: '1', padding: '.5rem 1.25rem', background: 'rgba(139,69,19,.05)', borderRadius: '12px' },
-      '.eo-ctr-lbl': { fontSize: '.78rem', color: '#8b7355', textTransform: 'uppercase', letterSpacing: '.08em' },
+      '.eo-demo-ttl': { fontFamily: "'Playfair Display', serif", fontSize: '1rem', fontWeight: '700', marginBottom: '1.25rem', color: ink, borderBottom: '2px solid ' + p.primary.border, paddingBottom: '.5rem' },
+      '.eo-ctr-disp': { fontFamily: "'Playfair Display', serif", fontSize: '3rem', fontWeight: '700', color: p.primary.base, minWidth: '80px', textAlign: 'center', lineHeight: '1', padding: '.5rem 1.25rem', background: p.primary.light, borderRadius: '12px' },
+      '.eo-ctr-lbl': { fontSize: '.78rem', color: muted, textTransform: 'uppercase', letterSpacing: '.08em' },
       '.eo-ctr-btns': { display: 'flex', gap: '.65rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
       // Toast
       '.eo-toasts': { position: 'fixed', top: '5rem', right: '1.5rem', zIndex: '3000', display: 'flex', flexDirection: 'column', gap: '.6rem' },
-      '.eo-toast': { background: '#fff', borderRadius: '12px', padding: '1rem 1.4rem', boxShadow: '0 8px 30px rgba(0,0,0,.1)', display: 'flex', alignItems: 'center', gap: '.7rem', minWidth: '280px', border: '1px solid rgba(139,69,19,.08)', animation: 'eoToastIn .3s ease-out' },
-      '.eo-toast.success': { borderLeft: '4px solid #2F4F2F' },
-      '.eo-toast.info':    { borderLeft: '4px solid #4682B4' },
-      '.eo-toast.warning': { borderLeft: '4px solid #D2691E' },
-      '.eo-toast-t': { fontWeight: '700', fontSize: '.88rem', color: '#2d2017', marginBottom: '.1rem' },
-      '.eo-toast-m': { fontSize: '.82rem', color: '#8b7355' },
+      '.eo-toast': { background: paper, borderRadius: '12px', padding: '1rem 1.4rem', boxShadow: '0 8px 30px rgba(0,0,0,.1)', display: 'flex', alignItems: 'center', gap: '.7rem', minWidth: '280px', border: '1px solid ' + p.primary.border, animation: 'eoToastIn .3s ease-out' },
+      '.eo-toast.success': { borderLeft: '4px solid ' + p.tertiary.base },
+      '.eo-toast.info':    { borderLeft: '4px solid ' + p.info.base },
+      '.eo-toast.warning': { borderLeft: '4px solid ' + p.secondary.base },
+      '.eo-toast-t': { fontWeight: '700', fontSize: '.88rem', color: ink, marginBottom: '.1rem' },
+      '.eo-toast-m': { fontSize: '.82rem', color: muted },
       // Footer
-      '.eo-footer': { background: '#1a0f08', color: 'rgba(250,248,245,.55)', padding: '4rem 2rem 2rem' },
+      '.eo-footer': { background: p.primary.active, color: p.light.border, padding: '4rem 2rem 2rem' },
       '.eo-footer-inner': { maxWidth: '1200px', margin: '0 auto' },
       '.eo-footer-grid': { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '2rem', marginBottom: '3rem' },
-      '.eo-footer-brand': { fontFamily: "'Playfair Display', serif", fontSize: '1.45rem', fontWeight: '700', color: '#faf8f5', marginBottom: '.65rem' },
+      '.eo-footer-brand': { fontFamily: "'Playfair Display', serif", fontSize: '1.45rem', fontWeight: '700', color: cream, marginBottom: '.65rem' },
       '.eo-footer-desc': { fontSize: '.88rem', lineHeight: '1.65', marginBottom: '1rem' },
-      '.eo-footer-hd': { fontWeight: '600', fontSize: '.8rem', textTransform: 'uppercase', letterSpacing: '.12em', color: '#faf8f5', marginBottom: '.9rem' },
+      '.eo-footer-hd': { fontWeight: '600', fontSize: '.8rem', textTransform: 'uppercase', letterSpacing: '.12em', color: cream, marginBottom: '.9rem' },
       '.eo-footer-links': { listStyle: 'none', padding: '0', margin: '0' },
       '.eo-footer-links li': { marginBottom: '.45rem' },
-      '.eo-footer-links a': { color: 'rgba(250,248,245,.48)', textDecoration: 'none', fontSize: '.88rem', transition: 'color .2s' },
-      '.eo-footer-links a:hover': { color: '#D2691E' },
-      '.eo-footer-btm': { borderTop: '1px solid rgba(250,248,245,.08)', paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '.82rem' },
+      '.eo-footer-links a': { color: p.dark.border, textDecoration: 'none', fontSize: '.88rem', transition: 'color .2s' },
+      '.eo-footer-links a:hover': { color: p.secondary.base },
+      '.eo-footer-btm': { borderTop: '1px solid ' + p.dark.border, paddingTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '.82rem' },
       '.eo-social': { display: 'flex', gap: '.75rem' },
-      '.eo-social a': { width: '36px', height: '36px', borderRadius: '8px', background: 'rgba(250,248,245,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(250,248,245,.48)', textDecoration: 'none', fontSize: '1rem', transition: 'all .2s' },
-      '.eo-social a:hover': { background: 'rgba(210,105,30,.2)', color: '#D2691E' },
-      '.eo-scroll-top': { position: 'fixed', bottom: '2rem', right: '2rem', zIndex: '1000', width: '46px', height: '46px', borderRadius: '50%', background: 'linear-gradient(135deg,#8B4513,#D2691E)', color: '#fff', border: 'none', fontSize: '1.2rem', cursor: 'pointer', boxShadow: '0 4px 14px rgba(139,69,19,.3)', transition: 'all .3s', opacity: '0', pointerEvents: 'none' },
+      '.eo-social a': { width: '36px', height: '36px', borderRadius: '8px', background: p.dark.focus, display: 'flex', alignItems: 'center', justifyContent: 'center', color: p.dark.border, textDecoration: 'none', fontSize: '1rem', transition: 'all .2s' },
+      '.eo-social a:hover': { background: p.secondary.focus, color: p.secondary.base },
+      '.eo-scroll-top': { position: 'fixed', bottom: '2rem', right: '2rem', zIndex: '1000', width: '46px', height: '46px', borderRadius: '50%', background: gradPri, color: onDark, border: 'none', fontSize: '1.2rem', cursor: 'pointer', boxShadow: '0 4px 14px ' + p.primary.focus, transition: 'all .3s', opacity: '0', pointerEvents: 'none' },
       '.eo-scroll-top.visible': { opacity: '1', pointerEvents: 'all' },
       '.eo-scroll-top:hover': { transform: 'scale(1.1)' },
       '@keyframes eoToastIn': { from: { transform: 'translateX(100%)', opacity: '0' }, to: { transform: 'translateX(0)', opacity: '1' } },
       '@media (max-width:768px)': { '.eo-nav-links': { display: 'none' }, '.eo-cgrid': { gridTemplateColumns: '1fr' }, '.eo-footer-grid': { gridTemplateColumns: '1fr 1fr' }, '.eo-chart-row': { gridTemplateColumns: '1fr' }, '.eo-cart-panel': { width: '100vw' } }
     }), { id: 'eo-styles' });
 
+    }), { id: 'eo-styles' });
+
     // ─── Data ─────────────────────────────────────────────────────────────────
     var COFFEES = [
-      { id: 1, name: 'Ethiopian Yirgacheffe', origin: 'Ethiopia', region: 'Africa', price: 18.50, emoji: '☕', bg: 'linear-gradient(135deg,#8B6914,#DAA520)', tags: ['Floral','Citrus','Honey'], desc: 'Bright and floral with jasmine, lemon zest, and wild honey. A light roast that dances on the palate.', roast: 'Light', sca: 92 },
-      { id: 2, name: 'Colombian Supremo',     origin: 'Colombia', region: 'Americas', price: 16.00, emoji: '🫘', bg: 'linear-gradient(135deg,#8B4513,#CD853F)', tags: ['Caramel','Apple','Chocolate'], desc: 'Rich and balanced with caramel sweetness, red apple brightness, and a silky chocolate finish.', roast: 'Medium', sca: 88 },
-      { id: 3, name: 'Sumatra Mandheling',    origin: 'Indonesia', region: 'Asia', price: 19.00, emoji: '🌿', bg: 'linear-gradient(135deg,#2F4F2F,#556B2F)', tags: ['Earthy','Cedar','Chocolate'], desc: 'Deep and earthy with cedar, dark chocolate, and a lingering tobacco-like sweetness.', roast: 'Dark', sca: 87 },
-      { id: 4, name: 'Kenya AA',              origin: 'Kenya', region: 'Africa', price: 21.00, emoji: '🔥', bg: 'linear-gradient(135deg,#8B0000,#CD5C5C)', tags: ['Blackcurrant','Citrus','Bold'], desc: 'Complex and vibrant with blackcurrant, grapefruit, and brown sugar. Our boldest origin.', roast: 'Medium', sca: 91 },
-      { id: 5, name: 'Guatemala Antigua',     origin: 'Guatemala', region: 'Americas', price: 17.50, emoji: '🏔️', bg: 'linear-gradient(135deg,#4682B4,#5F9EA0)', tags: ['Chocolate','Almond','Spice'], desc: 'Velvety smooth with milk chocolate, toasted almond, and subtle warming spice notes.', roast: 'Dark', sca: 89 },
-      { id: 6, name: 'Costa Rica Tarrazú',    origin: 'Costa Rica', region: 'Americas', price: 20.00, emoji: '🌅', bg: 'linear-gradient(135deg,#D2691E,#F4A460)', tags: ['Peach','Vanilla','Maple'], desc: 'Bright acidity meets rich body — peach, vanilla, and maple syrup in perfect harmony.', roast: 'Light', sca: 90 },
-      { id: 7, name: 'Yemen Mokha',           origin: 'Yemen', region: 'Asia', price: 24.00, emoji: '🕌', bg: 'linear-gradient(135deg,#704214,#C87941)', tags: ['Wine','Blueberry','Spice'], desc: 'Rare and historic. Wild-fermented notes of dried fruit, cardamom, and dark wine.', roast: 'Medium', sca: 93 },
-      { id: 8, name: 'Brazil Cerrado',        origin: 'Brazil', region: 'Americas', price: 14.50, emoji: '⚡', bg: 'linear-gradient(135deg,#556B2F,#8FBC8F)', tags: ['Nutty','Brown Sugar','Smooth'], desc: 'The everyday hero. Clean and sweet with a nutty profile perfect for espresso or drip.', roast: 'Dark', sca: 85 }
+      { id: 1, name: 'Ethiopian Yirgacheffe', origin: 'Ethiopia', region: 'Africa', price: 18.50, emoji: '☕', bg: gradAccent, tags: ['Floral','Citrus','Honey'], desc: 'Bright and floral with jasmine, lemon zest, and wild honey. A light roast that dances on the palate.', roast: 'Light', sca: 92 },
+      { id: 2, name: 'Colombian Supremo',     origin: 'Colombia', region: 'Americas', price: 16.00, emoji: '🫘', bg: gradPriAlt, tags: ['Caramel','Apple','Chocolate'], desc: 'Rich and balanced with caramel sweetness, red apple brightness, and a silky chocolate finish.', roast: 'Medium', sca: 88 },
+      { id: 3, name: 'Sumatra Mandheling',    origin: 'Indonesia', region: 'Asia', price: 19.00, emoji: '🌿', bg: 'linear-gradient(135deg,' + p.tertiary.base + ',' + p.tertiary.hover + ')', tags: ['Earthy','Cedar','Chocolate'], desc: 'Deep and earthy with cedar, dark chocolate, and a lingering tobacco-like sweetness.', roast: 'Dark', sca: 87 },
+      { id: 4, name: 'Kenya AA',              origin: 'Kenya', region: 'Africa', price: 21.00, emoji: '🔥', bg: 'linear-gradient(135deg,' + p.danger.base + ',' + p.danger.hover + ')', tags: ['Blackcurrant','Citrus','Bold'], desc: 'Complex and vibrant with blackcurrant, grapefruit, and brown sugar. Our boldest origin.', roast: 'Medium', sca: 91 },
+      { id: 5, name: 'Guatemala Antigua',     origin: 'Guatemala', region: 'Americas', price: 17.50, emoji: '🏔️', bg: 'linear-gradient(135deg,' + p.info.base + ',' + p.info.hover + ')', tags: ['Chocolate','Almond','Spice'], desc: 'Velvety smooth with milk chocolate, toasted almond, and subtle warming spice notes.', roast: 'Dark', sca: 89 },
+      { id: 6, name: 'Costa Rica Tarrazú',    origin: 'Costa Rica', region: 'Americas', price: 20.00, emoji: '🌅', bg: gradSec, tags: ['Peach','Vanilla','Maple'], desc: 'Bright acidity meets rich body — peach, vanilla, and maple syrup in perfect harmony.', roast: 'Light', sca: 90 },
+      { id: 7, name: 'Yemen Mokha',           origin: 'Yemen', region: 'Asia', price: 24.00, emoji: '🕌', bg: 'linear-gradient(135deg,' + p.primary.hover + ',' + p.secondary.base + ')', tags: ['Wine','Blueberry','Spice'], desc: 'Rare and historic. Wild-fermented notes of dried fruit, cardamom, and dark wine.', roast: 'Medium', sca: 93 },
+      { id: 8, name: 'Brazil Cerrado',        origin: 'Brazil', region: 'Americas', price: 14.50, emoji: '⚡', bg: 'linear-gradient(135deg,' + p.tertiary.hover + ',' + p.success.base + ')', tags: ['Nutty','Brown Sugar','Smooth'], desc: 'The everyday hero. Clean and sweet with a nutty profile perfect for espresso or drip.', roast: 'Dark', sca: 85 }
     ];
     var FILTERS = ['All', 'Africa', 'Americas', 'Asia', 'Light', 'Medium', 'Dark'];
 
-    // ─── Toast — uses bw.create() for append pattern ─────────────────────
+    // ─── Toast — bw.append so mountTree runs (v2.1 lifecycle) ─────────────
     function toast(title, msg, type) {
       var wraps = bw.$('#eo-toasts');
       var wrap = wraps.length ? wraps[0] : null;
       if (!wrap) {
-        wrap = bw.create({ t: 'div', a: { id: 'eo-toasts', class: 'eo-toasts' } });
-        bw.$('body')[0].appendChild(wrap);
+        wrap = bw.append('body', { t: 'div', a: { id: 'eo-toasts', class: 'eo-toasts' } });
       }
       var icons = { success: '\u2713', warning: '\u26A0', info: '\u2139' };
-      var toastEl = bw.create({
+      var toastEl = bw.append(wrap, {
         t: 'div', a: { class: 'eo-toast ' + (type || 'info') },
         c: [
           { t: 'span', a: { style: 'font-size:1.3rem' }, c: icons[type] || icons.info },
@@ -259,8 +272,18 @@
           ]}
         ]
       });
-      wrap.appendChild(toastEl);
-      setTimeout(function() { toastEl.style.transition = 'all .3s'; toastEl.style.opacity = '0'; toastEl.style.transform = 'translateX(110%)'; setTimeout(function() { toastEl.remove(); }, 320); }, 3500);
+      setTimeout(function() {
+        if (!toastEl) return;
+        toastEl.style.transition = 'all .3s';
+        toastEl.style.opacity = '0';
+        toastEl.style.transform = 'translateX(110%)';
+        setTimeout(function() {
+          if (toastEl && toastEl.parentNode) {
+            bw.unmount(toastEl);
+            toastEl.remove();
+          }
+        }, 320);
+      }, 3500);
     }
 
     // ─── Cart (global state + direct DOM) ────────────────────────────────────
@@ -288,7 +311,7 @@
         bw.DOM(body, { t: 'div', a: { class: 'eo-cart-empty' }, c: [
           { t: 'div', a: { style: 'font-size:3rem;margin-bottom:.75rem' }, c: '☕' },
           { t: 'p', c: 'Your cart is empty.' },
-          { t: 'p', a: { style: 'font-size:.82rem;color:#c0a898;margin-top:.25rem' }, c: 'Add a coffee to get started.' }
+          { t: 'p', a: { style: 'font-size:.82rem;color:' + p.primary.border + ';margin-top:.25rem' }, c: 'Add a coffee to get started.' }
         ]});
         if (ftr) bw.DOM(ftr, { t: 'div' });
       } else {
@@ -296,7 +319,7 @@
           return { t: 'div', a: { class: 'eo-cart-row' }, c: [
             { t: 'div', c: [
               { t: 'div', a: { class: 'eo-cart-rname' }, c: item.name },
-              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355' }, c: item.origin }
+              { t: 'div', a: { style: 'font-size:.78rem;color:' + muted }, c: item.origin }
             ]},
             { t: 'div', a: { style: 'display:flex;align-items:center;gap:.35rem' }, c: [
               { t: 'span', a: { class: 'eo-cart-rprice' }, c: '$' + item.price.toFixed(2) },
@@ -505,9 +528,9 @@
           { t: 'h2', a: { class: 'eo-h2' }, c: 'Meet Our Team' }
         ]},
         { t: 'div', a: { class: 'eo-team' }, c: [
-          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,#8B4513,#D2691E)' }, c: 'EV' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Elena Vasquez' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Founder & Head Roaster' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Former Q-grader with 15 years of specialty coffee experience. Fell in love with roasting during a trip to Huila, Colombia.' }] },
-          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,#2F4F2F,#556B2F)' }, c: 'MC' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Marcus Chen' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Green Coffee Buyer' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Travels to origin 6 months a year. Building relationships and discovering the world\'s finest lots.' }] },
-          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,#4682B4,#5F9EA0)' }, c: 'AO' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Aisha Okafor' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Head of Operations' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Supply chain wizard. Previously at Blue Bottle and Counter Culture.' }] }
+          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:' + gradPri }, c: 'EV' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Elena Vasquez' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Founder & Head Roaster' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Former Q-grader with 15 years of specialty coffee experience. Fell in love with roasting during a trip to Huila, Colombia.' }] },
+          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,' + p.tertiary.base + ',' + p.tertiary.hover + ')' }, c: 'MC' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Marcus Chen' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Green Coffee Buyer' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Travels to origin 6 months a year. Building relationships and discovering the world\'s finest lots.' }] },
+          { t: 'div', a: { class: 'eo-tcard' }, c: [ { t: 'div', a: { class: 'eo-tav', style: 'background:linear-gradient(135deg,' + p.info.base + ',' + p.info.hover + ')' }, c: 'AO' }, { t: 'div', a: { class: 'eo-tname' }, c: 'Aisha Okafor' }, { t: 'div', a: { class: 'eo-trole' }, c: 'Head of Operations' }, { t: 'p', a: { class: 'eo-tbio' }, c: 'Supply chain wizard. Previously at Blue Bottle and Counter Culture.' }] }
         ]}
       ]
     };
@@ -521,9 +544,9 @@
           { t: 'h2', a: { class: 'eo-h2 eo-h2-light' }, c: 'What Our Community Says' }
         ]},
         { t: 'div', a: { class: 'eo-testgrid' }, c: [
-          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"I\'ve been a subscriber two years now. Each month feels like unwrapping a gift. The freshness and complexity are unmatched."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,#D2691E,#DAA520)' }, c: 'S' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'Sarah Mitchell' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'Portland, OR' }] }] }] },
-          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"The Ethiopian Yirgacheffe changed how I think about coffee. It\'s not just a drink — it\'s an experience I look forward to every morning."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,#8B4513,#CD853F)' }, c: 'J' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'James Okonkwo' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'Brooklyn, NY' }] }] }] },
-          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"Their direct trade model is real. I visited the farms they source from. The impact on those communities is tangible and beautiful."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,#2F4F2F,#556B2F)' }, c: 'M' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'Mei-Lin Park' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'San Francisco, CA' }] }] }] }
+          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"I\'ve been a subscriber two years now. Each month feels like unwrapping a gift. The freshness and complexity are unmatched."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:' + gradAccent }, c: 'S' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'Sarah Mitchell' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'Portland, OR' }] }] }] },
+          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"The Ethiopian Yirgacheffe changed how I think about coffee. It\'s not just a drink — it\'s an experience I look forward to every morning."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,' + p.primary.base + ',' + p.secondary.border + ')' }, c: 'J' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'James Okonkwo' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'Brooklyn, NY' }] }] }] },
+          { t: 'div', a: { class: 'eo-test' }, c: [ { t: 'div', a: { class: 'eo-test-stars' }, c: '★★★★★' }, { t: 'p', a: { class: 'eo-test-text' }, c: '"Their direct trade model is real. I visited the farms they source from. The impact on those communities is tangible and beautiful."' }, { t: 'div', a: { class: 'eo-test-auth' }, c: [ { t: 'div', a: { class: 'eo-test-av', style: 'background:linear-gradient(135deg,' + p.tertiary.base + ',' + p.tertiary.hover + ')' }, c: 'M' }, { t: 'div', c: [ { t: 'div', a: { class: 'eo-test-name' }, c: 'Mei-Lin Park' }, { t: 'div', a: { class: 'eo-test-loc' }, c: 'San Francisco, CA' }] }] }] }
         ]}
       ]}
     };
@@ -546,11 +569,11 @@
         { t: 'div', a: { class: 'eo-chart-row' }, c: [
           { t: 'div', a: { class: 'eo-box' }, c: [
             { t: 'div', a: { class: 'eo-box-title' }, c: 'Monthly Bags Shipped — 2025' },
-            bw.makeBarChart({ data: [{l:'Jan',v:3200},{l:'Feb',v:3800},{l:'Mar',v:4100},{l:'Apr',v:4500},{l:'May',v:5200},{l:'Jun',v:4900},{l:'Jul',v:5400},{l:'Aug',v:5800},{l:'Sep',v:5100},{l:'Oct',v:4700},{l:'Nov',v:5300},{l:'Dec',v:5500}], labelKey:'l', valueKey:'v', color:'#8B4513', height:'200px', formatValue:function(v){return (v/1000).toFixed(1)+'k';}, showValues:true, showLabels:true })
+            bw.makeBarChart({ data: [{l:'Jan',v:3200},{l:'Feb',v:3800},{l:'Mar',v:4100},{l:'Apr',v:4500},{l:'May',v:5200},{l:'Jun',v:4900},{l:'Jul',v:5400},{l:'Aug',v:5800},{l:'Sep',v:5100},{l:'Oct',v:4700},{l:'Nov',v:5300},{l:'Dec',v:5500}], labelKey:'l', valueKey:'v', color:p.primary.base, height:'200px', formatValue:function(v){return (v/1000).toFixed(1)+'k';}, showValues:true, showLabels:true })
           ]},
           { t: 'div', a: { class: 'eo-box' }, c: [
             { t: 'div', a: { class: 'eo-box-title' }, c: 'Revenue by Origin ($K)' },
-            bw.makeBarChart({ data: [{l:'Ethiopia',v:89},{l:'Colombia',v:72},{l:'Kenya',v:65},{l:'Indonesia',v:54},{l:'Guatemala',v:48},{l:'Yemen',v:38},{l:'Brazil',v:32}], labelKey:'l', valueKey:'v', color:'#D2691E', height:'200px', formatValue:function(v){return '$'+v+'K';}, showValues:true, showLabels:true })
+            bw.makeBarChart({ data: [{l:'Ethiopia',v:89},{l:'Colombia',v:72},{l:'Kenya',v:65},{l:'Indonesia',v:54},{l:'Guatemala',v:48},{l:'Yemen',v:38},{l:'Brazil',v:32}], labelKey:'l', valueKey:'v', color:p.secondary.base, height:'200px', formatValue:function(v){return '$'+v+'K';}, showValues:true, showLabels:true })
           ]}
         ]},
         { t: 'div', a: { style: 'margin-top:2.5rem' }, c: [
@@ -588,7 +611,7 @@
         render: function(el) {
           var s = el._bw_state;
           bw.DOM(el, { t: 'div', c: [
-            { t: 'div', a: { id: 'eo-form-status', style: 'padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem;font-weight:500;background:#dcf5e7;color:#1a6335;border:1px solid rgba(26,99,53,.2);display:' + s.statusVisible }, c: s.statusMsg },
+            { t: 'div', a: { id: 'eo-form-status', style: 'padding:.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.9rem;font-weight:500;background:' + p.success.light + ';color:' + p.success.darkText + ';border:1px solid ' + p.success.border + ';display:' + s.statusVisible }, c: s.statusMsg },
             bw.makeForm({ children: [
               bw.makeFormGroup({ label: 'Your Name', id: 'cname', input: bw.makeInput({ id: 'cname', placeholder: 'Elena Vasquez', required: true }) }),
               bw.makeFormGroup({ label: 'Email Address', id: 'cemail', input: bw.makeInput({ type: 'email', id: 'cemail', placeholder: 'you@example.com', required: true }) }),
@@ -641,7 +664,7 @@
       t: 'section', a: { class: 'eo-dark', style: 'text-align:center', 'data-testid': 'section-newsletter' },
       c: { t: 'div', a: { style: 'max-width:600px;margin:0 auto' }, c: [
         { t: 'div', a: { style: 'font-size:2.5rem;margin-bottom:1rem' }, c: '☕' },
-        { t: 'h2', a: { style: "font-family:'Playfair Display',serif;font-size:2rem;color:#faf8f5;margin-bottom:.75rem" }, c: 'Join the Ember & Oak Family' },
+        { t: 'h2', a: { style: "font-family:'Playfair Display',serif;font-size:2rem;color:" + cream + ";margin-bottom:.75rem" }, c: 'Join the Ember & Oak Family' },
         { t: 'p', a: { style: 'color:rgba(250,248,245,.55);margin-bottom:2rem;line-height:1.65' }, c: 'First access to new arrivals, brewing tips, and 10% off your first order.' },
         { t: 'div', a: { class: 'eo-nl-row' }, c: [
           { t: 'input', a: { type: 'email', id: 'nl-email', class: 'eo-nl-in', placeholder: 'your@email.com', 'data-testid': 'input-newsletter' } },
@@ -693,7 +716,7 @@
                 bw.makeButton({ text: '+1', variant: 'primary', size: 'sm', onclick: function() { counterSet(counterGet() + 1); } }),
                 bw.makeButton({ text: '+5', variant: 'outline_primary', size: 'sm', onclick: function() { counterSet(counterGet() + 5); } })
               ]},
-              { t: 'div', a: { style: 'font-size:.78rem;color:#8b7355;text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.refresh(el)' }
+              { t: 'div', a: { style: 'font-size:.78rem;color:' + muted + ';text-align:center' }, c: 'o.state + o.render -- updates via el._bw_state + bw.refresh(el)' }
             ]
           });
         }
@@ -720,7 +743,7 @@
           var s = el._bw_state;
           var p = s.progress;
           bw.DOM(el, { t: 'div', c: [
-            { t: 'div', a: { style: 'margin-bottom:.5rem;font-size:.88rem;color:#2d2017' }, c: 'Roast Stage: ' + s.roastLabel },
+            { t: 'div', a: { style: 'margin-bottom:.5rem;font-size:.88rem;color:' + ink }, c: 'Roast Stage: ' + s.roastLabel },
             bw.makeProgress({ value: p, max: 100, variant: p >= 100 ? 'success' : p >= 72 ? 'warning' : 'primary', striped: p < 100, animated: p < 100, label: p + '%' }),
             { t: 'div', a: { style: 'display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap' }, c: [
               bw.makeButton({ text: 'Drying Phase', variant: 'outline_primary', size: 'sm', onclick: function() { progressSet('Drying Phase (0-150\u00B0C)', 25); } }),

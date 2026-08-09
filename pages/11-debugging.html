@@ -988,6 +988,7 @@
     // =========================================================================
     bw.DOM('#tryit-message', makeTryIt({
       code: '// Create a status panel with an id\n' +
+        'var p = (window._bw_current_styles || bw.makeStyles()).palette;\n' +
         'bw.DOM(target, {\n' +
         '  t: \'div\',\n' +
         '  a: { id: \'status-panel\' },\n' +
@@ -998,7 +999,7 @@
         '      bw.DOM(el, {\n' +
         '        t: \'div\', a: {\n' +
         '          style: \'padding: 1rem;\' +\n' +
-        '            \' border: 2px solid var(--bw_teal);\' +\n' +
+        '            \' border: 2px solid \' + p.primary.base + \';\' +\n' +
         '            \' border-radius: 8px;\'\n' +
         '        },\n' +
         '        c: \'Status: \' + s.status\n' +

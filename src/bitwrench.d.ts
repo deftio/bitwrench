@@ -153,12 +153,24 @@ export interface StyleConfig {
   compact?: boolean;
 }
 
+/** Layout tokens resolved by bw.makeStyles() / bw.loadStyles() */
+export interface LayoutTokens {
+  spacing: Record<string, string>;
+  radius: Record<string, string>;
+  fontSize: number;
+  typeScale: Record<string, number>;
+  elevation: Record<string, string>;
+  motion: Record<string, any>;
+}
+
 /** Result of bw.makeStyles() */
 export interface StylesResult {
   css: string;
   alternateCss: string;
   palette: Palette;
   alternatePalette: Palette;
+  /** Spacing, radius, typeScale, elevation, motion — use in custom CSS like palette */
+  layout: LayoutTokens;
   rules: Record<string, any>;
   alternateRules: Record<string, any>;
   isLightPrimary: boolean;
@@ -315,8 +327,20 @@ export interface Bitwrench {
   // -- TACO Construction & Rendering ----------------------------------------
   /** Create TACO from positional args */
   h(tag: string, attrs?: TacoAttributes | null, content?: TacoContent, options?: TacoOptions): Taco;
-  /** Render TACO to HTML string */
-  html(taco: Taco | TacoContent, options?: { raw?: boolean; state?: Record<string, any> }): string;
+  /**
+   * Render TACO to HTML string.
+   *
+   * `on*` function attributes are auto-registered and emitted as a
+   * `bw.funcGetById('bw_fn_N')(event)` dispatch call, so the string carries a
+   * working handler with no binding step. Pass `fns` for CSP-safe output: the
+   * handlers collect there and the element gets a `bw_fn_N` class instead of
+   * an inline attribute, leaving you to bind them.
+   */
+  html(taco: Taco | TacoContent, options?: {
+    raw?: boolean;
+    state?: Record<string, any>;
+    fns?: Record<string, { fn: (event?: Event) => any; event: string }>;
+  }): string;
   /** Generate complete HTML page string */
   htmlPage(opts: { title?: string; css?: string; content?: TacoContent; favicon?: string; [key: string]: any }): string;
   /** Create DOM element from TACO (browser only). SVG TACOs ({t:'svg',...}) use createElementNS. */

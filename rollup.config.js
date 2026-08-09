@@ -14,6 +14,11 @@ import { dirname, resolve as pathResolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+// Shared terser options. `passes: 2` lets the compressor re-run its
+// analysis after the first round of substitutions, which finds folds the
+// single default pass misses. passes: 3 measured identical to 2.
+const minify = () => terser({ format: { comments: /^!/ }, compress: { passes: 2 } });
+
 const banner = `/*! bitwrench v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const leanBanner = `/*! bitwrench-lean v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const bwserveBanner = `/*! bwserve v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
@@ -73,7 +78,7 @@ const babelConfig = {
           format: 'umd',
           name: 'bw',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         // CommonJS
@@ -90,7 +95,7 @@ const babelConfig = {
           format: 'cjs',
           exports: 'auto',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -119,7 +124,7 @@ const babelConfig = {
           file: 'dist/bitwrench.esm.min.js',
           format: 'esm',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -145,7 +150,7 @@ const babelConfig = {
           format: 'umd',
           name: 'bw',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -174,7 +179,7 @@ const babelConfig = {
           name: 'bwCodeEdit',
           exports: 'named',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -189,7 +194,7 @@ const babelConfig = {
           format: 'cjs',
           exports: 'named',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -202,7 +207,7 @@ const babelConfig = {
           file: 'dist/bitwrench-code-edit.esm.min.js',
           format: 'esm',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -230,7 +235,7 @@ const babelConfig = {
           name: 'bwCodeEdit',
           exports: 'named',
           banner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -257,7 +262,7 @@ const babelConfig = {
           format: 'umd',
           name: 'bw',
           banner: leanBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -270,7 +275,7 @@ const babelConfig = {
           file: 'dist/bitwrench-lean.esm.min.js',
           format: 'esm',
           banner: leanBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -285,7 +290,7 @@ const babelConfig = {
           format: 'cjs',
           exports: 'auto',
           banner: leanBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -312,7 +317,7 @@ const babelConfig = {
           format: 'umd',
           name: 'bw',
           banner: leanBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -343,7 +348,7 @@ const babelConfig = {
           name: 'bwBCCL',
           exports: 'named',
           banner: bcclBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -358,7 +363,7 @@ const babelConfig = {
           format: 'cjs',
           exports: 'named',
           banner: bcclBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -371,7 +376,7 @@ const babelConfig = {
           file: 'dist/bitwrench-bccl.esm.min.js',
           format: 'esm',
           banner: bcclBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -399,7 +404,7 @@ const babelConfig = {
           name: 'bwUtilCSS',
           exports: 'named',
           banner: utilCssBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -414,7 +419,7 @@ const babelConfig = {
           format: 'cjs',
           exports: 'named',
           banner: utilCssBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -427,7 +432,7 @@ const babelConfig = {
           file: 'dist/bitwrench-util-css.esm.min.js',
           format: 'esm',
           banner: utilCssBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -455,7 +460,7 @@ const babelConfig = {
           name: 'bwUtilCSS',
           exports: 'named',
           banner: utilCssBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -484,7 +489,7 @@ const babelConfig = {
           name: 'bwUtilColor',
           exports: 'named',
           banner: utilColorBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -499,7 +504,7 @@ const babelConfig = {
           format: 'cjs',
           exports: 'named',
           banner: utilColorBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {
@@ -512,7 +517,7 @@ const babelConfig = {
           file: 'dist/bitwrench-util-color.esm.min.js',
           format: 'esm',
           banner: utilColorBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -540,7 +545,7 @@ const babelConfig = {
           name: 'bwUtilColor',
           exports: 'named',
           banner: utilColorBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
       ],
@@ -594,7 +599,7 @@ const babelConfig = {
           format: 'umd',
           name: 'bwd',
           banner: debugBanner,
-          plugins: [terser({ format: { comments: /^!/ } })],
+          plugins: [minify()],
           sourcemap: true,
         },
         {

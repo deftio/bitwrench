@@ -491,6 +491,7 @@
     // =========================================================================
     var completePatternCode =
       '// 1. Factory function \u2014 returns an object with TACO + API\n' +
+      'var p = bw.loadStyles().palette;  // or reuse styles.palette from page setup\n' +
       'function makeCounter(opts) {\n' +
       '  var id = bw.uuid(\'ctr\');\n' +
       '\n' +
@@ -501,8 +502,8 @@
       '      render: function(el) {               // stored as el._bw_render\n' +
       '        var s = el._bw_state;              // read state from the element\n' +
       '        bw.DOM(el, {                       // re-render into self\n' +
-      '          t: \'div\', a: { style: \'background: var(--bw_card_bg, #fff); \'\n' +
-      '            + \'border: 1px solid var(--bw_card_border, #dee2e6); \'\n' +
+      '          t: \'div\', a: { style: \'background: \' + p.surface + \'; \'\n' +
+      '            + \'border: 1px solid \' + p.light.border + \'; \'\n' +
       '            + \'border-radius: 8px; padding: 1rem; \'\n' +
       '            + \'text-align: center;\' },\n' +
       '          c: [\n' +
@@ -616,18 +617,19 @@
     // Section 3: Encapsulated Components
     // =========================================================================
     var counterSourceCode =
+      'var p = bw.loadStyles().palette;\n' +
       'function makeCounter(opts) {\n' +
       '  var id = bw.uuid(\'ctr\');\n' +
       '  var name = opts.label;\n' +
       '\n' +
-      '  // Inline styles \u2014 portable, no external CSS needed\n' +
-      '  var cardStyle = \'background: var(--bw_card_bg, #fff); \'\n' +
-      '    + \'border: 1px solid var(--bw_card_border, #dee2e6); \'\n' +
+      '  // Inline styles from palette tokens\n' +
+      '  var cardStyle = \'background: \' + p.surface + \'; \'\n' +
+      '    + \'border: 1px solid \' + p.light.border + \'; \'\n' +
       '    + \'border-radius: 8px; padding: 1rem 1.25rem; \'\n' +
       '    + \'text-align: center; min-width: 160px; \'\n' +
       '    + \'flex: 1 1 160px;\';\n' +
       '  var valueStyle = \'font-size: 2rem; font-weight: 700; \'\n' +
-      '    + \'color: var(--bw_teal_dark, #00796b); \'\n' +
+      '    + \'color: \' + p.primary.darkText + \'; \'\n' +
       '    + \'margin: 0.5rem 0;\';\n' +
       '  var btnsStyle = \'display: flex; gap: 0.35rem; \'\n' +
       '    + \'justify-content: center; flex-wrap: wrap;\';\n' +
@@ -940,6 +942,7 @@
     // Section 7: Stateful Todo Component
     // =========================================================================
     var todoSourceCode =
+      'var p = bw.loadStyles().palette;\n' +
       'function makeTodoList(opts) {\n' +
       '  var id = bw.uuid(\'todo\');\n' +
       '\n' +
@@ -1027,7 +1030,7 @@
       '          { t: \'div\', a: {\n' +
       '            style: \'margin-top:0.5rem; \'\n' +
       '              + \'font-size:0.8125rem; \'\n' +
-      '              + \'color:var(--bw_text_secondary);\'\n' +
+      '              + \'color:\' + p.secondary.base + \';\'\n' +
       '            },\n' +
       '            c: remaining + \' of \'\n' +
       '              + s.todos.length + \' remaining\'\n' +

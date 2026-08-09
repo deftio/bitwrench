@@ -99,8 +99,8 @@ These modify the browser's DOM tree:
 |------|---------|---------------|---------------|
 | `mount` | Mount TACO at selector | `client.mount(ref, taco)` | `bw.DOM(ref, taco)` |
 | `patch` | Update text/attributes | `client.patch(ref, fields)` | `bw.patch(ref, fields)` |
-| `append` | Add child element | `client.append(ref, taco)` | `ref.appendChild(bw.create(taco))` |
-| `remove` | Remove element | `client.remove(ref)` | `bw.unmount(el); el.remove()` |
+| `append` | Add child element | `client.append(ref, taco)` | `bw.append(ref, taco)` |
+| `remove` | Remove element | `client.remove(ref)` | `bw.remove(ref)` |
 | `batch` | Multiple operations | `client.batch(ops)` | Execute each op in sequence |
 
 ### Communication Operations (5 types)

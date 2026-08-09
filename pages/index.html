@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>bitwrench.js - JavaScript UI Engine</title>
   <meta name="description" content="UI engine, component library, router, and server push -- all from plain JavaScript objects. 165KB (45KB gzipped), zero dependencies, no build step.">
+  <meta name="web_author" content="M Chatterjee (github.com/deftio)">
   <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
   <script src="../dist/bitwrench.umd.min.js"></script>
   <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
   <script src="shared-nav.js"></script>
+  <script src="shared-tryit.js"></script>
   <script src="site.js"></script>
 </head>
 <body>
@@ -163,11 +165,6 @@
       '.ha_swatch_dot': {
         display: 'inline-block', width: '8px', height: '8px', 'border-radius': '50%'
       },
-      // --- How It Works ---
-      '.ha_how_grid': {
-        display: 'grid', 'grid-template-columns': '1fr 1fr',
-        gap: '1.5rem', 'align-items': 'start'
-      },
       // --- Features ---
       '.ha_feat_grid': {
         display: 'grid', 'grid-template-columns': 'repeat(3, 1fr)', gap: '1rem'
@@ -209,11 +206,13 @@
       },
       // --- Responsive ---
       '@media (max-width: 1100px)': {
-        '.ha_live_strip': { 'grid-template-columns': 'repeat(3, 1fr)' }
+        '.ha_live_strip': { 'grid-template-columns': 'repeat(3, 1fr)' },
+        // Side by side, the code column gets narrow enough that lines soft-wrap
+        // and the line-number gutter drifts. Go full width before that happens.
+        '.ha_how_tryit .tryit-grid': { 'grid-template-columns': '1fr' }
       },
       '@media (max-width: 900px)': {
-        '.ha_feat_grid': { 'grid-template-columns': 'repeat(2, 1fr)' },
-        '.ha_how_grid': { 'grid-template-columns': '1fr' }
+        '.ha_feat_grid': { 'grid-template-columns': 'repeat(2, 1fr)' }
       },
       '@media (max-width: 720px)': {
         '.ha_live_strip': { 'grid-template-columns': 'repeat(2, 1fr)' }
@@ -221,6 +220,10 @@
       '@media (max-width: 600px)': {
         '.ha_feat_grid': { 'grid-template-columns': '1fr' },
         '.ha_live_strip': { 'grid-template-columns': '1fr' },
+        // No phone is wide enough for these lines. Let them wrap, drop the
+        // gutter (wrapped lines desync it), and show the block whole.
+        '.ha_how_tryit .bw_ce_gutter': { display: 'none' },
+        '.ha_how_tryit .bw_ce': { 'max-height': 'none !important' },
         '.ha_hero': { padding: '1.25rem 0 1rem' },
         '.ha_hero_logo': { height: '44px' },
         '.ha_hero_tagline': { 'font-size': '1.375rem' },
@@ -330,7 +333,7 @@
 
     // -- 2b: Theme Switcher --
     var themePresets = [
-      { name: 'Teal', p: '#006666', s: '#cc6633', tr: '#2e8b57', dark: false },
+      { name: 'Teal', p: '#006767', s: '#cc6633', tr: '#2e8b57', dark: false },
       { name: 'Ocean', p: '#336699', s: '#cc6633', tr: '#2e8b57', dark: false },
       { name: 'Sunset', p: '#cc4400', s: '#6633cc', tr: '#d4a017', dark: false },
       { name: 'Dark', p: '#006666', s: '#80cbc4', tr: '#b39ddb', dark: true }
@@ -406,11 +409,10 @@
             bw.makeButton({
               text: 'Fire Toast', variant: 'success', size: 'sm',
               onclick: function() {
-                var container = bw.$('#ha-toast-box');
-                if (container.length) {
-                  container[0].appendChild(bw.create(
-                    bw.makeToast({ title: 'Success', content: 'Operation completed.', variant: 'success', delay: 3000 })
-                  ));
+                if (bw.$('#ha-toast-box').length) {
+                  bw.append('#ha-toast-box', bw.makeToast({
+                    title: 'Success', content: 'Operation completed.', variant: 'success', delay: 3000
+                  }));
                 }
               }
             })
@@ -491,17 +493,23 @@
     // =========================================================================
     // 3. "How It Works" -- simplest possible intro: object in, UI out
     // =========================================================================
+    // Lines are kept short on purpose: the editor soft-wraps, and a wrapped
+    // line pushes the line-number gutter out of alignment.
     var howCode = [
-      'bw.DOM(\'#app\', {',
+      'bw.DOM(\'#demo\', {',
       '  t: \'div\', c: [',
-      '    { t: \'h3\', c: \'Hello bitwrench\' },',
-      '    { t: \'p\', c: \'UI as a plain JS object.\' },',
+      '    { t: \'h2\', c: \'Hello bitwrench\' },',
+      '    { t: \'p\', c: \'UI as JS objects.\' },',
+      '    { t: \'ul\', c: [',
+      '      { t: \'li\', c: \'t = tag\' },',
+      '      { t: \'li\', a: { style: { color: \'#006767\' } },',
+      '        c: \'a = attributes\' },',
+      '      { t: \'li\', c: \'c = content\' }',
+      '    ]},',
       '    bw.makeButton({',
       '      text: \'Click me\',',
       '      variant: \'primary\',',
-      '      onclick: function() {',
-      '        alert(\'It works!\');',
-      '      }',
+      '      onclick: function() {alert(\'It works!\');}',
       '    })',
       '  ]',
       '});'
@@ -513,18 +521,10 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'How It Works' },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
-            c: 'Every UI element is a JavaScript object with four keys: t (tag), a (attributes), c (content), and o (options). Bitwrench calls this shape a TACO. The code on the left produces the result on the right -- no compile step, no JSX, no virtual DOM.'
+            c: 'Every UI element is a JavaScript object with four keys: t (tag), a (attributes), c (content), and o (options). Bitwrench calls this shape a TACO. This editor is live -- change the code, click Run, and the result panel rebuilds itself. No compile step, no JSX, no virtual DOM.'
           },
-          { t: 'div', a: { class: 'ha_how_grid' }, c: [
-            { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_code_label' }, c: 'JavaScript' },
-              { t: 'div', a: { id: 'how-code-panel' } }
-            ]},
-            { t: 'div', c: [
-              { t: 'div', a: { class: 'bw_code_label', style: 'color:' + p.primary.base }, c: 'Result' },
-              { t: 'div', a: { class: 'bw_site_pages_result', id: 'how-result-panel' } }
-            ]}
-          ]},
+          makeTryIt({ code: howCode, outputId: 'demo', height: '490px',
+                      lineNumbers: true, className: 'ha_how_tryit' }),
           { t: 'p', a: { style: 'font-size:0.8125rem;color:#555;margin:1rem 0 0;line-height:1.55' },
             c: [
               'TACOs nest, compose, and loop with plain JS. Add o.state for stateful components, o.handle for imperative control. The built-in components are TACOs too. ',
@@ -656,31 +656,7 @@
     // Chart
     renderChart();
 
-    // How It Works: code panel + live result (matches the code on the left)
-    (function() {
-      if (typeof bw.codeEditor === 'function') {
-        bw.DOM('#how-code-panel', bw.codeEditor({
-          code: howCode, lang: 'js', readOnly: true, height: 'auto'
-        }));
-      } else {
-        bw.DOM('#how-code-panel', {
-          t: 'div', a: { class: 'bw_site_pages_code' },
-          c: { t: 'pre', c: { t: 'code', c: howCode } }
-        });
-      }
-
-      // Exact same output as the code on the left
-      bw.DOM('#how-result-panel', {
-        t: 'div', c: [
-          { t: 'h3', c: 'Hello bitwrench' },
-          { t: 'p', c: 'UI as a plain JS object.' },
-          bw.makeButton({
-            text: 'Click me', variant: 'primary',
-            onclick: function() { alert('It works!'); }
-          })
-        ]
-      });
-    })();
+    // "How It Works" needs no wiring -- makeTryIt runs howCode into #demo on mount.
   </script>
 </body>
 </html>

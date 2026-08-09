@@ -44,3 +44,10 @@ updates:
           - "major"
           - "minor"
           - "patch"
+    ignore:
+      # github/codeql-action: pinned to the floating @v4 tag, which is what
+      # GitHub recommends -- it receives patches automatically at run time.
+      # Dependabot nonetheless proposes an exact pin on every patch release
+      # (v4 -> v4.37.3 -> v4.37.4 ...), which is pure churn on a repo that
+      # deliberately tracks the major tag.
+      - dependency-name: "github/codeql-action"

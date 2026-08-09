@@ -5,7 +5,7 @@ Real-time event stream with filter bar, slide-in animations, and auto-expiring i
 ## What This Demonstrates
 
 - `bw.patch()` / `bw.patchAll()` for targeted DOM updates (counter badges)
-- `bw.create()` + `insertBefore` for appending items without full re-render
+- `bw.append(list, taco, { before: 0 })` for prepending items without full re-render
 - `bw.unmount()` for element lifecycle management (removing expired items)
 - `bw.css({ '@keyframes slideIn': {...} })` for entry animations
 - `bw.uuid()` for counter badge addressing
@@ -31,7 +31,7 @@ open examples/live-feed/index.html
 ## Architecture
 
 - `feedItems` array holds all items with expiry timestamps
-- `addItem()` creates new items, prepends to DOM via `bw.create()` + `insertBefore`
+- `addItem()` creates new items, prepends via `bw.append(..., { before: 0 })`
 - `cleanupExpired()` removes items past their 30-second lifetime via `bw.unmount()`
 - `enforceMax()` caps visible items at 20
 - Filter changes trigger full `renderList()` re-render; new items use append pattern
@@ -39,7 +39,7 @@ open examples/live-feed/index.html
 
 ## Key Patterns to Study
 
-1. **Append vs. re-render**: New items use `bw.create()` (fast), filter changes use `bw.DOM()` (full)
+1. **Append vs. re-render**: New items use `bw.append()` (create + mountTree), filter changes use `bw.DOM()` (full)
 2. **bw.patchAll()**: Batch-updates multiple counter badges by CSS class in one call
 3. **bw.uuid()**: Generates stable CSS classes for counter badges that `bw.patchAll()` targets
 4. **bw.unmount()**: Properly cleans up lifecycle hooks when removing elements

@@ -1009,9 +1009,16 @@ describe("bw.html — function serialization branches", function() {
     assert.strictEqual(Object.keys(fns).length, 1);
   });
 
-  it("should skip function attrs without fns option (L743)", function() {
+  // Was: "should skip function attrs without fns option". That assertion was
+  // written to lock in the v2.1.0 behaviour where a bare bw.html() dropped
+  // handlers -- so the test agreed with the regression instead of catching it.
+  // Without {fns}, bw.html() auto-registers and emits a dispatch string, as
+  // 1.x and 2.0.x did. Full coverage of both paths lives in
+  // test/bitwrench_test_html_page.js.
+  it("should auto-register function attrs without fns option (L743)", function() {
     var result = bw.html({ t: 'button', a: { onclick: function() {} }, c: 'test' });
-    assert.ok(result.indexOf('onclick') < 0);
+    assert.ok(result.indexOf('onclick') >= 0, 'handler must survive. Got: ' + result);
+    assert.ok(result.indexOf('funcGetById') >= 0, 'should emit the dispatch string');
   });
 });
 

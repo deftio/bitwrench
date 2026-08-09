@@ -171,7 +171,9 @@ run('npm run build');
 
 // ── 6. Commit ───────────────────────────────────────────────────────────
 
-run('git add package.json package-lock.json src/version.js library.properties library.json idf_component.yml dist');
+// dbg/build-metrics.jsonl is appended to by the build above and is tracked,
+// so omitting it leaves the branch dirty from its first commit.
+run('git add package.json package-lock.json src/version.js library.properties library.json idf_component.yml dist dbg');
 run(`git commit -m "start v${version}: ${featureName}"`);
 
 // ── Summary ──────────────────────────────────────────────────────────────

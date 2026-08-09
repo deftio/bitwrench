@@ -303,7 +303,7 @@ describe('Palette Derivation', function() {
 describe('Theme Generation', function() {
 
   describe('bw.makeStyles', function() {
-    it('should return { css, palette, alternateCss, alternateRules, alternatePalette, isLightPrimary }', function() {
+    it('should return { css, palette, layout, alternateCss, alternateRules, alternatePalette, isLightPrimary }', function() {
       const result = bw.makeStyles({
         primary: '#0077b6',
         secondary: '#90e0ef',
@@ -311,6 +311,12 @@ describe('Theme Generation', function() {
       });
       assert.ok('css' in result, 'should have css');
       assert.ok('palette' in result, 'should have palette');
+      assert.ok('layout' in result, 'should have layout');
+      assert.ok(result.layout.spacing, 'layout.spacing');
+      assert.ok(result.layout.radius, 'layout.radius');
+      assert.ok(result.layout.elevation, 'layout.elevation');
+      assert.ok(result.layout.motion, 'layout.motion');
+      assert.ok(result.layout.typeScale, 'layout.typeScale');
       assert.ok('alternateCss' in result, 'should have alternateCss');
       assert.ok('alternateRules' in result, 'should have alternateRules');
       assert.ok('alternatePalette' in result, 'should have alternatePalette');
@@ -857,8 +863,15 @@ describe('Structural Styles', function() {
       '.bw_spinner_border', '.bw_vstack', '.bw_hstack',
       '.bw_bccl_form_check', '.bw_close'
     ];
+    // A rule key may be a group such as '.bw_bccl_container, .bw_container',
+    // so match the individual selectors rather than the whole key.
+    const declared = Object.keys(rules).reduce(function(set, key) {
+      key.split(',').forEach(function(one) { set[one.trim()] = true; });
+      return set;
+    }, {});
+
     expectedSelectors.forEach(function(sel) {
-      assert.ok(sel in rules || (sel + ', ' + sel.replace(/\.bw-/g, '.bw_')) in rules,
+      assert.ok(declared[sel] === true,
         'structural should have selector: ' + sel);
     });
   });

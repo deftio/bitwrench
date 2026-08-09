@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>northstar-llm fixture — mounted listeners (intentional)</title>
+  <script src="../../dist/bitwrench.umd.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    // Planted anti-pattern: addEventListener inside o.mounted
+    bw.DOM('#app', {
+      t: 'div',
+      c: [
+        { t: 'button', c: 'Save' },
+        { t: 'input', c: '' }
+      ],
+      o: {
+        mounted: function (el) {
+          el.querySelector('button').addEventListener('click', function () {});
+          el.querySelector('input').addEventListener('input', function () {});
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -228,16 +228,21 @@ bw.mount('#app', {
 
 ### bw.create() -- detached elements
 
-Sometimes you need a DOM element before inserting it. `bw.create()` returns a detached DOM node:
+Sometimes you need a DOM element before inserting it. `bw.create()` returns a
+detached DOM node. It **hydrates** handles/slots/state but does **not** fire
+`o.mounted` — that happens in `mountTree`, which `bw.mount` / `bw.DOM` /
+`bw.append` / `bw.replace` call for you.
 
 ```js
 var el = bw.create({ t: 'div', c: 'Not in the page yet' });
 // el is an HTMLDivElement, but it is not attached to the document.
-// You can inspect it, modify it, then insert it manually.
-// In practice, prefer bw.mount('#target', taco) instead of manual insertion.
+// Prefer bw.mount / bw.append / bw.replace over create + appendChild —
+// raw appendChild skips mountTree, so o.mounted never runs.
 ```
 
-Use `bw.create()` when you need to manipulate the element before it goes into the page. For most cases, `bw.mount()` is simpler and handles lifecycle automatically.
+Use `bw.create()` when you need to inspect or tweak a node before a lifecycle
+insert. For almost everything else, `bw.mount()` / `bw.append()` is the right
+tool.
 
 ### bw.DOM() and bw.el()
 

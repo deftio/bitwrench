@@ -3,6 +3,131 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.6 (2026-08-08)
+
+Consistency release: plain markup works right with no class on it. Everything
+here answers the same complaint -- bitwrench sometimes did the right thing only
+if you knew to ask for it. A handler passed
+to `bw.html()` was dropped unless you also passed `{fns}`. A `<ul>` needed a
+class to undo damage the library's own reset had done. Three components emitted
+classes that styled nothing. A sortable table shipped a working sort handle that
+no click ever reached. Each was individually small and silent; together they
+made the library feel like it had opinions it had not told you about.
+
+The rule this release settles on: **plain markup should look right and work
+right with no class on it, and a class is how you ask for something other than
+the default -- never how you repair one.**
+
+### Fixed
+
+- **`create`+`appendChild` dogfooding footgun (post-v2.1.0 lifecycle).**
+  `bw.create()` hydrates but does not fire `o.mounted`; `mountTree` is what
+  `bw.mount` / `bw.DOM` / `bw.append` / `bw.replace` run. Demos and docs that
+  taught `parent.appendChild(bw.create(taco))` looked fine and silently skipped
+  lifecycle. Sweep for 2.1.6:
+  - `pages/14-bwserve-sandbox.html` — editor mount + protocol fallback now use
+    `bw.DOM` / `bw.append` / `bw.remove` (Run was a silent no-op)
+  - Toast demos on `pages/01-components.html` and `pages/index.html` → `bw.append`
+  - `pages/thinking-in-bitwrench.html` code blocks → `bw.replace`
+  - `pages/shared-nav.js`, `blog/blog-nav.js` → `bw.append`
+  - `examples/live-feed`, `examples/ember-and-oak` → `bw.append`
+  - Docs (`bwserve.md`, protocol page, lifecycle, thinking-in, llm-guide,
+    agents.md) now teach `bw.append` / warn against raw `appendChild`
+- **`bw.html()` dropped `on*` handlers.** Passing a function to an event
+  attribute produced HTML with no handler at all unless the caller also passed
+  `{fns}`; the only signal was a `bw:diag` message nobody was subscribed to.
+  This was the behaviour in 1.x and 2.0 -- auto-register and emit a dispatch
+  string, with `o.atrOnEventRegister: false` as the opt-out -- and v2.1.0
+  replaced it with a silent drop. Restored: `bw.html(taco)` now registers the
+  function and emits `onclick="bw.funcGetById('bw_fn_N')(event)"`, so the markup
+  carries a working handler with no binding pass to remember. It also survives a
+  clone or a re-insert, because there is no separate binding step to re-run.
+  `{fns}` is unchanged and remains the CSP-safe path -- handlers go into a
+  per-render object and the element gets a `bw_fn_N` class instead.
+  **Anyone server-rendering interactive markup on 2.1.0-2.1.5 was affected and
+  had no way to know.**
+- **`bw.html()` emitted camelCase style properties.** `{style: {paddingLeft:
+  '1rem'}}` serialised to `style="paddingLeft:1rem"`, which every browser
+  ignores. The DOM path via `bw.create()` was always correct, because assigning
+  `el.style.paddingLeft` does the conversion for you -- so this only ever showed
+  up in string output, where nothing complained. Properties are now hyphenated,
+  with custom properties (`--x`) and vendor prefixes (`WebkitTransform`) handled.
+- **`makeTable` sortable headers never responded to clicks.** The table shipped
+  a correct `el.bw.sort()` handle and header cells that looked clickable, and
+  nothing connected the two. Structure perfect, behaviour absent -- the failure
+  mode that motivated most of this release. Headers now dispatch to the table's
+  own handle.
+- **Three components emitted classes with no CSS rule**, so they rendered
+  structurally correct and completely unstyled: `makeBreadcrumb` (now
+  `bw_bccl_breadcrumb_list` / `bw_bccl_breadcrumb_item`, with real rules),
+  `makeSpinner` at the default size (emitted `bw_spinner_border-md` with a
+  hyphen, while the stylesheet has always used `_sm` / `_md` / `_lg`), and
+  `bw_container` (the documented short form of `bw_bccl_container`, which
+  existed in the docs but in no rule -- including inside all four responsive
+  breakpoints, so `bw_col_md_4` lost to `bw_col_12` and the grid never
+  responded).
+
+### CSS and the design system
+
+- **The reset now repairs what it breaks.** `* { padding: 0 }` left every `<ul>`
+  rendering its markers outside its own content box, overlapping whatever
+  contained it, and `hr { border: 0 }` left a bare `<hr>` occupying space and
+  painting nothing. Both are fixed where the reset lives, so plain HTML looks
+  right with no class. `hr` takes its colour from the palette.
+- **New prose classes** for elements the reset never touched and that simply
+  have no default opinion: `.bw_quote` and `.bw_code`. `.bw_list` and `.bw_hr`
+  also exist and now restate the default -- they are kept for compatibility and
+  are no longer necessary.
+- **`bw.makeStyles()` returns `layout`** alongside `palette`, so spacing and
+  radius tokens are reachable from JavaScript the same way colours are. Page CSS
+  can be a function of the design system rather than a string of hard-coded
+  values.
+- **drift-lint rejects `var(--bw_*)` in first-party docs and examples.** The
+  theming path is `styles.palette` / `styles.layout`, and CSS custom properties
+  named after bitwrench were teaching a path the library does not take. The rule
+  is scoped to first-party content -- your own CSS may use custom properties
+  freely.
+- `tools/build-readme.js` was rewritten to derive its CSS from the palette
+  instead of ten `var(--bw_*)` references, which is what surfaced the rule above.
+
+### Build and release integrity
+
+- **`tools/verify-sri.js`, wired into both `postbuild` and `posttest`.** It
+  asserts every hash in `dist/sri.json` matches the file on disk, that every
+  loadable artifact is covered, and that `dist/builds.json` agrees. This closes
+  a real gap: CI rebuilds the bundles before publishing, and nothing regenerated
+  or rechecked the manifest, so the published `sri.json` did not describe the
+  published JavaScript. `npm run build` now regenerates and verifies it in the
+  same pass. 53 files covered.
+- Builds are still not byte-reproducible -- the banner carries a full ISO
+  `buildDate`, so any rebuild changes every hash. That no longer affects SRI
+  correctness, since the manifest is regenerated from the same bytes it
+  describes. It does mean a local rebuild always shows a `dist/` diff.
+
+### Tests
+
+New suites covering the shapes of bug above, all of which passed the old suite:
+
+- **`bitwrench_test_bccl_contract.js`** -- which prop actually carries content
+  (`children` vs `content` vs `items` vs `tabs`), an audit that fails if any
+  factory emits a class with no CSS rule, and wiring tests that issue real
+  clicks and assert the DOM changed.
+- **`bitwrench_test_html_golden.js`** with a fixture file -- pins the exact
+  string `bw.html()` produces, which is where the camelCase style bug hid.
+- **`bitwrench_test_contract.js`** and **`bitwrench_test_contract_live.js`.**
+- **`bitwrench_test_semantic_html.js`** -- what plain markup is entitled to look
+  like without a class.
+
+3,145 unit tests plus 168 bundle tests. Coverage 97.78% statements, 98.63%
+branches.
+
+### Notes
+
+- `makeBreadcrumb`'s markup classes changed from `bw_breadcrumb` /
+  `bw_breadcrumb_item` to the `bw_bccl_` prefixed forms. Neither old name had a
+  CSS rule in any release, so nothing that relied on bitwrench's own styling
+  changes -- but hand-written CSS targeting the old names needs updating.
+
 ## v2.1.5 (2026-08-03)
 
 Release tooling and CI stabilization. No library source changes -- the API,

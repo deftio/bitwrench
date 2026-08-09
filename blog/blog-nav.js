@@ -223,9 +223,8 @@
       }
     }
 
-    var body = bw.$('body');
-    if (body.length) {
-      body[0].appendChild(bw.create({
+    if (bw.$('body').length) {
+      bw.append('body', {
         t: 'footer',
         a: { class: 'bw_site_pages_footer' },
         c: {
@@ -233,7 +232,7 @@
           a: { class: 'bw_site_pages_footer_text' },
           c: 'bitwrench\u2122 blog \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause'
         }
-      }));
+      });
     }
   }
 

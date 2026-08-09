@@ -1,6 +1,6 @@
 {
     "name": "bitwrench",
-    "version": "2.1.5",
+    "version": "2.1.6",
     "description": "Header-only C/C++ library for composing bwserve protocol messages (TACO UI nodes, patch, mount, batch) as relaxed JSON. Enables microcontrollers to serve bitwrench-powered web dashboards via SSE.",
     "keywords": [
         "bitwrench",

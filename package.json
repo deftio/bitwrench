@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.1.5",
+	"version": "2.1.6",
 	"description": "Zero-dependency JavaScript UI library. Describe UI as plain objects (TACO), render to DOM or HTML strings. Theming, components, pub/sub, server-driven UI (bwserve). No build step.",
 	"main": "./dist/bitwrench.cjs",
 	"repository": {
@@ -124,8 +124,8 @@
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_cli.js ./test/bitwrench_test_util_color.js ./test/bitwrench_test_uuid.js ./test/bitwrench_test_stable.js ./test/bitwrench_test_v2.js -r jsdom-global/register --exit && npm run test:bundles",
-		"posttest": "node tools/drift-lint.js",
+		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_cli.js ./test/bitwrench_test_bccl_contract.js ./test/bitwrench_test_semantic_html.js ./test/bitwrench_test_contract.js ./test/bitwrench_test_contract_live.js ./test/bitwrench_test_html_golden.js ./test/bitwrench_test_util_color.js ./test/bitwrench_test_uuid.js ./test/bitwrench_test_stable.js ./test/bitwrench_test_v2.js -r jsdom-global/register --exit && npm run test:bundles",
+		"posttest": "node tools/drift-lint.js && npm run verify-sri",
 		"test:bundles": "mocha ./test/bitwrench_test_bundles.js -r jsdom-global/register --exit",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
 		"test:attach": "mocha ./test/bitwrench_test_attach.js -r jsdom-global/register",
@@ -136,7 +136,8 @@
 		"clean": "rm -rf dist/* bitwrench*.tgz",
 		"lint": "./node_modules/.bin/eslint src/",
 		"lint:drift": "node tools/drift-lint.js",
-		"postbuild": "npm run lint:drift",
+		"review:northstar": "node tools/northstar-llm/cli.js",
+		"postbuild": "npm run lint:drift && npm run sri",
 		"serve": "node server.js",
 		"dev": "npm run build && npm run serve",
 		"instrument-bw": "echo 'deprecated: use c8 instead'",
@@ -160,11 +161,17 @@
 		"build:api-md": "node tools/build-api-markdown.js",
 		"build:builds": "node tools/build-builds-manifest.js",
 		"build:metrics": "node tools/build-metrics.cjs",
-		"build:generated": "npm run generate-sri && npm run build:builds && npm run build:readme && npm run build:api-reference && npm run build:api-md",
+		"build:generated": "npm run sri && npm run build:readme && npm run build:api-reference && npm run build:api-md",
 		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js",
 		"release": "node tools/release.js",
 		"release:dry": "node tools/release.js --dry-run",
-		"start-release": "node tools/start-release.js"
+		"start-release": "node tools/start-release.js",
+		"test:bccl": "mocha ./test/bitwrench_test_bccl_contract.js ./test/bitwrench_test_semantic_html.js -r jsdom-global/register --exit",
+		"sri": "npm run generate-sri && npm run build:builds && npm run verify-sri",
+		"verify-sri": "node tools/verify-sri.js",
+		"postbuild:css": "npm run sri",
+		"test:golden": "mocha ./test/bitwrench_test_html_golden.js -r jsdom-global/register --exit",
+		"test:contract": "mocha ./test/bitwrench_test_contract.js ./test/bitwrench_test_contract_live.js -r jsdom-global/register --exit"
 	},
 	"homepage": "https://deftio.github.io/bitwrench/pages",
 	"overrides": {

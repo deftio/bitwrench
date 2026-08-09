@@ -1,0 +1,179 @@
+{
+  "_readme": [
+    "Golden output for bitwrench's string-generating APIs.",
+    "",
+    "Each case is TACO in, exact HTML out. Not substring checks -- exact.",
+    "A substring check cannot see a removal, and that is precisely how the",
+    "v2.1.0 handler regression reached six releases: the guard on that API was",
+    "assert.ok(html.includes('bw_fn_0')), which is satisfied by BOTH",
+    "   <button onclick=\"bw.funcGetById('bw_fn_0')(event)\">x</button>",
+    "   <button class=\"bw_fn_0\">x</button>",
+    "so it passed while the handler quietly disappeared from the output.",
+    "",
+    "If a diff shows up here, that is the point. Read it and decide whether the",
+    "change was intended. Do not regenerate to make the suite green.",
+    "",
+    "To accept an intended change: UPDATE_GOLDEN=1 npm run test:golden",
+    "then commit the diff so it appears in review and in the release notes."
+  ],
+  "cases": [
+    {
+      "name": "text content is escaped by default",
+      "why": "Escaping is the default so that untrusted content cannot become markup. bw.raw() is the deliberate opt-out. If this ever emits live tags, that is an XSS hole, not a formatting change.",
+      "taco": {
+        "t": "p",
+        "c": "<script>alert(1)</script>"
+      },
+      "html": "<p>&lt;script&gt;alert(1)&lt;&#x2F;script&gt;</p>"
+    },
+    {
+      "name": "nesting and attributes",
+      "why": "The shape of TACO -> HTML. Arrays nest, a is attributes, c is content. This is the contract every generated page depends on.",
+      "taco": {
+        "t": "div",
+        "a": {
+          "class": "card"
+        },
+        "c": [
+          {
+            "t": "h2",
+            "c": "Title"
+          },
+          {
+            "t": "p",
+            "c": "Body"
+          }
+        ]
+      },
+      "html": "<div class=\"card\"><h2>Title</h2><p>Body</p></div>"
+    },
+    {
+      "name": "style object becomes a CSS string",
+      "why": "Styles are data. camelCase must convert to kebab-case -- browsers silently ignore camelCase in a style attribute, so getting this wrong fails invisibly (it did once; see commit 50a4555).",
+      "taco": {
+        "t": "li",
+        "a": {
+          "style": {
+            "color": "#006666",
+            "fontWeight": "600"
+          }
+        },
+        "c": "x"
+      },
+      "html": "<li style=\"color:#006666;font-weight:600\">x</li>"
+    },
+    {
+      "name": "boolean attribute",
+      "why": "true renders as a bare attribute, not =\"true\". false and null drop out entirely.",
+      "taco": {
+        "t": "input",
+        "a": {
+          "disabled": true,
+          "hidden": false
+        }
+      },
+      "html": "<input disabled />"
+    },
+    {
+      "name": "self-closing tag",
+      "why": "Void elements must not get a closing tag or the HTML parser produces a different tree than intended.",
+      "taco": {
+        "t": "img",
+        "a": {
+          "src": "a.png",
+          "alt": "a"
+        }
+      },
+      "html": "<img src=\"a.png\" alt=\"a\" />"
+    },
+    {
+      "name": "function handler auto-registers and emits a dispatch call",
+      "why": "THE north-star case for bw.html(). See test/bitwrench_test_html_page.js for the full argument. In short: bw.html(taco) -> HTML must be one call. A function in, a working handler out, no binding step. v2.1.0 replaced this with a silent drop unless the caller passed {fns}, which broke every bare bw.html() carrying a handler. If this line changes, you are changing that contract -- go read the WHY block in the test file before you touch it.",
+      "taco": {
+        "t": "button",
+        "a": {
+          "class": "bw_bccl_btn bw_primary"
+        },
+        "_onclick": "noop",
+        "c": "Click Me"
+      },
+      "html": "<button onclick=\"bw.funcGetById('bw_fn_0')(event)\" class=\"bw_bccl_btn bw_primary\">Click Me</button>"
+    },
+    {
+      "name": "string handler passes through escaped, no registry involved",
+      "why": "A string on* is the author's own inline JS. It is escaped but not registered -- only functions get the dispatch treatment.",
+      "taco": {
+        "t": "button",
+        "a": {
+          "onclick": "alert('hi')"
+        },
+        "c": "Click"
+      },
+      "html": "<button onclick=\"alert(&#39;hi&#39;)\">Click</button>"
+    },
+    {
+      "name": "fns registry emits a class marker and nothing executable",
+      "why": "The CSP-safe path, used by bw.htmlPage(). No on* attribute may appear here -- an inline handler violates a strict script-src, which is the whole reason this path exists. If an onclick shows up in this line, CSP output is broken.",
+      "taco": {
+        "t": "button",
+        "a": {},
+        "_onclick": "noop",
+        "_useFns": true,
+        "c": "Click"
+      },
+      "html": "<button class=\"bw_fn_0\">Click</button>"
+    }
+  ],
+  "pages": [
+    {
+      "name": "htmlPage skeleton with no runtime",
+      "why": "The document contract: doctype first, lang, charset, escaped title. Anything that changes this changes every standalone page and every embedded dashboard served from a device.",
+      "opts": {
+        "title": "My Page",
+        "runtime": "none"
+      },
+      "body": {
+        "t": "p",
+        "c": "hello"
+      },
+      "html": [
+        "<!DOCTYPE html>",
+        "<html lang=\"en\">",
+        "<head>",
+        "<meta charset=\"UTF-8\">",
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+        "<title>My Page</title>",
+        "</head>",
+        "<body>",
+        "<p>hello</p>",
+        "</body>",
+        "</html>"
+      ]
+    },
+    {
+      "name": "htmlPage escapes the title",
+      "why": "The title is the one place user text lands in <head>. Unescaped, it breaks out of the tag.",
+      "opts": {
+        "title": "a<b>c",
+        "runtime": "none"
+      },
+      "body": {
+        "t": "p",
+        "c": "x"
+      },
+      "html": [
+        "<!DOCTYPE html>",
+        "<html lang=\"en\">",
+        "<head>",
+        "<meta charset=\"UTF-8\">",
+        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
+        "<title>a&lt;b&gt;c</title>",
+        "</head>",
+        "<body>",
+        "<p>x</p>",
+        "</body>",
+        "</html>"
+      ]
+    }
+  ]
+}

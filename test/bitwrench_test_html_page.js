@@ -13,12 +13,63 @@ describe("bw.html() function serialization", function() {
     bw._fnIDCounter = 0;
   });
 
+  // ---- Default path: no {fns} ------------------------------------------
+  //
+  // bw.html(taco) must produce HTML whose handler fires, with no binding pass
+  // for the caller to remember. This is how 1.x and 2.0.x behaved; 1.x even
+  // shipped an opt-out (o.atrOnEventRegister:false) rather than making it
+  // opt-in. v2.1.0 replaced it with a silent drop unless {fns} was passed,
+  // which quietly broke every bare bw.html() carrying a handler -- including
+  // the demo on pages/15-html-generation.html. These tests pin the default so
+  // it cannot regress silently again.
+
+  it("should auto-register a function handler when no fns registry is given", function() {
+    var called = 0;
+    var html = bw.html({ t: 'button', a: { onclick: function() { called++; } }, c: 'Click' });
+
+    assert.ok(html.includes('onclick="'), 'should emit an inline on* attribute');
+    assert.ok(html.includes("bw.funcGetById('bw_fn_0')(event)"),
+      'should emit the dispatch string. Got: ' + html);
+
+    // The function is reachable and callable through the global registry --
+    // this is what makes the emitted HTML work with no binding step.
+    var resolved = bw.funcGetById('bw_fn_0');
+    assert.strictEqual(typeof resolved, 'function');
+    resolved();
+    assert.strictEqual(called, 1, 'dispatch should reach the original function');
+  });
+
+  it("should not silently drop handlers when no fns registry is given", function() {
+    // The specific 2.1.0 regression: handler vanished, nothing thrown, nothing
+    // logged -- only a bw:diag nobody listens to.
+    var html = bw.html({ t: 'button', a: { onclick: function() {} }, c: 'Click' });
+    assert.ok(/onclick=|bw_fn_/.test(html),
+      'a handler must leave some trace in the output. Got: ' + html);
+  });
+
+  it("should auto-register bound functions, which the fns path cannot serialize", function() {
+    // The global registry holds a live reference, so there is nothing to
+    // stringify and bound/native functions work. {fns} has to reject them.
+    var bound = (function() { return this.n; }).bind({ n: 7 });
+
+    var auto = bw.html({ t: 'b', a: { onclick: bound }, c: 'x' });
+    assert.ok(auto.includes('funcGetById'), 'auto path should handle a bound fn');
+
+    var fns = {};
+    bw.html({ t: 'b', a: { onclick: bound }, c: 'x' }, { fns: fns });
+    assert.strictEqual(Object.keys(fns).length, 0, 'fns path should reject a bound fn');
+  });
+
+  // ---- Opt-in path: {fns} ----------------------------------------------
+
   it("should serialize function onclick via fns registry", function() {
     var fn = function() { alert('hi'); };
     var fns = {};
     var html = bw.html({ t: 'button', a: { onclick: fn }, c: 'Click' }, { fns: fns, _fnCounter: 0 });
-    // v2.1: function attrs emit bw_fn_* class token, not inline onclick
+    // With {fns}, nothing executable goes in the markup -- a bw_fn_* class
+    // token instead, which the caller binds. bw.htmlPage() emits that binder.
     assert.ok(html.includes("bw_fn_0"));
+    assert.ok(!html.includes('onclick='), 'no inline handler, so output is CSP-safe');
     assert.ok(fns['bw_fn_0'], 'function should be registered in fns');
     assert.strictEqual(fns['bw_fn_0'].event, 'click');
   });

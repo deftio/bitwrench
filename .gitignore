@@ -39,4 +39,22 @@ CLAUDE.md
 .env.test.local
 .env.production.local
 
+# northstar-llm audit artifacts (model-specific, noisy)
+dbg/northstar-llm/
+
 .DS_Store
+# Desktop-testing copy of the library for the CircuitPython examples
+examples/circuitpython/www/
+examples/circuitpython/.venv-desktop/
+
+# Output of `python3 mcp_agent.py`. The README lists these under "Output
+# Files", and its directory listing shows only the script and the README --
+# a committed copy contradicts that. build_page inlines dist/bitwrench.umd.min.js,
+# so any checked-in copy pins one build and is stale after the next rebuild.
+examples/mcp-agent/dashboard.html
+examples/mcp-agent/dashboard.png
+# ...and the same outputs at the repo root, because the README's second
+# invocation (`python3 examples/mcp-agent/mcp_agent.py`) runs from there and
+# the script writes to os.getcwd().
+/dashboard.html
+/dashboard.png

@@ -29,9 +29,9 @@ you are doing it wrong. Read the patterns below.
 ## Lifecycle
 
 1. **Define** -- write a TACO object: `{t, a, c, o}`
-2. **Create** -- `bw.create(taco)` builds a real DOM element
+2. **Create** -- `bw.create(taco)` builds a real DOM element (hydrates; does not fire `o.mounted`)
 3. **Hydrate** -- handles attach to `el.bw`, slots wire getters/setters, UUID assigned, state initialized
-4. **Mount** -- element inserted into document; `o.mounted(el)` fires
+4. **Mount** -- `bw.mount` / `bw.DOM` / `bw.append` / `bw.replace` insert and run `mountTree`; `o.mounted(el)` fires. Never `parent.appendChild(bw.create(taco))` for lifecycle components.
 5. **Interact** -- external code calls `el.bw.method()` -- the component updates its own DOM
 6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)`, tears down subscriptions, removes element
 
@@ -163,19 +163,25 @@ should reference palette values, not hardcoded colors.
 bw.injectCSS('.sidebar { background: #f5f5f5; border-right: 1px solid #ddd; }');
 bw.injectCSS('.header { color: #333; font-size: 1.25rem; }');
 
+// drift-lint:ignore-start: counter-example of CSS custom properties as theming path
 // WRONG -- CSS custom properties (bitwrench does not use var(--bw_*))
 bw.injectCSS('.card { background: var(--bw_surface); }');
+// drift-lint:ignore-end
 
-// RIGHT -- CSS as a function of the palette
+// RIGHT -- CSS as a function of the palette + layout tokens
 var p = styles.palette;
+var L = styles.layout;
 bw.injectCSS(bw.css({
   '.sidebar': {
     background: p.surfaceAlt,
-    'border-right': '1px solid ' + p.light.border
+    'border-right': '1px solid ' + p.light.border,
+    padding: L.spacing.card
   },
   '.header': {
     color: p.dark.base,
-    'font-size': '1.25rem'
+    'font-size': L.typeScale.xl + 'px',
+    'border-radius': L.radius.card,
+    'box-shadow': L.elevation.sm
   }
 }));
 ```
@@ -184,6 +190,9 @@ The palette provides: primary, secondary, tertiary, success, danger,
 warning, info, light, dark (each an object with .base, .hover, .active,
 .light, .darkText, .border, .focus, .textOn). Also surface, surfaceAlt,
 background (plain strings -- NOT objects, do not access .base on them).
+
+`styles.layout` provides spacing, radius, typeScale, elevation, and motion
+tokens resolved from the same `loadStyles` / `makeStyles` config.
 
 For dark mode, call `bw.toggleThemeMode()`. Do not write `.bw_theme_alt`
 CSS overrides or `.dark` class selectors.
@@ -321,7 +330,8 @@ npm run cleanbuild     # Full build + SRI hashes + README
 |----------|---------|-------------|
 | bw.DOM(sel, taco) | void | Mount into existing container |
 | bw.mount(sel, taco) | root element | Need el.bw handle/slot access after mount |
-| bw.create(taco) | detached element | Build element before inserting into DOM |
+| bw.create(taco) | detached element | Build/hydrate before inserting (does not fire `o.mounted`) |
+| bw.append(target, taco) | new child element | Add child + `mountTree` (prefer over create+appendChild) |
 | bw.html(taco) | HTML string | SSR, emails, Node.js, CLI output |
 | bw.h(tag, a?, c?, o?) | TACO object | Shorthand TACO constructor |
 

@@ -613,6 +613,22 @@ function generateResetThemed(scope, palette) {
   return rules;
 }
 
+function generateProseThemed(scope, palette) {
+  var rules = {};
+  // Bare hr draws a rule now (see structuralRules.base), so it needs the
+  // palette colour too -- otherwise it falls back to the UA's grey currentColor.
+  rules[_sx(scope, 'hr, .bw_hr')] = { 'border-top-color': palette.light.border };
+  rules[_sx(scope, '.bw_quote')] = {
+    'border-left-color': palette.primary.base,
+    'color': palette.dark.base
+  };
+  rules[_sx(scope, '.bw_code')] = {
+    'background-color': palette.surfaceAlt,
+    'color': palette.danger.darkText
+  };
+  return rules;
+}
+
 function generateBreadcrumbThemed(scope, palette, layout) {
   var rules = {}, mo = layout.motion;
   rules[_sx(scope, '.bw_bccl_breadcrumb')] = {
@@ -1164,6 +1180,7 @@ export function generateThemedCSS(scopeName, palette, layout) {
     generateListGroups(scopeName, palette, layout),
     generatePagination(scopeName, palette, layout),
     generateProgress(scopeName, palette, layout),
+    generateProseThemed(scopeName, palette),
     generateBreadcrumbThemed(scopeName, palette, layout),
     generateCloseButtonThemed(scopeName, palette),
     generateSectionsThemed(scopeName, palette),
@@ -1226,6 +1243,16 @@ var structuralRules = {
   // ---- Reset ----
   base: {
     '*': { 'box-sizing': 'border-box', 'margin': '0', 'padding': '0' },
+
+    // The reset above zeroes padding on everything, which leaves a list with
+    // list-style-position: outside rendering its markers to the LEFT of its own
+    // content box -- overlapping whatever contains it. Put the indent back here
+    // rather than in a class, so the reset replaces what it destroys instead of
+    // leaving the damage for an opt-in to repair. 1em lands the marker on the
+    // body-text edge, so a list lines up with the paragraphs around it.
+    'ul, ol': { 'padding-left': '1em', 'margin-bottom': '1rem' },
+    'ul ul, ul ol, ol ol, ol ul': { 'margin-bottom': '0' },
+
     'html': {
       'font-size': '16px', 'line-height': '1.5',
       '-webkit-text-size-adjust': '100%',
@@ -1242,7 +1269,14 @@ var structuralRules = {
     '.bw_page': { 'min-height': '100vh', 'display': 'flex', 'flex-direction': 'column' },
     '.bw_page_content': { 'flex': '1', 'padding': '2rem 0' },
     'main': { 'display': 'block' },
-    'hr': { 'box-sizing': 'content-box', 'height': '0', 'overflow': 'visible', 'margin': '1rem 0', 'border': '0' },
+    // border: 0 is a normalize-style reset that expects a border added back.
+    // Without the two longhands below, a bare <hr> is 1px tall with no border
+    // and no background -- it occupies space and paints nothing. The longhands
+    // follow the shorthand so they win; colour comes from generateProseThemed.
+    'hr': {
+      'box-sizing': 'content-box', 'height': '0', 'overflow': 'visible', 'margin': '1rem 0',
+      'border': '0', 'border-top-width': '1px', 'border-top-style': 'solid'
+    },
     'hr:not([size])': { 'height': '1px' }
   },
 
@@ -1259,6 +1293,26 @@ var structuralRules = {
     'h5': { 'font-size': '1.25rem' },
     'h6': { 'font-size': '1rem' },
     'p': { 'margin-top': '0', 'margin-bottom': '1rem' },
+
+    // ---- Prose elements ----
+    // ul/ol and hr are repaired in structuralRules.base, where the reset that
+    // broke them lives -- these two classes are kept for compatibility and now
+    // just restate the default. .bw_quote and .bw_code are different: the reset
+    // never touched them, they simply have no opinion, so they stay opt-in.
+    '.bw_list': { 'padding-left': '1em', 'margin-bottom': '1rem' },
+    '.bw_list .bw_list': { 'margin-bottom': '0' },
+    '.bw_hr': {
+      'height': '0', 'margin': '1.5rem 0',
+      'border': '0', 'border-top-width': '1px', 'border-top-style': 'solid'
+    },
+    '.bw_quote': {
+      'margin': '0 0 1rem', 'padding': '0.5rem 0 0.5rem 1rem',
+      'border-left-width': '3px', 'border-left-style': 'solid'
+    },
+    '.bw_code': {
+      'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+      'font-size': '0.875em', 'padding': '0.15em 0.4em', 'border-radius': '4px'
+    },
     'small': { 'font-size': '0.875rem' },
     'a': { 'text-decoration': 'none' },
     '.bw_display_4': { 'font-size': 'calc(1.475rem + 2.7vw)', 'font-weight': '300', 'line-height': '1.2' },
@@ -1269,14 +1323,14 @@ var structuralRules = {
 
   // ---- Grid ----
   grid: {
-    '.bw_bccl_container': {
+    '.bw_bccl_container, .bw_container': {
       'width': '100%', 'padding-right': '0.75rem', 'padding-left': '0.75rem',
       'margin-right': 'auto', 'margin-left': 'auto'
     },
-    '@media (min-width: 576px)': { '.bw_bccl_container': { 'max-width': '540px' } },
-    '@media (min-width: 768px)': { '.bw_bccl_container': { 'max-width': '720px' } },
-    '@media (min-width: 992px)': { '.bw_bccl_container': { 'max-width': '960px' } },
-    '@media (min-width: 1200px)': { '.bw_bccl_container': { 'max-width': '1140px' } },
+    '@media (min-width: 576px)': { '.bw_bccl_container, .bw_container': { 'max-width': '540px' } },
+    '@media (min-width: 768px)': { '.bw_bccl_container, .bw_container': { 'max-width': '720px' } },
+    '@media (min-width: 992px)': { '.bw_bccl_container, .bw_container': { 'max-width': '960px' } },
+    '@media (min-width: 1200px)': { '.bw_bccl_container, .bw_container': { 'max-width': '1140px' } },
     '.bw_bccl_container_fluid': {
       'width': '100%', 'padding-right': '0.75rem', 'padding-left': '0.75rem',
       'margin-right': 'auto', 'margin-left': 'auto'
@@ -1510,6 +1564,12 @@ var structuralRules = {
   // ---- Breadcrumb ----
   breadcrumb: {
     '.bw_bccl_breadcrumb': { 'display': 'flex', 'flex-wrap': 'wrap', 'padding': '0 0', 'margin-bottom': '1rem', 'list-style': 'none' },
+    // The <ol> inside the <nav>. Without this it renders as a numbered list,
+    // because the flex/list-style rules above land on the wrapping <nav>.
+    '.bw_bccl_breadcrumb_list': {
+      'display': 'flex', 'flex-wrap': 'wrap', 'list-style': 'none',
+      'margin': '0', 'padding': '0'
+    },
     '.bw_bccl_breadcrumb_item': { 'display': 'flex' },
     '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item': { 'padding-left': '0.5rem' },
     '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item::before': { 'float': 'left', 'padding-right': '0.5rem', 'content': '"/"' },
@@ -1561,7 +1621,7 @@ var structuralRules = {
     },
     '.bw_spinner_border_sm': { 'width': '1rem', 'height': '1rem', 'border-width': '0.2em' },
     '.bw_spinner_border_lg': { 'width': '3rem', 'height': '3rem', 'border-width': '0.3em' },
-    '.bw_spinner_border_md': {},
+    '.bw_spinner_border_md': { 'width': '2rem', 'height': '2rem', 'border-width': '0.25em' },
     '.bw_spinner_grow': {
       'display': 'inline-block', 'width': '2rem', 'height': '2rem',
       'vertical-align': '-0.125em', 'border-radius': '50%', 'opacity': '0',

@@ -40,7 +40,13 @@ All of the following must pass before opening a PR:
 - [ ] **CLI tests**: `npm run test:cli` — all tests passing.
 - [ ] **Test coverage**: 100% of new code covered. Overall coverage must not decrease.
 - [ ] **Build**: `npm run build` succeeds without errors.
-- [ ] **Bundle size**: Verify gzipped UMD min stays under 45KB budget.
+- [ ] **Bundle size**: Verify gzipped UMD min stays under the 45KB budget.
+      The gate measures the `.gz` the build writes (level 9), not a
+      re-compression of the `.js`. If a size number looks wrong, check the
+      compression level before anything else — see
+      [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md), which
+      records the measurement rules and the optimizations already tried and
+      rejected.
 
 ### 5. Open Pull Request
 

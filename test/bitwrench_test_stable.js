@@ -210,6 +210,56 @@ describe("Table Functions", function() {
       assert.strictEqual((html.match(/<td/g) || []).length, 4, "two body rows of two cells");
     });
   });
+
+  // Regression: makeTable({sortable:true}) rendered headers that looked
+  // clickable and shipped a working o.handle.sort, but nothing wired a click
+  // to it -- so click-to-sort silently did nothing despite being documented.
+  describe("#makeTable() click-to-sort", function() {
+    function mountTable() {
+      document.body.innerHTML = '<div id="sort-host"></div>';
+      bw.DOM('#sort-host', bw.makeTable({
+        data: [{ pin: 'D0' }, { pin: 'D1' }, { pin: 'A0' }],
+        columns: [{ key: 'pin', label: 'Pin' }]
+      }));
+      return function cells() {
+        return Array.prototype.map.call(
+          document.querySelectorAll('#sort-host tbody td'),
+          function (td) { return td.textContent; }
+        );
+      };
+    }
+
+    it("should sort ascending then descending on repeated clicks", function() {
+      const cells = mountTable();
+      assert.deepStrictEqual(cells(), ["D0", "D1", "A0"], "unsorted to begin with");
+
+      document.querySelector('#sort-host th').click();
+      assert.deepStrictEqual(cells(), ["A0", "D0", "D1"], "first click sorts ascending");
+      assert.strictEqual(
+        document.querySelector('#sort-host th').getAttribute('aria-sort'), "ascending");
+
+      document.querySelector('#sort-host th').click();
+      assert.deepStrictEqual(cells(), ["D1", "D0", "A0"], "second click reverses");
+      assert.strictEqual(
+        document.querySelector('#sort-host th').getAttribute('aria-sort'), "descending");
+    });
+
+    it("should leave row order alone when sortable is false", function() {
+      document.body.innerHTML = '<div id="nosort-host"></div>';
+      bw.DOM('#nosort-host', bw.makeTable({
+        data: [{ pin: 'D0' }, { pin: 'D1' }, { pin: 'A0' }],
+        columns: [{ key: 'pin', label: 'Pin' }],
+        sortable: false
+      }));
+      const order = () => Array.prototype.map.call(
+        document.querySelectorAll('#nosort-host tbody td'), td => td.textContent);
+
+      assert.deepStrictEqual(order(), ["D0", "D1", "A0"]);
+      document.querySelector('#nosort-host th').click();
+      assert.deepStrictEqual(order(), ["D0", "D1", "A0"],
+        "a non-sortable header must not reorder rows");
+    });
+  });
 });
 
 // ================================================================

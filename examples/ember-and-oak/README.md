@@ -9,7 +9,7 @@ A full-page e-commerce landing built entirely with bitwrench — the most compre
 - `bw.loadStyles({ primary: '#8B4513', ... })` with warm brown/chocolate palette
 - `bw.makeBarChart()`, `bw.makeTimeline()`, `bw.makeAccordion()`, `bw.makeTable()`
 - `bw.makeSearchInput()` with live filter pattern
-- `bw.create()` for toast append pattern (transient UI)
+- `bw.append()` for toast append pattern (transient UI; fires mountTree)
 - `bw.makeStatCard()`, `bw.makeFeatureGrid()`, `bw.makeCodeDemo()`
 - Static TACOs, `o.mounted` components, and `o.handle`/`o.slots` components working side by side
 - 27 BCCL components used in a single page
@@ -55,5 +55,5 @@ The page is organized as a sequence of TACO sections mounted via a single `bw.DO
 1. **Pub/sub cart**: `cartAdd()` publishes `cart:updated` → navbar component subscribes and updates badge count automatically
 2. **Component handles**: `o.slots` auto-generates setter/getter methods on `el.bw`
 3. **Filter pattern**: `renderCoffeeSection()` re-renders the product grid based on search text and selected filter
-4. **Toast append**: `bw.create()` creates transient notifications that auto-dismiss after 3.5 seconds
+4. **Toast append**: `bw.append()` mounts transient notifications that auto-dismiss after 3.5 seconds
 5. **Theme tokens**: All colors derived from 3 seed hex values via `bw.loadStyles()`

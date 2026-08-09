@@ -1,0 +1,59 @@
+{
+  "providers": {
+    "default": "ollama",
+    "ollama": {
+      "baseUrl": "http://127.0.0.1:11434/v1",
+      "model": "gemma4:31b-mxfp8",
+      "apiKeyEnv": null,
+      "thinking": false,
+      "numCtx": 100000
+    },
+    "lmstudio": {
+      "baseUrl": "http://127.0.0.1:1234/v1",
+      "model": "gemma-4-31b",
+      "apiKeyEnv": null,
+      "thinking": false,
+      "numCtx": 100000
+    },
+    "openrouter": {
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "model": "google/gemma-4-31b",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
+      "thinking": false,
+      "numCtx": 100000
+    }
+  },
+  "scan": {
+    "include": [
+      "docs/**/*.md",
+      "pages/**/*.{html,js}",
+      "examples/**/*.{html,js}",
+      "agents.md",
+      "llms.txt"
+    ],
+    "exclude": [
+      "dev/**",
+      "**/node_modules/**",
+      "**/dist/**",
+      "pages/07-framework-comparison.html",
+      "examples/circuitpython/.venv-desktop/**",
+      "examples/circuitpython/www/**"
+    ]
+  },
+  "rubric": {
+    "sourceDocs": [
+      "docs/bitwrench-northstar-principles.md",
+      "agents.md"
+    ],
+    "checksPath": "tools/northstar-llm/rules"
+  },
+  "run": {
+    "concurrency": 1,
+    "maxFindingsPerFile": 12,
+    "outDir": "dbg/northstar-llm",
+    "maxFileBytes": 200000,
+    "maxChunkChars": 60000,
+    "temperature": 0.2,
+    "timeoutMs": 600000
+  }
+}

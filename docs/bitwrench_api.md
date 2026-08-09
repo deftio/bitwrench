@@ -4,12 +4,12 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.5 |
-| Generated | 2026-08-04 |
+| Version | 2.1.6 |
+| Generated | 2026-08-09 |
 | Total APIs | 112 |
 | Categories | 14 |
-| bitwrench.js | 5119 lines |
-| bitwrench-bccl.js | 3954 lines |
+| bitwrench.js | 5189 lines |
+| bitwrench-bccl.js | 3960 lines |
 
 ## Table of Contents
 
@@ -108,7 +108,7 @@ bw.raw('Hello &mdash; World') // Used in TACO content: { t: 'p', c: bw.raw('Pric
 
 ### `bw.html(taco, options = {})`
 
-Convert a TACO object (or array of TACOs) to an HTML string. This is the core rendering function — it works in both Node.js and browsers. Use it for server-side rendering, static site generation, or generating HTML snippets. Content is HTML-escaped by default; pass `{ raw: true }` to insert raw HTML.
+Convert a TACO object (or array of TACOs) to an HTML string. This is the core rendering function — it works in both Node.js and browsers. Use it for server-side rendering, static site generation, or generating HTML snippets. Content is HTML-escaped by default; pass `{ raw: true }` to insert raw HTML. **Event handlers.** Give an `on*` attribute a function and it is registered with `bw.funcRegister` automatically; the attribute becomes a `bw.funcGetById('bw_fn_N')(event)` dispatch call. The string therefore carries a working handler with no binding step — it fires as soon as the HTML is in the document, however it got there, and still works after a clone or re-insert. The registry holds a live reference, so closures and bound functions are fine. Pass `options.fns` when the output must satisfy a strict CSP: handlers go into that per-render object and the element gets a `bw_fn_N` class instead of an inline attribute, leaving nothing executable in the markup. You bind them yourself; `bw.htmlPage` takes this path and emits the binder. Note that auto-registered handlers persist in the global registry for the life of the process — see `bw.funcUnregister`. This is not a concern for live UI, which uses `bw.create` and attaches real listeners without touching the registry.
 
 **Parameters:**
 
@@ -117,12 +117,13 @@ Convert a TACO object (or array of TACOs) to an HTML string. This is the core re
 | `taco` | `Object|Array|string` | - TACO object, array of TACOs, or string |
 | `options` | `Object` | - Rendering options |
 | `options.raw` | `boolean` | - If true, skip HTML escaping on content |
+| `options.fns` | `Object` | - Per-render handler registry. When supplied, `on*` functions are collected here as `{id: {fn, event}}` and emitted as a `bw_fn_N` class rather than an inline attribute (CSP-safe). Omit it for the auto-registered dispatch-string form. |
 
 **Returns:** `string` — string
 
 **Example:**
 ```javascript
-bw.html({ t: 'h1', c: 'Hello' }) // => '<h1>Hello</h1>' bw.html({ t: 'div', a: { class: 'card' }, c: [ { t: 'p', c: 'Content here' } ]}) // => '<div class="card"><p>Content here</p></div>'
+bw.html({ t: 'h1', c: 'Hello' }) // => '<h1>Hello</h1>' bw.html({ t: 'div', a: { class: 'card' }, c: [ { t: 'p', c: 'Content here' } ]}) // => '<div class="card"><p>Content here</p></div>' // Handlers just work — nothing to wire up afterwards bw.html({ t: 'button', a: { onclick: function() { alert('hi'); } }, c: 'Go' }) // => '<button onclick="bw.funcGetById(\'bw_fn_0\')(event)">Go</button>' // CSP-safe variant: no inline handler, you bind the class yourself var fns = {}; bw.html({ t: 'button', a: { onclick: function() {} }, c: 'Go' }, { fns: fns }) // => '<button class="bw_fn_0">Go</button>'   fns = { bw_fn_0: {fn, event:'click'} }
 ```
 
 ---

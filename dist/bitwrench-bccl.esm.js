@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.1.5 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-bccl v2.1.6 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * Bitwrench v2 Components
  *
@@ -897,11 +897,14 @@ function makeBreadcrumb(props = {}) {
     a: { 'aria-label': 'breadcrumb', class: 'bw_bccl_breadcrumb' },
     c: {
       t: 'ol',
-      a: { class: 'bw_breadcrumb' },
+      // These carried bw_breadcrumb / bw_breadcrumb_item, but the stylesheet
+      // only ever defined .bw_bccl_breadcrumb_item -- so the separators and
+      // link colours never applied, and the list kept its default numbering.
+      a: { class: 'bw_bccl_breadcrumb_list' },
       c: items.map((item, _index) => ({
         t: 'li',
         a: {
-          class: `bw_breadcrumb_item ${item.active ? 'active' : ''}`,
+          class: `bw_bccl_breadcrumb_item ${item.active ? 'active' : ''}`,
           'aria-current': item.active ? 'page' : undefined
         },
         c: item.active ? item.text : {
@@ -1414,7 +1417,10 @@ function makeSpinner(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_bccl_spinner bw_spinner_${type} bw_spinner_${type}-${size} ${variantClass(variant)}`,
+      // Size suffix is underscore-separated like every other bw_ class. It was
+      // `-${size}`, which never matched the generated .bw_spinner_border_md /
+      // _sm / _lg rules, so the size prop had no effect.
+      class: `bw_bccl_spinner bw_spinner_${type} bw_spinner_${type}_${size} ${variantClass(variant)}`,
       role: 'status'
     },
     c: {

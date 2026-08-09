@@ -361,6 +361,8 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.
 
+Every release is gated at 45KB gzipped for the UMD build, measured against the pre-compressed `.gz` that ships. If you are working on bundle size, [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output *larger*), and where the remaining headroom is.
+
 ## Documentation
 
 **Start here:**

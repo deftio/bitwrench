@@ -89,6 +89,12 @@ After this call, `node` is a **detached** DOM element:
 
 You rarely call `bw.create()` directly — this is shown for understanding.
 
+**Anti-pattern (broken since v2.1.0):** `parent.appendChild(bw.create(taco))`
+skips `mountTree`, so `o.mounted` never runs. Components that wire behavior in
+`mounted` (code editor API, toast auto-dismiss, modal ESC, carousel keys, …)
+will look fine and silently fail. Use `bw.append(parent, taco)`,
+`bw.DOM(parent, taco)`, or `bw.replace(el, taco)` instead.
+
 ---
 
 ## Phase 4: Mount

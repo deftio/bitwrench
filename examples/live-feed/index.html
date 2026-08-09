@@ -15,7 +15,7 @@
     //
     // Demonstrates:
     //   - Manual render with bw.DOM() re-render on filter change
-    //   - bw.create() + appendChild for appending items into container
+    //   - bw.append(..., { before: 0 }) for prepending items into container
     //   - bw.unmount() for removing old items
     //   - bw.css({ '@keyframes slideIn': {...} }) for entry animation
     //   - bw.patch() for updating counters without full re-render
@@ -223,12 +223,11 @@
         feedItems.unshift(item);
         counts[type]++;
 
-        // Append new item into the visible feed via bw.create
+        // Prepend new item via bw.append (create + insert + mountTree)
         if (activeFilter === 'all' || activeFilter === type) {
           var listEl = bw.$('#feed-list')[0];
           if (listEl) {
-            var domItem = bw.create(makeFeedItem(item));
-            listEl.insertBefore(domItem, listEl.firstChild);
+            bw.append(listEl, makeFeedItem(item), { before: 0 });
           }
         }
 

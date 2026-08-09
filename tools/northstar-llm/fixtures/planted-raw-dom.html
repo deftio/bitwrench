@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>northstar-llm fixture — raw DOM (intentional)</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    // Planted anti-pattern for selftest: raw DOM instead of TACO / bw.DOM
+    document.getElementById('app').innerHTML = '<div class="card"><h2>Title</h2></div>';
+    var el = document.querySelector('.card');
+    el.style.background = '#f5f5f5';
+  </script>
+</body>
+</html>

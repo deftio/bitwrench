@@ -16,6 +16,7 @@ These guides cover how to build UIs with bitwrench.
 | How do I use bwmcp with an AI agent? | [bwmcp MCP Server](bitwrench-mcp.md) |
 | How do I use TypeScript? | [TypeScript Usage Guide](bitwrench_typescript_usage.md) |
 | Full API with signatures? | [API Reference](bitwrench_api.md) |
+| Why doesn't bitwrench do X? | [Future Options](bitwrench-future-options.md) |
 
 ## Start Here
 

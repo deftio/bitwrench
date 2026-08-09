@@ -348,6 +348,19 @@ var RULES = [
       /['"`].*addEventListener.*['"`]/,  // quoted demo/comparison code strings
       /window\.addEventListener|document\.addEventListener/  // page-level listeners are fine
     ]
+  },
+  {
+    // bitwrench's design system uses palette/layout JS tokens, not var(--bw_*).
+    // User CSS may use platform custom properties, but first-party docs/examples
+    // must not teach var(--bw_*) as the theming path.
+    id: 'css-var-bw',
+    pattern: /var\(--bw[_-]/g,
+    message: 'var(--bw_*) → styles.palette / styles.layout tokens (or .bw_bg_* / .bw_text_* classes)',
+    contextExclude: [
+      /does not use var\(--bw|no var\(--bw|never.*var\(--bw|not use var\(--bw|not var\(--bw/i,
+      /WRONG|wrong --|anti-pattern|do not|don't use/i,
+      /→ styles\.palette|→ .*palette/  // migration messages naming the old form
+    ]
   }
 ];
 

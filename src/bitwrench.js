@@ -176,6 +176,13 @@ var _isA  = Array.isArray;
 var _keys = Object.keys;
 var _to   = _typeOf;  // imported from bitwrench-utils.js
 var _is   = function(x, t) { var r = _to(x); return r === t || r.toLowerCase() === t; };
+// camelCase -> hyphenated CSS property name. Vendor-prefixed keys keep their
+// leading dash (WebkitTransform -> -webkit-transform).
+var _cssProp = function(k) {
+  if (k.indexOf('--') === 0) return k;               // custom property, leave alone
+  var out = k.replace(/[A-Z]/g, function(c) { return '-' + c.toLowerCase(); });
+  return out;
+};
 // Console aliases use thin wrappers (not direct references) so that test
 // code can monkey-patch console.warn/log/error and the patches take effect.
 var _cw   = function() { console.warn.apply(console, arguments); };
@@ -661,13 +668,37 @@ bw.h = function(tag, attrs, content, options) {
  * HTML snippets. Content is HTML-escaped by default; pass `{ raw: true }`
  * to insert raw HTML.
  *
+ * **Event handlers.** Give an `on*` attribute a function and it is registered
+ * with `bw.funcRegister` automatically; the attribute becomes a
+ * `bw.funcGetById('bw_fn_N')(event)` dispatch call. The string therefore
+ * carries a working handler with no binding step — it fires as soon as the
+ * HTML is in the document, however it got there, and still works after a
+ * clone or re-insert. The registry holds a live reference, so closures and
+ * bound functions are fine.
+ *
+ * Pass `options.fns` when the output must satisfy a strict CSP: handlers go
+ * into that per-render object and the element gets a `bw_fn_N` class instead
+ * of an inline attribute, leaving nothing executable in the markup. You bind
+ * them yourself; `bw.htmlPage` takes this path and emits the binder.
+ *
+ * Note that auto-registered handlers persist in the global registry for the
+ * life of the process — see `bw.funcUnregister`. This is not a concern
+ * for live UI, which uses `bw.create` and attaches real listeners
+ * without touching the registry.
+ *
  * @param {Object|Array|string} taco - TACO object, array of TACOs, or string
  * @param {Object} [options] - Rendering options
  * @param {boolean} [options.raw=false] - If true, skip HTML escaping on content
+ * @param {Object} [options.fns] - Per-render handler registry. When supplied,
+ *   `on*` functions are collected here as `{id: {fn, event}}` and emitted as a
+ *   `bw_fn_N` class rather than an inline attribute (CSP-safe). Omit it for
+ *   the auto-registered dispatch-string form.
  * @returns {string} HTML string
  * @category DOM Generation
  * @see bw.create
  * @see bw.DOM
+ * @see bw.htmlPage
+ * @see bw.funcRegister
  * @example
  * bw.html({ t: 'h1', c: 'Hello' })
  * // => '<h1>Hello</h1>'
@@ -676,6 +707,15 @@ bw.h = function(tag, attrs, content, options) {
  *   { t: 'p', c: 'Content here' }
  * ]})
  * // => '<div class="card"><p>Content here</p></div>'
+ *
+ * // Handlers just work — nothing to wire up afterwards
+ * bw.html({ t: 'button', a: { onclick: function() { alert('hi'); } }, c: 'Go' })
+ * // => '<button onclick="bw.funcGetById(\'bw_fn_0\')(event)">Go</button>'
+ *
+ * // CSP-safe variant: no inline handler, you bind the class yourself
+ * var fns = {};
+ * bw.html({ t: 'button', a: { onclick: function() {} }, c: 'Go' }, { fns: fns })
+ * // => '<button class="bw_fn_0">Go</button>'   fns = { bw_fn_0: {fn, event:'click'} }
  */
 bw.html = function(taco, options = {}) {
   // Handle null/undefined
@@ -749,11 +789,26 @@ bw.html = function(taco, options = {}) {
           fnMarkers.push(fnId);
           // No inline on* attribute emitted
         } else {
-          // No {fns} registry → skip function attrs, warn once per render
-          if (!options._fnSkipWarned) {
-            bw.pub('bw:diag', { code: 'fn_skipped', msg: 'function attrs skipped without {fns} option' });
-            options._fnSkipWarned = true;
-          }
+          // No {fns} registry → auto-register and emit a dispatch string.
+          //
+          // This is the 1.x/2.0 behaviour. bw.html(taco) has to just work:
+          // hand it a function and you get HTML whose handler fires, with no
+          // binding pass to remember. v2.1.0 replaced this with a silent drop
+          // unless the caller passed {fns}, which quietly broke every bare
+          // bw.html() carrying a handler. 1.x had already settled this question
+          // the other way -- it auto-registered by default and offered
+          // o.atrOnEventRegister:false as the opt-out.
+          //
+          // The dispatch string also survives things the {fns} class-marker
+          // cannot: it works the moment the HTML lands in the DOM, however it
+          // got there, and keeps working after a clone or a re-insert, because
+          // there is no separate binding step to re-run. It holds a live
+          // reference too, so bound and native functions work here even though
+          // {fns} has to reject them.
+          //
+          // fnId is always 'bw_fn_N' from funcRegister, so it needs no escaping.
+          var autoId = bw.funcRegister(value);
+          attrStr += ' ' + key + '="' + bw.funcGetDispatchStr(autoId, 'event') + '"';
         }
         continue;
       } else if (_is(value, 'string')) {
@@ -763,9 +818,13 @@ bw.html = function(taco, options = {}) {
     }
 
     if (key === 'style' && _is(value, 'object')) {
+      // Property names must be hyphenated inside a style attribute. The DOM
+      // path gets this free (el.style.paddingLeft is valid JS), but the string
+      // path used the key verbatim and emitted style="paddingLeft:1rem", which
+      // browsers ignore -- so server-rendered pages silently lost their styles.
       const styleStr = Object.entries(value)
         .filter(([, v]) => v != null)
-        .map(([k, v]) => `${k}:${v}`)
+        .map(([k, v]) => `${_cssProp(k)}:${v}`)
         .join(';');
       if (styleStr) {
         attrStr += ` style="${bw.escapeHTML(styleStr)}"`;
@@ -3869,6 +3928,7 @@ bw.makeStyles = function(config) {
     alternateRules: altRawRules,
     palette: palette,
     alternatePalette: altPalette,
+    layout: layout,
     isLightPrimary: lightPrimary
   };
 };
@@ -4483,6 +4543,16 @@ bw.makeTable = function(config) {
         };
         if (sortable) {
           thAttrs.style = { cursor: 'pointer', userSelect: 'none' };
+          // Wire the header to the table's own sort handle. Without this the
+          // headers only *look* sortable: o.handle.sort does the work, but
+          // nothing ever called it, so clicking a header did nothing.
+          thAttrs.onclick = function(e) {
+            var th = e.currentTarget;
+            var tableEl = th.closest ? th.closest('table') : null;
+            if (tableEl && tableEl.bw && typeof tableEl.bw.sort === 'function') {
+              tableEl.bw.sort(col.key);
+            }
+          };
         }
         if (currentSortColumn === col.key) {
           thAttrs['aria-sort'] = currentSortDirection === 'asc' ? 'ascending' : 'descending';

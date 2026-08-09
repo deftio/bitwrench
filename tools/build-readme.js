@@ -41,7 +41,7 @@ const html = `<!DOCTYPE html>
   <script src="pages/site.js"><\/script>
   <style>
 ${quikdownCSS}
-/* README-specific overrides to match pages/ look */
+/* Structural only — colors injected from palette below */
 .readme-body {
   max-width: 48rem;
   margin: 0 auto;
@@ -50,15 +50,12 @@ ${quikdownCSS}
 }
 .readme-body img { max-width: 100%; height: auto; }
 .readme-body table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-.readme-body th, .readme-body td { border: 1px solid var(--bw_card_border); padding: 0.5em 0.75em; text-align: left; }
-.readme-body th { background: var(--bw_teal_bg); font-weight: 600; }
-.readme-body h2 { border-bottom: 1px solid var(--bw_card_border); padding-bottom: 0.3em; }
-.readme-body a { color: var(--bw_teal); }
-.readme-body a:hover { color: var(--bw_teal_dark); }
-.readme-body pre { background: var(--bw_code_bg); border-radius: 6px; overflow-x: auto; border: 1px solid rgba(0,0,0,0.1); }
-.readme-body pre code { display: block; padding: 1rem; color: var(--bw_code_text); font-family: var(--bw_font_mono); font-size: 0.8125rem; line-height: 1.6; background: transparent; border: none; }
-.readme-body code:not(pre code) { background: var(--bw_teal_light); color: var(--bw_teal_dark); padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.85em; font-family: var(--bw_font_mono); }
-.readme-body blockquote { border-left: 4px solid var(--bw_teal); margin-left: 0; padding-left: 1em; color: var(--bw_text_secondary); }
+.readme-body th, .readme-body td { padding: 0.5em 0.75em; text-align: left; }
+.readme-body h2 { padding-bottom: 0.3em; }
+.readme-body pre { border-radius: 6px; overflow-x: auto; border: 1px solid rgba(0,0,0,0.1); }
+.readme-body pre code { display: block; padding: 1rem; font-size: 0.8125rem; line-height: 1.6; background: transparent; border: none; }
+.readme-body code:not(pre code) { padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.85em; }
+.readme-body blockquote { margin-left: 0; padding-left: 1em; }
   </style>
 </head>
 <body>
@@ -82,7 +79,23 @@ ${bodyHTML}
   </div>
 
   <script>
-    mountExampleNav('#example-nav', '', 'pages/');
+    var styles = initBitwrenchPage('', 'pages/');
+    var p = styles.palette;
+    bw.injectCSS(bw.css({
+      '.readme-body th, .readme-body td': { border: '1px solid ' + p.light.border },
+      '.readme-body th': { background: p.primary.light, 'font-weight': '600' },
+      '.readme-body h2': { 'border-bottom': '1px solid ' + p.light.border },
+      '.readme-body a': { color: p.primary.base },
+      '.readme-body a:hover': { color: p.primary.hover },
+      '.readme-body pre': { background: SITE.codeBg },
+      '.readme-body pre code': { color: SITE.codeText, 'font-family': SITE.fontMono },
+      '.readme-body code:not(pre code)': {
+        background: p.primary.light, color: p.primary.darkText, 'font-family': SITE.fontMono
+      },
+      '.readme-body blockquote': {
+        'border-left': '4px solid ' + p.primary.base, color: p.secondary.base
+      }
+    }), { id: 'readme-body-theme' });
   <\/script>
 </body>
 </html>`;

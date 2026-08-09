@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.1.5">
+  <meta name="generator" content="bitwrench v2.1.6">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.min.js"></script>
@@ -34,7 +34,7 @@
 .quikdown-task-item { list-style:none }
 .quikdown-task-checkbox { margin-right:.5em }
 
-/* README-specific overrides to match pages/ look */
+/* Structural only — colors injected from palette below */
 .readme-body {
   max-width: 48rem;
   margin: 0 auto;
@@ -43,15 +43,12 @@
 }
 .readme-body img { max-width: 100%; height: auto; }
 .readme-body table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-.readme-body th, .readme-body td { border: 1px solid var(--bw_card_border); padding: 0.5em 0.75em; text-align: left; }
-.readme-body th { background: var(--bw_teal_bg); font-weight: 600; }
-.readme-body h2 { border-bottom: 1px solid var(--bw_card_border); padding-bottom: 0.3em; }
-.readme-body a { color: var(--bw_teal); }
-.readme-body a:hover { color: var(--bw_teal_dark); }
-.readme-body pre { background: var(--bw_code_bg); border-radius: 6px; overflow-x: auto; border: 1px solid rgba(0,0,0,0.1); }
-.readme-body pre code { display: block; padding: 1rem; color: var(--bw_code_text); font-family: var(--bw_font_mono); font-size: 0.8125rem; line-height: 1.6; background: transparent; border: none; }
-.readme-body code:not(pre code) { background: var(--bw_teal_light); color: var(--bw_teal_dark); padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.85em; font-family: var(--bw_font_mono); }
-.readme-body blockquote { border-left: 4px solid var(--bw_teal); margin-left: 0; padding-left: 1em; color: var(--bw_text_secondary); }
+.readme-body th, .readme-body td { padding: 0.5em 0.75em; text-align: left; }
+.readme-body h2 { padding-bottom: 0.3em; }
+.readme-body pre { border-radius: 6px; overflow-x: auto; border: 1px solid rgba(0,0,0,0.1); }
+.readme-body pre code { display: block; padding: 1rem; font-size: 0.8125rem; line-height: 1.6; background: transparent; border: none; }
+.readme-body code:not(pre code) { padding: 0.15em 0.4em; border-radius: 3px; font-size: 0.85em; }
+.readme-body blockquote { margin-left: 0; padding-left: 1em; }
   </style>
 </head>
 <body>
@@ -471,7 +468,7 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <td class="quikdown-td">Legacy browsers (IE11)</td>
 </tr>
 </tbody>
-</table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><h2 class="quikdown-h2">Documentation</h2>
+</table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><p>Every release is gated at 45KB gzipped for the UMD build, measured against the pre-compressed <code class="quikdown-code">.gz</code> that ships. If you are working on bundle size, <a class="quikdown-a" href="dev/bitwrench-2.1.6-size-opt-findings.md">Bundle size findings</a> documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output <em class="quikdown-em">larger</em>), and where the remaining headroom is.</p><h2 class="quikdown-h2">Documentation</h2>
 <strong class="quikdown-strong">Start here:</strong></p><ul class="quikdown-ul">
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/quickstart.md">Quick Start</a></strong> -- annotated 100-line tutorial covering the full lifecycle</li>
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/thinking-in-bitwrench.md">Thinking in Bitwrench</a></strong> -- the complete guide: TACO format, styling, composition, events, the component model, bwserve, and common patterns</li>
@@ -524,7 +521,23 @@ npm run cleanbuild   # full production build with SRI hashes</code></pre></p><h2
   </div>
 
   <script>
-    mountExampleNav('#example-nav', '', 'pages/');
+    var styles = initBitwrenchPage('', 'pages/');
+    var p = styles.palette;
+    bw.injectCSS(bw.css({
+      '.readme-body th, .readme-body td': { border: '1px solid ' + p.light.border },
+      '.readme-body th': { background: p.primary.light, 'font-weight': '600' },
+      '.readme-body h2': { 'border-bottom': '1px solid ' + p.light.border },
+      '.readme-body a': { color: p.primary.base },
+      '.readme-body a:hover': { color: p.primary.hover },
+      '.readme-body pre': { background: SITE.codeBg },
+      '.readme-body pre code': { color: SITE.codeText, 'font-family': SITE.fontMono },
+      '.readme-body code:not(pre code)': {
+        background: p.primary.light, color: p.primary.darkText, 'font-family': SITE.fontMono
+      },
+      '.readme-body blockquote': {
+        'border-left': '4px solid ' + p.primary.base, color: p.secondary.base
+      }
+    }), { id: 'readme-body-theme' });
   </script>
 </body>
 </html>

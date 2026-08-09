@@ -992,13 +992,13 @@
                   t: 'div', c: [
                     { t: 'div', a: { style: 'display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;' }, c: [
                       bw.makeButton({ text: 'Success Toast', variant: 'success', onclick: function() {
-                        bw.$.one('#toast-container').appendChild(bw.create(bw.makeToast({ title: 'Success', content: 'Operation completed!', variant: 'success', delay: 3000 })));
+                        bw.append('#toast-container', bw.makeToast({ title: 'Success', content: 'Operation completed!', variant: 'success', delay: 3000 }));
                       }}),
                       bw.makeButton({ text: 'Error Toast', variant: 'danger', onclick: function() {
-                        bw.$.one('#toast-container').appendChild(bw.create(bw.makeToast({ title: 'Error', content: 'Something went wrong.', variant: 'danger', delay: 3000 })));
+                        bw.append('#toast-container', bw.makeToast({ title: 'Error', content: 'Something went wrong.', variant: 'danger', delay: 3000 }));
                       }}),
                       bw.makeButton({ text: 'Info Toast', variant: 'info', onclick: function() {
-                        bw.$.one('#toast-container').appendChild(bw.create(bw.makeToast({ title: 'Info', content: 'Here is some information.', variant: 'info', delay: 3000 })));
+                        bw.append('#toast-container', bw.makeToast({ title: 'Info', content: 'Here is some information.', variant: 'info', delay: 3000 }));
                       }})
                     ]},
                     { t: 'div', a: { style: 'margin-bottom: 0.75rem;' }, c: [

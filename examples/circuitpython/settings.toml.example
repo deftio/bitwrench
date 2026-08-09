@@ -1,0 +1,11 @@
+# Copy this file to the root of your CIRCUITPY drive as settings.toml
+# and fill in your network.
+#
+# CircuitPython reads these itself and connects to WiFi BEFORE code.py runs,
+# so none of the examples contain connection code.
+
+CIRCUITPY_WIFI_SSID = "your-network-name"
+CIRCUITPY_WIFI_PASSWORD = "your-password"
+
+# Optional: serve on a fixed port other than 80.
+# CIRCUITPY_WEB_API_PORT = 80
