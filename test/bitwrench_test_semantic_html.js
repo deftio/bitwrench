@@ -68,6 +68,43 @@ function ruleFor(selector) {
   return body.length ? body : null;
 }
 
+// "Has a padding-left" is not the property that matters -- v2.1.6 shipped
+// padding-left: 1em and the markers still hung outside, which is what a reader
+// actually reported. Measured in Chromium at a 16px root, marker ink starts
+// this far inside the list's own left edge:
+//
+//   1em -> 0px    1.15em -> 1px    1.25em -> 3px    1.5em -> 7px    2em -> 15px
+//
+// At 1em the bullet is flush with the box edge, so against a heading whose
+// glyphs carry a left side bearing it reads as hanging out to the left. The
+// invariant is therefore a MINIMUM, not the shipped value -- this should fail
+// when the markers stop clearing, not merely when someone retunes the number.
+const MIN_LIST_INDENT_PX = 20;      // 1.25em at the 16px root
+
+function assertClearsMarker(selector, rule) {
+  const m = /padding-left\s*:\s*([\d.]+)(em|rem|px)/.exec(rule);
+  assert.ok(m, `${selector} padding-left should be a length; got: ${rule}`);
+  const n = parseFloat(m[1]);
+  const px = m[2] === "px" ? n : n * 16;
+  assert.ok(px >= MIN_LIST_INDENT_PX,
+    `${selector} padding-left is ${m[1]}${m[2]} (${px}px), which does not clear ` +
+    `the marker -- it needs at least ${MIN_LIST_INDENT_PX}px or the bullets ` +
+    `render outside the list box. See the measurements above.`);
+}
+
+// Same idea as assertClearsMarker, for the elements whose repair is a margin
+// rather than a padding. The regex is passed in because the two shapes differ:
+// dd sets margin-left directly, blockquote sets the shorthand and the indent is
+// its fourth value.
+function assertIndented(selector, rule, re) {
+  const m = re.exec(rule);
+  assert.ok(m, `${selector} should set a left indent; rule was: ${rule}`);
+  const px = m[2] === "px" ? parseFloat(m[1]) : parseFloat(m[1]) * 16;
+  assert.ok(px >= MIN_LIST_INDENT_PX,
+    `${selector} left indent is ${m[1]}${m[2]} (${px}px), which does not read ` +
+    `as an indent -- the reset zeroed the UA's and this is what puts it back.`);
+}
+
 describe("prose classes make plain markup readable", function () {
   before(function () {
     bw.clearStyles && bw.clearStyles();
@@ -97,6 +134,7 @@ describe("prose classes make plain markup readable", function () {
     assert.ok(list, ".bw_list should exist");
     assert.ok(/padding-left/.test(list),
       ".bw_list should set padding-left so markers sit inside the element");
+    assertClearsMarker(".bw_list", list);
   });
 
   it("should indent bare ul and ol so markers sit inside the content box", function () {
@@ -110,14 +148,40 @@ describe("prose classes make plain markup readable", function () {
     // bare ones moved: .bw_nav, .bw_bccl_pagination, .bw_bccl_breadcrumb_list
     // and .bw_list_group all set their own padding-left: 0, and a class beats
     // an element selector. The worry was real in principle and empty in fact.
-    for (const tag of ["ul", "ol"]) {
+    // menu is in the list because it is a list: same default
+    // list-style-position, same markers outside the same zeroed box. Nobody
+    // reported it because nobody writes <menu>, which is the argument for
+    // pinning it here rather than waiting for the report.
+    for (const tag of ["ul", "ol", "menu"]) {
       const rule = ruleFor(tag);
       assert.ok(rule, `bare ${tag} should have a rule`);
       assert.ok(/padding-left/.test(rule),
         `bare ${tag} should set padding-left so markers sit inside the element`);
       assert.ok(/margin-bottom/.test(rule),
         `bare ${tag} should set margin-bottom so it separates from what follows`);
+      assertClearsMarker(tag, rule);
     }
+  });
+
+  it("should give back the indents the reset takes from blockquote and dl", function () {
+    // Same defect as the lists, found by asking what else `* { margin: 0 }`
+    // flattens rather than by waiting for a second report. A UA ships
+    // blockquote { margin: 1em 40px } and dd { margin-left: 40px }; with both
+    // gone, a quotation is indistinguishable from body text and a definition
+    // list is a flat ladder of terms and definitions at one indent.
+    //
+    // Asserted as a MINIMUM for the same reason as the list indent: this should
+    // fail when the indent stops being an indent, not when someone retunes it.
+    const bq = ruleFor("blockquote");
+    assert.ok(bq, "bare blockquote should have a rule");
+    assertIndented("blockquote", bq, /margin(?:-left)?\s*:[^;]*?([\d.]+)(em|rem|px)\s*(?:;|$)/);
+
+    const dd = ruleFor("dd");
+    assert.ok(dd, "bare dd should have a rule");
+    assertIndented("dd", dd, /margin-left\s*:\s*([\d.]+)(em|rem|px)/);
+
+    assert.ok(/margin-bottom/.test(ruleFor("dl") || ""),
+      "bare dl should set margin-bottom so it separates from what follows");
   });
 
   it("should not double-space nested lists", function () {

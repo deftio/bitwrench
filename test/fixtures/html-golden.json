@@ -122,6 +122,39 @@
         "c": "Click"
       },
       "html": "<button class=\"bw_fn_0\">Click</button>"
+    },
+    {
+      "name": "URLs in attributes are not slash-escaped",
+      "why": "escapeHTML escapes / -- an OWASP rule for element content, where it blunts a stray '</script'. Inside an attribute value / is ordinary, and escaping it emitted https:&#x2F;&#x2F;example.com for every href, src and action. Browsers decode it so links worked, which is why it survived; it was wrong for anything diffing or greping server-rendered HTML, and it appeared verbatim in the tutorial panel that claims to show the HTML you would have written by hand. Note the semantic equivalence test cannot see this -- both forms parse to the same value -- so this exact string is the guard.",
+      "taco": {
+        "t": "a",
+        "a": {
+          "href": "https://example.com/a?b=1&c=2"
+        },
+        "c": "A link"
+      },
+      "html": "<a href=\"https://example.com/a?b=1&amp;c=2\">A link</a>"
+    },
+    {
+      "name": "attribute values still escape what actually matters",
+      "why": "Dropping / must not become dropping the rest. & and \" are mandatory inside a double-quoted attribute -- without them a value can terminate the attribute and inject another one. < and > are escaped too, which is stricter than required and stricter than the DOM's own serialiser.",
+      "taco": {
+        "t": "p",
+        "a": {
+          "title": "a & b \" c < d > e"
+        },
+        "c": "x"
+      },
+      "html": "<p title=\"a &amp; b &quot; c &lt; d &gt; e\">x</p>"
+    },
+    {
+      "name": "content escaping is unchanged, / included",
+      "why": "The relaxation is scoped to attributes. Element content keeps the full set, so this case is the tripwire for anyone tempted to 'simplify' by pointing both contexts at one escaper again -- which is exactly how the attribute bug existed.",
+      "taco": {
+        "t": "p",
+        "c": "</script> and a/b"
+      },
+      "html": "<p>&lt;&#x2F;script&gt; and a&#x2F;b</p>"
     }
   ],
   "pages": [

@@ -29,33 +29,10 @@ except ImportError:
         "\n  On a board:  circup install adafruit_httpserver\n"
     )
 
-# ---------------------------------------------------------------------------
-# TODO(before-release): RESTORE THE CDN TAG IN THIS FILE
-#
-# These first two examples are meant to load bitwrench from a CDN -- that is
-# the point of example 1a: the device holds almost nothing. They are pointed at
-# the locally built copy *during development* so that `npm run build` plus a
-# test pass exercises the tutorials against the working tree instead of against
-# the last published release.
-#
-# Two real bugs hid behind the CDN version while developing 2.1.6: the
-# bw_container alias and the bw_list / bw_code prose classes both silently did
-# nothing here, because the CDN serves 2.1.5.
-#
-# To restore, in this file and in 01b-taco-nesting/code.py:
-#   1. put the CDN <script> tag back (see BITWRENCH_CDN below)
-#   2. delete the /js/bitwrench.js route
-#   3. drop the /www copy step from this example's README
-#
-# Grep for TODO(before-release) to find every site.
-# ---------------------------------------------------------------------------
-
-BITWRENCH_CDN = (
-    '<script src="https://cdn.jsdelivr.net/npm/bitwrench@2'
-    '/dist/bitwrench.umd.min.js"></script>'
-)
-
-# The page. Same shell as 1a; only the script changed.
+# 1a loaded bitwrench from a CDN. From here on the board serves it itself, off
+# the filesystem and pre-compressed -- 45KB of flash, and the page then works
+# with no internet at all, including when the board is its own access point.
+# One line of the shell changes; nothing else does.
 
 page = """<!doctype html><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
@@ -244,7 +221,7 @@ bw.DOM('#app', {
 
 pool, host, port = bw_board.start(
     "1b - TACOs inside TACOs",
-    serving="bitwrench from %s (LOCAL BUILD -- see TODO)" % bw_board.WWW,
+    serving="bitwrench from %s (gzipped, straight off the filesystem)" % bw_board.WWW,
 )
 server = Server(pool, "/static", debug=True)
 
@@ -256,7 +233,6 @@ def index(request: Request):
 
 @server.route("/js/bitwrench.js")
 def bitwrench_js(request: Request):
-    # TODO(before-release): delete this route; example 1 should use the CDN.
     return FileResponse(
         request,
         "bitwrench.umd.min.js.gz",

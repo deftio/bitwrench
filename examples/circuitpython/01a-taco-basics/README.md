@@ -1,4 +1,4 @@
-# 1a -- one object, one element
+# 1a -- intro to bitwrench and the {taco} format
 
 If you know a little HTML, you already know most of this.
 
@@ -60,15 +60,10 @@ up a virtualenv for you.
 1. Copy `bw_board.py` and this `code.py` to the CIRCUITPY drive
 2. Copy `settings.toml.example` to the drive as `settings.toml`, fill in your WiFi
 3. `circup install adafruit_httpserver`
-4. Copy `dist/bitwrench.umd.min.js.gz` to `/www/` on the drive (44.8KB)
-5. Open the serial console -- it prints the URL to visit
+4. Open the serial console -- it prints the URL to visit
+
+Nothing else goes on the drive. bitwrench comes from the CDN, so the device is
+holding one HTML page and a web server -- which is the point of this rung. From
+1b on, the board serves bitwrench itself and needs no internet at all.
 
 Works unchanged on ProS3, QT Py ESP32-S3 and Pico 2 W.
-
----
-
-> **TODO(before-release):** this example is temporarily served from the locally
-> built bitwrench so a full build and test pass exercises it against the working
-> tree. It is meant to load from the CDN -- that is the point of 1a, the device
-> holding almost nothing. Restore the CDN tag and drop the `/www` step before
-> publishing. See `dev/embedded-tutorial-2.1.x.md`.

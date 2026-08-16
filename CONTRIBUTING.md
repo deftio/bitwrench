@@ -123,7 +123,7 @@ When development is complete, run `npm run release` (`tools/release.js`) on the 
 3. **Lint** — `npm run lint`
 4. **Tests** — `npm test` and `npm run test:cli`
 5. **Version consistency** — verifies package.json, src/version.js, and dist banner all agree
-6. **Bundle size gate** — gzipped UMD must be under 45KB. Measured against the
+6. **Bundle size gate** — gzipped UMD and ESM must be under 46KB. Measured against the
    `.gz` the build writes (level 9), which is what actually ships. Before
    attempting any size optimization, read
    [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) — several

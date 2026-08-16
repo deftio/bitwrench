@@ -590,18 +590,57 @@ bw.getUUID = function(tacoOrElement) {
  */
 bw.escapeHTML = function(str) {
   if (!_is(str, 'string')) return '';
-  
-  const escapeMap = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-    '/': '&#x2F;'
-  };
-  
-  return str.replace(/[&<>"'/]/g, (char) => escapeMap[char]);
+  // Content escaping is the attribute set (_ATTR_ESCAPES, below) plus "/".
+  // Written as that relationship rather than as a second table of the same
+  // five entries: two hand-maintained copies of one mapping is how the
+  // contexts drift apart, which is the bug this pair was split to fix.
+  return str.replace(/[&<>"'/]/g, function(c) {
+    return c === '/' ? '&#x2F;' : _ATTR_ESCAPES[c];
+  });
 };
+
+// Escape a value for use inside a double-quoted attribute.
+//
+// Not the same job as bw.escapeHTML, which also escapes "/" -- an OWASP rule
+// for element *content*, where it blunts a stray "</script". Inside an
+// attribute value "/" is an ordinary character, so escaping it produced
+// technically-valid but unreadable output: every href, src and action came out
+// as https:&#x2F;&#x2F;example.com. Browsers decode it and the link works, which
+// is why this survived so long -- but it is wrong for anything that diffs,
+// greps or snapshots server-rendered HTML, wrong in a bwserve payload read by
+// something that is not a browser, and actively confusing in a tutorial whose
+// whole claim is "this is the HTML you would have written by hand".
+//
+// bw.create() was never affected: setAttribute takes the raw value and the DOM
+// does its own serialisation. So, like the camelCase style bug, this only ever
+// showed up in string output, where nothing complains.
+//
+// The character set is the one bw.htmlPage's favicon path already open-coded
+// for exactly this reason. ' is kept even though the delimiter is always " --
+// it costs nothing and keeps parity with that established behaviour.
+var _ATTR_ESCAPES = {
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+};
+
+var _escapeAttr = function(str) {
+  if (!_is(str, 'string')) return '';
+  return str.replace(/[&<>"']/g, function(c) { return _ATTR_ESCAPES[c]; });
+};
+
+// An attribute NAME is markup, not data, so no amount of escaping makes a bad
+// one safe -- the space in "x onclick=alert(1) y" is itself what ends the name
+// and starts the next attribute. setAttribute rejects these outright, so
+// bw.create() has always been safe and only the string path would emit
+//   {a: {'x onclick=alert(1) y': 'z'}}  ->  <div x onclick=alert(1) y="z">
+// which is the same shape as the two bugs fixed above: wrong only in string
+// output, where nothing complains.
+//
+// This is the HTML5 grammar's own exclusion set rather than an allowlist of
+// name shapes: whitespace, quotes, / and = are the characters that can end the
+// name and begin something else. An allowlist would also reject names that are
+// merely unusual -- @click, x-on:click -- which serialise fine and are none of
+// bitwrench's business.
+var _ATTR_NAME_BAD = /[\s"'>/=]/;
 
 /**
  * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create().
@@ -757,6 +796,15 @@ bw.html = function(taco, options = {}) {
     // Skip null, undefined, false
     if (value == null || value === false) continue;
 
+    // Drop names that cannot be serialised (see _ATTR_NAME_BAD). Dropping
+    // rather than throwing keeps a page rendering, and the diag says which key
+    // vanished -- bw.create() would have thrown on the same TACO, so anything
+    // reaching here is already a bug in the caller's data.
+    if (_ATTR_NAME_BAD.test(key)) {
+      bw.pub('bw:diag', { code: 'attr_name_invalid', name: key });
+      continue;
+    }
+
     // Serialize event handlers
     if (key.startsWith('on')) {
       if (_is(value, 'function')) {
@@ -812,7 +860,7 @@ bw.html = function(taco, options = {}) {
         }
         continue;
       } else if (_is(value, 'string')) {
-        attrStr += ' ' + key + '="' + bw.escapeHTML(value) + '"';
+        attrStr += ' ' + key + '="' + _escapeAttr(value) + '"';
       }
       continue;
     }
@@ -827,7 +875,7 @@ bw.html = function(taco, options = {}) {
         .map(([k, v]) => `${_cssProp(k)}:${v}`)
         .join(';');
       if (styleStr) {
-        attrStr += ` style="${bw.escapeHTML(styleStr)}"`;
+        attrStr += ` style="${_escapeAttr(styleStr)}"`;
       }
     } else if (key === 'class') {
       // Handled below with identity stamps
@@ -839,7 +887,7 @@ bw.html = function(taco, options = {}) {
       if (options.state && resolvedVal.indexOf('${') >= 0) {
         resolvedVal = bw._resolveTemplate(resolvedVal, options.state, !!options.compile);
       }
-      attrStr += ` ${key}="${bw.escapeHTML(resolvedVal)}"`;
+      attrStr += ` ${key}="${_escapeAttr(resolvedVal)}"`;
     }
   }
 
@@ -865,7 +913,7 @@ bw.html = function(taco, options = {}) {
   }
 
   if (classTokens.length > 0) {
-    attrStr += ' class="' + bw.escapeHTML(classTokens.join(' ')) + '"';
+    attrStr += ' class="' + _escapeAttr(classTokens.join(' ')) + '"';
   }
   
   // Build HTML
@@ -1012,21 +1060,22 @@ bw.htmlPage = function(opts) {
   // Favicon
   var faviconTag = '';
   if (favicon) {
-    var safeFavicon = favicon.replace(/[&<>"']/g, function(c) {
-      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
-    });
+    var safeFavicon = _escapeAttr(favicon);
     faviconTag = '<link rel="icon" href="' + safeFavicon + '">';
   }
 
-  // Escaped title
-  var safeTitle = bw.escapeHTML(title);
+  // Escaped title. <title> is RCDATA -- entities decode, so escapeHTML's "/"
+  // rule was never doing anything here except putting Docs&#x2F;Guide in the
+  // source of a file whose whole point is being readable. The attribute set is
+  // both sufficient (& and < are the two that matter) and quieter.
+  var safeTitle = _escapeAttr(title);
 
   // Combine all CSS
   var allCSS = (themeCSS ? themeCSS + '\n' : '') + css;
 
   // CSP nonce
   var nonce = (bw.config && bw.config.cspNonce) ? bw.config.cspNonce : null;
-  var nonceAttr = nonce ? ' nonce="' + bw.escapeHTML(nonce) + '"' : '';
+  var nonceAttr = nonce ? ' nonce="' + _escapeAttr(nonce) + '"' : '';
 
   // Body-end script: binder for registered functions
   var bodyEndScript = '';
@@ -1054,7 +1103,7 @@ bw.htmlPage = function(opts) {
   // Assemble document
   var parts = [
     '<!DOCTYPE html>',
-    '<html lang="' + lang + '">',
+    '<html lang="' + _escapeAttr(lang) + '">',
     '<head>',
     '<meta charset="UTF-8">',
     '<meta name="viewport" content="width=device-width, initial-scale=1">'

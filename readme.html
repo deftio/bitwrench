@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.1.6">
+  <meta name="generator" content="bitwrench v2.1.7">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.min.js"></script>
@@ -468,7 +468,7 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <td class="quikdown-td">Legacy browsers (IE11)</td>
 </tr>
 </tbody>
-</table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><p>Every release is gated at 45KB gzipped for the UMD build, measured against the pre-compressed <code class="quikdown-code">.gz</code> that ships. If you are working on bundle size, <a class="quikdown-a" href="dev/bitwrench-2.1.6-size-opt-findings.md">Bundle size findings</a> documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output <em class="quikdown-em">larger</em>), and where the remaining headroom is.</p><h2 class="quikdown-h2">Documentation</h2>
+</table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><p>Every release is gated at 46KB gzipped for the UMD and ESM builds, measured against the pre-compressed <code class="quikdown-code">.gz</code> that ships. (The gate was 45KB through 2.1.6; it was raised once, deliberately, in 2.1.7 -- and the core/BCCL CSS split planned for 2.2 is expected to give the byte back and then some.) If you are working on bundle size, <a class="quikdown-a" href="dev/bitwrench-2.1.6-size-opt-findings.md">Bundle size findings</a> documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output <em class="quikdown-em">larger</em>), and where the remaining headroom is.</p><h2 class="quikdown-h2">Documentation</h2>
 <strong class="quikdown-strong">Start here:</strong></p><ul class="quikdown-ul">
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/quickstart.md">Quick Start</a></strong> -- annotated 100-line tutorial covering the full lifecycle</li>
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/thinking-in-bitwrench.md">Thinking in Bitwrench</a></strong> -- the complete guide: TACO format, styling, composition, events, the component model, bwserve, and common patterns</li>

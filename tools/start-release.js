@@ -172,7 +172,10 @@ run('npm run build');
 // ── 6. Commit ───────────────────────────────────────────────────────────
 
 // dbg/build-metrics.jsonl is appended to by the build above and is tracked,
-// so omitting it leaves the branch dirty from its first commit.
+// so omitting it leaves the branch dirty from its first commit. The rest of
+// dbg/ is gitignored (screenshots, audit runs) -- `git add dbg` picks up the
+// metrics file and silently skips the ignored ones, which is why this stages
+// the directory rather than the file.
 run('git add package.json package-lock.json src/version.js library.properties library.json idf_component.yml dist dbg');
 run(`git commit -m "start v${version}: ${featureName}"`);
 

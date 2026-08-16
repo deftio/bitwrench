@@ -39,8 +39,18 @@ CLAUDE.md
 .env.test.local
 .env.production.local
 
-# northstar-llm audit artifacts (model-specific, noisy)
-dbg/northstar-llm/
+# Debug and scratch output: screenshots, agent audit runs, generated maps.
+# Written constantly during development and interesting to nobody afterwards.
+# `dbg/*` rather than `dbg/` so the exception below can apply -- git cannot
+# re-include a file inside a directory it has already excluded wholesale.
+#
+# The exception is not an oversight: dbg/build-metrics.jsonl is not debug
+# output. pages/src-sizes.html fetches it at runtime to draw the bundle-size
+# history, and tools/start-release.js stages it deliberately, so ignoring it
+# would 404 that page on the docs site.
+dbg/*
+!dbg/build-metrics.jsonl
+dbg-images/
 
 .DS_Store
 # Desktop-testing copy of the library for the CircuitPython examples

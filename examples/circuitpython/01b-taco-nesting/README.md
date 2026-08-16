@@ -55,8 +55,8 @@ Works unchanged on ProS3, QT Py ESP32-S3 and Pico 2 W.
 
 ---
 
-> **TODO(before-release):** this example is temporarily served from the locally
-> built bitwrench so a full build and test pass exercises it against the working
-> tree. It is meant to load from the CDN -- that is the point of 1a, the device
-> holding almost nothing. Restore the CDN tag and drop the `/www` step before
-> publishing. See `dev/embedded-tutorial-2.1.x.md`.
+**Why the `/www` copy, when 1a needed nothing?** 1a pulled bitwrench from a CDN,
+which needs *the browser* to reach the internet -- fine on a home network,
+impossible when the board is its own access point. From here on the board serves
+the file itself, pre-compressed, at a cost of 45KB of flash. It is one line of
+the shell either way.

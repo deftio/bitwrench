@@ -362,14 +362,27 @@ const esmGzipped = gzSize('dist/bitwrench.esm.min.js');
 console.log(`  UMD: ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped`);
 console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 
-const BUDGET = 45 * 1024; // 45KB
+// Raised from 45KB to 46KB in 2.1.7, deliberately and once.
+//
+// A budget you move whenever you bump into it is not a budget, so the reason is
+// on the record: 2.1.7 spends its bytes making the string path agree with the
+// DOM path and making the reset repair what it breaks, and the docs site now
+// runs live editors in the page rather than showing screenshots of code. The
+// gate did its job -- it caught the growth and forced this to be a decision
+// instead of a drift.
+//
+// It is also a number that is about to mean something different. 2.2 splits
+// core from BCCL, and the measured ~14KB of BCCL CSS that core ships and cannot
+// use comes out of exactly this artifact; per-SKU budgets land with that split.
+// Treat 46KB as the ceiling until then, not as headroom to spend.
+const BUDGET = 46 * 1024; // 46KB
 if (gzipped > BUDGET) {
-  fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 45KB budget!`);
+  fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 46KB budget!`);
 }
 if (esmGzipped > BUDGET) {
-  fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 45KB budget!`);
+  fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 46KB budget!`);
 }
-console.log('  ✓ UMD + ESM both under 45KB budget');
+console.log('  ✓ UMD + ESM both under 46KB budget');
 
 // ── 7. Docker clean-room install test ──────────────────────────────────
 

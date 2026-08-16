@@ -8,7 +8,6 @@ rewrite it before committing.
 maintainer-authored sources (list at bottom). The fastest way to improve
 this guide is to mark passages "I'd never write that."
 
----
 
 ## The voice in one paragraph
 

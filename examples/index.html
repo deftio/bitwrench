@@ -325,6 +325,7 @@
               'Server-side state with Node.js',
               'Real-time UI updates without page reload'
             ],
+            runLocal: true,
             prereq: 'Run: <code>node server.js</code>'
           },
           {
@@ -341,6 +342,7 @@
               'Sending image data back from client to server',
               '<code>allowScreenshot: true</code> opt-in security'
             ],
+            runLocal: true,
             prereq: 'Run: <code>node screenshot-server.js</code>'
           },
           {
@@ -356,6 +358,7 @@
               'Turning CLI output into a web dashboard',
               'Real-time visualization of streaming data'
             ],
+            runLocal: true,
             prereq: 'Run: <code>bash sensor.sh | node ../client-server/server.js</code>'
           },
           {
@@ -371,6 +374,7 @@
               'Append pattern for token-by-token rendering',
               'LLM API integration'
             ],
+            runLocal: true,
             prereq: 'Run: <code>node server.js</code> (connect to Ollama, LM Studio, or any OpenAI-compatible API)'
           }
         ]
@@ -392,6 +396,7 @@
               'Python + bitwrench integration',
               'Why JSON-based UI is LLM-friendly'
             ],
+            runLocal: true,
             prereq: 'Run: <code>python otfui.py</code> (requires Python 3 and an LLM API \u2014 local or cloud)'
           }
         ]
@@ -441,13 +446,24 @@
         detailContent.push({ t: 'div', a: { class: 'gal_prereq' }, c: ex.prereq });
       }
 
-      detailContent.push({
-        t: 'div', a: { class: 'gal_actions' },
-        c: [
-          bw.makeButton({ text: 'Open Example', variant: 'primary', size: 'sm', onclick: function() { window.location.href = ex.href; } }),
-          bw.makeButton({ text: 'View Source on GitHub', variant: 'outline_secondary', size: 'sm', onclick: function() { window.open('https://github.com/deftio/bitwrench/tree/master/examples/' + ex.href, '_blank'); } })
-        ]
-      });
+      // An example you start from a terminal has no page to open. These entries
+      // point at a directory holding a server and a README and no index.html,
+      // so "Open Example" handed the visitor an HTTP 500 from the dev server --
+      // while the prereq line right above it already said "Run: node server.js".
+      // The buttons now agree with the prereq instead of promising a demo that
+      // cannot exist until something is running.
+      var actions = [];
+      if (!ex.runLocal) {
+        actions.push(bw.makeButton({ text: 'Open Example', variant: 'primary', size: 'sm', onclick: function() { window.location.href = ex.href; } }));
+      }
+      actions.push(bw.makeButton({
+        text: ex.runLocal ? 'Get the Code & Run It' : 'View Source on GitHub',
+        variant: ex.runLocal ? 'primary' : 'outline_secondary',
+        size: 'sm',
+        onclick: function() { window.open('https://github.com/deftio/bitwrench/tree/master/examples/' + ex.href, '_blank'); }
+      }));
+
+      detailContent.push({ t: 'div', a: { class: 'gal_actions' }, c: actions });
 
       var detail = {
         t: 'div', a: { class: 'gal_detail', id: 'detail-' + itemId },

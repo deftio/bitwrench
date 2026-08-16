@@ -290,4 +290,24 @@ describe("bw.htmlPage()", function() {
     assert.ok(!result.includes('<title><script>'));
     assert.ok(result.includes('&lt;script&gt;'));
   });
+
+  // lang was the one attribute in this function still concatenated raw, missed
+  // by the 2.1.7 sweep that fixed href/src/class and the favicon two lines
+  // above it. Author-supplied rather than attacker-supplied in practice, but
+  // "in practice" is the argument every one of these bugs shipped behind.
+  it("should escape the lang attribute", function() {
+    var result = bw.htmlPage({ lang: 'en" onload="alert(1)' });
+    assert.ok(!result.includes('onload="alert(1)"'),
+      'lang must not be able to close its own attribute: ' + result.split('\n')[1]);
+    assert.ok(result.includes('&quot;'), 'the quote should come out as an entity');
+  });
+
+  // <title> is RCDATA: entities decode, so a slash-escaped title rendered fine
+  // and only ever looked wrong in the source. Same complaint that motivated the
+  // attribute fix -- generated HTML should read like HTML someone wrote.
+  it("should not slash-escape the title", function() {
+    var result = bw.htmlPage({ title: 'Docs/Guide & More' });
+    assert.ok(result.includes('<title>Docs/Guide &amp; More</title>'),
+      'title should keep its slashes and still escape &');
+  });
 });

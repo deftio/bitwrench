@@ -3,6 +3,89 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.7 (2026-08-15)
+
+The string path catches up with the DOM path. Every fix here is one of two
+shapes. Either `bw.html()` and `bw.create()` disagreed -- and it was always
+`bw.html()` that was wrong, because the DOM does its own serialising while
+string output is something nobody renders during development -- or the reset
+broke plain markup and did not put it back, which is the rule 2.1.6 settled and
+this release finishes applying.
+
+### Fixed
+
+- **`bw.html()` slash-escaped every attribute value.** `bw.escapeHTML()` also
+  escapes `/`, an OWASP rule for element *content* where it blunts a stray
+  `</script`. Inside an attribute `/` is an ordinary character, so every href,
+  src and action came out as `https:&#x2F;&#x2F;example.com`. Browsers decode
+  it and the links worked, which is why it survived -- but it is wrong for
+  anything that diffs, greps or snapshots server-rendered HTML, wrong in a
+  bwserve payload read by something that is not a browser, and openly
+  confusing in a tutorial whose claim is "this is the HTML you would have
+  written by hand". Attributes now use their own escaper; content escaping is
+  unchanged, `/` included.
+- **`bw.html()` emitted attribute *names* unchecked.** No escaping makes a bad
+  name safe -- the space in `{a: {'x onclick=alert(1) y': 'z'}}` is itself what
+  ends the name and begins the next attribute, so that TACO produced
+  `<div x onclick=alert(1) y="z">`. `bw.create()` was never affected because
+  `setAttribute` throws on the same key. Names carrying whitespace, quotes, `/`
+  or `=` are now dropped with a `bw:diag` (`attr_name_invalid`); unusual but
+  serialisable names still pass.
+- **`bw.htmlPage()` interpolated `lang` raw**, the one attribute the sweep
+  above missed -- two lines below the favicon it did fix. `<title>` also stopped
+  slash-escaping: it is RCDATA, so entities decode and `Docs&#x2F;Guide` only
+  ever looked wrong in the source.
+- **List markers hung outside the list box at `padding-left: 1em`.** Measured
+  in Chromium at a 16px root, marker ink starts 0px inside the box at 1em and
+  7px at 1.5em: 1em aligns marker ink to the text *box* edge while the eye
+  compares ink to ink, so the bullet read as hanging out to the left of the
+  heading above it. Bare `ul`/`ol` and `.bw_list` now indent 1.5em, and the
+  test asserts a minimum rather than the shipped number.
+- **The reset flattened `blockquote`, `dd` and `menu` and never put them back.**
+  `* { margin: 0; padding: 0 }` takes away `blockquote { margin: 1em 40px }`
+  and `dd { margin-left: 40px }`, leaving a quotation indistinguishable from
+  body text and a definition list as a flat ladder; `<menu>` is a list and lost
+  its markers outside the box exactly like `<ul>`. Repaired where the reset
+  that broke them lives. `.bw_quote` stays what it always was -- styling you
+  opt into, not the repair.
+
+### Changed
+
+- **The bundle gate is 46KB gzipped, raised from 45KB.** Both UMD and ESM are
+  measured, against the pre-compressed `.gz` the build writes. ESM had been the
+  binding artifact for some time without anyone noticing -- it went into this
+  release 9 bytes under the old gate -- so any one of the fixes above would have
+  tripped it. Raised once and deliberately rather than dropped a fix or golfed
+  library internals to fit a policy number. 2.2 splits core from BCCL, which
+  takes the ~14KB of BCCL CSS that core ships and cannot use out of this same
+  artifact; per-SKU budgets arrive with that split. Until then 46KB is a
+  ceiling, not headroom.
+
+### Tests
+
+- Golden fixtures pin the exact attribute bytes, including the case the
+  semantic-equivalence test cannot see: `href="https:&#x2F;&#x2F;x"` and
+  `href="https://x"` parse to the same value, so only exact strings catch it.
+- A new contract suite parses `bw.html()` output and compares resolved
+  attribute values against `bw.create()`, so the two paths cannot drift again
+  in silence. Verified by mutation: it catches the v2.1.6 camelCase style bug.
+- List and prose indents assert a minimum, not a snapshot -- they should fail
+  when the markers stop clearing, not when someone retunes a number.
+
+### Examples
+
+- `examples/circuitpython/01a` is now an introduction to bitwrench and the
+  `{taco}` format rather than a board demo that happens to use it; `01b`
+  trimmed to match.
+- **Ember & Oak rendered a blank page.** A duplicated `}), { id: 'eo-styles' });`
+  made the whole inline script a syntax error, so the most elaborate example in
+  the gallery -- 27 components -- displayed nothing at all.
+- **Five gallery cards linked to an HTTP 500.** The server-driven and AI
+  examples are directories holding a server and a README with no `index.html`,
+  so "Open Example" could only fail. Their own prereq line already said
+  `Run: node server.js`; the button now agrees with it and offers the code
+  instead of a demo that cannot exist until something is running.
+
 ## v2.1.6 (2026-08-08)
 
 Consistency release: plain markup works right with no class on it. Everything

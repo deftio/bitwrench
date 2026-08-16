@@ -1248,10 +1248,46 @@ var structuralRules = {
     // list-style-position: outside rendering its markers to the LEFT of its own
     // content box -- overlapping whatever contains it. Put the indent back here
     // rather than in a class, so the reset replaces what it destroys instead of
-    // leaving the damage for an opt-in to repair. 1em lands the marker on the
-    // body-text edge, so a list lines up with the paragraphs around it.
-    'ul, ol': { 'padding-left': '1em', 'margin-bottom': '1rem' },
+    // leaving the damage for an opt-in to repair.
+    //
+    // Why 1.5em and not 1em. Measured in Chromium at a 16px root, marker ink
+    // starts this far inside the list's own left edge:
+    //
+    //   1em -> 0px    1.25em -> 3px    1.5em -> 7px    2em -> 15px
+    //
+    // 1em looks like it should align the marker with the body-text edge, and
+    // arithmetically it does -- but it aligns marker ink to the text BOX edge,
+    // while the eye compares ink to ink. Every glyph has a left side bearing,
+    // so at 1em the bullet reads as hanging outside the heading above it. That
+    // is a real report from example 1a, not a theoretical concern. 1.5em clears
+    // it with room to spare and matches what .bw_list has always shipped.
+    //
+    // em rather than rem so nested and smaller-type lists scale with their own
+    // text instead of the root.
+    // <menu> is a list too -- same list-style-position: outside, same markers
+    // rendering to the left of a zeroed padding box. It is rare enough that
+    // nobody reported it, which is exactly why it belongs here rather than in
+    // whatever example trips over it next.
+    'ul, ol, menu': { 'padding-left': '1.5em', 'margin-bottom': '1rem' },
     'ul ul, ul ol, ol ol, ol ul': { 'margin-bottom': '0' },
+
+    // The same repair for the other two things `* { margin: 0 }` flattens.
+    // A UA gives blockquote margin: 1em 40px and dd margin-left: 40px; the
+    // reset takes both away, so a bare <blockquote> sits flush against body
+    // text with nothing to say it is a quote, and a <dl> collapses into an
+    // unreadable ladder of terms and definitions at the same indent.
+    //
+    // This is 2.1.6's rule applied where it was missed: plain markup should
+    // look right with no class on it, and a class asks for something other
+    // than the default rather than repairing one. .bw_quote is the former --
+    // a rule with a coloured left border is styling you opt into, not the
+    // repair for damage done here. Left indent only; the UA's symmetric 40px
+    // right margin is a typographic opinion, not something the reset broke.
+    // dl's half of the repair is just "a block of prose needs a bottom
+    // margin", which is what the p rule in typography already says -- so it
+    // says it there, for both, rather than as a second rule here.
+    'blockquote': { 'margin': '0 0 1rem 1.5em' },
+    'dd': { 'margin-left': '1.5em' },
 
     'html': {
       'font-size': '16px', 'line-height': '1.5',
@@ -1292,14 +1328,17 @@ var structuralRules = {
     'h4': { 'font-size': 'calc(1.275rem + .3vw)' },
     'h5': { 'font-size': '1.25rem' },
     'h6': { 'font-size': '1rem' },
-    'p': { 'margin-top': '0', 'margin-bottom': '1rem' },
+    'p, dl': { 'margin-top': '0', 'margin-bottom': '1rem' },
 
     // ---- Prose elements ----
     // ul/ol and hr are repaired in structuralRules.base, where the reset that
     // broke them lives -- these two classes are kept for compatibility and now
-    // just restate the default. .bw_quote and .bw_code are different: the reset
-    // never touched them, they simply have no opinion, so they stay opt-in.
-    '.bw_list': { 'padding-left': '1em', 'margin-bottom': '1rem' },
+    // just restate the default. .bw_quote and .bw_code are different: bare
+    // blockquote gets its indent back in base like any other reset casualty,
+    // and .bw_quote is the styling (border, colour) you opt into on top. .bw_code
+    // the reset never touched at all -- it simply has no opinion, so it stays
+    // opt-in.
+    '.bw_list': { 'padding-left': '1.5em', 'margin-bottom': '1rem' },
     '.bw_list .bw_list': { 'margin-bottom': '0' },
     '.bw_hr': {
       'height': '0', 'margin': '1.5rem 0',

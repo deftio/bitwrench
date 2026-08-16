@@ -366,7 +366,7 @@ progress, chipInput) need bw.mount() for el.bw access.
 - NEVER push feature branches to GitHub -- only main is pushed
 - NEVER run npm publish or create tags manually -- CI owns this
 - Run `npm run release` on feature branch, then squash-merge to main
-- Bundle budget: 45 KB gzipped for both UMD and ESM
+- Bundle budget: 46 KB gzipped for both UMD and ESM (45 KB through 2.1.6)
 
 <!-- drift-lint:ignore-start: removal documentation must name the removed APIs -->
 ## Removed APIs (will throw or silently fail)

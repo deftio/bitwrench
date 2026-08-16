@@ -99,7 +99,7 @@ reader learns in rung 1 gets thrown away.
 
 Each rung introduces exactly one idea.
 
-**Rung 1a — one object, one element.**
+**Rung 1a — intro to bitwrench and the {taco} format.**
 Device serves the shell; each TACO is shown three ways -- the object, the live
 element, and the HTML behind it. Introduces `t`, `a`, `c` and `bw.DOM()`. Loads
 bitwrench from the CDN, so the device holds a shell and nothing else. No BCCL --
@@ -373,22 +373,25 @@ keeps coming up.
 
 ## 9b. Release checklist -- MUST DO before shipping the tutorial
 
-- [ ] **Restore the CDN script tag in examples 1a and 1b.**
-      They are temporarily pointed at the locally built bitwrench so that
-      `npm run build` plus a test pass exercises the tutorials against the
-      working tree. Example 1a's whole point is that the device holds almost
-      nothing, so it must ship using the CDN.
+- [x] **Restore the CDN script tag in example 1a.** Done in 2.1.7, once 2.1.6
+      was on the CDN. During 2.1.6 development 1a and 1b were both pointed at
+      the locally built bitwrench, so that `npm run build` plus a test pass
+      exercised the tutorials against the working tree rather than the last
+      published release. That earned its keep: `bw_container` rendered an
+      uncapped full-width page and `bw_list` / `bw_code` did nothing at all,
+      because the CDN was still serving 2.1.5. Both looked like example bugs.
 
-      Grep for `TODO(before-release)` -- there are marker comments in both
-      `code.py` files and in the examples README.
+      1a is back on `bitwrench@2` and verified against the published 2.1.6.
+      **1b was deliberately left serving from `/www`** -- from that rung on, the
+      board owns the file, which is the shape a reader actually ships and the
+      only one that survives the device being its own access point. That also
+      keeps every rung after 1a exercising the working tree, so the same class
+      of bug stays catchable.
 
-      Why they were switched: two fixes made during 2.1.6 silently did nothing
-      in these examples, because the CDN serves the last published release.
-      `bw_container` rendered an uncapped full-width page, and `bw_list` /
-      `bw_code` had no effect at all. Both looked like example bugs.
-
-- [ ] Once restored, re-check that 1b still renders correctly without
-      `bw_list` and `bw_code`, or bump the CDN pin to a release that has them.
+      Consequence to remember: **1a alone now tests against whatever npm last
+      published**, so a fix made on a branch will not show up there until it
+      ships. If 1a renders wrong mid-cycle, check the published version before
+      hunting for an example bug.
 
 ## 10. Open questions
 

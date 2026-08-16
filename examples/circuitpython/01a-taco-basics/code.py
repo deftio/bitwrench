@@ -1,4 +1,4 @@
-# bitwrench on CircuitPython -- 1a: one object, one element
+# bitwrench on CircuitPython -- 1a: intro to bitwrench and the {taco} format
 #
 # The device serves one HTML page. bitwrench comes from a CDN, so the device
 # holds almost nothing: a shell and a UI description.
@@ -21,7 +21,7 @@ except ImportError:
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import bw_board
 try:
-    from adafruit_httpserver import Server, Request, Response, FileResponse
+    from adafruit_httpserver import Server, Request, Response
 except ImportError:
     raise SystemExit(
         "\n  adafruit_httpserver is not installed.\n"
@@ -30,31 +30,6 @@ except ImportError:
         "\n  On a board:  circup install adafruit_httpserver\n"
     )
 
-# ---------------------------------------------------------------------------
-# TODO(before-release): RESTORE THE CDN TAG IN THIS FILE
-#
-# These first two examples are meant to load bitwrench from a CDN -- that is
-# the point of example 1a: the device holds almost nothing. They are pointed at
-# the locally built copy *during development* so that `npm run build` plus a
-# test pass exercises the tutorials against the working tree instead of against
-# the last published release.
-#
-# Two real bugs hid behind the CDN version while developing 2.1.6: the
-# bw_container alias and the bw_list / bw_code prose classes both silently did
-# nothing here, because the CDN serves 2.1.5.
-#
-# To restore, in this file and in 01b-taco-nesting/code.py:
-#   1. put the CDN <script> tag back (see BITWRENCH_CDN below)
-#   2. delete the /js/bitwrench.js route
-#   3. drop the /www copy step from this example's README
-#
-# Grep for TODO(before-release) to find every site.
-# ---------------------------------------------------------------------------
-
-BITWRENCH_CDN = (
-    '<script src="https://cdn.jsdelivr.net/npm/bitwrench@2'
-    '/dist/bitwrench.umd.min.js"></script>'
-)
 
 # The page below is one long string. `page` holds it; Python convention names
 # module-level constants in capitals, which is why you often see PAGE in
@@ -65,9 +40,9 @@ BITWRENCH_CDN = (
 
 page = """<!doctype html><meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1">
-<title>TACO basics</title>
+<title>Intro to bitwrench and the {taco} format</title>
 <link rel=icon href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%232563eb'/></svg>">
-<script src="/js/bitwrench.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"></script>
 <div id=app></div>
 <script>
 bw.loadStyles({ primary: '#2563eb' });
@@ -203,7 +178,10 @@ bw.DOM('#app', {
        style: bw.s({ paddingTop: '1.5rem', paddingBottom: '2rem' }) },
   c: [
     { t: 'header', c: [
-      { t: 'h1', c: 'One object, one element' },
+      { t: 'h1', c: 'Intro to bitwrench and the {taco} format' },
+      { t: 'p', c: 'bitwrench builds UI from plain objects. One object is one '
+                 + 'element, and the object has four keys at most -- t, a, c '
+                 + 'and o. That shape is called a TACO.' },
       { t: 'p', c: 'Every row below started as a JavaScript object in code.py. '
                  + 'The middle column is what bitwrench built from it, and the '
                  + 'right column is that element, live on this page.' }
@@ -246,8 +224,8 @@ bw.DOM('#app', {
 
 
 pool, host, port = bw_board.start(
-    "1a - one object, one element",
-    serving="bitwrench from %s (LOCAL BUILD -- see TODO)" % bw_board.WWW,
+    "1a - intro to bitwrench and the {taco} format",
+    serving="bitwrench from the jsDelivr CDN (the device holds only this page)",
 )
 server = Server(pool, "/static", debug=True)
 
@@ -255,18 +233,6 @@ server = Server(pool, "/static", debug=True)
 @server.route("/")
 def index(request: Request):
     return Response(request, page, content_type="text/html")
-
-
-@server.route("/js/bitwrench.js")
-def bitwrench_js(request: Request):
-    # TODO(before-release): delete this route; example 1 should use the CDN.
-    return FileResponse(
-        request,
-        "bitwrench.umd.min.js.gz",
-        bw_board.WWW,
-        headers={"Content-Encoding": "gzip"},
-        content_type="text/javascript",
-    )
 
 
 print("  page size: %d bytes" % len(page))

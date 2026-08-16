@@ -209,4 +209,123 @@ describe("contract — content safety", function () {
     assert.ok(/<b>hi<\/b>/.test(bw.html({ t: "p", c: bw.raw("<b>hi</b>") })),
       "bw.raw() is the explicit escape hatch");
   });
+
+  /**
+   * WHY: Attribute values and element content are different contexts with
+   * different rules, and bitwrench used one escaper for both. escapeHTML also
+   * escapes "/" -- an OWASP rule for content, where it blunts a stray
+   * "</script" -- which inside an attribute turned every URL into
+   * https:&#x2F;&#x2F;example.com. Valid, decoded by browsers, and wrong for
+   * anything that diffs or greps server-rendered HTML.
+   *
+   * Content escaping is deliberately NOT relaxed here: the "/" rule earns its
+   * keep in that context and the case above depends on it.
+   */
+  /**
+   * WHY: escaping answers "is this value safe inside quotes", which is the
+   * wrong question for a KEY -- the space in `x onclick=alert(1) y` is what
+   * ends the attribute name and begins the next attribute, so there is nothing
+   * to escape. bw.create() has always been safe here because setAttribute
+   * throws on the same key; the string path emitted it. That is the third bug
+   * of this exact shape (string output wrong alone, nobody renders it during
+   * development), and the reason it is not caught by the html/create agreement
+   * test below is that create() throws rather than disagreeing.
+   */
+  it("drops attribute names the DOM itself would refuse", function () {
+    const out = bw.html({ t: "div", a: { "x onclick=alert(1) y": "z" }, c: "hi" });
+    assert.ok(!/onclick/.test(out),
+      "a key that smuggles a second attribute must not survive: " + out);
+    assert.strictEqual(out, "<div>hi</div>", "the bad key is dropped, the element still renders");
+
+    assert.throws(function () { bw.create({ t: "div", a: { "x onclick=alert(1) y": "z" } }); },
+      "the DOM path rejects the same key -- that is why this one is a bug and not a feature");
+
+    assert.ok(bw.html({ t: "div", a: { "data-x": "1", "aria-label": "a", "xml:lang": "en" } })
+      .match(/data-x="1"[\s\S]*aria-label="a"[\s\S]*xml:lang="en"/),
+      "the real attribute vocabulary -- data-*, aria-*, namespaced -- must pass");
+  });
+
+  it("does not slash-escape attribute values, but still does in content", function () {
+    const url = "https://example.com/a?b=1";
+    assert.ok(bw.html({ t: "a", a: { href: url }, c: "x" }).includes('href="https://example.com/a?b=1"'),
+      "an attribute value must survive intact -- a URL is the common case");
+    assert.ok(bw.html({ t: "p", c: "</script>" }).includes("&#x2F;"),
+      "content escaping is unchanged; / is still neutralised there");
+  });
+});
+
+/**
+ * The string path and the DOM path are two implementations of one idea, and
+ * they drift silently because only one of them is ever checked by eye. In both
+ * shipped bugs of this kind bw.create() was correct and bw.html() was not,
+ * because the DOM does its own serialising -- so the string path was wrong
+ * alone, in output nobody renders during development.
+ *
+ * Comparing raw markup would not work: the DOM's serialiser leaves < and >
+ * unescaped inside attributes, which is legal but not what we emit. So this
+ * compares semantics -- parse both, ask what the attribute actually VALUES.
+ *
+ * Know what that does and does not buy you. Verified by mutation:
+ *
+ *   camelCase style properties  -> CAUGHT here. style="paddingLeft:1rem" parses
+ *                                  to nothing, so the two paths genuinely
+ *                                  disagree about the resolved value.
+ *
+ *   slash-escaped attributes    -> NOT caught here. href="https:&#x2F;&#x2F;x"
+ *                                  and href="https://x" parse to the SAME
+ *                                  value, because every parser decodes
+ *                                  entities. The paths agree semantically; only
+ *                                  the bytes were ugly. That one is pinned by
+ *                                  the exact strings in the golden fixture and
+ *                                  by the content-safety case above.
+ *
+ * Semantic equivalence catches divergence. Exact goldens catch noise. Neither
+ * subsumes the other, which is why both exist.
+ */
+describe("contract — bw.html() and bw.create() agree on attributes", function () {
+  const CASES = [
+    { name: "a URL with a query string",
+      taco: { t: "a", a: { href: "https://example.com/p?a=1&b=2" }, c: "x" } },
+    { name: "quotes and angle brackets in a value",
+      taco: { t: "p", a: { title: 'he said "no" <yet>' }, c: "x" } },
+    { name: "a camelCase style object",
+      taco: { t: "p", a: { style: { paddingLeft: "1.25rem", backgroundColor: "red" } }, c: "x" } },
+    { name: "a data URI",
+      taco: { t: "img", a: { src: "data:image/svg+xml,<svg xmlns='http://x'/>", alt: "i" } } },
+    { name: "an apostrophe in text-bearing attributes",
+      taco: { t: "input", a: { placeholder: "it's here" } } }
+  ];
+
+  function parse(markup) {
+    const host = document.createElement("div");
+    host.innerHTML = markup;
+    return host.firstElementChild;
+  }
+
+  CASES.forEach(function (c) {
+    it("round-trips " + c.name, function () {
+      const fromString = parse(bw.html(c.taco));
+      const fromDom = bw.create(c.taco);
+
+      assert.strictEqual(fromString.tagName, fromDom.tagName, "same element");
+
+      Object.keys(c.taco.a).forEach(function (key) {
+        if (key === "style") {
+          // Compare resolved properties, not the serialised string: the two
+          // paths are free to order or space them differently.
+          Object.keys(c.taco.a.style).forEach(function (prop) {
+            assert.strictEqual(
+              fromString.style[prop], fromDom.style[prop],
+              "style." + prop + " must survive the string path identically"
+            );
+          });
+          return;
+        }
+        assert.strictEqual(
+          fromString.getAttribute(key), fromDom.getAttribute(key),
+          "attribute '" + key + "' differs between bw.html() and bw.create()"
+        );
+      });
+    });
+  });
 });

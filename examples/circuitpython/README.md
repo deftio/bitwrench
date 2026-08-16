@@ -4,11 +4,6 @@ Examples that build up from a single element to a device pushing live UI
 updates. Each adds exactly one idea, and each runs unchanged on every board
 below.
 
-> **TODO(before-release):** examples 1a and 1b are temporarily served from the
-> locally built bitwrench (`/www`) rather than the CDN, so that a full build and
-> test pass exercises them against the working tree. Restore the CDN tag before
-> publishing -- see `dev/embedded-tutorial-2.1.x.md`.
->
 > **Status: not yet tested on hardware.** These were written against the
 > CircuitPython and `adafruit_httpserver` documentation. Expect rough edges until
 > they have been run on a real board.
@@ -44,7 +39,7 @@ device side you are writing dicts.
 
 | # | What it adds | The call that never changes |
 |---|---|---|
-| [1a](01a-taco-basics/) | One object makes one element. Shows the object, the HTML it produced, and the live element side by side. | `bw.DOM('#app', taco)` |
+| [1a](01a-taco-basics/) | What a TACO is: one object makes one element. Shows the object, the HTML it produced, and the live element side by side. | `bw.DOM('#app', taco)` |
 | [1b](01b-taco-nesting/) | TACOs inside TACOs -- strings, single children, arrays, and children built from data. | same |
 | [2](02-styling/) | Styling: inline styles, the classes that ship, and one seed colour deriving a whole palette. Plus the first click handler. | same |
 | [3](03-json-dumps/) | Python composes the UI with `json.dumps`. bitwrench moves onto the device. | same |
@@ -89,7 +84,7 @@ The same `code.py` then runs unchanged on a board.
 5. Copy one example's `code.py` to the drive root
 6. Open the serial console -- the URL to visit is printed on boot
 
-Every example from 2 on also needs bitwrench on the device:
+Every example from 1b on also needs bitwrench on the device:
 
 ```
 mkdir /www  (on the CIRCUITPY drive)
@@ -106,7 +101,7 @@ Example 6 additionally needs `embedded_python/bwserve.py` copied to `/lib/`.
 **Why not inline the library in the page?** `Response` holds its whole body in
 memory. The Pico 2 W has 520KB of RAM and no PSRAM, so a 166KB string plus HTTP
 buffers is enough to run out. `FileResponse` streams from disk in 1KB chunks
-instead, which is why every example from 2 on serves it from `/www`.
+instead, which is why every example from 1b on serves it from `/www`.
 
 **CDN or on-device?** Interchangeable -- one line in the shell. But CDN delivery
 needs *the browser* to reach the internet, not the device. That is fine on a home

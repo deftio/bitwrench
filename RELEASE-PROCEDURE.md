@@ -40,7 +40,7 @@ All of the following must pass before opening a PR:
 - [ ] **CLI tests**: `npm run test:cli` — all tests passing.
 - [ ] **Test coverage**: 100% of new code covered. Overall coverage must not decrease.
 - [ ] **Build**: `npm run build` succeeds without errors.
-- [ ] **Bundle size**: Verify gzipped UMD min stays under the 45KB budget.
+- [ ] **Bundle size**: Verify gzipped UMD and ESM min stay under the 46KB budget.
       The gate measures the `.gz` the build writes (level 9), not a
       re-compression of the `.js`. If a size number looks wrong, check the
       compression level before anything else — see
