@@ -230,7 +230,12 @@
         c: {
           t: 'p',
           a: { class: 'bw_site_pages_footer_text' },
-          c: 'bitwrench\u2122 blog \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause'
+          // Blog pages are counted too, so they carry the same Privacy link as
+          // the rest of the site. They sit one level down from the root.
+          c: [
+            'bitwrench\u2122 blog \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause \u00B7 ',
+            { t: 'a', a: { href: '../pages/privacy.html' }, c: 'Privacy' }
+          ]
         }
       });
     }

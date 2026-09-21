@@ -15,7 +15,7 @@
  *   var p = styles.palette;
  *
  * Exposes: site.makePageHeader, site.makeCallout, site.makeDemoSection,
- *          site.makeCodeBlock, site.createTabbedDemo, site.makeSiteFooter,
+ *          site.makeCodeBlock, site.createTabbedDemo,
  *          applySiteChromeCSS, initBitwrenchPage
  */
 
@@ -950,16 +950,10 @@
     return { t: 'div', a: { class: 'bw_site_pages_console' }, c: bw.raw(content) };
   };
 
-  /**
-   * Site footer TACO.
-   * @returns {Object} TACO
-   */
-  site.makeSiteFooter = function() {
-    return {
-      t: 'footer', a: { class: 'bw_site_pages_footer' },
-      c: { t: 'p', a: { class: 'bw_site_pages_footer_text' }, c: 'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause' }
-    };
-  };
+  // NOTE: the site footer is NOT defined here. mountExampleNav() in
+  // shared-nav.js builds and appends it. A second copy lived here, unreferenced
+  // by any page, which meant every footer edit had a 50% chance of landing in
+  // the dead one -- removed rather than kept in sync.
 
   // =========================================================================
   // initBitwrenchPage -- replaces the one in shared-nav.js
@@ -973,11 +967,85 @@
   }
 
   // =========================================================================
+  // Analytics -- GoatCounter
+  // =========================================================================
+  //
+  // site.js is loaded by 31 of the 32 pages on the site, so this is the one
+  // place the tag has to go. (The holdout is index.html, an 11-line
+  // meta-refresh stub that forwards to pages/ in zero seconds -- counting it
+  // would only double up on the page it redirects to.)
+  //
+  // Injected on DOM ready rather than at load time: site.js sits in <head>, so
+  // document.body does not exist yet when this IIFE runs. Hooking readiness
+  // rather than initBitwrenchPage() matters -- the two blog pages load site.js
+  // but call blog-nav.js instead, so an init-only hook would silently miss them.
+  //
+  // Note `data-goatcounter`. bitwrench itself emits no data-* attributes
+  // anywhere, by rule; this one is GoatCounter's published API for naming the
+  // endpoint, so it is a third-party contract rather than an attribute we
+  // invented. Do not "clean it up".
+  var ANALYTICS = {
+    endpoint: 'https://deftio.goatcounter.com/count',
+    script:   'https://gc.zgo.at/count.js',
+
+    // GoatCounter can also append a visible hit-counter badge to the page.
+    // Off by default: it is a visible design element on all 31 pages, which is
+    // a separate decision from measuring traffic. Flip to true to show it.
+    showVisitorCount: false
+  };
+
+  // Local development must not reach the counter. Without this every
+  // ./run.sh, every file:// open and every localhost preview lands in the
+  // stats, and the numbers stop meaning anything.
+  function analyticsWanted() {
+    if (typeof window === 'undefined' || !window.location) return false;
+    var h = window.location.hostname;
+    if (window.location.protocol === 'file:') return false;
+    if (!h || h === 'localhost' || h === '127.0.0.1' || h === '::1') return false;
+    if (/\.local$/.test(h) || /^192\.168\./.test(h) || /^10\./.test(h)) return false;
+    return true;
+  }
+
+  function mountAnalytics() {
+    if (!analyticsWanted()) return;
+    if (typeof bw === 'undefined' || !bw.append) return;   // page without bitwrench
+    if (document.querySelector('script[data-goatcounter]')) return;   // idempotent
+
+    bw.append(document.body, {
+      t: 'script',
+      a: {
+        'data-goatcounter': ANALYTICS.endpoint,
+        src: ANALYTICS.script,
+        async: true,
+
+        // The badge call has to wait for count.js. count.js is async, so
+        // running window.goatcounter.visit_count() in a sibling <script> -- as
+        // GoatCounter's copy-paste snippet does -- reads visit_count off an
+        // undefined window.goatcounter whenever the network is slower than the
+        // parser. Hanging it on this element's own load event removes the race.
+        onload: function() {
+          if (!ANALYTICS.showVisitorCount) return;
+          if (window.goatcounter && window.goatcounter.visit_count) {
+            window.goatcounter.visit_count({ append: 'body' });
+          }
+        }
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', mountAnalytics);
+  } else {
+    mountAnalytics();
+  }
+
+  // =========================================================================
   // Exports
   // =========================================================================
   window.applySiteChromeCSS = applySiteChromeCSS;
   window.initBitwrenchPage = initBitwrenchPage;
   window.site = site;
   window.SITE = SITE;
+  window.ANALYTICS = ANALYTICS;
 
 })();

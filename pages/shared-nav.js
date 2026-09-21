@@ -443,10 +443,18 @@
         }
       }
 
-      // Append shared site footer via bw.DOM on body
+      // Append shared site footer via bw.DOM on body.
+      //
+      // The Privacy link is the only place this site says it counts pageviews,
+      // so it has to stay reachable. baseHref is how pages outside pages/ --
+      // readme.html at the root, blog/ one level down -- resolve it.
+      var privacyHref = (baseHref || '') + 'privacy.html';
       var footerTaco = {
         t: 'footer', a: { class: 'bw_site_pages_footer' },
-        c: { t: 'p', a: { class: 'bw_site_pages_footer_text' }, c: 'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause' }
+        c: { t: 'p', a: { class: 'bw_site_pages_footer_text' }, c: [
+          'bitwrench\u2122 \u00A9 deftio / M. Chatterjee \u00B7 BSD-2-Clause \u00B7 ',
+          { t: 'a', a: { href: privacyHref }, c: 'Privacy' }
+        ]}
       };
       if (bw.$('body').length) {
         bw.append('body', footerTaco);

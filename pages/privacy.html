@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - Privacy</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    var styles = initBitwrenchPage('privacy.html');
+    var p = styles.palette;
+
+    function para(content) {
+      return { t: 'p', c: content };
+    }
+
+    function heading(text) {
+      return { t: 'h2', a: { style: bw.s({ marginTop: '2rem' }) }, c: text };
+    }
+
+    var pageHeader = site.makePageHeader(
+      'Privacy',
+      'What this site measures, and what the library does not.'
+    );
+
+    // =========================================================================
+    // The library
+    // =========================================================================
+    var library = [
+      heading('The bitwrench library sends nothing'),
+
+      para([
+        'bitwrench has no analytics, no telemetry and no network calls of any ',
+        'kind. It has no runtime dependencies either, so there is nothing ',
+        'underneath it doing so on its behalf. This is true of every build: ',
+        { t: 'code', a: { class: 'bw_code' }, c: 'npm i bitwrench' },
+        ', the CDN bundle, and the file you copy onto a device.'
+      ]),
+
+      para([
+        'The example dashboards meant to be served from a microcontroller are ',
+        'deliberately excluded from the measurement described below. A page ',
+        'running on your own ESP32 or Pico talks to your device and nothing ',
+        'else. Putting a beacon in code that people flash onto their own ',
+        'hardware is not something a UI library should do.'
+      ]),
+
+      site.makeCallout('tip', 'Offline by design',
+        'A bitwrench page works with no internet at all -- including when the ' +
+        'device is its own access point, which is the normal case for setup ' +
+        'and provisioning screens.')
+    ];
+
+    // =========================================================================
+    // This website
+    // =========================================================================
+    var website = [
+      heading('This documentation site counts pageviews'),
+
+      para([
+        'These pages use ',
+        { t: 'a', a: { href: 'https://www.goatcounter.com/', rel: 'noopener' },
+          c: 'GoatCounter' },
+        ', an open-source analytics service. It records which pages are ',
+        'visited so I can tell which documentation is actually being read.'
+      ]),
+
+      para('GoatCounter sets no cookies and does not collect personal data. ' +
+           'It does not build a profile of you, does not follow you between ' +
+           'sites, and there is nothing here to log in to.'),
+
+      para([
+        'The counting script is loaded only on this website. It is not part of ',
+        'the published package -- ',
+        { t: 'code', a: { class: 'bw_code' }, c: 'pages/' },
+        ' is not included in the npm tarball -- so installing bitwrench or ',
+        'loading it from a CDN never fetches it.'
+      ]),
+
+      para('Local development is excluded, so nothing you run on localhost, ' +
+           'on your own network, or straight off the filesystem is counted.')
+    ];
+
+    // =========================================================================
+    // Contact
+    // =========================================================================
+    var contact = [
+      heading('Questions'),
+      para([
+        'Open an issue at ',
+        { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/issues',
+                       rel: 'noopener' },
+          c: 'github.com/deftio/bitwrench' },
+        '.'
+      ])
+    ];
+
+    bw.DOM('#app', { t: 'div', c: [
+      pageHeader,
+      { t: 'div', a: { class: 'content-container' },
+        c: [].concat(library, website, contact) }
+    ]});
+  </script>
+</body>
+</html>

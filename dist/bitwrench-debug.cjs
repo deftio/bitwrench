@@ -1,4 +1,4 @@
-/*! bitwrench-debug v2.1.7 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-debug v2.1.8 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 function getDefaultExportFromCjs (x) {

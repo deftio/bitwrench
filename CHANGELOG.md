@@ -3,6 +3,81 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.8 (2026-09-12)
+
+Site analytics and dev dependency updates, no library changes. The API,
+bundles and runtime behaviour are byte-for-byte what v2.1.7 shipped -- the only
+file under `src/` that moved is the generated version stamp.
+
+### Docs site
+
+- **GoatCounter added to the documentation site**, injected once from
+  `pages/site.js` rather than pasted into every page. It is a TACO through
+  `bw.append()` like everything else on the site, so there is no raw DOM here
+  either.
+- **Local development does not reach the counter.** Requests from `localhost`,
+  `127.0.0.1`, `192.168.*`, `*.local` and `file:` are skipped. Without this
+  every `./run.sh`, every local preview and every device-on-the-bench session
+  lands in the traffic numbers and they stop meaning anything.
+- **The visible hit-counter badge is off.** GoatCounter's copy-paste snippet
+  includes `visit_count({append: 'body'})`, which appends a counter to the page
+  body -- a visible design element on every page, which is a different decision
+  from measuring traffic. `ANALYTICS.showVisitorCount` turns it on.
+- **Fixed a race in that snippet while we were at it.** It calls
+  `window.goatcounter.visit_count()` from a sibling `<script>` while `count.js`
+  loads `async`, so whenever the network is slower than the parser it reads
+  `visit_count` off an undefined `window.goatcounter`. The call now hangs off
+  the script element's own `load` event.
+- **Coverage went from 38 to 46 of the 61 published pages.** GitHub Pages
+  serves this repository from `main` at `/`, so the site is larger than
+  `pages/` -- `examples/` is part of it and eight of those pages had no shared
+  include at all. They do now.
+
+- **A privacy page**, `pages/privacy.html`, linked from the footer on every
+  page that renders one. It states what is measured and -- more usefully for a
+  library sold on having no dependencies and no build step -- that bitwrench
+  itself sends nothing, from any install path, ever.
+- Removed a second, unreferenced copy of the site footer in `pages/site.js`.
+  `mountExampleNav()` in `shared-nav.js` builds the real one, so every footer
+  edit had even odds of landing in the dead copy.
+
+### Deliberately not instrumented
+
+`examples/*/dashboard.html` and `examples/esp32-adafruitST25DV16/static/` are
+**firmware payloads, not web pages.** Each sits next to the thing that serves
+it -- `server.py`, `server.ino`, `settings.toml`, `sketch.ino` -- and gets
+copied onto a board. Putting an analytics beacon in them would mean code
+flashed to someone else's hardware phoning home from their LAN, which is not
+what a UI library should do to the people using it. Several also load
+bitwrench from an absolute path (`/bitwrench.umd.min.js`) that only resolves
+when the device serves them, so they do not work on the docs site anyway.
+
+Also skipped: the root `index.html`, an eleven-line meta-refresh stub that
+forwards to `pages/` in zero seconds and would only double-count its
+destination.
+
+**The library itself contains no analytics of any kind, and never has.** This
+release adds a tag to the documentation website. Nothing in `dist/` phones
+home, and a page served off an ESP32 talks to nobody but its own device.
+
+### Dev dependencies
+
+Clears dependabot #97, #99 and #100. All dev-only -- bitwrench still has zero
+runtime dependencies.
+
+| package | from | to |
+|---|---|---|
+| `comment-parser` | 1.4.7 | 1.4.9 |
+| `eslint` | 10.8.0 | 10.10.0 |
+| `globals` | 17.8.0 | 17.12.0 |
+| `mocha` | 11.7.6 | 11.8.0 |
+| `js-yaml` (via mocha) | 4.3.1 | 4.3.2 |
+| `svgo` (via rollup-plugin-postcss) | 2.8.3 | 2.8.4 |
+
+3,158 unit tests plus 168 bundle tests. Coverage 97.79% statements,
+98.6% branches -- unchanged, as expected for a release that touches no
+library source.
+
 ## v2.1.7 (2026-08-15)
 
 The string path catches up with the DOM path. Every fix here is one of two
