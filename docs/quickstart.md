@@ -17,6 +17,60 @@ object-first approach is more composable and needs zero tooling. That same
 design choice happens to work everywhere from cloud dashboards to ESP32
 microcontrollers.
 
+## Hello, world
+
+The whole setup is one script tag. Save this as an `.html` file and open it:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"></script>
+<div id="app"></div>
+<script>
+  bw.mount('#app', { t: 'h1', c: 'Hello, world' });
+</script>
+```
+
+`{ t: 'h1', c: 'Hello, world' }` is a TACO: **t**ag, **a**ttributes,
+**c**ontent, **o**ptions. Children go in `c`, and event handlers are ordinary
+attributes:
+
+```javascript
+var count = 0;
+bw.mount('#app', {
+  t: 'div', c: [
+    { t: 'h1', c: 'Clicks' },
+    { t: 'button', a: { onclick: function() { bw.patch('n', String(++count)); } }, c: '+1' },
+    { t: 'span', a: { id: 'n' }, c: '0' }
+  ]
+});
+```
+
+If the key names feel heavy, `bw.h(tag, attrs, content)` builds the same
+objects from positional arguments -- the output is identical, so mix freely:
+
+```javascript
+var h = bw.h;
+bw.mount('#app', h('ul', null, ['one', 'two', 'three'].map(function(x) {
+  return h('li', null, x);
+})));
+```
+
+SVG is written the same way, starting from `{ t: 'svg', ... }` -- see
+[SVG in taco-format.md](taco-format.md#svg).
+
+## Which file do I load?
+
+| You want | Load | Size (gzip) |
+|----------|------|-------------|
+| A `<script>` tag, everything included | `dist/bitwrench.umd.min.js` | ~45 KB |
+| Your own design, no built-in components | `dist/bitwrench-lean.umd.min.js` | ~35 KB |
+| Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | ~110 KB |
+| `import bw from ...` without npm | `dist/bitwrench.esm.min.js` (or `-lean.esm.min.js`) | ~45 KB |
+| npm | `npm install bitwrench`, then `import bw from 'bitwrench'` | -- |
+
+Every file has a source map next to it. The unminified builds are for
+debugging -- don't vendor them into a page you ship. All builds and their
+hashes are listed in `dist/builds.json`.
+
 ## Lifecycle at a glance
 
 1. **Define** -- write a TACO object: `{t: 'div', a: {class: 'card'}, c: 'Hello', o: {...}}`
@@ -81,7 +135,7 @@ var header = {
 };
 
 // --- 3. Using a built-in component (BCCL) ---------------------------------
-// bitwrench ships 47 components. Check docs/component-cheatsheet.md first.
+// bitwrench ships 51 components. Check docs/component-cheatsheet.md first.
 // BCCL functions return TACO objects -- they are data, not DOM yet.
 var addButton = bw.makeButton({
   text: 'Add Task',
@@ -95,6 +149,7 @@ var addButton = bw.makeButton({
 function taskList() {
   return {
     t: 'div',
+    a: { id: 'tasks' },   // an id makes it addressable: bw.el('tasks')
     o: {
       state: {
         tasks: [
@@ -111,7 +166,7 @@ function taskList() {
             return {
               t: 'li',
               a: {
-                class: 'bw_list_item' + (task.done ? ' task-done' : ''),
+                class: 'bw_list_group_item' + (task.done ? ' task-done' : ''),
                 onclick: function() {
                   state.tasks[i].done = !state.tasks[i].done;
                   bw.refresh(el);  // explicit re-render -- no magic
@@ -145,9 +200,8 @@ function taskList() {
 }
 
 // --- 5. Mount to DOM -------------------------------------------------------
-// bw.mount() returns the root element so you can call el.bw methods.
-// bw.DOM() does the same but doesn't return the element.
-var listEl = bw.mount('#app', {
+// bw.mount() returns the root element. (bw.DOM() is another name for it.)
+bw.mount('#app', {
   t: 'div', a: { class: 'bw_container' },
   c: [
     header,             // static TACO
@@ -162,11 +216,7 @@ var listEl = bw.mount('#app', {
 // manipulating the DOM directly. The component owns its DOM.
 function addTask() {
   var text = prompt('New task:');
-  if (text) {
-    // Find the task list element and call its handle method
-    var list = listEl.querySelector('div[class]');  // or use bw.$(), bw.el()
-    if (list && list.bw) list.bw.addTask(text);
-  }
+  if (text) bw.el('tasks').bw.addTask(text);  // find by id, call its method
 }
 
 </script>
@@ -176,8 +226,11 @@ function addTask() {
 
 ## What to read next
 
+- **docs/core-api.md** -- one-page card: mount, patch, css, pub/sub, syncChildren. Start here if you bring your own design
+- **docs/taco-format.md** -- the object format, including [SVG](taco-format.md#svg) and `bw.h()`
+- **docs/bw-attach.md** -- `bwcli attach`: drive a live page from a terminal (REPL, inspect, screenshots). Useful for anything a headless browser can't do, like Web MIDI or hardware
 - **docs/thinking-in-bitwrench.md** -- full progressive walkthrough (1300 lines)
-- **docs/component-cheatsheet.md** -- all 47 built-in components
+- **docs/component-cheatsheet.md** -- all 51 built-in components
 - **docs/llm-bitwrench-guide.md** -- compact code-first tutorial (700 lines)
 - **docs/theming.md** -- palette generation, dark mode, custom CSS
 - **docs/state-management.md** -- o.state, o.render, handles, slots, pub/sub

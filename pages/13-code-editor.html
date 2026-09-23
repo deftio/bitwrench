@@ -236,8 +236,7 @@
         { format: 'CJS', file: 'bitwrench-code-edit.cjs.js', use: 'Node require()' },
         { format: 'ES5', file: 'bitwrench-code-edit.es5.min.js', use: 'Legacy browsers (IE11)' }
       ],
-      columns: ['format', 'file', 'use'],
-      headers: ['Format', 'File', 'Use Case'],
+      columns: [{ key: 'format', label: 'Format' }, { key: 'file', label: 'File' }, { key: 'use', label: 'Use Case' }],
       striped: true
     }));
 
@@ -247,12 +246,12 @@
       code: jsCode, lang: 'js', readOnly: true, height: '140px'
     }));
 
-    var cssCode = '.bw_card {\n  background: #ffffff;\n  border: 1px solid #dee2e6;\n  border-radius: 8px;\n  box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n  padding: 1.25rem;\n}';
+    var cssCode = '.card {\n  background: #ffffff;\n  border: 1px solid #dee2e6;\n  border-radius: 8px;\n  box-shadow: 0 2px 4px rgba(0,0,0,0.1);\n  padding: 1.25rem;\n}';
     bw.DOM('#demo-highlight-css', bw.codeEditor({
       code: cssCode, lang: 'css', readOnly: true, height: '160px'
     }));
 
-    var htmlCode = '<div class="bw_card">\n  <h3 class="bw_card_title">Hello</h3>\n  <p>Content here</p>\n  <button class="bw_btn bw_btn_primary">Click</button>\n</div>';
+    var htmlCode = '<div class="card">\n  <h3 class="card-title">Hello</h3>\n  <p>Content here</p>\n  <button class="btn">Click</button>\n</div>';
     bw.DOM('#demo-highlight-html', bw.codeEditor({
       code: htmlCode, lang: 'html', readOnly: true, height: '140px'
     }));
@@ -303,8 +302,7 @@
         { fn: 'el._bwCodeEdit.getValue()', returns: 'string', desc: 'Get current code from mounted editor element' },
         { fn: 'el._bwCodeEdit.setValue(code)', returns: 'void', desc: 'Set code and re-highlight' }
       ],
-      columns: ['fn', 'returns', 'desc'],
-      headers: ['Function / Option', 'Returns', 'Description']
+      columns: [{ key: 'fn', label: 'Function / Option' }, { key: 'returns', label: 'Returns' }, { key: 'desc', label: 'Description' }]
     }));
   </script>
 </body>

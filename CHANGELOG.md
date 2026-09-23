@@ -3,6 +3,132 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.9 (2026-09-23)
+
+Maintenance release: tables, grid, docs and better tests.
+
+Every fix came from someone using bitwrench -- field reports, filed issues and
+two rounds of outside review -- and each is locked by a test that fails on the
+old code. Core is ~110 bytes larger gzipped than 2.1.8, spent on keeping table
+cells alive across updates.
+
+### Fixed
+
+**Rendering**
+
+- **Nested arrays in `c` render everywhere (#105).** `bw.create`, `bw.mount`,
+  `bw.patch` and `bw.el(ref, apply)` flatten `c: [[a, b], c]` the way
+  `bw.html` always has, instead of printing `[object Object]`. This is what
+  broke `makeAlert({ content: [...] })`.
+- `bw.patch(ref, bw.raw(html))` inserts the markup instead of treating the raw
+  wrapper as an attribute object.
+- `bw.patch(ref, text)` over child elements runs their unmount hooks first.
+
+**Tables** -- first paint and every handle now compute one view (current sort,
+then the current page's slice), so the parts agree with each other:
+
+- `render()` output survives a sort (#98); `0` and `false` render as values,
+  not blanks (#102), and sort as values.
+- The sort glyph moves with the column and flips with the direction. It was
+  painted once, so it disagreed with `aria-sort`.
+- `sort()` and `setData()` keep the page slice; a header click on a paginated
+  table used to show every row. `setData()` and `update()` re-apply the active
+  sort.
+- The pager follows that slice: label, disabled states and the page passed to
+  `onPageChange` are clamped to the data. A one-row table used to read
+  "Page 2 of 3" and offer a Next that asked for a page that no longer existed.
+- `onRowClick` reports the row and index on screen now. Rows carry no handlers;
+  one `onclick` on `<tbody>` resolves the row at click time, so a reused row no
+  longer reports the record it was first painted with.
+- A keyed row keeps the cells whose rendered content is unchanged, so an
+  `<input>` in a cell keeps focus and caret while the table re-sorts. Changed
+  cells still go through `bw.patch`, so what they replace still unmounts.
+  Reordering rows no longer blurs the focused element.
+- Cell values that are already a TACO or `bw.raw()` render as markup without a
+  `render()` function.
+- No `data-*` attributes left: row keys live in component state, headers match
+  columns by position.
+
+**Components**
+
+- `makeNavbar` lays out in one row again (#101). The flex rule targeted
+  `.bw_bccl_container`; the factory renders `.bw_container`.
+- `makeRow({ gap: 0 })` means no gutter -- `0` is falsy, so no class was
+  emitted and the row kept the default.
+- `makeContainer({ fluid: true })` emits `bw_bccl_container_fluid`, which has
+  rules; the old hyphenated class matched nothing.
+- `makePagination({ size })` and `makeDataTable`'s title spacing have CSS. Both
+  emitted classes no rule matched.
+- `makeBarChart` shows a `0` label; `makeFeatureGrid({ columns })` always emits
+  a whole grid span (counts that don't divide 12 round; documented).
+- `makeSelect` options accept `label` as well as `text`.
+- `makeTabs` wires Arrow/Home/End through `onkeydown` in the tablist's
+  attributes, not `addEventListener` in `o.mounted`.
+
+**Grid CSS**
+
+- Gutters work (#104): column padding targeted Bootstrap's `.col`/`col-*` and
+  never matched `bw_col_*`. `bw_g_0`..`bw_g_5` are generated from the spacing
+  scale and set `row-gap`. **Visible change:** every `bw_row`/`bw_col_*` layout
+  gains the 0.375rem column padding its row's negative margin already reserved.
+- Responsive sizes apply when `xs` is set (#103). Section merging reused the
+  `@media` keys, so base `.bw_col_N` rules landed after the breakpoints and the
+  container's 540/720/960px max-widths were dropped. `bw_col_xl_*` now exists.
+- No CSS custom properties in the library: gutters are generated values, and a
+  dead `:root` font block is gone.
+
+**bwserve / types**
+
+- `client.screenshot()` is back (#107). The 2.1 refactor dropped the server
+  side while `bwcli serve`, `bwcli attach /screenshot` and the browser capture
+  still called it. Honours `format`, `quality`, `maxWidth`, `maxHeight`,
+  `scale`; resolves to `{ data: Buffer, width, height, format }`.
+- Types: `TabsConfig` declared `text` where `makeTabs` reads `label`; `css()`
+  and `injectCSS()` accept rule arrays and `{ minify }`; `screenshot()` typed;
+  removed `bw._el`, `bw._unmountCallbacks` and options no code reads.
+
+### Added
+
+- `makeTabs({ onTabChange })` (#106), called as `(index, tab, el)` on click,
+  keyboard or `setActiveTab()`, only when the index changes. `tab` is your own
+  object, so extra keys come back.
+- `docs/core-api.md`: one page, one line per call, for bringing your own design.
+- SVG is documented (`taco-format.md#svg`) -- it has worked since 2.0.26, but
+  the docs never said so, so people built SVG as strings.
+
+### Docs
+
+- The quickstart opens with a three-line hello world and a "which file do I
+  load?" table; `docs/README.md`, `llms.txt` and `agents.md` point there first.
+- Corrected against the code: `bw.DOM()` returns the mounted element (it is
+  `bw.mount`), `t` is required, 51 components not 47, `data-*` and custom
+  properties are banned in library source but fine in application CSS, and the
+  cheat sheet lists the table handles.
+- ~100 uses of class names with no CSS rule (`bw_btn`, `bw_card`, `bw_table`
+  ...) across 15 pages, examples, the README and `CONTRIBUTING.md`. Nine
+  reference tables on the docs site rendered empty (`makeTable({headers,rows})`
+  is not a thing; `makeTableFromArray` is).
+- The quick-start page's own try-it wired its Run button with
+  `addEventListener` in `o.mounted` -- the mistake it teaches against. It is a
+  component now (`el.bw.run()`), shared by every tutorial page.
+
+### Tests and tooling
+
+- Invariants: `bw.create()` and `bw.html()` build the same tree; every emitted
+  `bw_*` class has a CSS rule; `makeTable` under random handle sequences
+  matches a recomputed view.
+- Every code block in 11 onboarding docs runs in CI (191 blocks); `.d.ts`
+  members must exist at runtime; `assert.ok(true)` counts may only decrease.
+- Playwright layout specs measure gutters, navbar, responsive columns and
+  container widths -- what jsdom cannot see.
+- drift-lint scans `src/` (no `data-*`, no custom properties) and catches dead
+  BCCL class names in every file type, not just `.md`.
+
+### Dev dependencies
+
+- eslint 10.11.0, mocha 12.0.2 (major), rollup 4.63.3 -- Dependabot #109, taken
+  on this branch rather than merged to `main` separately.
+
 ## v2.1.8 (2026-09-12)
 
 Site analytics and dev dependency updates, no library changes. The API,

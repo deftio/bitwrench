@@ -5,9 +5,9 @@
 bitwrench is a JavaScript UI library where every UI element is a plain JS
 object called a TACO: `{t, a, c, o}` (Tag, Attributes, Content, Options).
 bitwrench renders TACOs to live DOM or HTML strings and provides a complete
-component library (47 components), palette-based theming, state management,
-client-side routing, and server-driven UI via SSE (bwserve). 165 KB on disk
-(45 KB gzipped), zero dependencies, no build step.
+component library (51 `make*()` components), palette-based theming, state management,
+client-side routing, and server-driven UI via SSE (bwserve). ~45 KB gzipped for
+the minified script-tag build, zero dependencies, no build step.
 
 bitwrench started in 2011 -- by an author who'd previously co-founded the
 Lampdesk webVM that became Palm/HP webOS -- with a simple premise:
@@ -39,9 +39,10 @@ you are doing it wrong. Read the patterns below.
 
 Before writing or modifying bitwrench code, read these docs in order:
 
-1. **docs/quickstart.md** -- Annotated 100-line tutorial. Covers the
-   full lifecycle from theming through stateful components in a single
-   working HTML file. Start here for the fastest onramp.
+1. **docs/quickstart.md** -- Hello world in one script tag, which dist
+   file to load, then an annotated 100-line app covering the full
+   lifecycle from theming through stateful components. Start here for
+   the fastest onramp; then read docs/thinking-in-bitwrench.md (3).
 
 2. **docs/llm-bitwrench-guide.md** -- Compact code-first tutorial.
    Covers TACO format, rendering, events, CSS, BCCL components, state,
@@ -56,11 +57,17 @@ Before writing or modifying bitwrench code, read these docs in order:
 
 4. **docs/component-cheatsheet.md** -- Every built-in component with
    key props and handle methods. Check this BEFORE building custom
-   UI -- bitwrench ships 47 components. If one exists for your need,
+   UI -- bitwrench ships 51 components. If one exists for your need,
    use it; do not hand-build a replacement.
 
 5. **docs/bitwrench-northstar-principles.md** -- Core design philosophy.
    Read when proposing architectural changes or new patterns.
+
+6. **docs/core-api.md** -- One-page card of the core calls (mount, patch,
+   syncChildren, css, pub/sub). Keep it open while writing code.
+
+SVG is ordinary TACO (`{t: 'svg', ...}`) -- see docs/taco-format.md#svg.
+Never build SVG as strings with bw.raw().
 
 ## The bitwrench mental model
 
@@ -115,8 +122,9 @@ For querying existing elements, use `bw.$()` (returns array) or `bw.el()`.
 
 ### 2. BCCL components first, custom TACO second
 
-bitwrench ships 47 ready-made components. ALWAYS check the component
-library before building custom UI:
+bitwrench ships 51 ready-made components (47 in the BCCL module, plus
+makeTable, makeTableFromArray, makeDataTable and makeBarChart in core).
+ALWAYS check the component library before building custom UI:
 
 ```javascript
 // WRONG -- hand-building a table
@@ -164,9 +172,12 @@ bw.injectCSS('.sidebar { background: #f5f5f5; border-right: 1px solid #ddd; }');
 bw.injectCSS('.header { color: #333; font-size: 1.25rem; }');
 
 // drift-lint:ignore-start: counter-example of CSS custom properties as theming path
-// WRONG -- CSS custom properties (bitwrench does not use var(--bw_*))
+// WRONG -- theming bitwrench components through custom properties: the library
+// defines none (drift-lint forbids them in src/), so var(--bw_surface) is empty
 bw.injectCSS('.card { background: var(--bw_surface); }');
 // drift-lint:ignore-end
+// (Your OWN tokens are fine in application CSS -- see docs/theming.md,
+// "Bring your own design". Use bw.css([...]) when a selector repeats.)
 
 // RIGHT -- CSS as a function of the palette + layout tokens
 var p = styles.palette;
@@ -233,9 +244,10 @@ o.mounted is only for non-event setup: IntersectionObserver, measuring
 dimensions, third-party library initialization.
 
 <!-- drift-lint:ignore-start: naming the retired attribute is the point of this note -->
-No `data-*` attributes anywhere, including bwserve. Declarative attribute
-binding (`data-bw-action` and similar) is a framework pattern, not a
-bitwrench one; bwserve carried it by mistake until v2.1.0. Server-driven
+No `data-*` attributes in bitwrench's own source (`src/`, including bwserve --
+drift-lint enforces it). Application code may use them (`data-testid`, a
+`[data-theme]` switch). Declarative attribute binding (`data-bw-action` and
+similar) is a framework pattern, not a bitwrench one; bwserve carried it by mistake until v2.1.0. Server-driven
 click handling uses `bw_act_*` class tokens instead, which the thin client
 delegates on: `{ t: 'button', a: { class: 'bw_act_save' } }`.
 <!-- drift-lint:ignore-end -->
@@ -270,34 +282,32 @@ bw.DOM('#app', {
   }
 });
 
-// ALSO RIGHT -- for targeted updates without full re-render, use handles
-var el = bw.mount('#app', {
+// ALSO RIGHT (cheaper) -- targeted update, nothing rebuilt: bw.patch() by id.
+// It runs unmount on anything it replaces, which a textContent write does not.
+var count = 0;
+bw.mount('#app', {
   t: 'div', c: [
-    { t: 'span', a: { class: 'val' }, c: '0' },
-    { t: 'button', a: { onclick: function() { el.bw.increment(); } }, c: '+1' }
-  ],
-  o: {
-    handle: {
-      increment: function(el) {
-        var span = el.querySelector('.val');
-        span.textContent = String(Number(span.textContent) + 1);
-      }
-    }
-  }
+    { t: 'span', a: { id: 'count' }, c: '0' },
+    { t: 'button', a: { onclick: function() { bw.patch('count', String(++count)); } }, c: '+1' }
+  ]
 });
 ```
 
-Three levels -- use the simplest that fits:
+Four levels -- use the simplest that fits:
 1. **Static TACO**: plain objects, no state. Most UI is this.
-2. **Re-render on demand**: call bw.DOM() again with new data.
-3. **Stateful TACO**: o.state + o.render + bw.refresh().
+2. **Re-render on demand**: call bw.mount() again with new data (replaces the
+   elements -- an input mid-edit or mid-drag loses it).
+3. **Targeted updates**: `bw.patch()`, `bw.syncChildren()` for keyed lists,
+   handle methods (`el.bw.*`). Nothing is rebuilt.
+4. **Stateful TACO**: o.state + o.render + bw.refresh() -- full rebuild, the most
+   expensive update.
 
 ## Source layout
 
 ```
-src/bitwrench.js              Main library (~3900 lines)
-src/bitwrench-styles.js       Theme/CSS generation (~2190 lines)
-src/bitwrench-color-utils.js  Color utilities (~460 lines)
+src/bitwrench.js              Main library (~5200 lines)
+src/bitwrench-styles.js       Theme/CSS generation (~2500 lines)
+src/bitwrench-color-utils.js  Color utilities (~400 lines)
 src/bitwrench-bccl.js         Component library (BCCL)
 src/bitwrench-code-edit.js    Code editor component
 src/bitwrench-router.js       Client-side routing
@@ -305,8 +315,10 @@ src/bitwrench-file-ops.js     File I/O (browser + Node)
 src/bitwrench-debug.js        Debug utilities
 src/bwserve/                  Server-driven UI (SSE)
 src/cli/                      CLI tool (bwcli)
-dist/                         Built output (UMD, ESM, CJS, ES5)
-test/                         Mocha + Karma tests
+dist/                         Built output (UMD, ESM, CJS, ES5). For a script tag:
+                              bitwrench.umd.min.js; -lean = no BCCL; unminified
+                              .umd.js/.esm.js are for stack traces only
+test/                         Mocha tests (+ Playwright specs in tests/)
 pages/                        Live demo pages (dogfood bitwrench)
 examples/                     Standalone examples
 docs/                         Documentation
@@ -328,12 +340,14 @@ npm run cleanbuild     # Full build + SRI hashes + README
 ### Rendering
 | Function | Returns | When to use |
 |----------|---------|-------------|
-| bw.DOM(sel, taco) | void | Mount into existing container |
-| bw.mount(sel, taco) | root element | Need el.bw handle/slot access after mount |
+| bw.mount(sel, taco) | mounted element | Mount into a container; keep the return value for el.bw |
+| bw.DOM(sel, taco) | mounted element | Same function as bw.mount |
 | bw.create(taco) | detached element | Build/hydrate before inserting (does not fire `o.mounted`) |
 | bw.append(target, taco) | new child element | Add child + `mountTree` (prefer over create+appendChild) |
 | bw.html(taco) | HTML string | SSR, emails, Node.js, CLI output |
 | bw.h(tag, a?, c?, o?) | TACO object | Shorthand TACO constructor |
+| bw.replace(el, taco) | new element | Swap one element (old one unmounted) |
+| bw.syncChildren(parent, items, opts) | -- | Keyed list update; kept rows are the same nodes |
 
 ### Styling
 | Function | What it does |
@@ -341,8 +355,8 @@ npm run cleanbuild     # Full build + SRI hashes + README
 | bw.loadStyles() | Inject structural CSS (component styles) |
 | bw.loadStyles(config) | Generate palette + inject themed CSS |
 | bw.makeStyles(config) | Generate styles object (palette, css, rules) |
-| bw.css(rules) | JS object to CSS string |
-| bw.injectCSS(css, {id}) | Insert CSS into document |
+| bw.css(rules, {minify}) | JS object (or array of them, for repeated selectors) to CSS string |
+| bw.injectCSS(css, {id, append, minify}) | Insert CSS into document; readable by default |
 | bw.toggleThemeMode() | Switch primary/alternate palettes |
 
 ### State and lifecycle
@@ -351,14 +365,16 @@ npm run cleanbuild     # Full build + SRI hashes + README
 | bw.refresh(el) | Re-invoke o.render |
 | bw.update(ref, data) | Dispatch to el.bw.update(data) |
 | bw.unmount(el) | Tear down lifecycle, remove element |
-| bw.patch(ref, content) | Update element content by id/UUID |
+| bw.patch(ref, content) | Update one element's content (text/TACO/array/raw); runs unmount on what it replaces |
 | bw.pub(topic, data) | Publish to all subscribers |
 | bw.sub(topic, fn, el?) | Subscribe (auto-cleans on unmount if el given) |
 
 ### Components (BCCL)
-All `bw.make*()` functions return static TACO objects. Mount with bw.DOM()
-or bw.mount(). Components with handles (modal, carousel, tabs, accordion,
-progress, chipInput) need bw.mount() for el.bw access.
+All `bw.make*()` functions return TACO objects. Mount with bw.mount() (or
+bw.DOM(), the same function) and keep the returned element: components with
+handles -- table (sort, setData, update, getData), modal, carousel, tabs,
+accordion, progress, chipInput -- expose them on el.bw. Update through the
+handle instead of re-mounting.
 
 ## Commit and release rules
 
@@ -366,7 +382,7 @@ progress, chipInput) need bw.mount() for el.bw access.
 - NEVER push feature branches to GitHub -- only main is pushed
 - NEVER run npm publish or create tags manually -- CI owns this
 - Run `npm run release` on feature branch, then squash-merge to main
-- Bundle budget: 46 KB gzipped for both UMD and ESM (45 KB through 2.1.6)
+- Bundle budget: 46 KB gzipped for both UMD and ESM, measured on the shipped .gz
 
 <!-- drift-lint:ignore-start: removal documentation must name the removed APIs -->
 ## Removed APIs (will throw or silently fail)
@@ -383,8 +399,9 @@ progress, chipInput) need bw.mount() for el.bw access.
 For the full doc map, see llms.txt in the project root.
 
 Essential reading for code changes:
-- docs/quickstart.md -- annotated 100-line tutorial, lifecycle overview
-- docs/llm-bitwrench-guide.md -- compact tutorial with all API patterns
+- docs/quickstart.md -- hello world, which file to load, annotated 100-line app
 - docs/thinking-in-bitwrench.md -- progressive walkthrough, design rationale
-- docs/component-cheatsheet.md -- all 47 components, props, handles
+- docs/llm-bitwrench-guide.md -- compact tutorial with all API patterns
+- docs/core-api.md -- one-page core API card
+- docs/component-cheatsheet.md -- all 51 components, props, handles
 - docs/bitwrench-northstar-principles.md -- core design philosophy

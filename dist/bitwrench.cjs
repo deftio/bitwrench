@@ -1,4 +1,4 @@
-/*! bitwrench v2.1.8 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench v2.1.9 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
@@ -8,10 +8,10 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  */
 
 const VERSION_INFO = {
-  version: '2.1.8',
+  version: '2.1.9',
   name: 'bitwrench',
   license: 'BSD-2-Clause',
-  buildDate: '2026-09-21T21:05:30.910Z'
+  buildDate: '2026-09-23T02:07:01.064Z'
 };
 
 /**
@@ -1777,13 +1777,11 @@ var structuralRules = {
     },
     '.bw_row': {
       'display': 'flex', 'flex-wrap': 'wrap',
-      'margin-right': 'calc(var(--bw_gutter_x, 0.75rem) * -0.5)',
-      'margin-left': 'calc(var(--bw_gutter_x, 0.75rem) * -0.5)'
+      'margin-right': '-0.375rem', 'margin-left': '-0.375rem'
     },
-    '.col, [class*="col-"]': {
+    '.bw_col, [class*="bw_col_"]': {
       'position': 'relative', 'width': '100%',
-      'padding-right': 'calc(var(--bw_gutter_x, 0.75rem) * 0.5)',
-      'padding-left': 'calc(var(--bw_gutter_x, 0.75rem) * 0.5)'
+      'padding-right': '0.375rem', 'padding-left': '0.375rem'
     },
     '.bw_col': { 'flex-basis': '0', 'flex-grow': '1', 'max-width': '100%' },
     ..._gridCols('bw_col')
@@ -1866,7 +1864,7 @@ var structuralRules = {
       'position': 'relative', 'display': 'flex', 'flex-wrap': 'wrap',
       'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 1.5rem'
     },
-    '.bw_bccl_navbar > .bw_bccl_container, .bw_bccl_navbar > .container': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' },
+    '.bw_bccl_navbar > .bw_bccl_container, .bw_bccl_navbar > .bw_container': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' },
     '.bw_bccl_navbar_brand': {
       'display': 'inline-flex', 'align-items': 'center', 'gap': '0.5rem',
       'padding-top': '0.25rem', 'padding-bottom': '0.25rem', 'margin-right': '1.5rem',
@@ -1998,6 +1996,9 @@ var structuralRules = {
       'font-family': 'inherit', 'font-size': 'inherit', 'background': 'none'
     },
     '.bw_page_item:first-child .bw_page_link': { 'margin-left': '0' },
+    // makePagination({ size }) -- same steps as the button sizes
+    '.bw_bccl_pagination_sm .bw_page_link': { 'padding': '0.25rem 0.5rem', 'font-size': '0.8125rem' },
+    '.bw_bccl_pagination_lg .bw_page_link': { 'padding': '0.625rem 1.25rem', 'font-size': '1.125rem' },
     '.bw_page_link:focus-visible': { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' }
   },
 
@@ -2032,8 +2033,7 @@ var structuralRules = {
     '.bw_feature': { 'padding': '1rem' },
     '.bw_feature_icon': { 'display': 'inline-block', 'margin-bottom': '1rem' },
     '.bw_feature_title': { 'margin-bottom': '0.5rem' },
-    '.bw_feature_grid': { 'width': '100%' },
-    '.bw_g_4': { '--bw_gutter_x': '1.5rem', '--bw_gutter_y': '1.5rem' }
+    '.bw_feature_grid': { 'width': '100%' }
   },
 
   // ---- Sections ----
@@ -2507,13 +2507,13 @@ var structuralRules = {
     '@media (min-width: 576px)': _gridCols('bw_col_sm'),
     '@media (min-width: 768px)': _gridCols('bw_col_md'),
     '@media (min-width: 992px)': _gridCols('bw_col_lg'),
+    '@media (min-width: 1200px)': _gridCols('bw_col_xl'),
     '@media (max-width: 575px)': {
       '.bw_bccl_card_img_left, .bw_bccl_card-img-left': { 'width': '100%' },
       '.bw_bccl_card_img_right, .bw_bccl_card-img-right': { 'width': '100%' },
       '.bw_bccl_hero, .bw_bccl_hero': { 'padding': '2rem 1rem' },
       '.bw_cta_actions, .bw_cta-actions': { 'flex-direction': 'column' },
       '.bw_hstack, .bw_hstack': { 'flex-direction': 'column' },
-      '.bw_feature_grid, .bw_feature-grid': { 'grid-template-columns': '1fr' },
       '.bw_bccl_modal_dialog': { 'margin': '0.5rem auto' },
       '.bw_bccl_modal_lg': { 'max-width': 'calc(100% - 1rem)' },
       '.bw_bccl_modal_xl': { 'max-width': 'calc(100% - 1rem)' },
@@ -2550,6 +2550,10 @@ function generateUtilityRules() {
     rules['.bw_pb_' + k] = { 'padding-bottom': v + ' !important' };
     rules['.bw_ps_' + k] = { 'padding-left': v + ' !important' };
     rules['.bw_pe_' + k] = { 'padding-right': v + ' !important' };
+    // Gutter k: half on each side of every column, pulled back by the row
+    var h = parseFloat(v) / 2 + 'rem';
+    rules['.bw_g_' + k] = { 'margin-left': '-' + h, 'margin-right': '-' + h, 'row-gap': v };
+    rules['.bw_g_' + k + ' > *'] = { 'padding-left': h, 'padding-right': h };
   }
   rules['.bw_m_auto'] = { 'margin': 'auto !important' };
   rules['.bw_py_3'] = { 'padding-top': '1rem !important', 'padding-bottom': '1rem !important' };
@@ -2713,7 +2717,14 @@ function getStructuralCSS() {
   var result = {};
   var keys = Object.keys(structuralRules);
   for (var i = 0; i < keys.length; i++) {
-    Object.assign(result, structuralRules[keys[i]]);
+    var sec = structuralRules[keys[i]];
+    for (var k in sec) {
+      // A repeated @media key merges and moves to its later position, so
+      // breakpoint grid rules land after the base .bw_col_N rules (#103).
+      var prev = result[k];
+      delete result[k];
+      result[k] = prev && k.charAt(0) === '@' ? Object.assign({}, prev, sec[k]) : sec[k];
+    }
   }
   Object.assign(result, generateUtilityRules());
 
@@ -2769,21 +2780,11 @@ function getResetStyles() {
 // Tests import `defaultStyles` and check for category keys.
 // We export structuralRules directly as defaultStyles — it already
 // has all the required category keys. The 'utilities' category is
-// generated from generateUtilityRules() and 'root' from the theme token.
+// generated from generateUtilityRules().
 // =========================================================================
 
 Object.assign({}, structuralRules, {
-  // Merge utility + root categories for backward compat
-  root: {
-    ':root': {
-      '--bw_font_sans_serif': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      '--bw_font_monospace': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Liberation Mono", "Courier New", monospace',
-      '--bw_body_font_family': 'var(--bw_font_sans_serif)',
-      '--bw_body_font_size': '1rem',
-      '--bw_body_font_weight': '400',
-      '--bw_body_line_height': '1.5'
-    }
-  },
+  // Merge utility categories for backward compat
   reset: structuralRules.base,
   enhancedCards: structuralRules.cards,
   tableResponsive: { '.bw_bccl_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' } },
@@ -4012,7 +4013,7 @@ function makeContainer(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_container${fluid ? '-fluid' : ''} ${className}`.trim() },
+    a: { class: `bw_bccl_container${fluid ? '_fluid' : ''} ${className}`.trim() },
     c: children
   };
 }
@@ -4023,7 +4024,7 @@ function makeContainer(props = {}) {
  * @param {Object} [props] - Row configuration
  * @param {Array|Object|string} [props.children] - Child columns
  * @param {string} [props.className] - Additional CSS classes
- * @param {number} [props.gap] - Gap size (1-5) applied via bw_g_{gap} class
+ * @param {number} [props.gap] - Gutter size 0-5 applied via bw_g_{gap} (0 = no gutter; omit for the default)
  * @returns {Object} TACO object representing a grid row
  * @category Component Builders
  * @example
@@ -4038,7 +4039,7 @@ function makeRow(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_bccl_row bw_row ${gap ? `bw_g_${gap}` : ''} ${className}`.trim()
+      class: `bw_bccl_row bw_row ${gap != null ? `bw_g_${gap}` : ''} ${className}`.trim()
     },
     c: children
   };
@@ -4226,6 +4227,8 @@ function makeNavbar(props = {}) {
  * @param {string|Object|Array} props.tabs[].content - Tab pane content
  * @param {boolean} [props.tabs[].active] - Whether this tab is initially active
  * @param {number} [props.activeIndex=0] - Default active tab index (overridden by tab.active)
+ * @param {Function} [props.onTabChange] - Called as (index, tab, el) when the active tab changes
+ *   (click, keyboard, or el.bw.setActiveTab). `tab` is the tabs[index] config object.
  * @returns {Object} TACO object representing a tabbed interface
  * @category Component Builders
  * @example
@@ -4238,7 +4241,7 @@ function makeNavbar(props = {}) {
  * bw.DOM("#app", tabs);
  */
 function makeTabs(props = {}) {
-  const { tabs = [], activeIndex = 0 } = props;
+  const { tabs = [], activeIndex = 0, onTabChange } = props;
 
   // Find the active tab index based on the active property or use activeIndex
   let actualActiveIndex = activeIndex;
@@ -4263,7 +4266,9 @@ function makeTabs(props = {}) {
     allTabs[index].setAttribute('aria-selected', 'true');
     allTabs[index].setAttribute('tabindex', '0');
     allPanes[index].classList.add('active');
+    var prev = el._bw_state ? el._bw_state.activeIndex : -1;
     if (el._bw_state) el._bw_state.activeIndex = index;
+    if (onTabChange && index !== prev) onTabChange(index, tabs[index], el);
   }
 
   return {
@@ -4272,7 +4277,40 @@ function makeTabs(props = {}) {
     c: [
       {
         t: 'ul',
-        a: { class: 'bw_nav bw_nav_tabs', role: 'tablist' },
+        a: {
+          class: 'bw_nav bw_nav_tabs', role: 'tablist',
+          // Arrow/Home/End move between tabs. In a: like the click handler, so
+          // keyboard and mouse take the same path (switchTab via click).
+          onkeydown: function(e) {
+            var tablist = e.currentTarget;
+            var tabButtons = tablist.querySelectorAll('[role="tab"]');
+            var currentIndex = -1;
+            for (var i = 0; i < tabButtons.length; i++) {
+              if (tabButtons[i] === e.target) { currentIndex = i; break; }
+            }
+            if (currentIndex === -1) return;
+
+            var newIndex = -1;
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
+            } else if (e.key === 'Home') {
+              e.preventDefault();
+              newIndex = 0;
+            } else if (e.key === 'End') {
+              e.preventDefault();
+              newIndex = tabButtons.length - 1;
+            }
+
+            if (newIndex >= 0) {
+              tabButtons[newIndex].focus();
+              tabButtons[newIndex].click();
+            }
+          }
+        },
         c: tabs.map((tab, index) => ({
           t: 'li',
           a: { class: 'bw_nav_item', role: 'presentation' },
@@ -4311,38 +4349,6 @@ function makeTabs(props = {}) {
       handle: {
         setActiveTab: switchTab,
         getActiveTab: function(el) { return (el._bw_state && el._bw_state.activeIndex) || 0; }
-      },
-      mounted: function(el) {
-        var tablist = el.querySelector('[role="tablist"]');
-        if (!tablist) return;
-        tablist.addEventListener('keydown', function(e) {
-          var tabButtons = tablist.querySelectorAll('[role="tab"]');
-          var currentIndex = -1;
-          for (var i = 0; i < tabButtons.length; i++) {
-            if (tabButtons[i] === e.target) { currentIndex = i; break; }
-          }
-          if (currentIndex === -1) return;
-
-          var newIndex = -1;
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
-          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
-          } else if (e.key === 'Home') {
-            e.preventDefault();
-            newIndex = 0;
-          } else if (e.key === 'End') {
-            e.preventDefault();
-            newIndex = tabButtons.length - 1;
-          }
-
-          if (newIndex >= 0) {
-            tabButtons[newIndex].focus();
-            tabButtons[newIndex].click();
-          }
-        });
       }
     }
   };
@@ -4983,7 +4989,7 @@ function makeTextarea(props = {}) {
  * @param {Object} [props] - Select configuration
  * @param {Array<Object>} [props.options=[]] - Dropdown options
  * @param {string} props.options[].value - Option value
- * @param {string} [props.options[].text] - Option display text (defaults to value)
+ * @param {string} [props.options[].text] - Option display text (`label` also accepted; defaults to value)
  * @param {string} [props.value] - Currently selected value
  * @param {string} [props.id] - Element ID
  * @param {string} [props.name] - Select name attribute
@@ -5030,7 +5036,7 @@ function makeSelect(props = {}) {
         value: opt.value,
         selected: opt.value === value
       },
-      c: opt.text || opt.value
+      c: opt.text || opt.label || opt.value
     }))
   };
 }
@@ -5268,7 +5274,9 @@ function makeHero(props = {}) {
  * @param {string} [props.features[].icon] - Icon content (emoji, HTML entity, or text)
  * @param {string} [props.features[].title] - Feature title
  * @param {string} [props.features[].description] - Feature description text
- * @param {number} [props.columns=3] - Number of columns (divides 12-col grid)
+ * @param {number} [props.columns=3] - Items per row at md+ widths. Uses the 12-column grid,
+ *   so use a divisor of 12 (1, 2, 3, 4, 6, 12); other counts round to the nearest
+ *   span (5 -> 6 per row, 8 -> 6 per row). Stacks to one column below md.
  * @param {boolean} [props.centered=true] - Center-align feature text
  * @param {string} [props.iconSize="3rem"] - Icon font size
  * @param {string} [props.className] - Additional CSS classes
@@ -5293,7 +5301,8 @@ function makeFeatureGrid(props = {}) {
     className = ''
   } = props;
 
-  const colClass = `bw_col_md_${12/columns}`;
+  // Nearest whole grid span: 12/5 would emit bw_col_md_2.4, which no rule matches
+  const colClass = `bw_col_md_${Math.min(12, Math.max(1, Math.round(12 / columns)))}`;
 
   return {
     t: 'div',
@@ -7913,6 +7922,22 @@ var _cssProp = function(k) {
   var out = k.replace(/[A-Z]/g, function(c) { return '-' + c.toLowerCase(); });
   return out;
 };
+// Flatten nested content arrays ([a, [b, c]] -> [a, b, c]) so every render
+// path -- bw.html, bw.create, bw.patch, bw.el apply -- agrees on what c holds.
+// Returns the input unchanged when nothing is nested (the common case).
+var _flat = function(arr) {
+  for (var i = 0; i < arr.length; i++) {
+    if (_isA(arr[i])) {
+      var out = arr.slice(0, i);
+      for (; i < arr.length; i++) {
+        if (_isA(arr[i])) out.push.apply(out, _flat(arr[i]));
+        else out.push(arr[i]);
+      }
+      return out;
+    }
+  }
+  return arr;
+};
 // Console aliases use thin wrappers (not direct references) so that test
 // code can monkey-patch console.warn/log/error and the patches take effect.
 var _cw   = function() { console.warn.apply(console, arguments); };
@@ -8143,17 +8168,11 @@ function _applyTo(el, apply) {
   } else if (_isA(apply)) {
     bw.unmountChildren(el);
     el.innerHTML = '';
-    apply.forEach(function(item) {
-      if (item != null) {
-        if (_is(item, 'object') && item.t) {
-          el.appendChild(bw.create(item));
-        } else {
-          el.appendChild(document.createTextNode(String(item)));
-        }
-      }
+    _flat(apply).forEach(function(item) {
+      if (item != null) el.appendChild(bw.create(item));
     });
     bw.mountTree(el);
-  } else if (_is(apply, 'object') && apply !== null && apply.t) {
+  } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
     bw.unmountChildren(el);
     el.innerHTML = '';
     el.appendChild(bw.create(apply));
@@ -8944,6 +8963,7 @@ function _createNode(taco, options) {
   }
   if (content != null) {
     if (_isA(content)) {
+      content = _flat(content);
       for (var ci = 0; ci < content.length; ci++) {
         var child = content[ci];
         if (child != null) {
@@ -9921,25 +9941,20 @@ bw.patch = function(id, content, attr) {
     // Legacy: explicit attribute patch
     el.setAttribute(attr, String(content));
   } else if (_is(content, 'string') || _is(content, 'number')) {
-    // Text patch
+    // Text patch. Replacing child elements with text still runs their unmount.
+    if (el.firstElementChild) bw.unmountChildren(el);
     el.textContent = String(content);
   } else if (_isA(content)) {
     // Array of children: full pipeline
     bw.unmountChildren(el);
     el.innerHTML = '';
+    content = _flat(content);
     for (var i = 0; i < content.length; i++) {
-      var item = content[i];
-      if (item != null) {
-        if (_is(item, 'object') && item.t) {
-          el.appendChild(bw.create(item));
-        } else {
-          el.appendChild(document.createTextNode(String(item)));
-        }
-      }
+      if (content[i] != null) el.appendChild(bw.create(content[i]));
     }
     bw.mountTree(el);
-  } else if (_is(content, 'object') && content !== null && content.t) {
-    // TACO content: full pipeline
+  } else if (_is(content, 'object') && content !== null && (content.t || content.__bw_raw)) {
+    // TACO or bw.raw() content: full pipeline
     bw.unmountChildren(el);
     el.innerHTML = '';
     el.appendChild(bw.create(content));
@@ -9951,6 +9966,7 @@ bw.patch = function(id, content, attr) {
       el.setAttribute(attrKeys[ak], String(content[attrKeys[ak]]));
     }
   } else {
+    if (el.firstElementChild) bw.unmountChildren(el);
     el.textContent = String(content);
   }
   return el;
@@ -11381,6 +11397,8 @@ bw.css = function(rules, options = {}) {
  * @param {Object} [options] - Injection options
  * @param {string} [options.id='bw_styles'] - ID for the style element
  * @param {boolean} [options.append=true] - Append to existing CSS (false to replace)
+ * @param {boolean} [options.minify=false] - Minify CSS generated from rule objects.
+ *   Output is readable by default; strings are inserted exactly as written.
  * @returns {Element} The style element
  * @category CSS & Styling
  * @see bw.css
@@ -11388,6 +11406,7 @@ bw.css = function(rules, options = {}) {
  * @example
  * bw.injectCSS('.my-class { color: red; }');
  * bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' });
+ * bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles', minify: true });
  */
 bw.injectCSS = function(css, options = {}) {
   if (!bw._isBrowser) {
@@ -12270,41 +12289,47 @@ bw.makeTable = function(config) {
     ? _keys(data[0]).map(key => ({ key, label: key }))
     : []);
 
-  // Current sort state
-  let currentSortColumn = sortColumn || null;
-  let currentSortDirection = sortDirection;
-
-  // Sort data if column specified
-  let sortedData = [...data];
-  if (currentSortColumn) {
-    sortedData.sort((a, b) => {
-      const aVal = a[currentSortColumn];
-      const bVal = b[currentSortColumn];
-
-      // Handle different types
-      if (_is(aVal, 'number') && _is(bVal, 'number')) {
-        return currentSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-
-      // String comparison
-      const aStr = String(aVal || '').toLowerCase();
-      const bStr = String(bVal || '').toLowerCase();
-
-      if (currentSortDirection === 'asc') {
-        return aStr.localeCompare(bStr);
-      } else {
-        return bStr.localeCompare(aStr);
-      }
-    });
+  // Only null/undefined are empty -- 0 and false are real values (#102)
+  function _cellText(v) { return v == null ? '' : String(v); }
+  // A value that is already a TACO or bw.raw() renders as markup, like render() output
+  function _cellContent(col, row) {
+    var v = row[col.key];
+    if (col.render) return col.render(v, row);
+    return v && (v.t || v.__bw_raw) ? v : _cellText(v);
   }
 
-  // Pagination
-  const totalRows = sortedData.length;
-  const totalPages = pageSize ? Math.max(1, Math.ceil(totalRows / pageSize)) : 1;
-  const page = Math.max(1, Math.min(currentPage, totalPages));
-  if (pageSize) {
-    const start = (page - 1) * pageSize;
-    sortedData = sortedData.slice(start, start + pageSize);
+  // One comparator and one slice for first paint and every handle, so the
+  // body always shows what the header and the pager claim.
+  function _sorted(rows, column, dir) {
+    var out = rows.slice();
+    if (!column) return out;
+    out.sort(function(a, b) {
+      var aVal = a[column], bVal = b[column];
+      if (_is(aVal, 'number') && _is(bVal, 'number')) return dir === 'asc' ? aVal - bVal : bVal - aVal;
+      var aStr = _cellText(aVal).toLowerCase(), bStr = _cellText(bVal).toLowerCase();
+      return dir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+    });
+    return out;
+  }
+  // The rows on screen: current sort, then this page's slice (page clamped to the data)
+  function _view(rows, column, dir) {
+    var all = _sorted(rows, column, dir);
+    if (!pageSize) return { rows: all, offset: 0, pages: 1 };
+    var pages = Math.max(1, Math.ceil(all.length / pageSize));
+    var offset = (Math.max(1, Math.min(currentPage, pages)) - 1) * pageSize;
+    return { rows: all.slice(offset, offset + pageSize), offset: offset, pages: pages };
+  }
+
+  const first = _view(data, sortColumn || null, sortDirection);
+  const totalPages = first.pages;
+  const page = first.offset / (pageSize || 1) + 1;
+
+  // Header cell content: the label, plus the glyph on the sorted column.
+  // Used at first paint and by the sort handle, so the glyph follows the sort.
+  function _thContent(col, column, dir) {
+    return sortable && col.key === column
+      ? [col.label, { t: 'span', a: { style: { marginLeft: '5px' } }, c: dir === 'asc' ? '▲' : '▼' }]
+      : col.label;
   }
 
   // Build table header with scope="col" and aria-sort support
@@ -12313,154 +12338,167 @@ bw.makeTable = function(config) {
     c: {
       t: 'tr',
       c: cols.map(col => {
-        var thAttrs = {
-          scope: 'col',
-          'data-col-key': col.key
-        };
+        var thAttrs = { scope: 'col' };
         if (sortable) {
           thAttrs.style = { cursor: 'pointer', userSelect: 'none' };
-          // Wire the header to the table's own sort handle. Without this the
-          // headers only *look* sortable: o.handle.sort does the work, but
-          // nothing ever called it, so clicking a header did nothing.
+          // th -> tr -> thead -> table, which carries the sort handle
           thAttrs.onclick = function(e) {
-            var th = e.currentTarget;
-            var tableEl = th.closest ? th.closest('table') : null;
-            if (tableEl && tableEl.bw && typeof tableEl.bw.sort === 'function') {
-              tableEl.bw.sort(col.key);
-            }
+            var tableEl = e.currentTarget.parentNode.parentNode.parentNode;
+            if (tableEl && tableEl.bw) tableEl.bw.sort(col.key);
           };
         }
-        if (currentSortColumn === col.key) {
-          thAttrs['aria-sort'] = currentSortDirection === 'asc' ? 'ascending' : 'descending';
+        if (sortColumn === col.key) {
+          thAttrs['aria-sort'] = sortDirection === 'asc' ? 'ascending' : 'descending';
         }
-        return {
-          t: 'th',
-          a: thAttrs,
-          c: [
-            col.label,
-            sortable && currentSortColumn === col.key && {
-              t: 'span',
-              a: { style: { marginLeft: '5px' } },
-              c: currentSortDirection === 'asc' ? '\u25B2' : '\u25BC'
-            }
-          ].filter(Boolean)
-        };
+        return { t: 'th', a: thAttrs, c: _thContent(col, sortColumn, sortDirection) };
       })
     }
   };
 
-  // Build table body with selectable/onRowClick support
-  const tbody = {
-    t: 'tbody',
-    c: sortedData.map((row, idx) => {
-      const globalIdx = pageSize ? (page - 1) * pageSize + idx : idx;
-      const rowAttrs = {};
-      if (rowKey && row[rowKey] !== undefined) {
-        rowAttrs['data-row-key'] = String(row[rowKey]);
-      }
-      if (selectable || onRowClick) {
-        rowAttrs.style = 'cursor:pointer;';
-        rowAttrs.onclick = function(e) {
-          if (selectable) {
-            var tr = e.currentTarget;
-            tr.classList.toggle('bw_bccl_table_row_selected');
-          }
-          if (onRowClick) {
-            onRowClick(row, globalIdx, e);
-          }
-        };
-      }
-      return {
-        t: 'tr',
-        a: rowAttrs,
-        c: cols.map(col => ({
-          t: 'td',
-          c: col.render ? col.render(row[col.key], row) : String(row[col.key] || '')
-        }))
-      };
-    })
-  };
+  // What was last rendered into a cell, as a comparable value. render() builds a
+  // fresh TACO every call, so identity says nothing; this says whether the result
+  // is the same. Handlers normalise to a marker: a cell that renders the same
+  // shape keeps its nodes, and the handlers bound when those nodes were built.
+  function _cellSig(v) {
+    if (v == null) return '';
+    if (typeof v !== 'object') return 's:' + String(v);
+    return 'o:' + JSON.stringify(v, function(k, val) { return typeof val === 'function' ? '\u0192' : val; });
+  }
 
-  // Shared helper: sort the live table DOM
-  function _sortTableDOM(el, column, direction) {
-    var ths = el.querySelectorAll('th[data-col-key]');
-    // Remove all aria-sort
-    for (var h = 0; h < ths.length; h++) {
-      ths[h].removeAttribute('aria-sort');
-    }
-    // Set aria-sort on the sorted column
-    for (var h2 = 0; h2 < ths.length; h2++) {
-      if (ths[h2].getAttribute('data-col-key') === column) {
-        ths[h2].setAttribute('aria-sort', direction === 'asc' ? 'ascending' : 'descending');
-        break;
-      }
+  // Signatures of the cells currently rendered, by row key (keyed tables only).
+  var _sigs = {};
+
+  // Rows carry no handlers. One onclick on <tbody> resolves the row and its
+  // index from the current view at click time, so a row reused across sort or
+  // setData never reports the record it was first painted with.
+  function _rowTaco(row) {
+    var contents = cols.map(function(col) { return _cellContent(col, row); });
+    if (rowKey) _sigs[String(row[rowKey])] = contents.map(_cellSig);
+    return {
+      t: 'tr',
+      a: (selectable || onRowClick) ? { style: 'cursor:pointer;' } : {},
+      c: contents.map(function(c) { return { t: 'td', c: c }; })
+    };
+  }
+
+  function _onBodyClick(e) {
+    var tb = e.currentTarget, tr = e.target;
+    while (tr && tr.parentNode !== tb) tr = tr.parentNode;
+    if (!tr) return;
+    if (selectable) tr.classList.toggle('bw_bccl_table_row_selected');
+    if (onRowClick) {
+      var st = tb.parentNode._bw_state || {};
+      var i = Array.prototype.indexOf.call(tb.children, tr);
+      onRowClick((st.view || first.rows)[i], (st.offset || 0) + i, e);
     }
   }
 
-  // Shared helper: rebuild tbody rows from new data
-  function _rebuildTbody(el, newData, colsDef, rKey) {
+  const tbody = {
+    t: 'tbody',
+    a: (selectable || onRowClick) ? { onclick: _onBodyClick } : {},
+    c: first.rows.map(_rowTaco)
+  };
+
+  // Header cells line up with cols by position, so no per-cell key is needed
+  function _sortTableDOM(el, column, direction) {
+    var ths = el.querySelectorAll('thead th');
+    for (var h = 0; h < ths.length && h < cols.length; h++) {
+      if (cols[h].key === column) ths[h].setAttribute('aria-sort', direction === 'asc' ? 'ascending' : 'descending');
+      else ths[h].removeAttribute('aria-sort');
+      bw.patch(ths[h], _thContent(cols[h], column, direction));
+    }
+  }
+
+  // Rebuild tbody rows to match `rows`. Keyed rows are reused (selection
+  // class and focus survive); cells are patched, which unmounts old content.
+  function _rebuildTbody(el, rows) {
     var tbodyEl = el.querySelector('tbody');
     if (!tbodyEl) return;
 
-    if (rKey) {
-      // Keyed reconciliation: reuse existing row nodes
-      var existingRows = {};
-      var rows = tbodyEl.querySelectorAll('tr');
-      for (var r = 0; r < rows.length; r++) {
-        var k = rows[r].getAttribute('data-row-key');
-        if (k !== null) existingRows[k] = rows[r];
-      }
+    // Rendered row keys live in state, in tbody order -- no data-* on the rows
+    var state = el._bw_state || {};
+    var existingRows = {};
+    if (rowKey && state.rowKeys) {
+      var trs = tbodyEl.children;
+      for (var r = 0; r < trs.length; r++) existingRows[state.rowKeys[r]] = trs[r];
+    }
 
-      // Build new order
-      var frag = el.ownerDocument.createDocumentFragment();
-      for (var d = 0; d < newData.length; d++) {
-        var rowData = newData[d];
-        var keyVal = String(rowData[rKey]);
-        if (existingRows[keyVal]) {
-          // Reuse existing row, update cells
-          var tr = existingRows[keyVal];
-          var cells = tr.querySelectorAll('td');
-          for (var ci = 0; ci < colsDef.length; ci++) {
-            if (cells[ci]) {
-              var newText = colsDef[ci].render
-                ? colsDef[ci].render(rowData[colsDef[ci].key], rowData)
-                : String(rowData[colsDef[ci].key] || '');
-              if (cells[ci].textContent !== newText) cells[ci].textContent = newText;
-            }
-          }
-          frag.appendChild(tr);
-        } else {
-          // Create new row
-          var newTr = el.ownerDocument.createElement('tr');
-          newTr.setAttribute('data-row-key', keyVal);
-          for (var ci2 = 0; ci2 < colsDef.length; ci2++) {
-            var td = el.ownerDocument.createElement('td');
-            td.textContent = colsDef[ci2].render
-              ? colsDef[ci2].render(rowData[colsDef[ci2].key], rowData)
-              : String(rowData[colsDef[ci2].key] || '');
-            newTr.appendChild(td);
-          }
-          frag.appendChild(newTr);
+    var nextRows = [];
+    for (var d = 0; d < rows.length; d++) {
+      var tr = rowKey ? existingRows[String(rows[d][rowKey])] : null;
+      if (tr) {
+        // Patch only the cells whose rendered content changed. An unchanged cell
+        // keeps its nodes (focus, caret, scroll); a changed one goes through
+        // bw.patch, so a component it replaces still unmounts.
+        var cells = tr.children;
+        var key = String(rows[d][rowKey]);
+        var was = _sigs[key] || [];
+        var now = [];
+        for (var ci = 0; ci < cols.length; ci++) {
+          var cell = _cellContent(cols[ci], rows[d]);
+          now.push(_cellSig(cell));
+          if (cells[ci] && was[ci] !== now[ci]) bw.patch(cells[ci], cell);
         }
-      }
-      // Replace tbody contents
-      while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
-      tbodyEl.appendChild(frag);
-    } else {
-      // Full rebuild
-      while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
-      for (var d2 = 0; d2 < newData.length; d2++) {
-        var tr2 = el.ownerDocument.createElement('tr');
-        for (var ci3 = 0; ci3 < colsDef.length; ci3++) {
-          var td2 = el.ownerDocument.createElement('td');
-          td2.textContent = colsDef[ci3].render
-            ? colsDef[ci3].render(newData[d2][colsDef[ci3].key], newData[d2])
-            : String(newData[d2][colsDef[ci3].key] || '');
-          tr2.appendChild(td2);
-        }
-        tbodyEl.appendChild(tr2);
+        _sigs[key] = now;
+        nextRows.push(tr);
+      } else {
+        nextRows.push(bw.create(_rowTaco(rows[d])));
       }
     }
+
+    // Reattaching rows blurs whatever had focus inside them (bw.syncChildren
+    // restores focus for the same reason).
+    var focused = document.activeElement;
+    if (focused && !tbodyEl.contains(focused)) focused = null;
+
+    // Detach reused rows first so unmountChildren only tears down dropped ones
+    for (var n = 0; n < nextRows.length; n++) {
+      if (nextRows[n].parentNode === tbodyEl) tbodyEl.removeChild(nextRows[n]);
+    }
+    bw.unmountChildren(tbodyEl);
+    while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
+    for (var m = 0; m < nextRows.length; m++) tbodyEl.appendChild(nextRows[m]);
+    bw.mountTree(tbodyEl);
+    if (focused && focused.isConnected && document.activeElement !== focused) {
+      try { focused.focus(); } catch (e) { /* not focusable any more */ }
+    }
+    if (rowKey) {
+      state.rowKeys = rows.map(function(row) { return String(row[rowKey]); });
+      var live = {};
+      state.rowKeys.forEach(function(k) { live[k] = _sigs[k]; });
+      _sigs = live;   // drop signatures for rows no longer shown
+    }
+  }
+
+  // Prev / "Page N of M" / Next for one computed view. Built at first paint and
+  // rebuilt by _render, so the label, the disabled states and the page asked of
+  // onPageChange always describe the slice the tbody is showing.
+  function _pagerContent(pageNum, pages) {
+    return [
+      { t: 'button', a: {
+        class: 'bw_bccl_btn bw_bccl_btn_sm',
+        disabled: pageNum <= 1 ? 'disabled' : undefined,
+        onclick: pageNum > 1 && onPageChange ? function() { onPageChange(pageNum - 1); } : undefined
+      }, c: 'Prev' },
+      { t: 'span', a: { style: 'margin:0 0.5rem;font-size:0.875rem;' }, c: 'Page ' + pageNum + ' of ' + pages },
+      { t: 'button', a: {
+        class: 'bw_bccl_btn bw_bccl_btn_sm',
+        disabled: pageNum >= pages ? 'disabled' : undefined,
+        onclick: pageNum < pages && onPageChange ? function() { onPageChange(pageNum + 1); } : undefined
+      }, c: 'Next' }
+    ];
+  }
+
+  // Recompute the view from state (data, sort, page) and repaint body + pager
+  function _render(el) {
+    var st = el._bw_state;
+    var v = _view(st.data || [], st.sortColumn, st.sortDirection);
+    st.view = v.rows;
+    st.offset = v.offset;
+    _rebuildTbody(el, v.rows);
+    if (!pageSize || !el.parentNode) return;
+    var pager = el.parentNode.querySelector('.bw_bccl_table_pagination');
+    if (pager) bw.patch(pager, _pagerContent(v.offset / pageSize + 1, v.pages));
   }
 
   const table = {
@@ -12471,53 +12509,30 @@ bw.makeTable = function(config) {
       type: 'table',
       state: {
         data: data,
-        columns: cols,
-        sortColumn: currentSortColumn,
-        sortDirection: currentSortDirection,
-        rowKey: rowKey
+        sortColumn: sortColumn || null,
+        sortDirection: sortDirection,
+        view: first.rows,
+        offset: first.offset,
+        rowKeys: rowKey ? first.rows.map(row => String(row[rowKey])) : null
       },
       handle: {
         sort: function(el, column, dir) {
-          var state = el._bw_state || {};
-          if (!dir) {
-            if (state.sortColumn === column) {
-              dir = state.sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-              dir = 'asc';
-            }
-          }
+          var state = el._bw_state;
+          if (!dir) dir = state.sortColumn === column && state.sortDirection === 'asc' ? 'desc' : 'asc';
           state.sortColumn = column;
           state.sortDirection = dir;
           _sortTableDOM(el, column, dir);
-
-          // Re-sort and rebuild rows
-          var d = state.data ? [...state.data] : [];
-          d.sort(function(a, b) {
-            var aVal = a[column];
-            var bVal = b[column];
-            if (typeof aVal === 'number' && typeof bVal === 'number') {
-              return dir === 'asc' ? aVal - bVal : bVal - aVal;
-            }
-            var aStr = String(aVal || '').toLowerCase();
-            var bStr = String(bVal || '').toLowerCase();
-            return dir === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
-          });
-          _rebuildTbody(el, d, state.columns || cols, state.rowKey);
-
+          _render(el);
           if (onSort) onSort(column, dir);
         },
         update: function(el, newConfig) {
-          if (!newConfig) return;
-          var state = el._bw_state || {};
-          if (newConfig.data) {
-            state.data = newConfig.data;
-            _rebuildTbody(el, newConfig.data, state.columns || cols, state.rowKey);
-          }
+          if (!newConfig || !newConfig.data) return;
+          el._bw_state.data = newConfig.data;
+          _render(el);
         },
         setData: function(el, newData) {
-          var state = el._bw_state || {};
-          state.data = newData;
-          _rebuildTbody(el, newData, state.columns || cols, state.rowKey);
+          el._bw_state.data = newData;
+          _render(el);
         },
         getData: function(el) {
           return (el._bw_state && el._bw_state.data) || [];
@@ -12529,32 +12544,6 @@ bw.makeTable = function(config) {
   // If no pagination, return table directly
   if (!pageSize) return table;
 
-  // Build pagination controls
-  const pageButtons = [];
-  pageButtons.push({
-    t: 'button',
-    a: {
-      class: 'bw_bccl_btn bw_bccl_btn_sm',
-      disabled: page <= 1 ? 'disabled' : undefined,
-      onclick: page > 1 && onPageChange ? function() { onPageChange(page - 1); } : undefined
-    },
-    c: 'Prev'
-  });
-  pageButtons.push({
-    t: 'span',
-    a: { style: 'margin:0 0.5rem;font-size:0.875rem;' },
-    c: 'Page ' + page + ' of ' + totalPages
-  });
-  pageButtons.push({
-    t: 'button',
-    a: {
-      class: 'bw_bccl_btn bw_bccl_btn_sm',
-      disabled: page >= totalPages ? 'disabled' : undefined,
-      onclick: page < totalPages && onPageChange ? function() { onPageChange(page + 1); } : undefined
-    },
-    c: 'Next'
-  });
-
   return {
     t: 'div',
     a: { class: 'bw_bccl_table_paginated' },
@@ -12563,7 +12552,7 @@ bw.makeTable = function(config) {
       {
         t: 'div',
         a: { class: 'bw_bccl_table_pagination', style: 'display:flex;align-items:center;justify-content:flex-end;padding:0.5rem 0;gap:0.25rem;' },
-        c: pageButtons
+        c: _pagerContent(page, totalPages)
       }
     ]
   };
@@ -12711,7 +12700,7 @@ bw.makeBarChart = function(config) {
       }
     });
     if (showLabels) {
-      children.push({ t: 'div', a: { class: 'bw_bar_label' }, c: String(d[labelKey] || '') });
+      children.push({ t: 'div', a: { class: 'bw_bar_label' }, c: d[labelKey] == null ? '' : String(d[labelKey]) });
     }
 
     return { t: 'div', a: { class: 'bw_bar_group' }, c: children };
@@ -12784,7 +12773,7 @@ bw.makeDataTable = function(config) {
   if (title) {
     content.push({
       t: 'h5',
-      a: { class: 'mb-3' },
+      a: { class: 'bw_mb_3' },
       c: title
     });
   }
@@ -12822,11 +12811,9 @@ bw.makeDataTable = function(config) {
  * @see bw.append
  * @see bw.replace
  * @example
- * var r = bw.render('#app', 'append', {
- *   t: 'button', a: { class: 'bw_btn' }, c: 'Click Me',
- *   o: { state: { clicks: 0 } }
- * });
- * if (r.ok) r.el.bw.myMethod();   // use component handle
+ * var r = bw.render('#log', 'append', { t: 'li', c: 'Saving...' });
+ * if (r.ok) bw.patch(r.el, 'Saved');   // r.el is the new element
+ * else console.warn(r.error);
  */
 bw.render = function(target, position, taco) {
   try {

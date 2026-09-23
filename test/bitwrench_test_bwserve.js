@@ -495,11 +495,6 @@ describe("BwServeClient removed 2.0.x APIs", function() {
     var client = new BwServeClient('rm-4', null);
     assert.strictEqual(client.inspect, undefined);
   });
-
-  it("screenshot is removed", function() {
-    var client = new BwServeClient('rm-5', null);
-    assert.strictEqual(client.screenshot, undefined);
-  });
 });
 
 // ===================================================================================
@@ -1697,13 +1692,42 @@ describe("DIST_DIR resolution", function() {
 // ===================================================================================
 
 // ===================================================================================
-// Screenshot and pending mechanism removed in 2.1
+// client.screenshot() — restored in 2.1.9 (#107), uses _pend/_resolvePending
 // ===================================================================================
 
-describe("client.screenshot() — removed in 2.1", function() {
-  it("screenshot is not a function on BwServeClient", function() {
-    var client = new BwServeClient('ss-rm', null);
-    assert.strictEqual(client.screenshot, undefined);
+describe("client.screenshot()", function() {
+  it("rejects when allowScreenshot is off", async function() {
+    var client = new BwServeClient('ss-off', null);
+    await assert.rejects(client.screenshot('body'), /not enabled/);
+    assert.strictEqual((client._sent || []).length, 0);
+  });
+
+  it("sends _bw_screenshot and resolves to a Buffer", async function() {
+    var client = new BwServeClient('ss-on', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot('#app', { format: 'jpeg', maxWidth: 400 });
+    var args = client._sent[0].args[0];
+    assert.strictEqual(client._sent[0].name, '_bw_screenshot');
+    assert.strictEqual(args.selector, '#app');
+    assert.strictEqual(args.format, 'jpeg');
+    assert.strictEqual(args.maxWidth, 400);
+    client._resolvePending(args.requestId, { requestId: args.requestId, route: 'screenshot',
+      result: { data: 'data:image/jpeg;base64,' + Buffer.from('img').toString('base64'), width: 4, height: 3, format: 'jpeg' },
+      error: null });
+    var r = await p;
+    assert.ok(Buffer.isBuffer(r.data));
+    assert.strictEqual(r.data.toString(), 'img');
+    assert.deepStrictEqual([r.width, r.height, r.format], [4, 3, 'jpeg']);
+  });
+
+  it("rejects with the browser-side error", async function() {
+    var client = new BwServeClient('ss-err', null);
+    client._allowScreenshot = true;
+    var p = client.screenshot();
+    var id = client._sent[0].args[0].requestId;
+    assert.strictEqual(client._sent[0].args[0].selector, 'body');
+    client._resolvePending(id, { requestId: id, result: null, error: 'Element not found: body' });
+    await assert.rejects(p, /Element not found/);
   });
 });
 

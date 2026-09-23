@@ -1406,7 +1406,7 @@ describe('makeContainer', function() {
   it('should support fluid mode', function() {
     var taco = bw.makeContainer({ children: ['X'], fluid: true });
     var html = bw.html(taco);
-    assert.ok(html.includes('bw_bccl_container-fluid'), 'should have fluid class');
+    assert.ok(html.includes('bw_bccl_container_fluid'), 'should have fluid class');
   });
 });
 
@@ -3272,15 +3272,20 @@ describe('makeTabs switchTab bounds check', function() {
   });
 });
 
-describe('makeTabs mounted tablist guard', function() {
+describe('makeTabs keydown guard', function() {
   beforeEach(function() { freshDOM(); });
 
-  it('L582: mounted on element without tablist should return early', function() {
-    var taco = bw.makeTabs({ tabs: [] });
-    var el = document.createElement('div');
-    // el has no [role="tablist"] child
-    taco.o.mounted(el);
-    // Should not throw
+  it('ignores keys not from a tab button, and keys it does not handle', function() {
+    var calls = [];
+    var el = bw.mount('#app', bw.makeTabs({
+      tabs: [{ label: 'A', content: 'a' }, { label: 'B', content: 'b' }],
+      onTabChange: function(i) { calls.push(i); }
+    }));
+    var tablist = el.querySelector('[role="tablist"]');
+    tablist.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    el.querySelector('[role="tab"]').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'x', bubbles: true }));
+    assert.deepStrictEqual(calls, []);
+    assert.strictEqual(el.bw.getActiveTab(), 0);
   });
 });
 
@@ -4650,5 +4655,402 @@ describe('makeAccordion — transitionend handler (lines 2131-2137)', function()
     // maxHeight should NOT have been set to 'none' since collapse_show was removed
     assert.notStrictEqual(collapse.style.maxHeight, 'none', 'maxHeight should not be none when not showing');
     document.body.removeChild(el);
+  });
+});
+
+// ===================================================================================
+// v2.1.9 regression tests (#98, #101-#107)
+// ===================================================================================
+
+describe('Nested content arrays render the same on every path (#105)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  var nested = { t: 'div', c: [['a ', { t: 'b', c: 'x' }], ' c'] };
+
+  it('bw.create flattens nested arrays like bw.html', function() {
+    var el = bw.create(nested);
+    assert.strictEqual(el.outerHTML, bw.html(nested));
+    assert.strictEqual(el.textContent, 'a x c');
+  });
+
+  it('makeAlert accepts array content', function() {
+    var el = bw.create(bw.makeAlert({ content: ['go to ', { t: 'a', a: { href: '#' }, c: 'Target' }, '.'] }));
+    assert.ok(el.textContent.indexOf('go to Target.') === 0, el.textContent);
+  });
+
+  it('bw.patch and bw.el apply flatten nested arrays and accept bw.raw', function() {
+    var host = bw.mount('#app', { t: 'div', a: { id: 'p1' } });
+    bw.patch('p1', [['a', { t: 'i', c: 'b' }], 'c']);
+    assert.strictEqual(host.innerHTML, 'a<i>b</i>c');
+    bw.el('p1', [[bw.raw('<u>r</u>')]]);
+    assert.strictEqual(host.innerHTML, '<u>r</u>');
+    bw.patch('p1', bw.raw('<s>q</s>'));
+    assert.strictEqual(host.innerHTML, '<s>q</s>');
+  });
+});
+
+describe('makeTable cell values and re-render (#98, #102)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  function cellTexts(el) {
+    return Array.prototype.map.call(el.querySelectorAll('tbody td'), function(td) { return td.textContent; });
+  }
+
+  it('renders 0 and false instead of empty cells', function() {
+    var html = bw.html(bw.makeTable({ data: [{ n: 'a', count: 0, ok: false }], sortable: false }));
+    assert.ok(html.indexOf('<td>0</td><td>false</td>') > 0, html);
+  });
+
+  it('keeps render() TACO output after sorting (full rebuild)', function() {
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ name: 'b', score: 2 }, { name: 'a', score: 1 }],
+      columns: [{ key: 'name', label: 'Name' },
+                { key: 'score', label: 'Score', render: function(v) { return { t: 'b', c: v + '%' }; } }]
+    }));
+    el.bw.sort('name');
+    assert.deepStrictEqual(cellTexts(el), ['a', '1%', 'b', '2%']);
+    assert.strictEqual(el.querySelectorAll('tbody b').length, 2);
+  });
+
+  it('keeps render() TACO output and row handlers with keyed rows', function() {
+    var clicked = [];
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ id: 1, v: 0 }, { id: 2, v: 5 }],
+      rowKey: 'id',
+      onRowClick: function(row) { clicked.push(row.id); },
+      columns: [{ key: 'id', label: 'Id' },
+                { key: 'v', label: 'V', render: function(v) { return { t: 'em', c: String(v) }; } }]
+    }));
+    el.bw.sort('v', 'desc');
+    assert.deepStrictEqual(cellTexts(el), ['2', '5', '1', '0']);
+    assert.strictEqual(el.querySelectorAll('tbody em').length, 2);
+    el.bw.setData([{ id: 3, v: 7 }]);
+    assert.deepStrictEqual(cellTexts(el), ['3', '7']);
+    el.querySelector('tbody tr').click();
+    assert.deepStrictEqual(clicked, [3], 'rebuilt rows keep onRowClick');
+  });
+
+  it('sorts 0 as a value, not as empty', function() {
+    var el = bw.mount('#app', bw.makeTable({ data: [{ s: 'b' }, { s: 0 }, { s: 'a' }] }));
+    el.bw.sort('s');
+    assert.deepStrictEqual(cellTexts(el), ['0', 'a', 'b']);
+  });
+});
+
+describe('makeTabs onTabChange (#106)', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('fires on click and setActiveTab, only when the tab changes', function() {
+    var calls = [];
+    var el = bw.mount('#app', bw.makeTabs({
+      tabs: [{ label: 'A', content: 'a', key: 'first' }, { label: 'B', content: 'b', key: 'second' }],
+      onTabChange: function(i, tab, root) { calls.push([i, tab.key, root === el]); }
+    }));
+    el.querySelectorAll('[role="tab"]')[1].click();
+    el.bw.setActiveTab(1);
+    el.bw.setActiveTab(0);
+    assert.deepStrictEqual(calls, [[1, 'second', true], [0, 'first', true]]);
+  });
+});
+
+describe('makeSelect option label (#98 note)', function() {
+  it('uses label when text is absent', function() {
+    var html = bw.html(bw.makeSelect({ options: [{ value: 'a', label: 'Alpha' }] }));
+    assert.ok(html.indexOf('>Alpha</option>') > 0, html);
+  });
+});
+
+describe('Grid and navbar structural CSS (#101, #103, #104)', function() {
+  var css = bw.css(getStructuralStyles());
+
+  it('navbar layout rule matches the container makeNavbar renders', function() {
+    assert.ok(bw.html(bw.makeNavbar({ brand: 'B' })).indexOf('class="bw_container"') > 0);
+    assert.ok(css.indexOf('.bw_bccl_navbar > .bw_container') > 0);
+  });
+
+  it('emits base column rules before every breakpoint', function() {
+    var base = css.indexOf('.bw_col_12 ');
+    ['576', '768', '992', '1200'].forEach(function(w) {
+      assert.ok(css.indexOf('@media (min-width: ' + w + 'px)') > base, w);
+    });
+    assert.ok(css.indexOf('.bw_col_xl_3') > 0, 'xl breakpoint generated');
+  });
+
+  it('keeps every container max-width, in ascending order', function() {
+    var re = /@media \(min-width: \d+px\) \{\s*\.bw_bccl_container, \.bw_container \{\s*max-width: (\d+)px/g;
+    var m, widths = [];
+    while ((m = re.exec(css))) widths.push(+m[1]);
+    assert.deepStrictEqual(widths, [540, 720, 960, 1140]);
+  });
+
+  it('pads bitwrench columns and defines gap classes 0-5', function() {
+    assert.ok(css.indexOf('.bw_col, [class*="bw_col_"]') >= 0);
+    for (var g = 0; g <= 5; g++) assert.ok(css.indexOf('.bw_g_' + g + ' > *') >= 0, 'bw_g_' + g);
+  });
+
+  it('uses no CSS custom properties in structural CSS', function() {
+    assert.ok(css.indexOf('var(--') < 0 && css.indexOf('--bw') < 0);
+  });
+
+  it('makeContainer fluid class matches the stylesheet', function() {
+    assert.ok(bw.html(bw.makeContainer({ fluid: true })).indexOf('bw_bccl_container_fluid') > 0);
+    assert.ok(css.indexOf('.bw_bccl_container_fluid') >= 0);
+  });
+});
+
+describe('More 0 / grid-span edge cases (2.1.9)', function() {
+  it('makeBarChart shows a 0 label', function() {
+    var html = bw.html(bw.makeBarChart({ data: [{ hour: 0, n: 5 }], labelKey: 'hour', valueKey: 'n' }));
+    assert.ok(html.indexOf('bw_bar_label">0<') > 0, html);
+  });
+
+  it('makeFeatureGrid always emits a whole grid span', function() {
+    [1, 2, 3, 4, 5, 7, 12, 13, 0].forEach(function(n) {
+      var html = bw.html(bw.makeFeatureGrid({ features: [{ title: 'a' }], columns: n }));
+      assert.ok(/bw_col_md_(?:[1-9]|1[0-2])"/.test(html), 'columns=' + n + ': ' + html.match(/bw_col_md_[^" ]*/));
+    });
+  });
+});
+
+// ===================================================================================
+// Review 2026-09-22 (tmp/cg-fixes): table view/sort/page contract, cell lifecycle
+// ===================================================================================
+
+describe('makeTable: header, view and handlers agree after sort/setData', function() {
+  beforeEach(function() { freshDOM(); });
+
+  function texts(root, sel) {
+    return Array.prototype.map.call(root.querySelectorAll(sel), function(n) { return n.textContent; });
+  }
+
+  it('moves the sort glyph with the column and the direction (A1)', function() {
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ n: 'b', v: 2 }, { n: 'a', v: 1 }],
+      columns: [{ key: 'n', label: 'Name' }, { key: 'v', label: 'Val' }],
+      sortColumn: 'n', sortDirection: 'asc'
+    }));
+    function marks() {
+      return Array.prototype.map.call(el.querySelectorAll('thead th'), function(th) {
+        return th.textContent + ':' + th.getAttribute('aria-sort');
+      });
+    }
+    assert.deepStrictEqual(marks(), ['Name▲:ascending', 'Val:null']);
+    el.bw.sort('v');
+    assert.deepStrictEqual(marks(), ['Name:null', 'Val▲:ascending']);
+    el.bw.sort('v');
+    assert.deepStrictEqual(marks(), ['Name:null', 'Val▼:descending']);
+  });
+
+  it('keyed row click reports the current row and index after sort and setData (A2)', function() {
+    var clicks = [];
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ id: 1, v: 1 }, { id: 2, v: 2 }],
+      rowKey: 'id',
+      onRowClick: function(row, idx) { clicks.push([row.id, row.v, idx]); },
+      columns: [{ key: 'id', label: 'Id' }, { key: 'v', label: 'V' }]
+    }));
+    el.bw.sort('v', 'desc');
+    el.querySelector('tbody tr').click();
+    assert.deepStrictEqual(clicks, [[2, 2, 0]]);
+
+    clicks = [];
+    el.bw.setData([{ id: 2, v: 50 }]);
+    el.querySelector('tbody tr').click();
+    assert.deepStrictEqual(clicks, [[2, 50, 0]]);
+  });
+
+  it('sort and setData keep the current page slice; index is global (A3)', function() {
+    var clicks = [];
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }, { n: 5 }],
+      columns: [{ key: 'n', label: 'N' }],
+      pageSize: 2, currentPage: 2,
+      onRowClick: function(row, idx) { clicks.push([row.n, idx]); }
+    }));
+    var table = el.querySelector('table');
+    assert.deepStrictEqual(texts(table, 'tbody td'), ['3', '4']);
+
+    table.bw.sort('n', 'desc');
+    assert.deepStrictEqual(texts(table, 'tbody td'), ['3', '2']);
+    table.querySelector('tbody tr').click();
+    assert.deepStrictEqual(clicks, [[3, 2]], 'page 2, first row = global index 2');
+
+    table.bw.setData([{ n: 9 }, { n: 8 }, { n: 7 }]);
+    assert.deepStrictEqual(texts(table, 'tbody td'), ['7'], 'page 2 of the new data, still sorted desc');
+  });
+
+  it('pager label and buttons match the slice after setData shrinks the page count (P1)', function() {
+    var requested = [];
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }, { n: 5 }],
+      columns: [{ key: 'n', label: 'N' }],
+      pageSize: 2,
+      currentPage: 2,
+      onPageChange: function(p) { requested.push(p); }
+    }));
+    var table = el.querySelector('table');
+    function pager() {
+      var box = el.querySelector('.bw_bccl_table_pagination');
+      var buttons = box.querySelectorAll('button');
+      return { label: box.querySelector('span').textContent, prev: buttons[0].disabled, next: buttons[1].disabled };
+    }
+
+    assert.deepStrictEqual(pager(), { label: 'Page 2 of 3', prev: false, next: false });
+
+    table.bw.sort('n', 'desc');
+    assert.deepStrictEqual(pager(), { label: 'Page 2 of 3', prev: false, next: false });
+
+    table.bw.setData([{ n: 9 }, { n: 8 }, { n: 7 }]);
+    assert.deepStrictEqual(texts(table, 'tbody td'), ['7']);
+    assert.deepStrictEqual(pager(), { label: 'Page 2 of 2', prev: false, next: true });
+
+    table.bw.setData([{ n: 1 }]);
+    assert.deepStrictEqual(texts(table, 'tbody td'), ['1']);
+    assert.deepStrictEqual(pager(), { label: 'Page 1 of 1', prev: true, next: true });
+
+    el.querySelector('.bw_bccl_table_pagination button:last-child').click();
+    assert.deepStrictEqual(requested, [], 'Next on the last page does not ask for a page');
+
+    // The clamp is derived, not remembered: data that fills page 2 again shows page 2.
+    table.bw.setData([{ n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }, { n: 5 }]);
+    assert.deepStrictEqual(pager(), { label: 'Page 2 of 3', prev: false, next: false });
+    el.querySelector('.bw_bccl_table_pagination button:first-child').click();
+    assert.deepStrictEqual(requested, [1], 'Prev asks for the page before the clamped one');
+  });
+
+  it('setData and update re-apply the active sort (A4)', function() {
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ n: 'b' }, { n: 'a' }],
+      columns: [{ key: 'n', label: 'N' }],
+      sortColumn: 'n', sortDirection: 'asc'
+    }));
+    el.bw.setData([{ n: 'm' }, { n: 'a' }]);
+    assert.deepStrictEqual(texts(el, 'tbody td'), ['a', 'm']);
+    assert.strictEqual(el.querySelector('thead th').getAttribute('aria-sort'), 'ascending');
+    el.bw.update({ data: [{ n: 'z' }, { n: 'c' }] });
+    assert.deepStrictEqual(texts(el, 'tbody td'), ['c', 'z']);
+    el.bw.update({ data: [] });
+    assert.strictEqual(el.querySelectorAll('tbody tr').length, 0);
+  });
+
+  it('unmounts a cell component when render() later returns text (A5)', function() {
+    var unmounted = 0;
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ id: 1, v: 1 }],
+      rowKey: 'id',
+      columns: [{ key: 'v', label: 'V', render: function(v) {
+        if (v === 1) return { t: 'span', c: 'live', o: { unmount: function() { unmounted++; } } };
+        return String(v);
+      } }]
+    }));
+    el.bw.setData([{ id: 1, v: 2 }]);
+    assert.strictEqual(el.querySelector('tbody td').textContent, '2');
+    assert.strictEqual(unmounted, 1);
+  });
+
+  it('bw.patch with text over a component runs its unmount', function() {
+    var unmounted = 0;
+    var host = bw.mount('#app', { t: 'div', a: { id: 'ph' },
+      c: { t: 'b', c: 'x', o: { unmount: function() { unmounted++; } } } });
+    bw.patch('ph', 'plain');
+    assert.strictEqual(host.textContent, 'plain');
+    assert.strictEqual(unmounted, 1);
+  });
+
+  it('keeps a focused cell component across setData and sort when its content is unchanged', function() {
+    var unmounted = 0;
+    var el = bw.mount('#app', bw.makeTable({
+      data: [{ id: 1, v: 5, n: 'a' }, { id: 2, v: 6, n: 'b' }],
+      rowKey: 'id',
+      columns: [
+        { key: 'n', label: 'N' },
+        { key: 'v', label: 'V', render: function(v) {
+          if (v === 99) return { t: 'span', c: 'gone', o: { unmount: function() { unmounted++; } } };
+          return { t: 'input', a: { value: String(v) } };
+        } }
+      ]
+    }));
+    var input = el.querySelectorAll('tbody input')[0];
+    var textCell = el.querySelectorAll('tbody td')[0];
+    var textNode = textCell.firstChild;
+    input.focus();
+    assert.strictEqual(document.activeElement, input);
+
+    // same data: nothing about the cell changed, so nothing is rebuilt
+    el.bw.setData([{ id: 1, v: 5, n: 'a' }, { id: 2, v: 6, n: 'b' }]);
+    assert.strictEqual(el.querySelectorAll('tbody input')[0], input, 'input node reused');
+    assert.ok(input.isConnected);
+    assert.strictEqual(document.activeElement, input, 'focus kept');
+    assert.strictEqual(textCell.firstChild, textNode, 'unchanged text cell not rewritten');
+
+    // reorder: the row moves, the node and its focus come with it
+    el.bw.sort('v', 'desc');
+    assert.strictEqual(el.querySelectorAll('tbody input')[1], input, 'moved row keeps its input');
+    assert.strictEqual(document.activeElement, input, 'focus restored after the move');
+
+    // content changes: the cell is rebuilt and the old component unmounts
+    el.bw.setData([{ id: 1, v: 99, n: 'a' }, { id: 2, v: 6, n: 'b' }]);
+    var changed = Array.prototype.filter.call(el.querySelectorAll('tbody tr'), function(tr) {
+      return tr.children[0].textContent === 'a';   // still sorted by v desc, so this row moved
+    })[0];
+    assert.strictEqual(changed.children[1].textContent, 'gone');
+    el.bw.setData([{ id: 1, v: 5, n: 'a' }, { id: 2, v: 6, n: 'b' }]);
+    assert.strictEqual(unmounted, 1, 'replaced cell component unmounted');
+  });
+
+  it('makeDataTable title uses a real spacing class (A6)', function() {
+    var html = bw.html(bw.makeDataTable({ title: 'Users', data: [{ n: 1 }] }));
+    assert.ok(html.indexOf('mb-3') < 0, html);
+    assert.ok(html.indexOf('bw_mb_3') > 0, html);
+  });
+});
+
+describe('makeFeatureGrid columns snap to a 12-grid span (B, contract lock)', function() {
+  function span(n) {
+    var html = bw.html(bw.makeFeatureGrid({ features: [{ title: 'a' }], columns: n }));
+    return html.match(/bw_col_md_(\d+)/)[1];
+  }
+  it('divisors of 12 are exact; other counts round', function() {
+    assert.deepStrictEqual([1, 2, 3, 4, 6, 12].map(span), ['12', '6', '4', '3', '2', '1']);
+    assert.strictEqual(span(5), '2');   // 6 per row, not 5
+    assert.strictEqual(span(8), '2');   // 6 per row, not 8
+    assert.strictEqual(span(0), '12');
+  });
+});
+
+describe('TACO without t is text, not a div (F2)', function() {
+  beforeEach(function() { freshDOM(); });
+  it('renders an object with no t as text', function() {
+    bw.mount('#app', { c: 'hi' });
+    var app = document.getElementById('app');
+    assert.strictEqual(app.querySelector('div'), null);
+    assert.ok(app.textContent.indexOf('object Object') >= 0);
+  });
+});
+
+describe('makeTabs keyboard goes through onTabChange (G)', function() {
+  beforeEach(function() { freshDOM(); });
+  it('ArrowRight, End and Home switch tabs and fire the callback', function() {
+    var calls = [];
+    var el = bw.mount('#app', bw.makeTabs({
+      tabs: [{ label: 'A', content: 'a' }, { label: 'B', content: 'b' }, { label: 'C', content: 'c' }],
+      onTabChange: function(i) { calls.push(i); }
+    }));
+    var tabs = el.querySelectorAll('[role="tab"]');
+    function key(target, k) {
+      target.dispatchEvent(new window.KeyboardEvent('keydown', { key: k, bubbles: true }));
+    }
+    key(tabs[0], 'ArrowRight');
+    key(tabs[1], 'End');
+    key(tabs[2], 'Home');
+    assert.deepStrictEqual(calls, [1, 2, 0]);
+    assert.strictEqual(el.bw.getActiveTab(), 0);
+  });
+});
+
+describe('makeRow gap: 0 means no gutter (found by tests/layout.spec.js)', function() {
+  it('emits bw_g_0 for gap 0 and nothing when gap is omitted', function() {
+    assert.ok(bw.html(bw.makeRow({ gap: 0, children: [] })).indexOf('bw_g_0') > 0);
+    assert.ok(bw.html(bw.makeRow({ children: [] })).indexOf('bw_g_') < 0);
   });
 });

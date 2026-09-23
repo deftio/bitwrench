@@ -1,15 +1,15 @@
 # bitwrench
 
-> Build web UIs from plain JavaScript objects. 165 KB on disk
-> (45 KB gzipped), zero dependencies, no build step.
+> Build web UIs from plain JavaScript objects. ~45 KB gzipped for the
+> minified script-tag build, zero dependencies, no build step.
 
 ## What bitwrench is
 
 bitwrench is a UI library where every element -- a button, a card, a full
 page layout -- is a plain JS object called a TACO: {t, a, c, o} (Tag,
 Attributes, Content, Options). You describe UI as data, and bitwrench
-renders it to live DOM or HTML strings. It ships 47 ready-made components
-(tables, cards, modals, tabs, forms, charts), a palette-based theming
+renders it to live DOM or HTML strings. It ships 51 ready-made `make*()`
+components (tables, cards, modals, tabs, forms, charts), a palette-based theming
 system, client-side routing, and server-driven UI via SSE (bwserve).
 
 ## How it came to exist
@@ -27,17 +27,21 @@ microcontrollers.
 ## Lifecycle
 
 1. **Define** -- write a TACO object: `{t, a, c, o}`
-2. **Create** -- `bw.create(taco)` builds a real DOM element
+2. **Create** -- `bw.create(taco)` builds a real DOM element (hydrates; does not fire `o.mounted`)
 3. **Hydrate** -- handles attach to `el.bw`, slots wire getters/setters, UUID assigned, state initialized
-4. **Mount** -- element inserted into document; `o.mounted(el)` fires
+4. **Mount** -- `bw.mount` / `bw.DOM` / `bw.append` / `bw.replace` insert and run `mountTree`; `o.mounted(el)` fires. Never `parent.appendChild(bw.create(taco))` for lifecycle components.
 5. **Interact** -- external code calls `el.bw.method()` -- the component updates its own DOM
 6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)`, tears down subscriptions, removes element
+
+Create already hydrates -- you do not call `bw.hydrate()` on the normal path
+(it is for wiring `o` onto DOM that bitwrench did not build).
 
 This is NOT a thin wrapper around the DOM. bitwrench replaces the entire
 workflow: rendering, components, styling, state, theming, routing, and
 server-driven UI. If you find yourself reaching for document.querySelector,
-innerHTML, or hand-written CSS classes, you are fighting the library
-instead of using it. Read the mental model below before writing code.
+innerHTML, or raw CSS strings with hex colors, you are fighting the library
+instead of using it. (Classes are fine -- a class on a TACO is how a rule
+from `bw.css()` attaches.) Read the mental model below before writing code.
 
 ## The Mental Model (read this first)
 
@@ -48,7 +52,7 @@ bitwrench is closer to Qt/MFC than to React or jQuery. The key differences:
    c: 'Hello'}`. Nest them, loop them with .map(), branch with ternaries.
 
 2. **Components are functions that return objects.** A "component" is just
-   a function that returns a TACO. bitwrench ships 47 ready-made ones
+   a function that returns a TACO. bitwrench ships 51 ready-made ones
    (bw.makeCard, bw.makeTable, bw.makeModal, etc.). Check BCCL first --
    if there is a built-in component for what you need, use it.
 
@@ -60,16 +64,19 @@ bitwrench is closer to Qt/MFC than to React or jQuery. The key differences:
    CSS string literals.
 
 4. **State is explicit, not reactive.** There is no virtual DOM and no
-   automatic re-rendering. You change state, then call `bw.refresh(el)`.
-   Or use handle methods: `el.bw.setTitle('new')`. Components own their
-   DOM and update it directly.
+   automatic re-rendering. Components own their DOM; you call them. Cheapest
+   first: a handle method (`el.bw.setTitle('new')`), `bw.patch(id, value)`
+   for one element, `bw.syncChildren()` for a keyed list, and `bw.refresh(el)`
+   (full rebuild of an `o.render` component) last.
 
 5. **Events go in attributes.** `{t: 'button', a: {onclick: fn}, c: 'Go'}`
    -- never addEventListener in lifecycle hooks. Handlers in attributes
    survive re-renders; addEventListener in o.mounted does not.
 
-For a complete progressive walkthrough, read `docs/thinking-in-bitwrench.md`.
-For a compact code-first tutorial, read `docs/llm-bitwrench-guide.md`.
+Start with `docs/quickstart.md` (hello world, which file to load, then a full
+annotated app), then read `docs/thinking-in-bitwrench.md` for the complete
+progressive walkthrough. For a compact code-first tutorial, read
+`docs/llm-bitwrench-guide.md`; for a one-page API card, `docs/core-api.md`.
 
 ## Common Mistakes (and what to do instead)
 
@@ -98,7 +105,7 @@ bw.injectCSS(bw.css({
 }));
 ```
 
-### Mistake 3: Hand-coding reactivity
+### Mistake 3: Hand-coding DOM updates
 
 ```javascript
 // WRONG -- manually tracking state and updating DOM nodes
@@ -109,7 +116,15 @@ document.getElementById('btn').addEventListener('click', function() {
   document.getElementById('counter').textContent = count;
 });
 
-// RIGHT -- stateful TACO with explicit refresh
+// RIGHT -- handlers in a:, bw.patch() changes the one element that changed
+var count = 0;
+bw.DOM('#app', { t: 'div', c: [
+  { t: 'span', a: { id: 'count' }, c: '0' },
+  bw.makeButton({ text: '+1', onclick: function() { bw.patch('count', String(++count)); } })
+]});
+
+// ALSO RIGHT -- state kept on the component, full re-render with bw.refresh()
+// (the most expensive update; use it when much of the component changes)
 bw.DOM('#app', {
   t: 'div',
   o: {
@@ -129,6 +144,7 @@ bw.DOM('#app', {
 
 ### Mistake 4: Building components that already exist
 
+<!-- doc-test: skip (WRONG example elides the row body with ...) -->
 ```javascript
 // WRONG -- hand-building a table
 { t: 'table', c: [
@@ -140,8 +156,11 @@ bw.DOM('#app', {
 bw.makeTable({ data: rows, columns: columns, sortable: true, pageSize: 20 })
 ```
 
-bitwrench ships 47 components: cards, tables, modals, toasts, tabs,
-accordions, carousels, forms, navigation, charts, and more. Check
+bitwrench ships 51 `make*()` components (47 in the BCCL module, plus
+makeTable, makeTableFromArray, makeDataTable and makeBarChart in core):
+cards, tables, modals, toasts, tabs, accordions, carousels, forms,
+navigation, charts, and more. Tables have handles -- `el.bw.sort()`,
+`setData()`, `update()` -- so update them in place instead of re-mounting. Check
 `docs/component-cheatsheet.md` or `docs/component-library.md` before
 building from scratch.
 
@@ -161,8 +180,10 @@ bw.makeButton({ text: 'Save', onclick: save })
 ### Mistake 6: `data-*` attributes for binding
 
 <!-- drift-lint:ignore-start: migration note must name the retired attribute -->
-bitwrench uses no `data-*` attributes. `data-bw-action` existed in bwserve by
-mistake and was removed in v2.1.0. Server-driven click handling uses
+bitwrench's own code uses no `data-*` attributes and defines no CSS custom
+properties (drift-lint enforces both in `src/`). Your application may use
+either -- `data-testid`, a `[data-theme]` token switch -- in its own markup and
+CSS. `data-bw-action` existed in bwserve by mistake and was removed in v2.1.0. Server-driven click handling uses
 `bw_act_*` class tokens: `{ t: 'button', a: { class: 'bw_act_save' } }`.
 <!-- drift-lint:ignore-end -->
 
@@ -197,11 +218,17 @@ mistake and was removed in v2.1.0. Server-driven click handling uses
 
 No build step. No npm. Open the file in a browser.
 
+Which file: `dist/bitwrench.umd.min.js` for a script tag (everything, ~45 KB
+gzipped); `bitwrench-lean.umd.min.js` (~35 KB) if you bring your own design and
+don't need the built-in components; `bitwrench.umd.js` / `bitwrench.esm.js` are
+**unminified, for readable stack traces only** -- never vendor them into a page
+you ship. `dist/builds.json` lists every file.
+
 ## TACO Format
 
 ```javascript
 {
-  t: 'div',                         // tag (defaults to 'div' if omitted)
+  t: 'div',                         // tag -- required (an object with no t renders as text)
   a: { class: 'card', id: 'x' },   // attributes (including event handlers)
   c: [                              // content: string, TACO, or array
     { t: 'h2', c: 'Title' },
@@ -219,15 +246,28 @@ No build step. No npm. Open the file in a browser.
 ```
 
 Content is HTML-escaped by default. Use `bw.raw(str)` for trusted HTML.
+Nested arrays in `c` are flattened. `bw.h(tag, attrs, content, opts)` builds
+the same object from positional arguments.
+
+**SVG is ordinary TACO**: `{ t: 'svg', a: { viewBox: '0 0 100 20' }, c: [ { t: 'rect', ... } ] }`.
+Children are created in the SVG namespace, attribute names stay as SVG spells
+them (`viewBox`, `stroke-width`), and handlers and `o.*` work. Never build SVG
+as strings through `bw.raw()`.
 
 ## Rendering Functions
 
 | Function | Returns | Use When |
 |----------|---------|----------|
-| bw.DOM(sel, taco) | void | Mount into existing container |
-| bw.mount(sel, taco) | root element | Need el.bw handle/slot access |
-| bw.create(taco) | detached element | Building elements before inserting |
+| bw.mount(sel, taco) | mounted element | Mount into a container; keep the return value for `el.bw` |
+| bw.DOM(sel, taco) | mounted element | Same function as bw.mount |
+| bw.append(target, taco) | new child | Add a child (runs `o.mounted`) |
+| bw.replace(el, taco) | new element | Swap one element for another |
+| bw.patch(ref, content) | element | Change one element's content (text, TACO, array, bw.raw) |
+| bw.syncChildren(parent, items, {key, create, update}) | -- | Keyed list update; kept rows are the same nodes |
+| bw.create(taco) | detached element | Build before inserting (does not fire `o.mounted`) |
 | bw.html(taco) | HTML string | SSR, emails, Node.js, CLI |
+
+One page with every core call: `docs/core-api.md`.
 
 ## Styling
 
@@ -247,6 +287,12 @@ bw.injectCSS(bw.css({
 
 // 4. Dark mode
 bw.toggleThemeMode();   // switch between primary and alternate palettes
+
+// Same selector twice, or a fixed order: pass an array of rule objects
+bw.css([{ '.btn': { padding: '4px 8px' } }, { '.btn': { borderRadius: '4px' } }]);
+
+// Output is readable by default; minify for production
+bw.injectCSS(rules, { id: 'app_css', minify: true });
 ```
 
 Palette keys: primary, secondary, tertiary, success, danger, warning, info,
@@ -256,11 +302,15 @@ strings, not objects).
 
 ## State and Updates
 
-Three levels of interactivity -- use the simplest that fits:
+Four levels of interactivity -- use the simplest that fits:
 
 1. **Static TACO**: plain objects, no state. Most UI is this.
-2. **Re-render on demand**: call bw.DOM() again when data changes.
-3. **Stateful TACO**: o.state + o.render + bw.refresh().
+2. **Re-render on demand**: call bw.mount() again when data changes. Fine for
+   small views; it replaces the elements, so an input mid-edit or mid-drag loses it.
+3. **Targeted updates**: `bw.patch()` for one element, `bw.syncChildren()` for a
+   keyed list, handle methods (`el.bw.*`) on components. Nothing is rebuilt.
+4. **Stateful TACO**: o.state + o.render + bw.refresh() -- a full rebuild of that
+   component. The most expensive update.
 
 For targeted updates without full re-render, use handles and slots:
 
@@ -273,17 +323,18 @@ el.bw.setContent({ t: 'b', c: '$42k' });  // content can be a TACO too
 ## Documentation Map
 
 Start here:
-- docs/quickstart.md -- Annotated 100-line tutorial, lifecycle overview, origin story
-- docs/llm-bitwrench-guide.md -- Compact code-first tutorial (700 lines)
+- docs/quickstart.md -- Hello world, which dist file to load, annotated 100-line app
 - docs/thinking-in-bitwrench.md -- Full progressive walkthrough with design rationale
+- docs/llm-bitwrench-guide.md -- Compact code-first tutorial (700 lines)
+- docs/core-api.md -- One-page core API card (bring-your-own-design path)
 
 Core concepts:
-- docs/taco-format.md -- TACO object specification
+- docs/taco-format.md -- TACO object specification, including SVG
 - docs/component-lifecycle.md -- mounted, unmount, handles, slots, state
 - docs/state-management.md -- o.state, o.render, bw.refresh(), pub/sub
 
 Components and styling:
-- docs/component-library.md -- All 47 BCCL components with examples
+- docs/component-library.md -- All 51 make*() components with examples
 - docs/component-cheatsheet.md -- Copy-paste patterns
 - docs/theming.md -- bw.makeStyles(), palettes, dark mode
 

@@ -78,7 +78,7 @@ var cardSchema = {
   t: { type: 'string', const: 'div' },
   a: {
     properties: {
-      class: { type: 'string', pattern: /bw_card/ }
+      class: { type: 'string', pattern: /bw_bccl_card/ }
     }
   },
   c: {
@@ -95,7 +95,7 @@ validator would do the same thing:
 ```javascript
 // Pydantic-style: define the model, validate input, get path-specific errors
 var result = validate(taco, cardSchema);
-// => { valid: false, errors: [{ path: '.a.class', message: 'missing bw_card' }] }
+// => { valid: false, errors: [{ path: '.a.class', message: 'missing bw_bccl_card' }] }
 ```
 
 **The key insight**: bitwrench could offer this natively because TACO

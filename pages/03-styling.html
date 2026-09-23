@@ -128,16 +128,14 @@
       c: [
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Responsive Styles' },
         { t: 'p', c: bw.raw('<code>bw.responsive()</code> generates mobile-first <code>@media (min-width)</code> CSS from a single object. These breakpoints match the grid system (<code>.bw_col_sm_*</code>, etc.) and <code>theme.breakpoints</code>.') },
-        bw.makeTable({
-          headers: ['Key', 'Min-Width', 'Target'],
-          rows: [
+        bw.makeTableFromArray({
+          data: [['Key', 'Min-Width', 'Target'],
             ['base', '(none)', 'All devices (no media query)'],
             ['sm', '576px', 'Small devices (landscape phones)'],
             ['md', '768px', 'Medium devices (tablets)'],
             ['lg', '992px', 'Large devices (desktops)'],
             ['xl', '1200px', 'Extra large devices (wide desktops)']
           ],
-          className: 'bw_bccl_table_sm',
           style: 'margin-bottom: 1rem;'
         }),
         { t: 'div', a: { id: 'tryit-responsive' } }
@@ -178,7 +176,7 @@
             ])
           ]
         },
-        { t: 'p', c: bw.raw('Both produce the same <code>bw_btn</code>, <code>bw_card</code>, <code>bw_table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.') },
+        { t: 'p', c: bw.raw('Both produce the same <code>bw_bccl_btn</code>, <code>bw_bccl_card</code>, <code>bw_bccl_table</code> classes. Or skip them entirely and use your own CSS, Bootstrap, Tailwind, or pure inline styles.') },
         { t: 'div', a: { style: 'margin-top: 1rem;' }, c: site.makeCallout('tip', [
           { t: 'strong', c: 'Custom palettes:' },
           bw.raw(' Need different colors? <code>bw.makeStyles()</code> derives a complete palette from just 2-3 seed colors &mdash; buttons, alerts, badges, hover states, and contrast text. Call <code>bw.applyStyles()</code> to inject them. See the <a href="10-themes.html">Themes page</a> for an interactive generator, presets, multi-theme demos, and code export.')
@@ -246,20 +244,20 @@
       t: 'div', a: { class: 'bw_site_pages_demo' },
       c: [
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Class Naming Convention' },
-        { t: 'p', c: bw.raw('All bitwrench CSS classes use the <code>bw-</code> prefix. Both <strong>hyphens</strong> and <strong>underscores</strong> work interchangeably:') },
+        { t: 'p', c: bw.raw('Every bitwrench class starts with <code>bw_</code> and uses <strong>underscores</strong>. There is no hyphen form: <code>bw-card</code> matches nothing. The built-in components add their own <code>bw_bccl_</code> classes:') },
         bw.makeTable({
-          headers: ['Form', 'Example', 'Notes'],
-          rows: [
-            ['Hyphen (canonical)', 'bw_btn, bw_card, bw_table_hover', 'Used in docs, generated CSS, component output'],
-            ['Underscore (alias)', 'bw_btn, bw_card, bw_table_hover', 'Convenient in JS objects (no quoting needed)']
+          data: [
+            { kind: 'Component (from make*())', example: 'bw_bccl_btn, bw_bccl_card, bw_bccl_table', note: 'Emitted by makeButton, makeCard, makeTable...' },
+            { kind: 'Variant', example: 'bw_primary, bw_danger, bw_bccl_btn_sm', note: 'Added by props like variant and size' },
+            { kind: 'Utility', example: 'bw_mb_3, bw_text_center, bw_d_flex', note: 'Spacing, text, display -- use on any element' },
+            { kind: 'Layout', example: 'bw_container, bw_row, bw_col_6', note: 'Grid and containers' }
           ],
-          className: 'bw_bccl_table_sm',
-          style: 'margin-bottom: 1rem;'
+          columns: [{ key: 'kind', label: 'Kind' }, { key: 'example', label: 'Examples' }, { key: 'note', label: 'Notes' }],
+          sortable: false
         }),
-        { t: 'p', c: bw.raw('TACO attribute keys like <code>bw_id</code> and <code>bw_meta</code> use underscores because they\'re plain JS identifiers. CSS classes support both forms — the generated stylesheet includes both selectors automatically.') },
         { t: 'div', a: { style: 'margin-top: 0.5rem;' }, c: site.makeCallout('tip', [
-          { t: 'strong', c: 'Class naming:' },
-          bw.raw(' All bitwrench CSS classes use underscores (<code>bw_btn</code>, <code>bw_card</code>). This is the only supported form.')
+          { t: 'strong', c: 'Easiest rule:' },
+          bw.raw(' let the factory emit the classes. <code>bw.makeButton({ variant: \'primary\' })</code> produces <code>bw_bccl_btn bw_primary</code>; writing the classes by hand is how selectors end up matching nothing.')
         ]) }
       ]
     };
@@ -404,7 +402,7 @@
         '  a: {\n' +
         '    // Global class (from bitwrench.css) for base card styling\n' +
         '    // + generated class for :hover\n' +
-        '    class: \'bw_card status-card\',\n' +
+        '    class: \'bw_bccl_card status-card\',\n' +
         '    // Inline style for the dynamic part (computed from JS)\n' +
         '    style: bw.s({ padding: "1rem" }, { transition: "all 0.2s ease" }, {\n' +
         '      borderLeft: \'4px solid \' + (isOnline ? \'#28a745\' : \'#dc3545\'),\n' +
@@ -459,10 +457,10 @@
         var pal = result.palette;
 
         bw.DOM('#theme-preview-area', {
-          t: 'div', a: { class: 'bw_card' },
+          t: 'div', a: { class: 'bw_bccl_card' },
           c: [
-            { t: 'div', a: { class: 'bw_card_header' }, c: 'Live Preview' },
-            { t: 'div', a: { class: 'bw_card_body' },
+            { t: 'div', a: { class: 'bw_bccl_card_header' }, c: 'Live Preview' },
+            { t: 'div', a: { class: 'bw_bccl_card_body' },
               c: [
                 // Color pickers row
                 {

@@ -46,6 +46,7 @@ var html = bw.html(card);    // or get HTML string
 
 Centered page container.
 
+<!-- doc-test: skip (signature listing: [...] marks where your content goes) -->
 ```javascript
 bw.makeContainer({
   fluid: false,      // true = full width, false = max-width centered
@@ -58,6 +59,7 @@ bw.makeContainer({
 
 Flexbox row for grid layouts.
 
+<!-- doc-test: skip (signature listing: [...] marks where your content goes) -->
 ```javascript
 bw.makeRow({
   children: [...],   // array of makeCol() TACOs
@@ -70,6 +72,7 @@ bw.makeRow({
 
 Responsive grid column.
 
+<!-- doc-test: skip (signature listing: [...] marks where your content goes) -->
 ```javascript
 bw.makeCol({
   size: 6,                          // fixed: 1-12
@@ -86,6 +89,7 @@ bw.makeCol({
 
 Flexbox stack (vertical or horizontal).
 
+<!-- doc-test: skip (signature listing: [...] marks where your content goes) -->
 ```javascript
 bw.makeStack({
   children: [...],
@@ -289,9 +293,15 @@ bw.makeTabs({
     { label: 'Tab 2', content: { t: 'div', c: 'Panel 2 TACO' } },
     { label: 'Tab 3', content: 'Panel 3 content' }
   ],
-  activeIndex: 0
+  activeIndex: 0,
+  onTabChange: function(index, tab, el) {}   // optional
 })
 ```
+
+`onTabChange(index, tab, el)` runs after the active tab changes -- by click,
+by Arrow/Home/End, or by `el.bw.setActiveTab(i)` -- and not when the index
+stays the same. `tab` is the object you passed in `tabs`, so extra keys you put
+on it (an id, a route) come back to you.
 
 ### makeBreadcrumb
 
@@ -372,6 +382,7 @@ bw.makeButtonGroup({
 
 Form wrapper with submit handler.
 
+<!-- doc-test: skip (signature listing: [...] marks where your content goes) -->
 ```javascript
 bw.makeForm({
   children: [...],           // form controls
@@ -442,7 +453,7 @@ Dropdown select.
 ```javascript
 bw.makeSelect({
   options: [
-    { value: 'us', text: 'United States' },
+    { value: 'us', text: 'United States' },   // `label` works too
     { value: 'uk', text: 'United Kingdom' },
     { value: 'ca', text: 'Canada' }
   ],
@@ -799,6 +810,11 @@ bw.makeFeatureGrid({
 })
 ```
 
+`columns` is items per row from the md breakpoint up, on the 12-column grid, so
+use a divisor of 12: 1, 2, 3, 4, 6 or 12. Other counts round to the nearest
+span -- `columns: 5` and `columns: 8` both give 6 per row. Below md the items
+stack to one column.
+
 ### makeCTA
 
 Call-to-action section.
@@ -861,6 +877,21 @@ bw.makeTable({
 })
 ```
 
+**Handles** -- the table updates itself; you don't re-mount it to sort or to
+change its data:
+
+```javascript
+var el = bw.mount('#users', bw.makeTable({ data: users, rowKey: 'id' }));
+el.bw.sort('age');            // toggles asc/desc; el.bw.sort('age', 'desc') to set it
+el.bw.setData(freshUsers);    // keeps the current sort (and page)
+el.bw.update({ data: rows }); // same as setData
+el.bw.getData();              // the full dataset
+```
+
+With `rowKey`, rows whose key survives an update are reused rather than
+rebuilt, so a selected row stays selected. `onRowClick` always receives the row
+and index currently on screen.
+
 **Cell renderers** — each column definition can include a `render` function for custom cell rendering. The function receives the cell value and the full row object, and can return a string or TACO:
 
 ```javascript
@@ -878,6 +909,13 @@ bw.makeTable({
 })
 ```
 
+On an update, a row whose `rowKey` is unchanged keeps the cells whose rendered
+content is unchanged -- the same DOM nodes, so an `<input>` in a cell keeps its
+focus, caret and scroll position while the rest of the table re-sorts. A cell
+whose content differs is rebuilt (and anything it replaced is unmounted). One
+consequence: handlers inside a cell's TACO are bound when that cell is built,
+so read current data from `el.bw.getData()` rather than closing over the row.
+
 **Row selection** — enables click-to-select with visual feedback:
 
 ```javascript
@@ -890,7 +928,7 @@ bw.makeTable({
 })
 ```
 
-Clicking a row toggles the `bw_table_row_selected` CSS class. The `selectable` flag also enables hover highlighting automatically.
+Clicking a row toggles the `bw_bccl_table_row_selected` CSS class. The `selectable` flag also enables hover highlighting automatically.
 
 **Pagination** — set `pageSize` to limit visible rows:
 
@@ -910,7 +948,15 @@ function renderTable() {
 renderTable();
 ```
 
-When `pageSize` is set, the table is wrapped in a container with Prev/Next controls and a page indicator. The `onRowClick` index is the global index into the full dataset, not the page-local index.
+When `pageSize` is set, the table is wrapped in a container with Prev/Next controls and a page indicator, and the handles are on the inner `<table>` (`el.querySelector('table').bw`). Changing the *page* is a re-mount from `onPageChange`, as above. Sorting and `setData` are not: they keep the current page, re-sort, and show that page's slice.
+
+The Prev / "Page N of M" / Next controls follow that slice. If `setData` leaves
+fewer pages than before, the page is clamped: the label says the page actually
+on screen, Next is disabled on the last page, and `onPageChange` is asked for a
+page that exists. The clamp is recomputed from the data each time rather than
+remembered, so data that fills the original page again shows that page again.
+
+The `onRowClick` index is the global index into the sorted dataset, not the page-local index.
 
 ### makeTableFromArray
 
@@ -934,6 +980,7 @@ bw.makeTableFromArray({
 
 Convenience wrapper with title and responsive scrolling.
 
+<!-- doc-test: skip (signature listing: [...] marks where your content goes) -->
 ```javascript
 bw.makeDataTable({
   title: 'Team Members',

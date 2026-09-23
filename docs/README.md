@@ -6,6 +6,10 @@ These guides cover how to build UIs with bitwrench.
 
 | Question | Guide |
 |----------|-------|
+| Where do I start? | [Quickstart](quickstart.md) -- hello world, which file to load, then a full app |
+| I bring my own design -- what's the core API? | [Core API Card](core-api.md) -- one page, one line per call |
+| How do I draw SVG? | [TACO Format: SVG](taco-format.md#svg) -- SVG is ordinary TACO |
+| How do I use my own CSS and tokens? | [Theming: Bring your own design](theming.md#bring-your-own-design) |
 | What components does bitwrench have? | [Component Cheat Sheet](component-cheatsheet.md) |
 | How do I build a page? | [Building a Website tutorial](tutorial-website.md) |
 | How does TACO work? | [TACO Format](taco-format.md) or [Thinking in Bitwrench](thinking-in-bitwrench.md) |
@@ -20,13 +24,17 @@ These guides cover how to build UIs with bitwrench.
 
 ## Start Here
 
-- **[Thinking in Bitwrench](thinking-in-bitwrench.md)** -- The complete guide to building with bitwrench. Covers TACO basics, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, the component model, events (and why `onclick` goes in `a:`, not `o.mounted`), bwserve, and common patterns. **Read this first.**
+- **[Quickstart](quickstart.md)** -- Hello world in one script tag, which `dist/` file to load, then an annotated ~100-line app. **Read this first.**
+- **[Core API Card](core-api.md)** -- The calls you need when you bring your own design, one line each.
+- **[Thinking in Bitwrench](thinking-in-bitwrench.md)** -- The complete guide to building with bitwrench. Covers TACO basics, styling (`bw.css`, `bw.s`, `bw.responsive`), composition, the component model, events (and why `onclick` goes in `a:`, not `o.mounted`), bwserve, and common patterns. Read it once the quickstart makes sense.
 - **[LLM Guide](llm-bitwrench-guide.md)** -- Compact single-file reference for AI-assisted development. All APIs, patterns, and rules in one document. Also useful as a quick-reference cheat sheet for humans.
 
 ## Guides
 
 | Guide | Description |
 |-------|-------------|
+| [Quickstart](quickstart.md) | Hello world, which file to load, annotated first app |
+| [Core API Card](core-api.md) | One-page reference for mount/patch/css/pub-sub/syncChildren |
 | [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
 | [State Management](state-management.md) | Component model, explicit stateful components, cross-component communication |
@@ -42,6 +50,10 @@ These guides cover how to build UIs with bitwrench.
 | [TypeScript Usage Guide](bitwrench_typescript_usage.md) | Import patterns, typed configs, TACO types, tree-shaking |
 | [bwmcp MCP Server](bitwrench-mcp.md) | MCP server for AI agents: tool catalog, live rendering, screenshots |
 | [drift-lint](drift-lint.md) | Maintainer tool: keeps docs/examples consistent with the shipped API |
+| [North Star Principles](bitwrench-northstar-principles.md) | The design rules the library is held to, and what to challenge |
+| [Framework Translation Table](framework-translation-table.md) | React / Vue / Svelte idioms and their bitwrench equivalents |
+| [TACO Schema Discussion](bitwrench-taco-schema-discussion.md) | Design notes on validating TACO structurally |
+| [bitwrench for WASM](bitwrench-for-wasm.md) | Driving bitwrench from WebAssembly (Rust, Go, C) |
 
 ## Tutorials
 

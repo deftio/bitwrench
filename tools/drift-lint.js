@@ -31,6 +31,7 @@ if (HELP) {
     'drift-lint -- keep docs honest\n' +
     '\n' +
     'Scans release-facing files (docs/, pages/, examples/, root .md files)\n' +
+    'and library source (src/, with its own stricter rules)\n' +
     'for stale API references, removed function names, renamed fields, and\n' +
     'structural anti-patterns. Extracts the real public API from src/ at\n' +
     'runtime and cross-references every bw.XXX() call in scanned files.\n' +
@@ -244,31 +245,29 @@ var RULES = [
     ]
   },
   {
-    id: 'bw_card-bare',
-    pattern: /\bbw_card\b/g,
-    message: 'bw_card → bw_bccl_card when describing BCCL component output',
-    fileFilter: /\.md$/,
-    fileExclude: /taco-format|taco-schema|CONTRIBUTING|typescript_usage|bitwrench_api/,
-    contextExclude: [
-      /bw_bccl_card/,           // already correct
-      /removed|renamed|was/i,   // explaining the change
-      /\.bw_card/,              // CSS selector reference (still valid)
-      /class[:\s]/i,            // CSS class attribute usage (CSS class still valid)
-      /pattern/                 // regex pattern reference
-    ]
+    // bw.DOM is bw.mount (same function); both return the mounted element.
+    // agents.md and llms.txt said "void" until 2.1.9, teaching agents to drop
+    // the handle.
+    id: 'dom-returns-void',
+    pattern: /bw\.DOM\([^)]*\)[^|\n]*\|\s*void/g,
+    message: 'bw.DOM returns the mounted element (it is bw.mount)'
   },
   {
-    id: 'bw_btn-bare',
-    pattern: /\bbw_btn\b/g,
-    message: 'bw_btn → bw_bccl_btn when describing BCCL component output',
-    fileFilter: /\.md$/,
-    fileExclude: /taco-format|taco-schema|CONTRIBUTING|typescript_usage|bitwrench_api/,
-    contextExclude: [
-      /bw_bccl_btn/,
-      /removed|renamed|was/i,
-      /\.bw_btn/,              // CSS selector reference (still valid)
-      /class[:\s]/i            // CSS class attribute usage
-    ]
+    // A TACO needs t. An object without it renders as the text [object Object].
+    id: 't-defaults-div',
+    pattern: /defaults? to ['"]?div['"]? if omitted/gi,
+    message: 't is required -- an object with no t renders as text, not a div'
+  },
+  {
+    // Class names with no rule in the stylesheet. makeButton/makeCard/makeTable
+    // emit bw_bccl_*; the bare forms were never generated. Until 2.1.9 this rule
+    // only read .md files and exempted class: lines, so ~100 dead uses sat in
+    // pages/ and examples/ -- including the README's first button.
+    id: 'dead-bccl-class',
+    pattern: /(?<![\w-])bw_(?:card(?:_header|_body|_title|_footer)?|btn(?:_primary|_secondary|_sm|_lg|_outline_\w+)?|table(?:_hover|_striped)?|bccl_table_sm)(?![\w-])/g,
+    message: 'no such class -- makeX() emits bw_bccl_card / bw_bccl_btn (+ bw_primary, bw_bccl_btn_sm) / bw_bccl_table',
+    fileExclude: /bitwrench_api\.md|08-api-reference\.html/,   // generated from JSDoc
+    contextExclude: [/removed|renamed|no longer|never (?:existed|generated)|no such class/i]
   },
   {
     id: 'bw-container',
@@ -361,6 +360,39 @@ var RULES = [
       /WRONG|wrong --|anti-pattern|do not|don't use/i,
       /→ styles\.palette|→ .*palette/  // migration messages naming the old form
     ]
+  },
+
+  {
+    // Never existed in the stylesheet; the quickstart used it until 2.1.9 and
+    // its task list rendered unstyled.
+    id: 'bw_list_item',
+    pattern: /\bbw_list_item\b/g,
+    message: 'bw_list_item is not a class -- bw_list_group_item'
+  },
+
+  // ── Library-source rules (src: true) ──
+  // These run only on src/, where the rules are stricter than for docs and
+  // examples: app code may use data-* and custom properties, bitwrench may not.
+  {
+    // Identity and state live in bw_* classes, closures, DOM properties or
+    // o.state -- never data-* attributes (v2.0.19 purge). makeTable's
+    // data-row-key/data-col-key survived it until 2.1.9 because nothing
+    // scanned src/.
+    id: 'src-data-attr',
+    src: true,
+    pattern: /['"\[]data-[a-z]/g,
+    message: 'no data-* in library source → bw_* class, closure, DOM property or o.state',
+    contextExclude: [/^\s*(\*|\/\/)/]
+  },
+  {
+    // Styles are generated from palette/layout JS values; the library defines
+    // and reads no CSS custom properties. The grid gutter var(--bw_gutter_x)
+    // and a dead :root font block survived until 2.1.9.
+    id: 'src-css-var',
+    src: true,
+    pattern: /var\(--|['"]--bw[_-]/g,
+    message: 'no CSS custom properties in library source → generate values with bw.css() from palette/layout',
+    contextExclude: [/^\s*(\*|\/\/)/]
   }
 ];
 
@@ -369,7 +401,7 @@ if (LIST_RULES) {
   console.log('  Pattern rules:');
   for (var lr = 0; lr < RULES.length; lr++) {
     var r = RULES[lr];
-    var kind = r.followedBy ? 'structural' : 'name';
+    var kind = r.src ? 'src' : (r.followedBy ? 'structural' : 'name');
     console.log('    ' + r.id.padEnd(25) + ' [' + kind + ']  ' + r.message);
   }
   console.log('\n  API rules:');
@@ -380,12 +412,12 @@ if (LIST_RULES) {
 
 // ── File collection ──────────────────────────────────────────────────
 
-var SCAN_DIRS = ['docs', 'pages', 'examples', 'embedded_python'];
+var SCAN_DIRS = ['docs', 'pages', 'examples', 'embedded_python', 'src'];
 // readme.html is generated from README.md — scanning it catches "README fixed
 // but build:readme not re-run", which is itself a form of drift.
 var SCAN_ROOT_FILES = ['README.md', 'CONTRIBUTING.md', 'ABOUT.md', 'readme.html', 'llms.txt', 'agents.md'];
 var SCAN_EXTS = new Set(['.md', '.html', '.js', '.py', '.sh', '.ts', '.txt']);
-var SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'dev']);
+var SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'dev', 'vendor']);
 
 function collectFiles(dir) {
   var files = [];
@@ -512,6 +544,8 @@ function scanFile(filePath, content) {
   var hits = [];
   var lines = content.split('\n');
   var relPath = relative(ROOT, filePath);
+  // src/ gets only the src: true rules; everything else only the doc rules
+  var isSrc = relPath.indexOf('src/') === 0;
 
   var ig = computeIgnores(lines, relPath);
   pragmaErrors = pragmaErrors.concat(ig.errors);
@@ -524,7 +558,7 @@ function scanFile(filePath, content) {
 
     for (var ri = 0; ri < RULES.length; ri++) {
       var rule = RULES[ri];
-      if (!ruleApplies(rule, relPath)) continue;
+      if (!!rule.src !== isSrc || !ruleApplies(rule, relPath)) continue;
 
       rule.pattern.lastIndex = 0;
       if (!rule.pattern.test(line)) continue;

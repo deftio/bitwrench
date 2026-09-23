@@ -1076,7 +1076,7 @@ describe('Structural + Cosmetic = Full Coverage', function() {
 
   it('defaultStyles should have all expected categories', function() {
     const expectedCategories = [
-      'root', 'reset', 'typography', 'grid', 'buttons', 'cards', 'forms',
+      'reset', 'typography', 'grid', 'buttons', 'cards', 'forms',
       'formChecks', 'navigation', 'tables', 'tableResponsive', 'alerts',
       'badges', 'progress', 'tabs', 'listGroups', 'pagination', 'breadcrumb',
       'hero', 'features', 'enhancedCards', 'sections', 'cta', 'spinner',

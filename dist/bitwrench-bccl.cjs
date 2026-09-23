@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.1.8 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-bccl v2.1.9 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 /**
@@ -280,7 +280,7 @@ function makeContainer(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_container${fluid ? '-fluid' : ''} ${className}`.trim() },
+    a: { class: `bw_bccl_container${fluid ? '_fluid' : ''} ${className}`.trim() },
     c: children
   };
 }
@@ -291,7 +291,7 @@ function makeContainer(props = {}) {
  * @param {Object} [props] - Row configuration
  * @param {Array|Object|string} [props.children] - Child columns
  * @param {string} [props.className] - Additional CSS classes
- * @param {number} [props.gap] - Gap size (1-5) applied via bw_g_{gap} class
+ * @param {number} [props.gap] - Gutter size 0-5 applied via bw_g_{gap} (0 = no gutter; omit for the default)
  * @returns {Object} TACO object representing a grid row
  * @category Component Builders
  * @example
@@ -306,7 +306,7 @@ function makeRow(props = {}) {
   return {
     t: 'div',
     a: {
-      class: `bw_bccl_row bw_row ${gap ? `bw_g_${gap}` : ''} ${className}`.trim()
+      class: `bw_bccl_row bw_row ${gap != null ? `bw_g_${gap}` : ''} ${className}`.trim()
     },
     c: children
   };
@@ -494,6 +494,8 @@ function makeNavbar(props = {}) {
  * @param {string|Object|Array} props.tabs[].content - Tab pane content
  * @param {boolean} [props.tabs[].active] - Whether this tab is initially active
  * @param {number} [props.activeIndex=0] - Default active tab index (overridden by tab.active)
+ * @param {Function} [props.onTabChange] - Called as (index, tab, el) when the active tab changes
+ *   (click, keyboard, or el.bw.setActiveTab). `tab` is the tabs[index] config object.
  * @returns {Object} TACO object representing a tabbed interface
  * @category Component Builders
  * @example
@@ -506,7 +508,7 @@ function makeNavbar(props = {}) {
  * bw.DOM("#app", tabs);
  */
 function makeTabs(props = {}) {
-  const { tabs = [], activeIndex = 0 } = props;
+  const { tabs = [], activeIndex = 0, onTabChange } = props;
 
   // Find the active tab index based on the active property or use activeIndex
   let actualActiveIndex = activeIndex;
@@ -531,7 +533,9 @@ function makeTabs(props = {}) {
     allTabs[index].setAttribute('aria-selected', 'true');
     allTabs[index].setAttribute('tabindex', '0');
     allPanes[index].classList.add('active');
+    var prev = el._bw_state ? el._bw_state.activeIndex : -1;
     if (el._bw_state) el._bw_state.activeIndex = index;
+    if (onTabChange && index !== prev) onTabChange(index, tabs[index], el);
   }
 
   return {
@@ -540,7 +544,40 @@ function makeTabs(props = {}) {
     c: [
       {
         t: 'ul',
-        a: { class: 'bw_nav bw_nav_tabs', role: 'tablist' },
+        a: {
+          class: 'bw_nav bw_nav_tabs', role: 'tablist',
+          // Arrow/Home/End move between tabs. In a: like the click handler, so
+          // keyboard and mouse take the same path (switchTab via click).
+          onkeydown: function(e) {
+            var tablist = e.currentTarget;
+            var tabButtons = tablist.querySelectorAll('[role="tab"]');
+            var currentIndex = -1;
+            for (var i = 0; i < tabButtons.length; i++) {
+              if (tabButtons[i] === e.target) { currentIndex = i; break; }
+            }
+            if (currentIndex === -1) return;
+
+            var newIndex = -1;
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+              e.preventDefault();
+              newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
+            } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+              e.preventDefault();
+              newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
+            } else if (e.key === 'Home') {
+              e.preventDefault();
+              newIndex = 0;
+            } else if (e.key === 'End') {
+              e.preventDefault();
+              newIndex = tabButtons.length - 1;
+            }
+
+            if (newIndex >= 0) {
+              tabButtons[newIndex].focus();
+              tabButtons[newIndex].click();
+            }
+          }
+        },
         c: tabs.map((tab, index) => ({
           t: 'li',
           a: { class: 'bw_nav_item', role: 'presentation' },
@@ -579,38 +616,6 @@ function makeTabs(props = {}) {
       handle: {
         setActiveTab: switchTab,
         getActiveTab: function(el) { return (el._bw_state && el._bw_state.activeIndex) || 0; }
-      },
-      mounted: function(el) {
-        var tablist = el.querySelector('[role="tablist"]');
-        if (!tablist) return;
-        tablist.addEventListener('keydown', function(e) {
-          var tabButtons = tablist.querySelectorAll('[role="tab"]');
-          var currentIndex = -1;
-          for (var i = 0; i < tabButtons.length; i++) {
-            if (tabButtons[i] === e.target) { currentIndex = i; break; }
-          }
-          if (currentIndex === -1) return;
-
-          var newIndex = -1;
-          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-            e.preventDefault();
-            newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
-          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-            e.preventDefault();
-            newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
-          } else if (e.key === 'Home') {
-            e.preventDefault();
-            newIndex = 0;
-          } else if (e.key === 'End') {
-            e.preventDefault();
-            newIndex = tabButtons.length - 1;
-          }
-
-          if (newIndex >= 0) {
-            tabButtons[newIndex].focus();
-            tabButtons[newIndex].click();
-          }
-        });
       }
     }
   };
@@ -1251,7 +1256,7 @@ function makeTextarea(props = {}) {
  * @param {Object} [props] - Select configuration
  * @param {Array<Object>} [props.options=[]] - Dropdown options
  * @param {string} props.options[].value - Option value
- * @param {string} [props.options[].text] - Option display text (defaults to value)
+ * @param {string} [props.options[].text] - Option display text (`label` also accepted; defaults to value)
  * @param {string} [props.value] - Currently selected value
  * @param {string} [props.id] - Element ID
  * @param {string} [props.name] - Select name attribute
@@ -1298,7 +1303,7 @@ function makeSelect(props = {}) {
         value: opt.value,
         selected: opt.value === value
       },
-      c: opt.text || opt.value
+      c: opt.text || opt.label || opt.value
     }))
   };
 }
@@ -1536,7 +1541,9 @@ function makeHero(props = {}) {
  * @param {string} [props.features[].icon] - Icon content (emoji, HTML entity, or text)
  * @param {string} [props.features[].title] - Feature title
  * @param {string} [props.features[].description] - Feature description text
- * @param {number} [props.columns=3] - Number of columns (divides 12-col grid)
+ * @param {number} [props.columns=3] - Items per row at md+ widths. Uses the 12-column grid,
+ *   so use a divisor of 12 (1, 2, 3, 4, 6, 12); other counts round to the nearest
+ *   span (5 -> 6 per row, 8 -> 6 per row). Stacks to one column below md.
  * @param {boolean} [props.centered=true] - Center-align feature text
  * @param {string} [props.iconSize="3rem"] - Icon font size
  * @param {string} [props.className] - Additional CSS classes
@@ -1561,7 +1568,8 @@ function makeFeatureGrid(props = {}) {
     className = ''
   } = props;
 
-  const colClass = `bw_col_md_${12/columns}`;
+  // Nearest whole grid span: 12/5 would emit bw_col_md_2.4, which no rule matches
+  const colClass = `bw_col_md_${Math.min(12, Math.max(1, Math.round(12 / columns)))}`;
 
   return {
     t: 'div',

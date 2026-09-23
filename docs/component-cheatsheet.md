@@ -8,13 +8,13 @@
 | Component | Key Props | Capabilities | Handles / Slots |
 |-----------|-----------|-------------|----------------|
 | **Tables & Data** | | | |
-| makeTable | data, columns, sortable, pageSize, onRowClick | Click-to-sort (on by default), pagination, row selection, custom column renderers | -- |
+| makeTable | data, columns, sortable, sortColumn, pageSize, rowKey, onRowClick, onSort | Click-to-sort (on by default), pagination, row selection, custom column renderers | sort(column, dir?), setData(rows), update({data}), getData() |
 | makeTableFromArray | data (2D array), headerRow, sortable | Convert CSV/spreadsheet data to sortable table | -- |
 | makeDataTable | title, data, columns, responsive | Title heading + responsive scroll wrapper around makeTable | -- |
 | makeBarChart | data, labelKey, valueKey, title, color, formatValue | Pure-CSS vertical bar chart, no external library | -- |
 | **Interactive** | | | |
 | makeCarousel | items, autoPlay, interval, showControls | Auto-play, pause-on-hover, keyboard nav, dot indicators | goToSlide(i), next(), prev(), play(), pause(), getActiveIndex() |
-| makeTabs | tabs [{label,content}], activeIndex | Arrow/Home/End keys, full WAI-ARIA, click switching | setActiveTab(i), getActiveTab() |
+| makeTabs | tabs [{label,content}], activeIndex, onTabChange(index, tab, el) | Arrow/Home/End keys, full WAI-ARIA, click switching. `tab` is your own tabs[i] object, so extra keys come back | setActiveTab(i), getActiveTab() |
 | makeAccordion | items [{title,content}], multiOpen | Smooth animations, ARIA, multi-open option | toggle(i), openAll(), closeAll() |
 | makeModal | title, content, footer, size, onClose | ESC dismiss, backdrop click close, size variants | open(), close() |
 | makeToast | title, content, variant, delay, position | Auto-dismiss (5s default), 6 position options | dismiss() |
@@ -29,7 +29,7 @@
 | makeProgress | value, max, variant, striped, animated | Striped + animated variants, ARIA | setValue(n), getValue() |
 | makeHero | title, subtitle, actions, variant, size, backgroundImage | Background image with overlay, centered/left layouts | -- |
 | makeSection | title, subtitle, content, variant, spacing | Semantic section wrapper with spacing control | -- |
-| makeFeatureGrid | features [{icon,title,desc}], columns, centered | Responsive icon+title+desc grid | -- |
+| makeFeatureGrid | features [{icon,title,description}], columns (use 1/2/3/4/6/12), centered | Responsive icon+title+description grid; other column counts round to a 12-grid span | -- |
 | makeCTA | title, description, actions, variant | Call-to-action block with action buttons | -- |
 | makeCodeDemo | title, description, code, result | Code + live output in tabbed view, copy button | -- |
 | makeMediaObject | src, alt, title, content, reverse, imageSize | Image + text side-by-side, reversible | -- |
@@ -49,7 +49,7 @@
 | makeFormGroup | label, input, help, validation, feedback, required | Required indicator (*), validation feedback (valid/invalid) | -- |
 | makeInput | type, placeholder, value, disabled, oninput | All HTML5 types, bw_form_control styling | -- |
 | makeTextarea | placeholder, value, rows, disabled | Multi-line input, bw_form_control styling | -- |
-| makeSelect | options [{value,text}], value, disabled | Dropdown select, bw_form_control styling | -- |
+| makeSelect | options [{value, text or label}], value, disabled | Dropdown select, bw_form_control styling | -- |
 | makeCheckbox | label, checked, id, name, disabled | Label-for-id linking, bw_form_check styling | -- |
 | makeRadio | label, name, value, checked, id | Label-for-id linking, radio group support | -- |
 | makeSwitch | label, checked, id, name, disabled | Toggle switch with label linking | -- |
@@ -68,7 +68,7 @@
 
 ## How to Use Handles
 
-Components with handles expose imperative methods via `el.bw`. Use `bw.mount()` instead of `bw.DOM()` to get the element reference:
+Components with handles expose imperative methods via `el.bw`. `bw.mount()` returns the mounted element (so does `bw.DOM()`, which is the same function) -- keep it:
 
 ```javascript
 // Mount and get element reference

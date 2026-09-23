@@ -26,11 +26,11 @@
       background: p.surface, border: '1px solid ' + p.light.border,
       borderRadius: '8px', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
     },
-    '.table-wrap .bw_table': { marginBottom: '0' },
-    '.table-wrap .bw_table > thead > tr > *': { background: p.primary.darkText, color: '#fff', fontSize: '0.8rem' },
-    '.table-wrap .bw_table > tbody > tr > *': { fontSize: '0.8rem' },
-    '.table-wrap .bw_table > tbody > tr:nth-of-type(odd) > *': { backgroundColor: 'rgba(0,0,0,0.025)' },
-    '.table-wrap .bw_table > tfoot > tr > *': { fontWeight: '700', background: p.background, fontSize: '0.8rem' },
+    '.table-wrap .bw_bccl_table': { marginBottom: '0' },
+    '.table-wrap .bw_bccl_table > thead > tr > *': { background: p.primary.darkText, color: '#fff', fontSize: '0.8rem' },
+    '.table-wrap .bw_bccl_table > tbody > tr > *': { fontSize: '0.8rem' },
+    '.table-wrap .bw_bccl_table > tbody > tr:nth-of-type(odd) > *': { backgroundColor: 'rgba(0,0,0,0.025)' },
+    '.table-wrap .bw_bccl_table > tfoot > tr > *': { fontWeight: '700', background: p.background, fontSize: '0.8rem' },
     '.bar': { display: 'inline-block', height: '14px', background: p.primary.base, borderRadius: '2px', verticalAlign: 'middle', minWidth: '2px' },
     '.bar-doc': { background: '#90c0c0' },
     '.bar-wrap': { display: 'flex', gap: '1px', alignItems: 'center' },
@@ -113,10 +113,8 @@
         bw.raw(barHTML(t.sourceMinBytes, totDocBytes, maxBytes))
       ]);
 
-      return bw.makeTable({
-        headers: ['File', 'Purpose', 'Lines', 'KB', 'Min KB', 'Code%', 'Gz KB', 'Weight'],
-        rows: rows,
-        footer: false
+      return bw.makeTableFromArray({
+        data: [['File', 'Purpose', 'Lines', 'KB', 'Min KB', 'Code%', 'Gz KB', 'Weight']].concat(rows)
       });
     }
 
@@ -139,9 +137,8 @@
         return [name, variant, fmt, kb(b.bytes), kb(b.gzipBytes)];
       });
 
-      return bw.makeTable({
-        headers: ['Bundle', 'Variant', 'Format', 'KB', 'Gz KB'],
-        rows: rows
+      return bw.makeTableFromArray({
+        data: [['Bundle', 'Variant', 'Format', 'KB', 'Gz KB']].concat(rows)
       });
     }
 

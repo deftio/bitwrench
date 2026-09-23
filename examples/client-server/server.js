@@ -110,7 +110,7 @@ app.page('/dashboard', function(client) {
         { t: 'div', a: { style: 'text-align: center;' }, c: [
           { t: 'button', a: { class: 'bw_bccl_btn bw_primary bw_act_refresh' }, c: 'Force Refresh' },
           { t: 'span', a: { style: 'display:inline-block; width:1rem;' } },
-          { t: 'a', a: { href: '/', class: 'bw_btn bw_secondary' }, c: '\u2190 Counter' }
+          { t: 'a', a: { href: '/', class: 'bw_bccl_btn bw_secondary' }, c: '\u2190 Counter' }
         ]},
         { t: 'p', a: { id: 'last-update', style: 'text-align: center; color: #94a3b8; margin-top: 1rem; font-size: 0.85rem;' },
           c: 'Last update: ' + new Date().toLocaleTimeString() }

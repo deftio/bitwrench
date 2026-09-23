@@ -22,9 +22,7 @@
     // =========================================================================
     // Section 1: Your First Bitwrench Page
     // =========================================================================
-    var helloCode = '<!DOCTYPE html>\n<html>\n<head>\n  <script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>\n</head>\n<body>\n  <div id="app"></div>\n  <script>\n    bw.loadStyles();\n    bw.DOM(\'#app\', { t: \'h1\', c: \'Hello bitwrench!\' });\n  <\/script>\n</body>\n</html>';
-
-    var livePageId = 'live-page-' + (bw._idCounter++);
+    var helloCode = '<!DOCTYPE html>\n<html>\n<head>\n  <script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js"><\/script>\n</head>\n<body>\n  <div id="app"></div>\n  <script>\n    bw.loadStyles();\n    bw.mount(\'#app\', { t: \'h1\', c: \'Hello bitwrench!\' });\n  <\/script>\n</body>\n</html>';
 
     var section1 = {
       t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-first-page' },
@@ -33,74 +31,27 @@
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
             c: 'This is the complete code for a bitwrench page. Edit the code and click Run to see the result:' },
-          {
-            t: 'div', a: { class: 'tryit-container', id: livePageId },
-            o: {
-              mounted: function(el) {
-                var iframe = el.querySelector('.live-page-iframe');
-                var errorEl = el.querySelector('.tryit-error');
-                var runBtn = el.querySelector('.tryit-run');
-                var ceEl = el.querySelector('.bw_ce');
-                var textarea = el.querySelector('.tryit-textarea');
-
-                function getCode() {
-                  if (ceEl && ceEl._bwCodeEdit) return ceEl._bwCodeEdit.getValue();
-                  if (textarea) return textarea.value;
-                  return '';
-                }
-
-                function runPage() {
-                  errorEl.textContent = '';
-                  errorEl.style.display = 'none';
-                  iframe.srcdoc = getCode();
-                }
-
-                runBtn.addEventListener('click', runPage);
-                // Auto-run on mount
-                runPage();
-              }
-            },
-            c: [{
-              t: 'div', a: { class: 'tryit-grid' },
-              c: [
-                {
-                  t: 'div', a: { class: 'tryit-editor-col' },
-                  c: [
-                    { t: 'div', a: { class: 'tryit-label' }, c: 'HTML' },
-                    bw.codeEditor
-                      ? bw.codeEditor({ code: helloCode, lang: 'html', height: '280px' })
-                      : { t: 'textarea', a: { class: 'tryit-textarea', spellcheck: 'false', style: 'height:280px' }, c: helloCode },
-                    {
-                      t: 'div', a: { class: 'tryit-controls' },
-                      c: [bw.makeButton({ text: 'Run', variant: 'primary', size: 'sm', className: 'tryit-run' })]
-                    },
-                    { t: 'div', a: { class: 'tryit-error' }, c: '' }
-                  ]
-                },
-                {
-                  t: 'div', a: { class: 'tryit-output-col' },
-                  c: [
-                    { t: 'div', a: { class: 'tryit-label tryit-label-result' }, c: 'Preview' },
-                    { t: 'iframe', a: {
-                      class: 'live-page-iframe',
-                      sandbox: 'allow-scripts',
-                      style: 'width: 100%; min-height: 280px; border: 2px dashed ' + p.light.border + '; border-radius: 8px; background: #fff;'
-                    }}
-                  ]
-                }
-              ]
-            }]
-          },
+          makeTryIt({ code: helloCode, lang: 'html', label: 'HTML', height: '280px' }),
           site.makeCallout('concept', 'What just happened?', {
             t: 'p', c: [
-              { t: 'code', c: 'bw.DOM(\'#app\', taco)' },
-              ' mounts a TACO object into any CSS selector. The TACO ',
+              { t: 'code', c: 'bw.mount(\'#app\', taco)' },
+              ' mounts a TACO object into any CSS selector (',
+              { t: 'code', c: 'bw.DOM()' },
+              ' is another name for it). The TACO ',
               { t: 'code', c: '{ t: \'h1\', c: \'Hello bitwrench!\' }' },
               ' becomes an ',
               { t: 'code', c: '<h1>' },
               ' element. Try changing the text, tag, or adding attributes like ',
               { t: 'code', c: "a: { style: 'color: teal;' }" },
               '.'
+            ]
+          }),
+          site.makeCallout('tip', 'Which file should I load?', {
+            t: 'p', c: [
+              { t: 'code', c: 'bitwrench.umd.min.js' }, ' has everything (~45 KB gzipped). ',
+              { t: 'code', c: 'bitwrench-lean.umd.min.js' }, ' (~35 KB) drops the built-in components if you bring your own design. ',
+              { t: 'code', c: 'bitwrench.umd.js' }, ' is unminified, for readable stack traces while debugging -- don\'t ship it. ',
+              'Every file is listed on the ', { t: 'a', a: { href: '09-downloads.html' }, c: 'Downloads' }, ' page.'
             ]
           })
         ]}
@@ -151,6 +102,59 @@
               'a plain JavaScript object that maps directly to HTML. Only ',
               { t: 'code', c: 't' }, ' is required; everything else is optional.'
             ]
+          }),
+          site.makeCallout('tip', 'Prefer positional arguments? Use bw.h()', {
+            t: 'p', c: [
+              { t: 'code', c: "bw.h('p', { class: 'intro' }, 'Hello')" },
+              ' returns exactly ',
+              { t: 'code', c: "{ t: 'p', a: { class: 'intro' }, c: 'Hello' }" },
+              '. Alias it (', { t: 'code', c: 'var h = bw.h;' },
+              ') and mix it freely with literal objects and ', { t: 'code', c: 'make*()' }, ' results.'
+            ]
+          })
+        ]}
+      ]
+    };
+
+    // =========================================================================
+    // Section 2b: SVG is TACO too
+    // =========================================================================
+    var section2b = {
+      t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-svg' },
+      c: [
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-svg' }, c: 'SVG Is TACO Too' } },
+        { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
+          { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
+            'Start a tree with ', { t: 'code', c: "t: 'svg'" },
+            ' and everything inside is real SVG. Attribute names stay as SVG spells them, and handlers work like anywhere else:'
+          ]},
+          makeTryIt({
+            code: [
+              'var notes = [\'C\', \'D\', \'E\', \'F\', \'G\', \'A\', \'B\'];',
+              '',
+              'bw.DOM(target, {',
+              '  t: \'svg\', a: { viewBox: \'0 0 140 60\', width: 280 },',
+              '  c: notes.map(function(n, i) {',
+              '    return { t: \'g\', c: [',
+              '      { t: \'rect\', a: { x: i * 20, y: 0, width: 19, height: 60,',
+              '          fill: \'#fff\', stroke: \'#333\', \'stroke-width\': 1,',
+              '          onclick: function() { bw.patch(\'picked\', \'You pressed \' + n); } } },',
+              '      { t: \'text\', a: { x: i * 20 + 10, y: 52, \'text-anchor\': \'middle\',',
+              '          \'font-size\': 9, \'pointer-events\': \'none\' }, c: n }',
+              '    ]};',
+              '  })',
+              '});',
+              'bw.append(target, { t: \'p\', a: { id: \'picked\' }, c: \'Click a key.\' });'
+            ].join('\n'),
+            height: '320px'
+          }),
+          site.makeCallout('concept', 'Build SVG as objects, not strings', {
+            t: 'p', c: [
+              'An SVG string passed through ', { t: 'code', c: 'bw.raw()' },
+              ' can\'t carry handlers or state and can\'t be patched later. As TACO, every shape is a normal element: ',
+              { t: 'code', c: 'class' }, ', ', { t: 'code', c: 'onclick' }, ', ', { t: 'code', c: 'o.state' },
+              ' and ', { t: 'code', c: 'bw.patch()' }, ' all work.'
+            ]
           })
         ]}
       ]
@@ -168,7 +172,7 @@
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
             'Bitwrench includes built-in CSS classes (',
-            { t: 'code', c: 'bw_btn' }, ', ', { t: 'code', c: 'bw_card' },
+            { t: 'code', c: 'bw_bccl_btn' }, ', ', { t: 'code', c: 'bw_bccl_card' },
             ', etc.) that give you Bootstrap-like styling. Call ',
             { t: 'code', c: 'bw.loadStyles()' }, ' once to load the structural CSS.'
           ]},
@@ -218,7 +222,7 @@
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-interactive' }, c: 'Making It Interactive' } },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' },
-            c: 'When state changes, call render again. Bitwrench replaces the old content with the new. That\'s the entire update model.' },
+            c: 'The simplest update: when state changes, call your render function again, and bitwrench replaces the old content with the new. Every update is a call you make -- nothing re-renders behind your back.' },
           makeTryIt({
             code: [
               'var count = 0;',
@@ -272,12 +276,12 @@
     var section4b = {
       t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-component' },
       c: [
-        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-component' }, c: 'The Recommended Pattern: o.state + o.render' } },
+        { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-component' }, c: 'Stateful Components: o.state + o.render' } },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: [
-            'The closure pattern above works, but for most components, ',
+            'When state belongs to one component, keep it on that component with ',
             { t: 'code', c: 'o.state + o.render' },
-            ' is the better approach. State lives on the DOM element at ',
+            '. State lives on the DOM element at ',
             { t: 'code', c: 'el._bw_state' },
             ', and ', { t: 'code', c: 'o.render(el)' },
             ' is called on mount and whenever you call ',
@@ -325,7 +329,13 @@
                 { t: 'strong', c: 'Closure + render()' }, ' \u2014 simple widgets, one-off interactivity.'
               ]},
               { t: 'p', c: [
-                { t: 'strong', c: 'o.state + o.render' }, ' \u2014 anything with state you want to read/write from outside. State at el._bw_state, re-render via bw.refresh(el), pub/sub integration.'
+                { t: 'strong', c: 'o.state + o.render' }, ' \u2014 state that belongs to one component. State at el._bw_state, re-render via bw.refresh(el).'
+              ]},
+              { t: 'p', c: [
+                { t: 'strong', c: 'Methods and patches' }, ' \u2014 the cheapest updates. Give a component methods with ',
+                { t: 'code', c: 'o.handle' }, ' and call ', { t: 'code', c: 'el.bw.method()' },
+                ', or change one element with ', { t: 'code', c: 'bw.patch()' },
+                '. Nothing is rebuilt, so inputs keep focus and drags keep going.'
               ]},
               { t: 'p', a: { style: 'margin-top: 0.5rem;' }, c: [
                 'See the ',
@@ -461,7 +471,7 @@
     // =========================================================================
     var nextSteps = [
       { href: '03-styling.html', title: 'Styling',
-        desc: 'Where bw-* classes come from, CSS generation from JavaScript objects, utility system.' },
+        desc: 'Where bw_* classes come from, CSS generation from JavaScript objects, utility system.' },
       { href: '01-components.html', title: 'Components',
         desc: 'Cards, buttons, alerts, badges, grids \u2014 all built-in components with live demos.' },
       { href: '02-tables-forms.html', title: 'Tables & Forms',
@@ -472,6 +482,8 @@
         desc: 'Build a complete game step by step. The best hands-on way to learn bitwrench.' },
       { href: '07-framework-comparison.html', title: 'Framework Comparison',
         desc: 'The same tasks in HTML/JS, React, Vue, Svelte, and bitwrench side by side.' },
+      { href: 'https://github.com/deftio/bitwrench/blob/main/docs/core-api.md', title: 'Core API Card',
+        desc: 'One page, one line per call: mount, patch, syncChildren, css, pub/sub. For bringing your own design.' },
       { href: 'thinking-in-bitwrench.html', title: 'Thinking in Bitwrench',
         desc: 'The full design philosophy \u2014 TACO as component spec, composition patterns, and progressive enhancement.' }
     ];
@@ -518,9 +530,9 @@
           c: [
             { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
                 { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'From Data to Components' },
-                { t: 'p', c: ['This page walks through the full progression: defining TACO objects as data, mounting them to the DOM, and managing state with reactivity. ', { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench' }] }
+                { t: 'p', c: ['This page walks through the full progression: defining TACO objects as data, mounting them to the DOM, and updating them with explicit calls. For the full story, read ', { t: 'a', a: { href: 'thinking-in-bitwrench.html' }, c: 'Thinking in Bitwrench' }, '.'] }
             ]},
-            section1, section2, section3, section4, section4b, section5, section5b, section6
+            section1, section2, section2b, section3, section4, section4b, section5, section5b, section6
           ]
         }
       ]

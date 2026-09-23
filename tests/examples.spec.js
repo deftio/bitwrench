@@ -52,6 +52,28 @@ test.describe('Bitwrench v2 Examples', () => {
     expect(page.errors).toHaveLength(0);
   });
 
+  test('00-quick-start.html try-its run through el.bw.run()', async ({ page }) => {
+    await page.goto('/pages/00-quick-start.html');
+
+    // lang:'html' try-it renders the hello page into its iframe
+    const frame = page.frameLocator('#section-first-page iframe.tryit-output-page');
+    await expect(frame.locator('h1')).toContainText('Hello bitwrench!');
+
+    // SVG demo: shapes are real SVG, and a click handler on a <rect> patches the text
+    const svgDemo = page.locator('#section-svg .tryit-output');
+    await expect(svgDemo.locator('svg rect')).toHaveCount(7);
+    await svgDemo.locator('svg rect').nth(2).click();
+    await expect(svgDemo.locator('#picked')).toHaveText('You pressed E');
+
+    // Run re-executes the editor's code via the component method, not a DOM listener
+    const hasRun = await page.locator('#section-svg .tryit-container').evaluate(el => typeof el.bw.run);
+    expect(hasRun).toBe('function');
+    await page.locator('#section-svg .tryit-run').click();
+    await expect(svgDemo.locator('#picked')).toHaveText('Click a key.');
+
+    expect(page.errors).toHaveLength(0);
+  });
+
   test('01-components.html loads without errors', async ({ page }) => {
     await page.goto('/pages/01-components.html');
 

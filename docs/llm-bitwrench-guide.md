@@ -110,6 +110,19 @@ bw.DOM('#app', { t: 'div', c: [
 ]});
 ```
 
+**SVG is ordinary TACO.** Start with `t: 'svg'`; children are created in the SVG
+namespace, attribute names stay as SVG spells them (`viewBox`, `stroke-width`),
+and handlers, `class` and `o.*` all work. Do not build SVG strings with `bw.raw()`.
+
+```javascript
+bw.DOM('#chart', { t: 'svg', a: { viewBox: '0 0 100 20' }, c: [
+  { t: 'rect', a: { width: 60, height: 20, class: 'bar', onclick: function() { bw.pub('bar:click'); } } },
+  { t: 'text', a: { x: 65, y: 14, 'font-size': 10 }, c: '60%' }
+]});
+```
+
+Nested arrays in `c` are flattened (`c: [head, rows.map(row)]` needs no `.flat()`).
+
 ---
 
 ## Step 3: From Data to DOM
@@ -354,17 +367,17 @@ bw.u.css('p4 shadow')  // includes your custom token
 
 | Component | Key Props | Capabilities |
 |-----------|-----------|-------------|
-| makeTable | data, columns, sortable, pageSize, onRowClick | **Click-to-sort (default!)**, pagination, row selection, column renderers |
+| makeTable | data, columns, sortable, pageSize, rowKey, onRowClick | **Click-to-sort (default!)**, pagination, row selection, column renderers. **handles: sort(col, dir?), setData(rows), update({data}), getData()** -- update in place, don't re-mount |
 | makeCard | title, content, footer, image, variant | Image positions, shadow variants, **slots: setTitle/setContent/setFooter** |
 | makeModal | title, content, footer, onClose | ESC dismiss, backdrop close, **handles: open(), close()** |
 | makeToast | title, content, variant, delay, position | Auto-dismiss 5s, 6 positions, **handle: dismiss()** |
-| makeTabs | tabs [{label,content}], activeIndex | Arrow/Home/End keys, WAI-ARIA, **handles: setActiveTab(i), getActiveTab()** |
+| makeTabs | tabs [{label,content}], activeIndex, onTabChange(index, tab, el) | Arrow/Home/End keys, WAI-ARIA, **handles: setActiveTab(i), getActiveTab()** |
 | makeAccordion | items [{title,content}], multiOpen | Animations, ARIA, **handles: toggle(i), openAll(), closeAll()** |
 | makeCarousel | items, autoPlay, interval | Auto-play, keyboard, **handles: goToSlide(i), next(), prev(), pause(), play()** |
 | makeFormGroup | label, input, help, validation, required | Required indicator, validation feedback -- **don't reinvent this** |
 | makeTextarea | placeholder, value, rows | bw_form_control styling -- **use this, not raw `{t:'textarea'}`** |
 | makeInput | type, placeholder, value, oninput | All HTML5 types with bw_form_control styling |
-| makeSelect | options [{value,text}], value | Dropdown select with bw_form_control styling |
+| makeSelect | options [{value, text or label}], value | Dropdown select with bw_form_control styling |
 | makeProgress | value, max, variant, striped, animated | Striped + animated, **handles: setValue(n), getValue()** |
 | makeStatCard | value, label, change, variant | Dashboard KPI with change arrows, **slots: setValue/setLabel** |
 | makeSearchInput | placeholder, onSearch, onInput | Enter to search, clear button |
@@ -394,6 +407,7 @@ card.bw.setContent({ t: 'b', c: '$42k' });
 | Factory | Handle Methods | Slot Methods |
 |---------|---------------|-------------|
 | makeCarousel | goToSlide, next, prev, getActiveIndex, pause, play | -- |
+| makeTable | sort, setData, update, getData | -- |
 | makeTabs | setActiveTab, getActiveTab | -- |
 | makeAccordion | toggle, openAll, closeAll | -- |
 | makeModal | open, close | -- |
@@ -460,6 +474,7 @@ Then from the terminal:
 
 Use bwserve screenshots for iterative UI refinement:
 
+<!-- doc-test: skip (Node ESM snippet: import + a running server) -->
 ```javascript
 import bwserve from 'bitwrench/bwserve';
 var app = bwserve.create({ port: 7902, allowScreenshot: true });
@@ -480,6 +495,7 @@ app.page('/', function(client) {
 
 Push TACO from any server to the browser via SSE. No client-side app logic needed.
 
+<!-- doc-test: skip (Node ESM snippet: import + a running server) -->
 ```javascript
 import bwserve from 'bitwrench/bwserve';
 var app = bwserve.create({ port: 7902 });
@@ -518,6 +534,7 @@ app.listen();
 
 Map URLs to views with `bw.router()`. Hash mode (default) works everywhere; history mode uses `pushState`.
 
+<!-- doc-test: skip (Node ESM snippet: import + a running server) -->
 ```javascript
 bw.router({
   target: '#app',

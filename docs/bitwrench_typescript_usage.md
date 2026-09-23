@@ -70,7 +70,7 @@ import type { Taco, TacoAttributes, TacoOptions, TacoContent } from 'bitwrench';
 
 const myCard: Taco = {
   t: 'div',
-  a: { class: 'bw_card', id: 'stats' },
+  a: { class: 'bw_bccl_card', id: 'stats' },
   c: [
     { t: 'h3', c: 'Revenue' },
     { t: 'p', c: '$1,234' }
@@ -127,7 +127,7 @@ const raw: Taco = { t: 'div', c: bw.raw('<strong>Pre-escaped</strong>') };
 const button: Taco = {
   t: 'button',
   a: {
-    class: ['bw_btn', 'bw_primary'],     // string or string[]
+    class: ['bw_bccl_btn', 'bw_primary'],     // string or string[]
     style: { padding: '8px', color: '#fff' }, // string or object
     disabled: false,                        // boolean attrs
     onclick: (e: Event) => handleClick(e),  // function or string

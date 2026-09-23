@@ -676,8 +676,8 @@
       },
       '.tryit-textarea:focus': { outline: '2px solid ' + p.primary.base, 'outline-offset': '-1px' },
       '.tryit-error': {
-        display: 'none', 'font-size': '0.8125rem', color: '#ef4444',
-        background: '#1e0000', padding: '0.5rem 0.75rem', 'border-radius': '4px',
+        display: 'none', 'font-size': '0.8125rem', color: p.danger.darkText,
+        background: p.danger.light, padding: '0.5rem 0.75rem', 'border-radius': '4px',
         'margin-top': SITE.space.xs,
         'font-family': SITE.fontMono
       },
@@ -685,6 +685,10 @@
         'border-radius': SITE.radius, padding: SITE.space.md, 'min-height': '60px',
         border: '2px dashed ' + p.light.border
       },
+      // lang:'html' try-its render a whole page in an iframe. White on purpose:
+      // it is the previewed page's own canvas (a browser default), not site
+      // chrome, so it does not follow the site palette or dark mode.
+      '.tryit-output-page': { display: 'block', width: '100%', padding: '0', background: '#fff' },
 
       // ---- Pipeline ----
       '.pipeline-label': {

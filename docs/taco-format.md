@@ -81,7 +81,10 @@ The element's content. This can be:
 
 - **A string** — rendered as text content (HTML-escaped by default)
 - **A TACO object** — rendered as a child element
-- **An array** — each item rendered in order (strings, TACOs, or nested arrays)
+- **An array** — each item rendered in order (strings, TACOs, or nested arrays).
+  Nested arrays are flattened, so `c: [header, rows.map(row)]` works without
+  `.flat()`. (Before 2.1.9 only `bw.html()` flattened them; `bw.mount()` and
+  `bw.create()` printed `[object Object]`.)
 
 ```javascript
 // String content
@@ -183,6 +186,40 @@ bw.DOM('#app', { t: 'div', c: 'Hello' });
 
 `bw.DOM()` cleans up any previous content (running unmount hooks, clearing state) before mounting new content. This prevents memory leaks when re-rendering.
 
+## SVG
+
+SVG is ordinary TACO. Start a tree with `t: 'svg'` and every element inside it
+is created in the SVG namespace; there is no separate helper to learn.
+
+```javascript
+var dial = {
+  t: 'svg', a: { viewBox: '0 0 120 40', width: 240, class: 'dial' },
+  c: [
+    { t: 'rect', a: { x: 1, y: 1, width: 118, height: 38, rx: 6, fill: 'none', stroke: '#888' } },
+    { t: 'circle', a: { cx: 20, cy: 20, r: 12, class: 'dial_knob', 'stroke-width': 2,
+                         onclick: function() { bw.pub('dial:click'); } } },
+    { t: 'text', a: { x: 40, y: 25, 'text-anchor': 'start' }, c: 'Cmaj7' }
+  ]
+};
+
+bw.mount('#app', dial);     // live SVG elements
+bw.html(dial);              // '<svg viewBox="0 0 120 40" ...>...</svg>'
+```
+
+- **Attribute names are written exactly as SVG spells them**: `viewBox`,
+  `stroke-width`, `text-anchor`. Nothing is camelCased or converted.
+- **`class` works** on SVG elements, so SVG can be styled with `bw.css()` like
+  anything else.
+- **Everything else works too**: event handlers in `a`, `o.state`, `o.handle`,
+  lifecycle hooks and `bw.patch()` behave as they do on HTML elements.
+- **`foreignObject` switches back to HTML**, so its children are normal HTML
+  elements.
+- `bw.html()` needs no special handling: the browser's HTML parser switches
+  namespaces on `<svg>` by itself.
+
+Build SVG as TACO, not as strings through `bw.raw()`: a string can't carry
+handlers, state or lifecycle, and it can't be patched later.
+
 ## bw.h() — concise TACO constructor
 
 `bw.h()` is a helper that produces TACO objects from positional arguments. It's a convenience — the return value is a plain `{t, a, c, o}` object, identical to what you'd write by hand.
@@ -277,7 +314,7 @@ This means you can compose library components the same way you compose raw TACOs
 ```javascript
 bw.DOM('#app', {
   t: 'div', c: [
-    bw.makeNavbar({ brand: 'My App', items: [...] }),
+    bw.makeNavbar({ brand: 'My App', items: [{ text: 'Home', href: '#' }] }),
     bw.makeContainer({ children: [
       bw.makeCard({ title: 'Stats', content: '42' }),
       bw.makeTable({ data: rows, sortable: true })

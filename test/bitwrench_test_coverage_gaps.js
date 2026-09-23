@@ -1852,9 +1852,9 @@ describe("bw.makeTable — sort and pagination", function() {
     assert.ok(html.indexOf('descending') >= 0);
   });
 
-  it("should add data-row-key (L4489)", function() {
+  it("should not emit data-* attributes for rowKey or columns", function() {
     var html = bw.html(bw.makeTable({ data: [{ id: 42, n: 'A' }], rowKey: 'id', selectable: true }));
-    assert.ok(html.indexOf('data-row-key') >= 0);
+    assert.ok(html.indexOf('data-') < 0, html);
   });
 
   it("should build pagination (L4670)", function() {
@@ -1871,12 +1871,16 @@ describe("bw.makeTable — sort and pagination", function() {
       columns: [{ key: 'n', label: 'N' }, { key: 'v', label: 'V' }],
       rowKey: 'n'
     }));
-    if (el && el.bw && el.bw.sort) {
-      el.bw.sort('n', 'asc');
-      el.bw.sort('v', 'desc');
-      el.bw.sort('v');
-      assert.ok(true);
+    function col(i) {
+      return Array.prototype.map.call(el.querySelectorAll('tbody tr'), function(tr) { return tr.children[i].textContent; });
     }
+    el.bw.sort('n', 'asc');
+    assert.deepStrictEqual(col(0), ['A', 'B']);
+    el.bw.sort('v', 'desc');
+    assert.deepStrictEqual(col(1), ['2', '1']);
+    el.bw.sort('v');                       // same column again toggles direction
+    assert.deepStrictEqual(col(1), ['1', '2']);
+    assert.strictEqual(el.querySelectorAll('thead th')[1].getAttribute('aria-sort'), 'ascending');
   });
 
   it("handle setData/getData via bw handle", function() {

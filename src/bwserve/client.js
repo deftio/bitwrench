@@ -168,6 +168,38 @@ export class BwServeClient {
     }
 
     /**
+     * Capture a screenshot of the client's page or one element (html2canvas,
+     * lazy-loaded in the browser). Requires the server option
+     * `allowScreenshot: true` (bwcli: --allow-screenshot).
+     *
+     * @param {string} [selector='body'] - CSS selector of element to capture
+     * @param {Object} [opts]
+     * @param {string} [opts.format='png'] - 'png' or 'jpeg'
+     * @param {number} [opts.quality=0.85] - JPEG quality 0-1
+     * @param {number} [opts.maxWidth] - Downscale if wider (keeps aspect ratio)
+     * @param {number} [opts.maxHeight] - Downscale if taller (keeps aspect ratio)
+     * @param {number} [opts.scale=1] - Device pixel ratio override
+     * @param {number} [opts.timeout=10000] - Timeout in ms
+     * @returns {Promise<{data: Buffer, width: number, height: number, format: string}>}
+     */
+    screenshot(selector, opts) {
+        var o = opts || {};
+        if (!this._allowScreenshot) {
+            return Promise.reject(new Error('Screenshot not enabled (server option allowScreenshot / --allow-screenshot)'));
+        }
+        var pend = this._pend(o.timeout || 10000);
+        this.call('_bw_screenshot', {
+            requestId: pend.requestId, selector: selector || 'body', format: o.format || 'png',
+            quality: o.quality, maxWidth: o.maxWidth, maxHeight: o.maxHeight, scale: o.scale
+        });
+        return pend.promise.then(function(r) {
+            if (r.error) throw new Error(r.error);
+            var s = r.result;
+            return { data: Buffer.from(s.data.split(',')[1], 'base64'), width: s.width, height: s.height, format: s.format };
+        });
+    }
+
+    /**
      * Create a pending request that resolves when the client responds.
      * @param {number} timeout - Timeout in ms
      * @returns {{ requestId: string, promise: Promise }}

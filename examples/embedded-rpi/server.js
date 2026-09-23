@@ -344,7 +344,7 @@ function buildOverviewCards(cpuTemp, cpuAvg, memPct, memUsedMB, memTotalMB, disk
     t: 'div', a: { id: 'overview', class: 'bw_row' }, c: [
       {
         t: 'div', a: { class: 'bw_col bw_col_xs_6 bw_col_md_3' }, c: {
-          t: 'div', a: { id: 'card-temp', class: 'bw_card bw_' + tempVariant(cpuTemp), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
+          t: 'div', a: { id: 'card-temp', class: 'bw_bccl_card bw_' + tempVariant(cpuTemp), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
             { t: 'div', a: { id: 'val-temp', style: 'font-size:1.75rem;font-weight:700' }, c: cpuTemp.toFixed(1) + '\u00B0C' },
             { t: 'div', a: { style: 'font-size:0.8rem;opacity:0.8' }, c: 'CPU Temp' }
           ]
@@ -352,7 +352,7 @@ function buildOverviewCards(cpuTemp, cpuAvg, memPct, memUsedMB, memTotalMB, disk
       },
       {
         t: 'div', a: { class: 'bw_col bw_col_xs_6 bw_col_md_3' }, c: {
-          t: 'div', a: { id: 'card-cpu', class: 'bw_card bw_' + cpuVariant(cpuAvg), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
+          t: 'div', a: { id: 'card-cpu', class: 'bw_bccl_card bw_' + cpuVariant(cpuAvg), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
             { t: 'div', a: { id: 'val-cpu', style: 'font-size:1.75rem;font-weight:700' }, c: cpuAvg + '%' },
             { t: 'div', a: { style: 'font-size:0.8rem;opacity:0.8' }, c: 'CPU Usage' }
           ]
@@ -360,7 +360,7 @@ function buildOverviewCards(cpuTemp, cpuAvg, memPct, memUsedMB, memTotalMB, disk
       },
       {
         t: 'div', a: { class: 'bw_col bw_col_xs_6 bw_col_md_3' }, c: {
-          t: 'div', a: { id: 'card-mem', class: 'bw_card bw_' + memVariant(memPct), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
+          t: 'div', a: { id: 'card-mem', class: 'bw_bccl_card bw_' + memVariant(memPct), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
             { t: 'div', a: { id: 'val-mem', style: 'font-size:1.75rem;font-weight:700' }, c: memPct + '%' },
             { t: 'div', a: { id: 'lbl-mem', style: 'font-size:0.8rem;opacity:0.8' }, c: 'Memory (' + memUsedMB + '/' + memTotalMB + ' MB)' }
           ]
@@ -368,7 +368,7 @@ function buildOverviewCards(cpuTemp, cpuAvg, memPct, memUsedMB, memTotalMB, disk
       },
       {
         t: 'div', a: { class: 'bw_col bw_col_xs_6 bw_col_md_3' }, c: {
-          t: 'div', a: { id: 'card-disk', class: 'bw_card bw_' + diskVariant(diskPct), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
+          t: 'div', a: { id: 'card-disk', class: 'bw_bccl_card bw_' + diskVariant(diskPct), style: 'text-align:center;padding:1rem;margin-bottom:0.5rem' }, c: [
             { t: 'div', a: { id: 'val-disk', style: 'font-size:1.75rem;font-weight:700' }, c: diskPct + '%' },
             { t: 'div', a: { id: 'lbl-disk', style: 'font-size:0.8rem;opacity:0.8' }, c: 'Disk (' + diskUsedGB.toFixed(1) + '/' + diskTotalGB.toFixed(0) + ' GB)' }
           ]
@@ -380,7 +380,7 @@ function buildOverviewCards(cpuTemp, cpuAvg, memPct, memUsedMB, memTotalMB, disk
 
 function buildCpuBars(cpuUsage) {
   return {
-    t: 'div', a: { id: 'cpu-bars', class: 'bw_card', style: 'padding:1rem;margin-bottom:1rem' }, c: [
+    t: 'div', a: { id: 'cpu-bars', class: 'bw_bccl_card', style: 'padding:1rem;margin-bottom:1rem' }, c: [
       { t: 'h3', a: { style: 'margin:0 0 0.5rem;font-size:1rem' }, c: 'CPU Cores' },
       {
         t: 'div', a: { id: 'cpu-bars-inner' }, c: cpuUsage.map(function(pct, i) {
@@ -406,7 +406,7 @@ function buildMemCard(memUsedMB, memTotalMB, swapUsedMB, swapTotalMB) {
   var memPct  = memTotalMB > 0 ? Math.round(memUsedMB / memTotalMB * 100) : 0;
   var swapPct = swapTotalMB > 0 ? Math.round(swapUsedMB / swapTotalMB * 100) : 0;
   return {
-    t: 'div', a: { id: 'mem-card', class: 'bw_card', style: 'padding:1rem;margin-bottom:1rem' }, c: [
+    t: 'div', a: { id: 'mem-card', class: 'bw_bccl_card', style: 'padding:1rem;margin-bottom:1rem' }, c: [
       { t: 'h3', a: { style: 'margin:0 0 0.5rem;font-size:1rem' }, c: 'Memory' },
       { t: 'div', a: { style: 'margin-bottom:0.5rem' }, c: [
         { t: 'div', a: { style: 'font-size:0.75rem;margin-bottom:2px' }, c: 'RAM: ' + memUsedMB + ' / ' + memTotalMB + ' MB' },
@@ -433,7 +433,7 @@ function buildGpioControls(gpioState) {
           var isOut = g.mode === 'OUT';
           return {
             t: 'div', a: { class: 'bw_col bw_col_xs_6 bw_col_md_4' }, c: {
-              t: 'div', a: { id: 'gpio-' + g.pin, class: 'bw_card', style: 'padding:0.75rem;margin-bottom:0.5rem' }, c: [
+              t: 'div', a: { id: 'gpio-' + g.pin, class: 'bw_bccl_card', style: 'padding:0.75rem;margin-bottom:0.5rem' }, c: [
                 { t: 'div', a: { style: 'font-size:0.85rem;font-weight:600;margin-bottom:0.3rem' },
                   c: 'GPIO ' + g.pin + ' -- ' + g.label },
                 { t: 'div', a: { style: 'margin-bottom:0.3rem' }, c: [
@@ -447,7 +447,7 @@ function buildGpioControls(gpioState) {
                 ]},
                 isOut
                   ? { t: 'button', a: {
-                      class: 'bw_btn bw_' + (g.value ? 'danger' : 'success') + ' bw_act_gpio-toggle',
+                      class: 'bw_bccl_btn bw_' + (g.value ? 'danger' : 'success') + ' bw_act_gpio-toggle',
                       style: 'font-size:0.75rem;padding:4px 10px',
                       'data-bw-id': String(g.pin)
                     }, c: g.value ? 'Turn Off' : 'Turn On' }
@@ -473,7 +473,7 @@ function buildProcessTable(procs) {
   return {
     t: 'div', a: { id: 'proc-section' }, c: [
       { t: 'h2', a: { style: 'font-size:1.1rem;margin:1rem 0 0.5rem' }, c: 'Processes' },
-      { t: 'table', a: { class: 'bw_table', style: 'width:100%;font-size:0.8rem' }, c: [
+      { t: 'table', a: { class: 'bw_bccl_table', style: 'width:100%;font-size:0.8rem' }, c: [
         { t: 'thead', c: { t: 'tr', c: [
           { t: 'th', c: 'PID' },
           { t: 'th', c: 'Process' },
@@ -501,7 +501,7 @@ function buildInfoTable(info, uptime, loadAvg, netRate) {
   return {
     t: 'div', a: { id: 'info-section' }, c: [
       { t: 'h2', a: { style: 'font-size:1.1rem;margin:1rem 0 0.5rem' }, c: 'System Info' },
-      { t: 'table', a: { class: 'bw_table', style: 'width:100%;font-size:0.8rem' }, c: [
+      { t: 'table', a: { class: 'bw_bccl_table', style: 'width:100%;font-size:0.8rem' }, c: [
         { t: 'thead', c: { t: 'tr', c: [
           { t: 'th', c: 'Property' },
           { t: 'th', c: 'Value' }

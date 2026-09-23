@@ -22,6 +22,9 @@ This single call:
 
 Every bitwrench component rendered after this call uses the generated theme.
 
+Not using the built-in components? You don't need any of this -- skip to
+[Bring your own design](#bring-your-own-design).
+
 ## Theme presets
 
 Bitwrench ships with 12 built-in presets:
@@ -218,8 +221,9 @@ var theme = bw.makeStyles({
 });
 bw.applyStyles(theme);
 
-theme.isLightPrimary;        // false — ocean primary is a dark blue
-theme.alternate.palette;     // light-inverted version of ocean
+theme.isLightPrimary;        // true -- judged on the whole primary palette
+theme.alternatePalette;      // the luminance-inverted counterpart
+theme.alternateCss;          // its CSS, scoped under .bw_theme_alt
 ```
 
 ### Switching between palettes
@@ -232,11 +236,13 @@ bw.setThemeMode('alternate');      // set explicitly
 bw.toggleThemeMode('#dashboard');  // toggle just one subtree
 ```
 
-To swap in a different palette entirely, re-apply:
+To swap in a different palette entirely, generate and apply another theme:
 
 ```javascript
-bw.applyStyles(theme.alternate);   // make the alternate palette primary
-bw.applyStyles(theme);             // switch back
+var ocean  = bw.makeStyles({ primary: '#0077b6', secondary: '#90e0ef' });
+var forest = bw.makeStyles({ primary: '#2d6a4f', secondary: '#d4a373' });
+bw.applyStyles(forest);   // replaces the global theme
+bw.applyStyles(ocean);    // switch back
 ```
 
 > **Note:** `bw.toggleStyles()` was removed in v2.1. Its replacement is `bw.toggleThemeMode()`, which toggles the `bw_theme_alt` class instead of re-injecting styles. See [`bw.toggleThemeMode()`](bitwrench_api.md#bwtogglethememodescope) and [`bw.setThemeMode()`](bitwrench_api.md#bwsetthememodemode-scope).
@@ -251,21 +257,22 @@ This removes the injected `<style>` elements and clears the internal theme cache
 
 ## Using themes without injection
 
-Set `inject: false` to get the CSS without adding it to the document:
+`bw.makeStyles()` only generates; nothing reaches the document until you pass
+the result to `bw.applyStyles()`. So to get the CSS as text, stop after
+`makeStyles`:
 
 ```javascript
 var theme = bw.makeStyles({
   primary: '#0077b6',
-  secondary: '#90e0ef',
-  inject: false
+  secondary: '#90e0ef'
 });
 
 // Use the CSS string however you want
-console.log(theme.css);           // primary CSS
-console.log(theme.alternate.css); // alternate CSS
+console.log(theme.css);          // primary CSS
+console.log(theme.alternateCss); // alternate CSS
 
 // Write to a file in Node.js
-fs.writeFileSync('theme.css', theme.css + '\n' + theme.alternate.css);
+fs.writeFileSync('theme.css', theme.css + '\n' + theme.alternateCss);
 ```
 
 This is useful for:
@@ -273,6 +280,72 @@ This is useful for:
 - Static site generation (write CSS to a file)
 - Server-side rendering (include CSS in the HTML response)
 - Theme export tools (let users download their theme)
+
+## Bring your own design
+
+The palette generator is for the built-in components. If you design your own
+UI -- or only use TACO, `bw.css()` and `bw.injectCSS()` -- skip `loadStyles()`
+and write your styles directly. Everything in this section works without it.
+
+### Rules as objects
+
+```javascript
+bw.injectCSS(bw.css({
+  body: { margin: 0, fontFamily: 'system-ui, sans-serif' },
+  '.key': { fill: '#f5f5f5', stroke: '#333' },
+  '.key:hover': { fill: '#ffd166' },
+  '@media (max-width: 600px)': { '.key': { strokeWidth: '0.5px' } }
+}), { id: 'app_css' });
+```
+
+- camelCase properties become kebab-case (`fontFamily` -> `font-family`).
+- `@media` and `@keyframes` nest as objects.
+- `injectCSS` with an `id` reuses one `<style>` element. It appends by default;
+  pass `{ id, append: false }` to replace its contents, e.g. when regenerating.
+- Output is readable by default, which is what you want while developing.
+  Pass `minify: true` for compact output in production -- to `bw.css()`, or
+  straight to `bw.injectCSS()`, which hands it on:
+
+  ```javascript
+  bw.injectCSS(rules, { id: 'app_css', minify: true });  // .key{fill:#f5f5f5;stroke:#333;}...
+  ```
+
+  `minify` applies to CSS generated from rule objects. A CSS string you pass
+  in is inserted exactly as written.
+
+### The same selector twice, or a fixed order
+
+An object can't hold the same key twice, and its key order is the only order
+you get. Pass an array of rule objects instead -- each is emitted in turn:
+
+```javascript
+bw.css([
+  { '.btn': { padding: '4px 8px' } },
+  { '.theme-dark .btn': { color: '#eee' } },
+  { '.btn': { borderRadius: '4px' } }   // second .btn block, emitted last
+]);
+```
+
+### Your own tokens
+
+Custom properties pass through `bw.css()` untouched, so a token set is a
+`:root` block plus an override block per theme:
+
+```javascript
+bw.injectCSS(bw.css({
+  ':root':                { '--bg': '#0f1115', '--fg': '#e8e8e8', '--accent': '#ffd166' },
+  '[data-theme="light"]': { '--bg': '#ffffff', '--fg': '#1a1a1a', '--accent': '#b5651d' },
+  body:                   { background: 'var(--bg)', color: 'var(--fg)' },
+  '.accent':              { color: 'var(--accent)' }
+}), { id: 'app_tokens' });
+
+// Switch themes by changing one attribute on <html>
+function setTheme(name) { bw.patch(bw.$('html')[0], { 'data-theme': name }); }
+```
+
+This is a normal web-platform pattern and fine in your code. bitwrench's own
+components don't use custom properties -- their values come from the palette
+object in JS -- so your tokens and a generated theme don't interfere.
 
 ## Multiple themes on one page
 

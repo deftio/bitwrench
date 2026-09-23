@@ -170,7 +170,7 @@
           { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: 'TACO objects nest naturally. Arrays become sibling elements. Attributes go in the a: property. Self-closing tags (img, br, hr, input) are handled automatically.' },
 
           makeTryIt({
-            code: "var card = {\n  t: 'div', a: { class: 'bw_card', style: 'max-width:320px' },\n  c: [{\n    t: 'div', a: { class: 'bw_card_body' },\n    c: [\n      { t: 'h5', a: { class: 'bw_card_title' }, c: 'Nested Card' },\n      { t: 'p', c: 'Attributes, arrays, nesting \u2014 all plain JS.' },\n      { t: 'hr' },\n      { t: 'small', c: 'Self-closing tags just work.' }\n    ]\n  }]\n};\n\nvar html = bw.html(card);\ntarget.innerHTML = '<p><strong>HTML string:</strong></p>'\n  + '<pre style=\"background:#f5f5f5;padding:0.5rem;border-radius:4px;white-space:pre-wrap;word-break:break-all;font-size:0.8rem\">' + bw.escapeHTML(html) + '</pre>'\n  + '<p><strong>Rendered:</strong></p>' + html;",
+            code: "var card = {\n  t: 'div', a: { class: 'bw_bccl_card', style: 'max-width:320px' },\n  c: [{\n    t: 'div', a: { class: 'bw_bccl_card_body' },\n    c: [\n      { t: 'h5', a: { class: 'bw_bccl_card_title' }, c: 'Nested Card' },\n      { t: 'p', c: 'Attributes, arrays, nesting \u2014 all plain JS.' },\n      { t: 'hr' },\n      { t: 'small', c: 'Self-closing tags just work.' }\n    ]\n  }]\n};\n\nvar html = bw.html(card);\ntarget.innerHTML = '<p><strong>HTML string:</strong></p>'\n  + '<pre style=\"background:#f5f5f5;padding:0.5rem;border-radius:4px;white-space:pre-wrap;word-break:break-all;font-size:0.8rem\">' + bw.escapeHTML(html) + '</pre>'\n  + '<p><strong>Rendered:</strong></p>' + html;",
             label: 'Edit & Run',
             height: '280px'
           })
@@ -297,9 +297,8 @@
           }),
 
           { t: 'h3', c: 'Options' },
-          bw.makeTable({
-            headers: ['Option', 'Type', 'Default', 'Description'],
-            rows: [
+          bw.makeTableFromArray({
+            data: [['Option', 'Type', 'Default', 'Description'],
               ['body', 'TACO / string / array', "''", 'Page content \u2014 TACO objects are rendered via bw.html()'],
               ['title', 'string', "'bitwrench'", 'Document title'],
               ['state', 'object', 'undefined', 'State for ${expr} template resolution'],
@@ -341,9 +340,8 @@
             ' option controls how much bitwrench infrastructure is included in the generated page. The levels range from nothing at all to the full library embedded inline:'
           ]},
 
-          bw.makeTable({
-            headers: ['Level', 'Functions?', 'Bitwrench loaded?', 'Added size', 'Use case'],
-            rows: [
+          bw.makeTableFromArray({
+            data: [['Level', 'Functions?', 'Bitwrench loaded?', 'Added size', 'Use case'],
               ["'none'", 'No', 'No', '0', 'Pure static HTML \u2014 no event handlers, no bitwrench API. The consumer provides bitwrench externally if needed.'],
               ["'shim'", 'Yes', 'No', '~1 KB', 'A tiny shim is injected so that onclick and other serialized event handlers work. Bitwrench itself is NOT loaded \u2014 no BCCL components, no bw.DOM(), no theming at runtime.'],
               ["'cdn'", 'Yes', 'Yes (CDN)', '~200 B tag', 'A <script> tag loads the full bitwrench library from jsdelivr. The page has full bitwrench capability (BCCL, themes, bw.DOM) but requires an internet connection on first load.'],
@@ -442,16 +440,15 @@
           { t: 'h3', c: 'Two rendering paths' },
           { t: 'p', c: 'The same TACO object works in both paths \u2014 choose based on your use case:' },
 
-          bw.makeTable({
-            headers: ['Path', 'Function', 'Events', 'Lifecycle', 'Best For'],
-            rows: [
+          bw.makeTableFromArray({
+            data: [['Path', 'Function', 'Events', 'Lifecycle', 'Best For'],
               ['Client-side', 'bw.DOM() / bw.create()', 'addEventListener', 'mounted / unmount hooks', 'Interactive SPAs, live dashboards'],
               ['Server-side', 'bw.html() + bw.htmlPage()', 'funcRegister dispatch', 'Initial state only', 'SSR, static files, emails, offline']
             ]
           }),
 
           { t: 'h3', c: 'Node.js example' },
-          site.makeCodeBlock("const bw = require('bitwrench');\nconst fs = require('fs');\n\nvar page = bw.htmlPage({\n  title: 'Report',\n  body: [\n    { t: 'h1', c: 'Monthly Report' },\n    bw.makeTable({\n      headers: ['Month', 'Revenue', 'Growth'],\n      rows: data.map(function(r) {\n        return [r.month, '$' + r.revenue, r.growth + '%'];\n      })\n    })\n  ],\n  theme: 'ocean',\n  runtime: 'none'   // static report, no interactivity needed\n});\n\nfs.writeFileSync('report.html', page);\nconsole.log('Report generated!');"),
+          site.makeCodeBlock("const bw = require('bitwrench');\nconst fs = require('fs');\n\nvar page = bw.htmlPage({\n  title: 'Report',\n  body: [\n    { t: 'h1', c: 'Monthly Report' },\n    bw.makeTableFromArray({\n      data: [['Month', 'Revenue', 'Growth']].concat(data.map(function(r) {\n        return [r.month, '$' + r.revenue, r.growth + '%'];\n      }))\n    })\n  ],\n  theme: 'ocean',\n  runtime: 'none'   // static report, no interactivity needed\n});\n\nfs.writeFileSync('report.html', page);\nconsole.log('Report generated!');"),
 
           site.makeCallout('concept', 'Embedded / airgapped use', {
             t: 'p', c: [
@@ -478,9 +475,8 @@
             ' internally. CLI flags map directly to runtime levels:'
           ]},
 
-          bw.makeTable({
-            headers: ['CLI Flag', 'Runtime Level', 'Effect'],
-            rows: [
+          bw.makeTableFromArray({
+            data: [['CLI Flag', 'Runtime Level', 'Effect'],
               ['--standalone / -s', "'inline'", 'Full UMD bundle embedded in the output file'],
               ['--cdn', "'cdn'", 'jsdelivr script tag with SRI hash'],
               ['(default)', "'none'", 'No bitwrench injection']

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.1.8">
+  <meta name="generator" content="bitwrench v2.1.9">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.min.js"></script>
@@ -83,11 +83,13 @@ bw.mount(&#39;#app&#39;, page);        // -&gt; live DOM see it rendered now
 
 // or create just html page, css, js and all using 
 bw.html(page);                 // -&gt; HTML string (Node.js, emails, SSR).  use server or client side</code></pre><p>Each object has four keys: <strong class="quikdown-strong">t</strong> (tag), <strong class="quikdown-strong">a</strong> (attributes, including event handlers like <code class="quikdown-code">onclick</code>), <strong class="quikdown-strong">c</strong> (content -- a string, array, or nested TACO), and <strong class="quikdown-strong">o</strong> (options for state and lifecycle). Nest them, loop them, build them with functions -- they are ordinary JavaScript values.</p><p>A TACO is already a JavaScript object, so there is nothing to compile or transform. This makes bitwrench a good fit for situations where a build pipeline costs more than it buys: dashboards, internal tools, embedded device UIs, server-driven pages, or anything you want to ship as a single HTML file.</p><h2 class="quikdown-h2">Installation</h2>
-<p><pre class="quikdown-pre"><code class="language-bash">npm install bitwrench</code></pre></p><pre class="quikdown-pre"><code class="language-javascript">// ES module
+<p><pre class="quikdown-pre"><code class="language-bash">npm install bitwrench</code></pre></p><p>&lt;!-- doc-test: skip (ESM/CJS import forms, not a browser snippet) --&gt;
+<pre class="quikdown-pre"><code class="language-javascript">// ES module
 import bw from &#39;bitwrench&#39;;
 
 // CommonJS
-const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a page:</p><pre class="quikdown-pre"><code class="language-html">&lt;script src=&quot;https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js&quot;&gt;&lt;/script&gt;</code></pre><h2 class="quikdown-h2">Getting Started</h2>
+const bw = require(&#39;bitwrench&#39;);</code></pre></p><p>Or include directly in a page:</p><pre class="quikdown-pre"><code class="language-html">&lt;script src=&quot;https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js&quot;&gt;&lt;/script&gt;</code></pre><p>Vendoring a copy instead? Take a <strong class="quikdown-strong">minified</strong> file -- see <a class="quikdown-a" href="#build-formats">Build Formats</a>
+for which one. The unminified builds are for debugging.</p><h2 class="quikdown-h2">Getting Started</h2>
 <p>A complete page -- no build step, no imports, everything is a plain object:</p><pre class="quikdown-pre"><code class="language-html">&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
@@ -104,7 +106,7 @@ const bw = require(&#39;bitwrench&#39;);</code></pre><p>Or include directly in a
         { t: &#39;h1&#39;, c: &#39;My App&#39; },
         { t: &#39;p&#39;,  c: &#39;Built from plain JavaScript objects.&#39; },
         { t: &#39;button&#39;,
-          a: { class: &#39;bw_btn bw_primary&#39;, onclick: function() { alert(&#39;Hello!&#39;); } },
+          a: { class: &#39;bw_bccl_btn bw_primary&#39;, onclick: function() { alert(&#39;Hello!&#39;); } },
           c: &#39;Click me&#39; }
       ]
     });
@@ -349,6 +351,18 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <td class="quikdown-td">Create a detached DOM element from a TACO (not inserted into the page)</td>
 </tr>
 <tr class="quikdown-tr">
+<td class="quikdown-td">bw.append(target, obj, opts?)</td>
+<td class="quikdown-td">Add a child and mount it; returns the new element</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td">bw.replace(el, obj)</td>
+<td class="quikdown-td">Swap one element for another (the old one unmounts)</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td">bw.h(tag, attrs?, content?, opts?)</td>
+<td class="quikdown-td">Build a TACO from positional arguments</td>
+</tr>
+<tr class="quikdown-tr">
 <td class="quikdown-td">bw.el(selector, apply?)</td>
 <td class="quikdown-td">Find an element; optionally apply text, TACO, or function to it</td>
 </tr>
@@ -401,6 +415,10 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <td class="quikdown-td">Update a specific element by id or UUID</td>
 </tr>
 <tr class="quikdown-tr">
+<td class="quikdown-td">bw.syncChildren(parent, items, opts)</td>
+<td class="quikdown-td">Keyed list update; rows that stay keep their DOM nodes</td>
+</tr>
+<tr class="quikdown-tr">
 <td class="quikdown-td">bw.refresh(el)</td>
 <td class="quikdown-td">Re-render a stateful component via its o.render function</td>
 </tr>
@@ -419,6 +437,10 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <tr class="quikdown-tr">
 <td class="quikdown-td">bw.sub(topic, handler, el?)</td>
 <td class="quikdown-td">Subscribe to a topic (supports wildcard &#39;ns:*&#39;); returns unsub function</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td">bw.derive(topics, fn, outTopic, opts?)</td>
+<td class="quikdown-td">Publish fn(...latest) on outTopic when an input publishes</td>
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td">bw.once(topic, handler, el?)</td>
@@ -450,12 +472,22 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <tr class="quikdown-tr">
 <td class="quikdown-td">UMD</td>
 <td class="quikdown-td">bitwrench.umd.min.js</td>
-<td class="quikdown-td">Browsers and Node.js</td>
+<td class="quikdown-td">Browsers and Node.js -- the <code class="quikdown-code">&lt;script&gt;</code> tag default (~45 KB gz)</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td">UMD, lean</td>
+<td class="quikdown-td">bitwrench-lean.umd.min.js</td>
+<td class="quikdown-td">Your own design: everything except the built-in <code class="quikdown-code">make*()</code> components (~35 KB gz)</td>
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td">ESM</td>
 <td class="quikdown-td">bitwrench.esm.min.js</td>
-<td class="quikdown-td">Modern bundlers (Vite, webpack, etc.)</td>
+<td class="quikdown-td">Modern bundlers (Vite, webpack, etc.), <code class="quikdown-code">import</code> without npm</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td">ESM, lean</td>
+<td class="quikdown-td">bitwrench-lean.esm.min.js</td>
+<td class="quikdown-td">As above, without the built-in components</td>
 </tr>
 <tr class="quikdown-tr">
 <td class="quikdown-td">CJS</td>
@@ -467,14 +499,21 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <td class="quikdown-td">bitwrench.es5.min.js</td>
 <td class="quikdown-td">Legacy browsers (IE11)</td>
 </tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td">Debug</td>
+<td class="quikdown-td">bitwrench.umd.js, bitwrench.esm.js</td>
+<td class="quikdown-td">Unminified, for readable stack traces. Don&#39;t ship these (~110 KB gz)</td>
+</tr>
 </tbody>
-</table><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><p>Every release is gated at 46KB gzipped for the UMD and ESM builds, measured against the pre-compressed <code class="quikdown-code">.gz</code> that ships. (The gate was 45KB through 2.1.6; it was raised once, deliberately, in 2.1.7 -- and the core/BCCL CSS split planned for 2.2 is expected to give the byte back and then some.) If you are working on bundle size, <a class="quikdown-a" href="dev/bitwrench-2.1.6-size-opt-findings.md">Bundle size findings</a> documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output <em class="quikdown-em">larger</em>), and where the remaining headroom is.</p><h2 class="quikdown-h2">Documentation</h2>
+</table><p>The lean builds still include <code class="quikdown-code">makeTable</code>, <code class="quikdown-code">makeDataTable</code>, <code class="quikdown-code">makeTableFromArray</code> and
+<code class="quikdown-code">makeBarChart</code>. <code class="quikdown-code">dist/builds.json</code> lists every file with its size and SRI hash.</p><p>All formats include source maps. A separate CSS file (<code class="quikdown-code">bitwrench.css</code>) is also available for use without JavaScript.</p><p>Every release is gated at 46KB gzipped for the UMD and ESM builds, measured against the pre-compressed <code class="quikdown-code">.gz</code> that ships. (The gate was 45KB through 2.1.6; it was raised once, deliberately, in 2.1.7 -- and the core/BCCL CSS split planned for 2.2 is expected to give the byte back and then some.) If you are working on bundle size, <a class="quikdown-a" href="dev/bitwrench-2.1.6-size-opt-findings.md">Bundle size findings</a> documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output <em class="quikdown-em">larger</em>), and where the remaining headroom is.</p><h2 class="quikdown-h2">Documentation</h2>
 <strong class="quikdown-strong">Start here:</strong></p><ul class="quikdown-ul">
-<li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/quickstart.md">Quick Start</a></strong> -- annotated 100-line tutorial covering the full lifecycle</li>
+<li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/quickstart.md">Quick Start</a></strong> -- hello world, which file to load, then an annotated 100-line app</li>
+<li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/core-api.md">Core API Card</a></strong> -- one page, one line per call, for when you bring your own design</li>
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/thinking-in-bitwrench.md">Thinking in Bitwrench</a></strong> -- the complete guide: TACO format, styling, composition, events, the component model, bwserve, and common patterns</li>
 <li class="quikdown-li"><strong class="quikdown-strong"><a class="quikdown-a" href="docs/llm-bitwrench-guide.md">LLM Guide</a></strong> -- compact single-file reference with all APIs, patterns, and rules</li>
 </ul><p><strong class="quikdown-strong">Reference guides</strong> (in <code class="quikdown-code">docs/</code>):</p><ul class="quikdown-ul">
-<li class="quikdown-li"><a class="quikdown-a" href="docs/taco-format.md">TACO Format</a> -- the <code class="quikdown-code">{t, a, c, o}</code> object format</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/taco-format.md">TACO Format</a> -- the <code class="quikdown-code">{t, a, c, o}</code> object format, including SVG</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/component-lifecycle.md">Component Lifecycle Walkthrough</a> -- one stats card through all four phases</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/state-management.md">State Management</a> -- component model, explicit updates, cross-component communication</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/component-library.md">Component Library</a> -- all <code class="quikdown-code">make*()</code> functions with signatures and examples</li>

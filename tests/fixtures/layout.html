@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>layout fixture</title>
+  <!-- Fixture for tests/layout.spec.js: renders BCCL layout components so the
+       spec can measure them. jsdom has no layout engine; these checks need a
+       real browser. -->
+  <script src="../../dist/bitwrench.umd.min.js"></script>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    bw.loadStyles({ primary: '#336699', secondary: '#cc6633' });
+    function cols(n, size) {
+      var out = [];
+      for (var i = 0; i < n; i++) out.push(bw.makeCol({ size: size, content: { t: 'div', a: { class: 'probe' }, c: 'c' + i } }));
+      return out;
+    }
+    bw.mount('#app', { t: 'div', c: [
+      bw.makeNavbar({ brand: 'Brand', items: [{ text: 'Home', href: '#', active: true }, { text: 'Docs', href: '#' }] }),
+      { t: 'div', a: { id: 'container' }, c: bw.makeContainer({ children: 'x' }) },
+      { t: 'div', a: { id: 'row-default' }, c: bw.makeRow({ children: cols(2, 6) }) },
+      { t: 'div', a: { id: 'row-g4' }, c: bw.makeRow({ gap: 4, children: cols(2, 6) }) },
+      { t: 'div', a: { id: 'row-g0' }, c: bw.makeRow({ gap: 0, children: cols(2, 6) }) },
+      { t: 'div', a: { id: 'row-resp' }, c: bw.makeRow({ children: cols(4, { xs: 12, lg: 3 }) }) }
+    ]});
+  </script>
+</body>
+</html>

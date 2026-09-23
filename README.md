@@ -3,7 +3,7 @@
 [<img class="quikdown-img" src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License" data-qd-alt="License" data-qd-src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" data-qd="!">](https://opensource.org/licenses/BSD-2-Clause)
 [<img class="quikdown-img" src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version" data-qd-alt="NPM version" data-qd-src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" data-qd="!">](https://www.npmjs.com/package/bitwrench)
 [<img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI" data-qd-alt="CI" data-qd-src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" data-qd="!">](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-97.7%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-97.7%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
+[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-97.9%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-97.9%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
 
 [<img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench" data-qd-alt="bitwrench" data-qd-src="./images/bitwrench-logo-med.png" data-qd="!">](https://deftio.github.io/bitwrench/pages/)
 
@@ -36,6 +36,7 @@ A TACO is already a JavaScript object, so there is nothing to compile or transfo
 npm install bitwrench
 ```
 
+<!-- doc-test: skip (ESM/CJS import forms, not a browser snippet) -->
 ```javascript
 // ES module
 import bw from 'bitwrench';
@@ -49,6 +50,9 @@ Or include directly in a page:
 ```html
 <script src="https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js"></script>
 ```
+
+Vendoring a copy instead? Take a **minified** file -- see [Build Formats](#build-formats)
+for which one. The unminified builds are for debugging.
 
 ## Getting Started
 
@@ -71,7 +75,7 @@ A complete page -- no build step, no imports, everything is a plain object:
         { t: 'h1', c: 'My App' },
         { t: 'p',  c: 'Built from plain JavaScript objects.' },
         { t: 'button',
-          a: { class: 'bw_btn bw_primary', onclick: function() { alert('Hello!'); } },
+          a: { class: 'bw_bccl_btn bw_primary', onclick: function() { alert('Hello!'); } },
           c: 'Click me' }
       ]
     });
@@ -325,6 +329,9 @@ See the [Framework Translation Table](docs/framework-translation-table.md) for s
 | bw.mount(selector, obj) | Mount a TACO into a DOM element; returns the root element |
 | bw.DOM(selector, obj) | Alias of bw.mount() |
 | bw.create(taco) | Create a detached DOM element from a TACO (not inserted into the page) |
+| bw.append(target, obj, opts?) | Add a child and mount it; returns the new element |
+| bw.replace(el, obj) | Swap one element for another (the old one unmounts) |
+| bw.h(tag, attrs?, content?, opts?) | Build a TACO from positional arguments |
 | bw.el(selector, apply?) | Find an element; optionally apply text, TACO, or function to it |
 | bw.$(selector) | querySelectorAll as an array |
 | bw.raw(str) | Mark a string as pre-escaped HTML (no double-escaping) |
@@ -338,11 +345,13 @@ See the [Framework Translation Table](docs/framework-translation-table.md) for s
 | bw.toggleThemeMode(scope?) | Switch between primary and alternate palettes |
 | bw.clearStyles() | Remove injected theme styles |
 | bw.patch(id, content) | Update a specific element by id or UUID |
+| bw.syncChildren(parent, items, opts) | Keyed list update; rows that stay keep their DOM nodes |
 | bw.refresh(el) | Re-render a stateful component via its o.render function |
 | bw.update(el, data) | Dispatch to el.bw.update(data) |
 | bw.message(target, action, data) | Dispatch to el.bw[action]() by selector or UUID |
 | bw.pub(topic, detail) | Publish to subscribers (exact + wildcard matches) |
 | bw.sub(topic, handler, el?) | Subscribe to a topic (supports wildcard 'ns:*'); returns unsub function |
+| bw.derive(topics, fn, outTopic, opts?) | Publish fn(...latest) on outTopic when an input publishes |
 | bw.once(topic, handler, el?) | One-shot subscribe; auto-unsub after first fire |
 | bw.remove(el) | Unmount a component (fires o.unmount hook) |
 | bw.inspect(target, depth) | Introspect a DOM subtree with bitwrench metadata |
@@ -354,10 +363,16 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 
 | Format | File | Use case |
 | --- | --- | --- |
-| UMD | bitwrench.umd.min.js | Browsers and Node.js |
-| ESM | bitwrench.esm.min.js | Modern bundlers (Vite, webpack, etc.) |
+| UMD | bitwrench.umd.min.js | Browsers and Node.js -- the `<script>` tag default (~45 KB gz) |
+| UMD, lean | bitwrench-lean.umd.min.js | Your own design: everything except the built-in `make*()` components (~35 KB gz) |
+| ESM | bitwrench.esm.min.js | Modern bundlers (Vite, webpack, etc.), `import` without npm |
+| ESM, lean | bitwrench-lean.esm.min.js | As above, without the built-in components |
 | CJS | bitwrench.min.cjs | Node.js require() |
 | ES5 | bitwrench.es5.min.js | Legacy browsers (IE11) |
+| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~110 KB gz) |
+
+The lean builds still include `makeTable`, `makeDataTable`, `makeTableFromArray` and
+`makeBarChart`. `dist/builds.json` lists every file with its size and SRI hash.
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.
 
@@ -367,13 +382,14 @@ Every release is gated at 46KB gzipped for the UMD and ESM builds, measured agai
 
 **Start here:**
 
-- **[Quick Start](docs/quickstart.md)** -- annotated 100-line tutorial covering the full lifecycle
+- **[Quick Start](docs/quickstart.md)** -- hello world, which file to load, then an annotated 100-line app
+- **[Core API Card](docs/core-api.md)** -- one page, one line per call, for when you bring your own design
 - **[Thinking in Bitwrench](docs/thinking-in-bitwrench.md)** -- the complete guide: TACO format, styling, composition, events, the component model, bwserve, and common patterns
 - **[LLM Guide](docs/llm-bitwrench-guide.md)** -- compact single-file reference with all APIs, patterns, and rules
 
 **Reference guides** (in `docs/`):
 
-- [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format
+- [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format, including SVG
 - [Component Lifecycle Walkthrough](docs/component-lifecycle.md) -- one stats card through all four phases
 - [State Management](docs/state-management.md) -- component model, explicit updates, cross-component communication
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples

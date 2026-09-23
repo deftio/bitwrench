@@ -168,20 +168,22 @@ Mounted components can respond to mount and unmount events:
 For fine-grained updates without re-rendering an entire component, use `bw.patch()`:
 
 ```javascript
-// Give an element a UUID for addressing
-var display = { t: 'span', a: { class: bw.uuid('count') }, c: '0' };
+// Give the elements you will update an id
+bw.mount('#app', { t: 'p', c: [
+  { t: 'span', a: { id: 'count' }, c: '0' }, ' ',
+  { t: 'span', a: { id: 'status' }, c: 'Idle' }
+]});
 
-// Later, update just that element's content
+// Later, update just that element's content (text, TACO, array or bw.raw)
 bw.patch('count', '42');
 
-// Update content and attributes together
-bw.patch('count', '42', { style: 'color: red' });
+// A plain object (no t) patches attributes instead
+bw.patch('count', { style: 'color: red' });
 
 // Batch multiple patches
 bw.patchAll({
-  count: '42',
-  status: 'Active',
-  label: 'Updated'
+  count: '43',
+  status: 'Active'
 });
 ```
 
@@ -339,7 +341,7 @@ State lives directly on the DOM element as `el._bw_state`:
 To read or modify state from outside, get a reference to the element:
 
 ```javascript
-var el = bw.$('#my-component')[0];
+var el = bw.el('my-component');   // or keep the element bw.mount() returned
 el._bw_state.count = 42;
 bw.refresh(el);
 ```
@@ -614,6 +616,61 @@ bw.DOM('#app', {
 });
 ```
 
+### Re-mount, patch, or sync?
+
+Re-mounting a whole view on every change is fine for small views -- a MIDI
+practice app that re-mounts on every note on/off never notices. It stops being fine when the
+view holds something the user is in the middle of using, because a re-mount
+replaces those elements:
+
+- **An input being edited or dragged** loses focus, caret or drag. Re-mounting
+  a settings panel from a range slider's `input` event ends the drag after one
+  step.
+- **A long list** rebuilds every row to change one.
+
+Two tools cover those cases.
+
+**Patch the part that changes.** Leave the input alone and update only what
+depends on it:
+
+```javascript
+bw.mount('#settings', { t: 'label', c: [
+  'Tempo ',
+  { t: 'input', a: { type: 'range', min: 40, max: 240, value: 120,
+      oninput:  function(e) { bw.patch('tempo_value', e.target.value + ' bpm'); },  // live label
+      onchange: function(e) { saveSetting('tempo', +e.target.value); } } },      // commit on release
+  { t: 'span', a: { id: 'tempo_value' }, c: '120 bpm' }
+]});
+```
+
+### Keyed lists with bw.syncChildren()
+
+For a list that changes, `bw.syncChildren()` matches existing children to your
+data by key. Rows whose key is still present are the **same DOM nodes** --
+moved if the order changed, updated in place if you pass `update` -- so their
+focus, scroll position and state survive. Only new keys are created and only
+missing keys are removed (with their unmount hooks).
+
+```javascript
+var list = bw.mount('#held', { t: 'ul', a: { class: 'held_notes' } });
+
+var listOpts = {
+  key:    function(note) { return String(note.midi); },
+  create: function(note) { return { t: 'li', c: note.name }; },
+  update: function(el, note) { bw.patch(el, note.name + (note.sustained ? ' (sus)' : '')); }
+};
+
+// Call whenever the data changes -- first call creates, later calls reconcile
+function renderHeld(notes) { bw.syncChildren(list, notes, listOpts); }
+
+renderHeld([{ midi: 60, name: 'C4' }, { midi: 64, name: 'E4' }]);
+renderHeld([{ midi: 64, name: 'E4', sustained: true }, { midi: 67, name: 'G4' }]);
+// C4's <li> removed, E4's <li> updated in place and moved first, G4's created
+```
+
+`key` must return a string that is unique within the list. `create` returns a
+TACO. `update` is optional; without it, kept rows are only moved.
+
 ---
 
 ## Low-Level Primitives
@@ -728,6 +785,7 @@ function renderProjectView(target) {
 
 Do NOT use a single `'store:changed'` topic that re-renders everything:
 
+<!-- doc-test: skip (WRONG/RIGHT sketch; renderTodos and todosEl are the reader's) -->
 ```javascript
 // WRONG -- every view re-renders on every store change
 bw.sub('store:changed', function() {

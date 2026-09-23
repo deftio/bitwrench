@@ -746,7 +746,7 @@
       if (!user) {
         return { t: 'div', a: { style: 'padding:1rem' }, c: [
           { t: 'h3', a: { style: 'margin-top:0' }, c: 'User not found' },
-          bw.link('/demo/users', 'Back to list', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+          bw.link('/demo/users', 'Back to list', { class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary' })
         ]};
       }
       var qTab = (params._query && params._query.tab) || 'profile';
@@ -764,8 +764,8 @@
           {
             t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
             c: [
-              bw.link('/demo/users', 'Back to list', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
-              bw.link('/demo/users/' + user.id + '?tab=settings', '?tab=settings', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+              bw.link('/demo/users', 'Back to list', { class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary' }),
+              bw.link('/demo/users/' + user.id + '?tab=settings', '?tab=settings', { class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary' })
             ]
           }
         ]
@@ -1253,7 +1253,7 @@
         c: routerPages5.map(function(pg) {
           var label = pg.charAt(0).toUpperCase() + pg.slice(1);
           return bw.link(routerBasePath + (pg === 'home' ? '' : '/' + pg), label, {
-            class: 'bw_btn bw_btn_sm bw_btn_outline_secondary'
+            class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary'
           });
         })
       });
@@ -1262,7 +1262,7 @@
       bw.DOM('#router6-nav', {
         t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
         c: [
-          bw.link('/demo/users', 'User List', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+          bw.link('/demo/users', 'User List', { class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary' })
         ]
       });
 
@@ -1270,9 +1270,9 @@
       bw.DOM('#router8-nav', {
         t: 'div', a: { style: 'display:flex;gap:0.5rem;flex-wrap:wrap' },
         c: [
-          bw.link('/demo/guard', 'Home', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
-          bw.link('/demo/guard/dashboard', 'Dashboard', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' }),
-          bw.link('/demo/guard/settings', 'Settings', { class: 'bw_btn bw_btn_sm bw_btn_outline_secondary' })
+          bw.link('/demo/guard', 'Home', { class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary' }),
+          bw.link('/demo/guard/dashboard', 'Dashboard', { class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary' }),
+          bw.link('/demo/guard/settings', 'Settings', { class: 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary' })
         ]
       });
 
@@ -1299,12 +1299,12 @@
           bw.$('#router5-nav a').forEach(function(a) {
             var href = (a.getAttribute('href') || '').replace(/^#/, '');
             a.className = (href === to || (to === '/demo' && href === '/demo'))
-              ? 'bw_btn bw_btn_sm bw_btn_primary' : 'bw_btn bw_btn_sm bw_btn_outline_secondary';
+              ? 'bw_bccl_btn bw_bccl_btn_sm bw_primary' : 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary';
           });
           bw.$('#router8-nav a').forEach(function(a) {
             var href = (a.getAttribute('href') || '').replace(/^#/, '');
             a.className = href === to
-              ? 'bw_btn bw_btn_sm bw_btn_primary' : 'bw_btn bw_btn_sm bw_btn_outline_secondary';
+              ? 'bw_bccl_btn bw_bccl_btn_sm bw_primary' : 'bw_bccl_btn bw_bccl_btn_sm bw_bccl_btn_outline bw_secondary';
           });
         }
       });

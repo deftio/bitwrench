@@ -4,12 +4,12 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.8 |
-| Generated | 2026-09-21 |
+| Version | 2.1.9 |
+| Generated | 2026-09-23 |
 | Total APIs | 112 |
 | Categories | 14 |
-| bitwrench.js | 5238 lines |
-| bitwrench-bccl.js | 3960 lines |
+| bitwrench.js | 5216 lines |
+| bitwrench-bccl.js | 3968 lines |
 
 ## Table of Contents
 
@@ -351,7 +351,7 @@ Render a TACO into the DOM at a specific position relative to a target. Thin con
 
 **Example:**
 ```javascript
-var r = bw.render('#app', 'append', { t: 'button', a: { class: 'bw_btn' }, c: 'Click Me', o: { state: { clicks: 0 } } }); if (r.ok) r.el.bw.myMethod();   // use component handle
+var r = bw.render('#log', 'append', { t: 'li', c: 'Saving...' }); if (r.ok) bw.patch(r.el, 'Saved');   // r.el is the new element else console.warn(r.error);
 ```
 
 ---
@@ -687,12 +687,13 @@ Inject CSS into the document head (browser only). Creates or reuses a `<style>` 
 | `options` | `Object` | - Injection options |
 | `options.id` | `string` | - ID for the style element |
 | `options.append` | `boolean` | - Append to existing CSS (false to replace) |
+| `options.minify` | `boolean` | - Minify CSS generated from rule objects. Output is readable by default; strings are inserted exactly as written. |
 
 **Returns:** `Element` — style element
 
 **Example:**
 ```javascript
-bw.injectCSS('.my-class { color: red; }'); bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' });
+bw.injectCSS('.my-class { color: red; }'); bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' }); bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles', minify: true });
 ```
 
 ---
@@ -1054,7 +1055,7 @@ Create a flexbox row for the grid system
 | `props` | `Object` | - Row configuration |
 | `props.children` | `Array|Object|string` | - Child columns |
 | `props.className` | `string` | - Additional CSS classes |
-| `props.gap` | `number` | - Gap size (1-5) applied via bw_g_{gap} class |
+| `props.gap` | `number` | - Gutter size 0-5 applied via bw_g_{gap} (0 = no gutter; omit for the default) |
 
 **Returns:** `Object` — object representing a grid row
 
@@ -1159,6 +1160,7 @@ Create a tabbed interface with accessible tab navigation Each tab is rendered as
 | `props.tabs[].content` | `string|Object|Array` | - Tab pane content |
 | `props.tabs[].active` | `boolean` | - Whether this tab is initially active |
 | `props.activeIndex` | `number` | - Default active tab index (overridden by tab.active) |
+| `props.onTabChange` | `Function` | - Called as (index, tab, el) when the active tab changes (click, keyboard, or el.bw.setActiveTab). `tab` is the tabs[index] config object. |
 
 **Returns:** `Object` — object representing a tabbed interface
 
@@ -1408,7 +1410,7 @@ Create a select dropdown with options
 | `props` | `Object` | - Select configuration |
 | `props.options` | `Array<Object>` | - Dropdown options |
 | `props.options[].value` | `string` | - Option value |
-| `props.options[].text` | `string` | - Option display text (defaults to value) |
+| `props.options[].text` | `string` | - Option display text (`label` also accepted; defaults to value) |
 | `props.value` | `string` | - Currently selected value |
 | `props.id` | `string` | - Element ID |
 | `props.name` | `string` | - Select name attribute |
@@ -1537,7 +1539,7 @@ Create a responsive feature grid for showcasing capabilities Renders features in
 | `props.features[].icon` | `string` | - Icon content (emoji, HTML entity, or text) |
 | `props.features[].title` | `string` | - Feature title |
 | `props.features[].description` | `string` | - Feature description text |
-| `props.columns` | `number` | - Number of columns (divides 12-col grid) |
+| `props.columns` | `number` | - Items per row at md+ widths. Uses the 12-column grid, so use a divisor of 12 (1, 2, 3, 4, 6, 12); other counts round to the nearest span (5 -> 6 per row, 8 -> 6 per row). Stacks to one column below md. |
 | `props.centered` | `boolean` | - Center-align feature text |
 | `props.iconSize` | `string` | - Icon font size |
 | `props.className` | `string` | - Additional CSS classes |

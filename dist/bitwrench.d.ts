@@ -218,8 +218,16 @@ export interface NavConfig {
   class?: string;
 }
 
+/** `{ selector: { prop: value } }`; at-rules (`@media`, `@keyframes`) nest as objects. */
+export type CssRules = Record<string, any>;
+
+export interface TabItem { label: string | Taco; content: TacoContent; active?: boolean; [key: string]: any }
+
 export interface TabsConfig {
-  tabs: Array<{ text: string; content: TacoContent; active?: boolean }>;
+  tabs: TabItem[];
+  activeIndex?: number;
+  /** Called when the active tab changes (click, keyboard, or el.bw.setActiveTab). */
+  onTabChange?: (index: number, tab: TabItem, el: HTMLElement) => void;
   variant?: Variant;
   style?: Record<string, string | number>;
   class?: string;
@@ -452,9 +460,11 @@ export interface Bitwrench {
 
   // -- CSS & Styles ---------------------------------------------------------
   /** Generate CSS string from JS object */
-  css(rules: Record<string, any>, options?: { scopeSelector?: string; selector?: string }): string;
+  /** CSS text from rule objects. Pass an array to repeat a selector or fix the order. */
+  css(rules: CssRules | CssRules[] | string, options?: { minify?: boolean }): string;
   /** Inject CSS into document */
-  injectCSS(css: string, options?: { id?: string; append?: boolean; scope?: string }): HTMLElement;
+  /** Inject CSS into a <style> by id. Readable by default; minify applies to rule objects. */
+  injectCSS(css: string | CssRules | CssRules[], options?: { id?: string; append?: boolean; minify?: boolean }): HTMLElement | null;
   /** Merge style objects (shallow Object.assign). Use to compose inline styles. */
   s(...objs: Record<string, string | number>[]): Record<string, string | number>;
   /** Responsive media query helper */
@@ -611,11 +621,8 @@ export interface Bitwrench {
 
   // -- Internal (access at own risk) ----------------------------------------
   _nodeMap: Record<string, HTMLElement>;
-  /** @deprecated Use bw.el() instead. Alias kept for one release cycle. */
-  _el(id: string): HTMLElement | null;
   _registerNode(el: HTMLElement, uuid: string): void;
   _deregisterNode(el: HTMLElement, uuid: string): void;
-  _unmountCallbacks: Map<string, Function>;
   _topics: Record<string, any[]>;
   _fnRegistry: Record<string, Function>;
   _clientFunctions: Record<string, Function>;

@@ -1376,13 +1376,11 @@ var structuralRules = {
     },
     '.bw_row': {
       'display': 'flex', 'flex-wrap': 'wrap',
-      'margin-right': 'calc(var(--bw_gutter_x, 0.75rem) * -0.5)',
-      'margin-left': 'calc(var(--bw_gutter_x, 0.75rem) * -0.5)'
+      'margin-right': '-0.375rem', 'margin-left': '-0.375rem'
     },
-    '.col, [class*="col-"]': {
+    '.bw_col, [class*="bw_col_"]': {
       'position': 'relative', 'width': '100%',
-      'padding-right': 'calc(var(--bw_gutter_x, 0.75rem) * 0.5)',
-      'padding-left': 'calc(var(--bw_gutter_x, 0.75rem) * 0.5)'
+      'padding-right': '0.375rem', 'padding-left': '0.375rem'
     },
     '.bw_col': { 'flex-basis': '0', 'flex-grow': '1', 'max-width': '100%' },
     ..._gridCols('bw_col')
@@ -1465,7 +1463,7 @@ var structuralRules = {
       'position': 'relative', 'display': 'flex', 'flex-wrap': 'wrap',
       'align-items': 'center', 'justify-content': 'space-between', 'padding': '0.5rem 1.5rem'
     },
-    '.bw_bccl_navbar > .bw_bccl_container, .bw_bccl_navbar > .container': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' },
+    '.bw_bccl_navbar > .bw_bccl_container, .bw_bccl_navbar > .bw_container': { 'display': 'flex', 'flex-wrap': 'wrap', 'align-items': 'center', 'justify-content': 'space-between' },
     '.bw_bccl_navbar_brand': {
       'display': 'inline-flex', 'align-items': 'center', 'gap': '0.5rem',
       'padding-top': '0.25rem', 'padding-bottom': '0.25rem', 'margin-right': '1.5rem',
@@ -1597,6 +1595,9 @@ var structuralRules = {
       'font-family': 'inherit', 'font-size': 'inherit', 'background': 'none'
     },
     '.bw_page_item:first-child .bw_page_link': { 'margin-left': '0' },
+    // makePagination({ size }) -- same steps as the button sizes
+    '.bw_bccl_pagination_sm .bw_page_link': { 'padding': '0.25rem 0.5rem', 'font-size': '0.8125rem' },
+    '.bw_bccl_pagination_lg .bw_page_link': { 'padding': '0.625rem 1.25rem', 'font-size': '1.125rem' },
     '.bw_page_link:focus-visible': { 'z-index': '3', 'outline': '2px solid currentColor', 'outline-offset': '-2px' }
   },
 
@@ -1631,8 +1632,7 @@ var structuralRules = {
     '.bw_feature': { 'padding': '1rem' },
     '.bw_feature_icon': { 'display': 'inline-block', 'margin-bottom': '1rem' },
     '.bw_feature_title': { 'margin-bottom': '0.5rem' },
-    '.bw_feature_grid': { 'width': '100%' },
-    '.bw_g_4': { '--bw_gutter_x': '1.5rem', '--bw_gutter_y': '1.5rem' }
+    '.bw_feature_grid': { 'width': '100%' }
   },
 
   // ---- Sections ----
@@ -2106,13 +2106,13 @@ var structuralRules = {
     '@media (min-width: 576px)': _gridCols('bw_col_sm'),
     '@media (min-width: 768px)': _gridCols('bw_col_md'),
     '@media (min-width: 992px)': _gridCols('bw_col_lg'),
+    '@media (min-width: 1200px)': _gridCols('bw_col_xl'),
     '@media (max-width: 575px)': {
       '.bw_bccl_card_img_left, .bw_bccl_card-img-left': { 'width': '100%' },
       '.bw_bccl_card_img_right, .bw_bccl_card-img-right': { 'width': '100%' },
       '.bw_bccl_hero, .bw_bccl_hero': { 'padding': '2rem 1rem' },
       '.bw_cta_actions, .bw_cta-actions': { 'flex-direction': 'column' },
       '.bw_hstack, .bw_hstack': { 'flex-direction': 'column' },
-      '.bw_feature_grid, .bw_feature-grid': { 'grid-template-columns': '1fr' },
       '.bw_bccl_modal_dialog': { 'margin': '0.5rem auto' },
       '.bw_bccl_modal_lg': { 'max-width': 'calc(100% - 1rem)' },
       '.bw_bccl_modal_xl': { 'max-width': 'calc(100% - 1rem)' },
@@ -2149,6 +2149,10 @@ function generateUtilityRules() {
     rules['.bw_pb_' + k] = { 'padding-bottom': v + ' !important' };
     rules['.bw_ps_' + k] = { 'padding-left': v + ' !important' };
     rules['.bw_pe_' + k] = { 'padding-right': v + ' !important' };
+    // Gutter k: half on each side of every column, pulled back by the row
+    var h = parseFloat(v) / 2 + 'rem';
+    rules['.bw_g_' + k] = { 'margin-left': '-' + h, 'margin-right': '-' + h, 'row-gap': v };
+    rules['.bw_g_' + k + ' > *'] = { 'padding-left': h, 'padding-right': h };
   }
   rules['.bw_m_auto'] = { 'margin': 'auto !important' };
   rules['.bw_py_3'] = { 'padding-top': '1rem !important', 'padding-bottom': '1rem !important' };
@@ -2312,7 +2316,14 @@ function getStructuralCSS() {
   var result = {};
   var keys = Object.keys(structuralRules);
   for (var i = 0; i < keys.length; i++) {
-    Object.assign(result, structuralRules[keys[i]]);
+    var sec = structuralRules[keys[i]];
+    for (var k in sec) {
+      // A repeated @media key merges and moves to its later position, so
+      // breakpoint grid rules land after the base .bw_col_N rules (#103).
+      var prev = result[k];
+      delete result[k];
+      result[k] = prev && k.charAt(0) === '@' ? Object.assign({}, prev, sec[k]) : sec[k];
+    }
   }
   Object.assign(result, generateUtilityRules());
 
@@ -2368,21 +2379,11 @@ export function getResetStyles() {
 // Tests import `defaultStyles` and check for category keys.
 // We export structuralRules directly as defaultStyles — it already
 // has all the required category keys. The 'utilities' category is
-// generated from generateUtilityRules() and 'root' from the theme token.
+// generated from generateUtilityRules().
 // =========================================================================
 
 export var defaultStyles = Object.assign({}, structuralRules, {
-  // Merge utility + root categories for backward compat
-  root: {
-    ':root': {
-      '--bw_font_sans_serif': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      '--bw_font_monospace': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Liberation Mono", "Courier New", monospace',
-      '--bw_body_font_family': 'var(--bw_font_sans_serif)',
-      '--bw_body_font_size': '1rem',
-      '--bw_body_font_weight': '400',
-      '--bw_body_line_height': '1.5'
-    }
-  },
+  // Merge utility categories for backward compat
   reset: structuralRules.base,
   enhancedCards: structuralRules.cards,
   tableResponsive: { '.bw_bccl_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' } },
