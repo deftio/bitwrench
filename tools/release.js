@@ -17,6 +17,11 @@
  * bundle budget, Docker clean-room) but performs NO mutations: no release
  * archive, no git commit, no merge, no push. Use it to rehearse a release.
  * Note that dist/ is still rebuilt, so the working tree will be dirty after.
+ *
+ * --dry-run also downgrades the two release-readiness gates (version not yet
+ * on npm, CHANGELOG entry present) from errors to warnings. This lets you
+ * verify a maintenance branch that is deliberately not being published --
+ * dev-dependency pruning, CI config, tooling -- without bumping the version.
  */
 
 import { execSync } from 'child_process';
@@ -240,10 +245,20 @@ const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const version = pkg.version;
 console.log(`  Version: ${version}`);
 
+// The registry and changelog checks below are release-readiness gates, not
+// code-quality gates. Under --dry-run they degrade to warnings so the build,
+// lint, test, size and clean-room gates can be run on maintenance work that
+// is deliberately NOT being published (dev-dependency pruning, CI config,
+// tooling). Without this, verifying such a branch would require burning a
+// version number on an artifact identical to the one already on npm.
+const gate = DRY_RUN
+  ? (msg) => console.log(`  ! ${msg.split('\n')[0]} (ignored: --dry-run)`)
+  : fail;
+
 try {
   const npmVersion = runQuiet(`npm view bitwrench@${version} version 2>/dev/null || true`);
   if (npmVersion === version) {
-    fail(
+    gate(
       `v${version} is already published on npm.\n` +
       `  Did you forget to bump at the start of this dev cycle?\n` +
       `  Run: npm version patch --no-git-tag-version && npm run generate-version`
@@ -256,7 +271,7 @@ try {
 // CHANGELOG.md must have an entry for this version
 const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8');
 if (!changelog.match(new RegExp(`^## v${version.replace(/\./g, '\\.')}\\b`, 'm'))) {
-  fail(
+  gate(
     `CHANGELOG.md has no entry for v${version}.\n` +
     `  Add a "## v${version}" section before releasing.`
   );

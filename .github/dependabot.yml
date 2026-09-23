@@ -1,12 +1,56 @@
+# Dependabot policy for bitwrench
+#
+# READ THIS BEFORE "FIXING" THE CONFIG BELOW.
+#
+# bitwrench has ZERO runtime dependencies. `dependencies` in package.json is
+# {} and the published tarball resolves nothing at install time. Every entry
+# in the lockfile is a build/test tool.
+#
+# Consequences:
+#
+#   1. A CVE in a transitive dev dependency cannot reach a bitwrench consumer.
+#      `npm audit --omit=dev` is the only audit that describes user-facing
+#      risk, and it reports 0.
+#   2. Dependency freshness is therefore a build-maintenance chore, not a
+#      security control. It belongs on the release cadence, not on GitHub's.
+#   3. The real supply-chain risk is build-time: a compromised dev dependency
+#      altering dist/. Updating *faster* makes that worse, not better, which
+#      is why GitHub itself now applies a default 3-day cooldown.
+#
+# So: npm version-update PRs are OFF (open-pull-requests-limit: 0 -- this is
+# GitHub's documented idiom for "security updates only"). Dev dependencies are
+# refreshed deliberately at the start of each release cycle:
+#
+#   npx npm-check-updates -u && npm i && npm test && npm run build
+#
+# GitHub Actions updates stay ON, at a low cadence. Those are a genuine
+# supply-chain control -- actions execute with repository credentials.
+#
+# Historical note: between 2026-03 and 2026-09 this repo received 84 Dependabot
+# PRs; 51 were closed unmerged. This config exists to stop that.
+
 version: 2
 updates:
+  # ---------------------------------------------------------------------
+  # npm -- SECURITY UPDATES ONLY.
+  #
+  # open-pull-requests-limit: 0 disables version-update PRs entirely while
+  # leaving Dependabot security updates unaffected (security PRs bypass this
+  # limit and do not count toward it). Set it back to 1 only if this project
+  # ever grows a runtime dependency.
+  #
+  # Note: security-update PRs are governed by the repository setting
+  # (Settings > Advanced Security > Dependabot security updates), NOT by this
+  # file. Dependabot alerts remain on regardless, so a genuine advisory is
+  # still visible -- it just does not open a pull request.
+  # ---------------------------------------------------------------------
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "monthly"
     commit-message:
       prefix: "deps"
-    open-pull-requests-limit: 1
+    open-pull-requests-limit: 0
     groups:
       all-dev-deps:
         patterns:
@@ -16,6 +60,9 @@ updates:
           - "minor"
           - "patch"
     ignore:
+      # Ignore conditions apply to security updates as well as version
+      # updates, so these stay meaningful even with version updates off.
+      #
       # jsdom: v27+ is ESM-only, breaks jsdom-global/register (CJS)
       - dependency-name: "jsdom"
         versions: [">=27.0.0"]
@@ -26,13 +73,18 @@ updates:
         versions: [">=8.0.0"]
       - dependency-name: "@babel/preset-env"
         versions: [">=8.0.0"]
-      - dependency-name: "@babel/preset-react"
-        versions: [">=8.0.0"]
 
+  # ---------------------------------------------------------------------
+  # GitHub Actions -- version updates ON, quarterly.
+  #
+  # Actions run with repository credentials, so keeping them current is real
+  # supply-chain hygiene rather than lockfile churn. Quarterly is frequent
+  # enough for that and infrequent enough to stay out of the way.
+  # ---------------------------------------------------------------------
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "quarterly"
     commit-message:
       prefix: "ci"
     open-pull-requests-limit: 1
