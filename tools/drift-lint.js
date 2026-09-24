@@ -415,7 +415,10 @@ if (LIST_RULES) {
 var SCAN_DIRS = ['docs', 'pages', 'examples', 'embedded_python', 'src'];
 // readme.html is generated from README.md — scanning it catches "README fixed
 // but build:readme not re-run", which is itself a form of drift.
-var SCAN_ROOT_FILES = ['README.md', 'CONTRIBUTING.md', 'ABOUT.md', 'readme.html', 'llms.txt', 'agents.md'];
+// SECURITY.md names real APIs when it describes what is in and out of scope
+// (bw.raw, bw.escapeHTML, the raw option), so it rots the same way any other
+// doc does and belongs in the scan.
+var SCAN_ROOT_FILES = ['README.md', 'CONTRIBUTING.md', 'ABOUT.md', 'SECURITY.md', 'readme.html', 'llms.txt', 'agents.md'];
 var SCAN_EXTS = new Set(['.md', '.html', '.js', '.py', '.sh', '.ts', '.txt']);
 var SKIP_DIRS = new Set(['node_modules', '.git', 'dist', 'coverage', 'dev', 'vendor']);
 

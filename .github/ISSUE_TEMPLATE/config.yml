@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/deftio/bitwrench/security/advisories/new
+    about: Report privately through a GitHub security advisory. Please do not open a public issue.
+  - name: Documentation and examples
+    url: https://deftio.github.io/bitwrench/pages
+    about: Quickstart, component gallery, live editors and the API reference.
+  - name: Contributing guide
+    url: https://github.com/deftio/bitwrench/blob/main/CONTRIBUTING.md
+    about: Setup, code rules, testing and the release process.

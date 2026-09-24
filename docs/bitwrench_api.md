@@ -4,8 +4,8 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.9 |
-| Generated | 2026-09-23 |
+| Version | 2.1.10 |
+| Generated | 2026-09-24 |
 | Total APIs | 112 |
 | Categories | 14 |
 | bitwrench.js | 5216 lines |

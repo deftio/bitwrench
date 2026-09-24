@@ -3,6 +3,98 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.10 (2026-09-23)
+
+Supply-chain and toolchain release. No API changes and no behavioural changes
+to any component: every hand-written file under `src/` is byte-identical to
+2.1.9. The work is in the release pipeline, the dependency policy, and making
+the build reproducible enough that a compromised tool would be visible.
+
+### Security
+
+The threat model here is specific. bitwrench has zero runtime dependencies, so
+a CVE in a build tool cannot reach anyone who installs the package. What *can*
+reach them is a compromised tool altering `dist/`, or compromised CI publishing
+as the project. These changes target that, in order of blast radius:
+
+- **GitHub Actions are pinned to commit SHAs** rather than floating major tags
+  (`actions/checkout`, `actions/setup-node`, `actions/upload-artifact`). The
+  publish job holds `id-token: write` and `contents: write`; a moved or
+  compromised tag would run inside it. Version comments are retained so
+  Dependabot can still propose updates.
+- **npm is pinned in the publish step.** It was `npx -y npm@latest`, resolved at
+  run time, executing with publishing rights -- the least-reviewed and most
+  privileged code in the pipeline. Now `npm@12.1.0`, bumped deliberately.
+- **`npm ci --ignore-scripts` in CI.** Dependency lifecycle scripts are the
+  classic install-time vector and nothing in this build needs them. Verified:
+  lint, build and the full suite pass without them.
+- **`github/codeql-action` deliberately stays on the floating `@v4` tag**, as
+  documented in `.github/dependabot.yml`. That job cannot publish, so the
+  trade-off differs from the publish path.
+
+Unchanged and worth stating: publishing uses OIDC trusted publishing, so no
+long-lived npm token exists in the repository to leak.
+
+### Changed
+
+**Builds are reproducible within a day.** `buildDate` in the generated
+`src/version.js` is now a calendar date (`2026-09-23`) instead of a
+millisecond timestamp (`2026-09-23T02:07:01.064Z`), and honours
+`SOURCE_DATE_EPOCH` if set.
+
+This is the change that makes the security work above checkable. `dist/` is
+committed, so `git diff dist/` is the cheapest available evidence that the
+build tools produced what the source says they should -- but the old stamp
+propagated into every artifact importing `version.js` and cascaded into
+`sri.json` and `builds.json`, dirtying ~44 files on every build. Real
+unexplained output changes were indistinguishable from noise. Now two builds
+of the same source on the same day are byte-identical, and anything else in
+that diff is a question worth asking.
+
+`bw.versionInfo().buildDate` therefore returns a shorter string. It is still a
+string, still ISO-8601, and still parses with `new Date()`.
+
+**Project documentation added.** `SECURITY.md` records how to report a
+vulnerability (GitHub private advisories, which are enabled), what is and is
+not in scope given a library with no runtime dependencies, and the full
+security posture -- including the two controls that live in GitHub repository
+settings and would otherwise leave no trace in the repository. `drift-lint`
+now scans it, because it names real APIs and can rot like any other doc.
+
+Also added: `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), issue templates
+for bugs and feature requests, and a pull request template. `CONTRIBUTING.md`
+now states the real Node floor -- 22.12+ for the build toolchain, tested on 22
+and 24 -- rather than 18+, which has not been accurate for some time.
+
+**Dropped four unused devDependencies.** None were reachable from the build,
+the tests or the tooling:
+
+- `@babel/preset-react` -- a React preset in a library whose premise is that
+  JSX is unnecessary. Its only remaining reference was an ignore rule in
+  `.github/dependabot.yml`.
+- `uglify-js` -- superseded by `@rollup/plugin-terser`. A carry-over from the
+  1.x build, when uglify was the only minifier worth using.
+- `uglifyjs` -- the deprecated 2.4.11 fork of the above, almost certainly an
+  accidental install.
+- `rollup-plugin-postcss` -- `rollup.config.js` uses `rollup-plugin-css-only`.
+
+The lockfile drops from 457 to 354 packages, a ~23% smaller install for
+contributors. No effect on consumers: bitwrench has zero runtime dependencies
+and devDependencies are never installed downstream.
+
+**Dependency update policy is now explicit.** npm version-update pull requests
+are disabled (`open-pull-requests-limit: 0`); dev dependencies are refreshed
+deliberately at the start of each release cycle instead. GitHub Actions updates
+remain enabled at a quarterly cadence, because actions execute with repository
+credentials and are a genuine supply-chain surface. Dependabot alerts remain
+on, so advisories are still reported.
+
+The reasoning is recorded in `.github/dependabot.yml` itself: with no runtime
+dependencies, a CVE in a transitive build tool cannot reach a bitwrench user,
+so dependency freshness here is build maintenance rather than a security
+control -- and updating *faster* is the wrong reflex against the one risk that
+does apply, a compromised tool altering `dist/`.
+
 ## v2.1.9 (2026-09-23)
 
 Maintenance release: tables, grid, docs and better tests.

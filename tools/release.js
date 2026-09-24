@@ -20,7 +20,7 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync, readFileSync, statSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { gzipSync } from 'zlib';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -404,6 +404,11 @@ if (!dockerAvailable) {
   console.log('    Install Docker to enable this gate');
 } else {
   console.log('  Docker available — running clean-room install test');
+
+  // tmp/ is gitignored, so it is absent in a fresh clone and after any
+  // cleanup. npm pack will not create the destination itself -- it fails with
+  // ENOENT on the tarball it just tried to write -- so make it first.
+  mkdirSync(join(root, 'tmp'), { recursive: true });
 
   // Pack the tarball
   const packOut = runQuiet('npm pack --pack-destination tmp/');

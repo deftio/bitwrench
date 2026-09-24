@@ -1,0 +1,99 @@
+name: Bug report
+description: Something in bitwrench does not behave the way it is documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing. Most bitwrench fixes have come from reports like this
+        one, and each ships with a test that fails on the old code -- so a
+        minimal reproduction is genuinely the most useful thing you can provide.
+
+        If this is a **security** problem, please do not file it here. See
+        [SECURITY.md](https://github.com/deftio/bitwrench/blob/main/SECURITY.md).
+
+  - type: input
+    id: version
+    attributes:
+      label: bitwrench version
+      description: "`bw.getVersion().version`, or the version in your package.json / CDN URL"
+      placeholder: "2.1.10"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: build
+    attributes:
+      label: Which build?
+      options:
+        - bitwrench (full) -- UMD
+        - bitwrench (full) -- ESM
+        - bitwrench (full) -- CJS
+        - bitwrench (full) -- ES5
+        - bitwrench-lean
+        - bitwrench-bccl
+        - bitwrench-code-edit
+        - bwserve / bwcli
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source
+    attributes:
+      label: Loaded from
+      options:
+        - npm
+        - CDN (jsdelivr / unpkg)
+        - Built from source
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and version, or Node version
+      placeholder: "Chrome 141 / Node 24.18.1 / ESP32 serving from flash"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: |
+        The smallest TACO or snippet that shows the problem. A runnable page is
+        ideal; a few lines is usually enough.
+      render: javascript
+      placeholder: |
+        const taco = { t: 'div', a: { class: 'bw_bccl_card' }, c: 'hello' };
+        bw.mount('#app', taco);
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+      description: Include the rendered HTML or console output if relevant.
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: |
+        Optional. If the docs say something that contradicts the behaviour,
+        a link to the page is helpful -- that is a bug too.
+    validations:
+      required: false

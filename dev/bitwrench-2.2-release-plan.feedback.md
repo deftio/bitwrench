@@ -26,30 +26,32 @@ written.
 
 ## 1. Corrections to facts in the plan
 
-### 1.1 The size baseline is wrong, and the wrong artifact is at risk
+### 1.1 The size baseline is wrong (UPDATED 2026-09-22, post-2.1.9)
 
-The plan (Sec. 8) states the full UMD is 46,082 B gzipped, "2 bytes over" the
-46,080 B gate, and uses that to constrain the Sec. 4.1 alias decision.
+**This section originally claimed the build was 2 bytes from the gate and that
+ESM had 9 bytes of headroom. Both numbers are obsolete.** They were measured
+against a 45 KB budget in the 2.1.7 tree. The budget was deliberately raised to
+46 KB in 2.1.7 (`tools/release.js`, with the rationale recorded in-line), and
+2.1.8/2.1.9 have shipped since. Current state, measured 2026-09-22:
 
-The gate does not read that number. `tools/release.js:174-178` prefers the
-shipped `.gz` file, falling back to `gzipSync(..., {level: 9})`:
-
-| Artifact | plan says | what the gate reads | headroom |
+| Artifact | gz (level 9 / shipped `.gz`) | budget 47,104 | headroom |
 |---|---:|---:|---:|
-| `dist/bitwrench.umd.min.js.gz` | 46,082 | **45,940** | 140 B |
-| `dist/bitwrench.esm.min.js.gz` | not listed | **46,071** | **9 B** |
+| `dist/bitwrench.umd.min.js` | 46,099 | PASS | 1,005 B |
+| `dist/bitwrench.esm.min.js` | 46,223 | PASS | 881 B |
 
-46,082 is zlib *default* compression (level 6), which is what
-`tools/build-builds-manifest.js:45` uses. So two tools in this repo report
-"gzipped size" at two different compression levels and disagree by ~140 bytes.
+So there is roughly 1 KB of headroom, not 9 bytes, and the Sec. 4.1 alias
+decision is **not** size-constrained. The recommendation in Sec. 3.1 to cut the
+`loadCSSReset` rename stands on naming-consistency and migration-budget
+grounds alone; drop the byte-cost argument.
 
-Two consequences:
+What does survive from the original finding:
 
-1. There is headroom, but the binding constraint is **ESM at 9 bytes**, not
-   UMD. The plan's "measure, do not assume" instinct is correct and is aimed at
-   the wrong file.
-2. Reconciling the two gzip levels belongs on the Sec. 5.3 list as a defect,
-   not just as part of the rename sweep.
+**The two-gzip-level discrepancy is real.** `tools/release.js:174-178` prefers
+the shipped `.gz` (level 9); `tools/build-builds-manifest.js:45` uses zlib
+default (level 6). Measured on the same 2.1.9 artifact: 46,099 vs 46,238 --
+a 139-byte disagreement between two tools that both report "gzipped size".
+Harmless at 1 KB of headroom, misleading at 20 bytes. Reconciling them belongs
+on the Sec. 5.3 list as a defect, not just part of the rename sweep.
 
 ### 1.2 The core/BCCL CSS problem is measured, not hypothetical
 

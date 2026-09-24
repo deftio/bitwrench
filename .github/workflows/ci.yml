@@ -10,21 +10,34 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
+    # Declared explicitly so this job does not inherit whatever the repository
+    # default happens to be. Build and test need to read the tree and nothing
+    # else; uploading the coverage artifact uses the Actions runtime token, not
+    # GITHUB_TOKEN. With publish.yml and codeql-analysis.yml already declaring
+    # their own, no workflow here depends on the repository-wide default.
+    permissions:
+      contents: read
+
     strategy:
       matrix:
         node-version: [22, 24]
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        # --ignore-scripts: lifecycle scripts from dependencies are the classic
+        # supply-chain vector, and nothing in this build needs them. The only
+        # script in package.json is `prepare`, which installs a local git hook
+        # and is meaningless in CI. Verified: lint, build and the full test
+        # suite pass without them.
+        run: npm ci --ignore-scripts
 
       - name: Lint
         run: npm run lint
@@ -37,7 +50,7 @@ jobs:
 
       - name: Upload coverage
         if: matrix.node-version == 22
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: coverage-report
           path: coverage/

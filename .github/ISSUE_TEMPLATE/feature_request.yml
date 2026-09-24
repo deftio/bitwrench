@@ -1,0 +1,65 @@
+name: Feature request
+description: Propose a capability bitwrench does not have
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before writing, it is worth skimming
+        [docs/bitwrench-northstar-principles.md](https://github.com/deftio/bitwrench/blob/main/docs/bitwrench-northstar-principles.md).
+        bitwrench is deliberately not a virtual-DOM framework: components own
+        their rendering and you call methods on them. Proposals that assume a
+        diffing or reconciliation model usually have a different shape here.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: |
+        Describe the situation, not the solution. What are you building, and
+        where does bitwrench get in the way?
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: How do you do it today?
+      description: |
+        What is the current workaround, and what is wrong with it? "It is not
+        possible" is a valid answer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: If you have a shape in mind, sketch it as TACO or a call.
+      render: javascript
+    validations:
+      required: false
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Where would this live?
+      options:
+        - Core (TACO, rendering, state)
+        - BCCL (a component factory)
+        - Styles / theming
+        - CLI / bwserve
+        - Docs or examples
+        - Not sure
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints you have considered
+      description: Optional, but these are the ones that usually decide it.
+      options:
+        - label: This does not require a build step or transpilation
+        - label: This does not add a runtime dependency
+        - label: I have considered the effect on bundle size

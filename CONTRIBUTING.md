@@ -2,7 +2,11 @@
 
 ## Setup
 
-Requires Node.js 18+ (tested on 18, 20, 22).
+Requires Node.js 22.12+ for the build toolchain (c8 and mocha need
+`require(esm)`). CI tests on 22 and 24.
+
+This is a **build-time** floor only. The published library has no runtime
+dependencies and runs on far older engines, browsers included.
 
 ```bash
 git clone https://github.com/deftio/bitwrench.git
@@ -92,7 +96,10 @@ Your PR should include:
 
 **Do not** bump the version number, modify `dist/` files, or run `build:release` — the maintainer handles that during the release process.
 
-CI runs automatically on all PRs (lint, build, test across Node 20/22/24).
+CI runs automatically on all PRs (lint, build, test across Node 22 and 24).
+
+This project follows a [Code of Conduct](CODE_OF_CONDUCT.md). Security issues
+go through [SECURITY.md](SECURITY.md), not the public issue tracker.
 
 ## Release Process (Maintainers Only)
 
