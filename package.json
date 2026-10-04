@@ -149,6 +149,8 @@
 		"test:spec21": "mocha \"dev/test_v2.1/*.spec.js\" -r jsdom-global/register --exit",
 		"test:e2e": "playwright test",
 		"test:e2e:docker": "bash tools/e2e-docker.sh",
+		"test:gcc": "bash tools/test-gcc.sh",
+		"ci:local": "bash tools/ci-local.sh",
 		"test:e2e:headed": "playwright test --headed",
 		"test:e2e:debug": "playwright test --debug",
 		"test:examples": "playwright test tests/examples.spec.js",

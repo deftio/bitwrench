@@ -277,7 +277,9 @@ server.on("/", HTTP_GET, [](AsyncWebServerRequest *req) {
 /* 3. on connect, mount the whole UI; later, patch what changed */
 events.onConnect([](AsyncEventSourceClient *client) {
     char label[BW_TACO_BUF_SIZE], value[BW_TACO_BUF_SIZE], btn[BW_TACO_BUF_SIZE];
-    char kids[BW_BUF_SIZE], card[BW_BUF_SIZE], msg[BW_BUF_SIZE];
+    char kids[BW_BUF_SIZE];
+    char card[BW_BUF_SIZE * 2];      /* each level larger than the last */
+    char msg[BW_BUF_SIZE * 4];
 
     BW_TACO_CLS(label, "div", "bw_text_muted", "Count");
     BW_TACO_ID(value, "div", "count", "0");
@@ -475,7 +477,10 @@ The `BW_TACO_*` macros quote their content, which makes them leaves. Use
 one message:
 
 ```c
-char label[256], value[256], kids[512], card[512], msg[1024];
+char label[256], value[256];
+char kids[512];
+char card[1024];      /* larger than kids */
+char msg[2048];       /* larger than card */
 BW_TACO_CLS(label, "div", "bw_text_muted", "Temperature");
 BW_TACO_ID(value, "div", "temp", "22.4 C");
 BW_ARRAY_START(kids);

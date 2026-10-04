@@ -20,6 +20,9 @@ npm install
 2. Build: `npm run build`
 3. Test: `npm test`
 4. Lint: `npm run lint`
+5. Before pushing: `npm run ci:local` — the same steps GitHub runs, on the same
+   toolchain. A green local run on a different OS and compiler is a guess, not
+   a check.
 
 ## Directory Layout
 
@@ -54,6 +57,8 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 - `npm run test:all` — Run all test suites
 - `npm run lint` — ESLint over `src/` (is the code well-formed?)
 - `npm run lint:drift` — drift-lint over docs/examples/pages (do the docs still tell the truth?). Runs automatically after `npm test` and `npm run build`. See [docs/drift-lint.md](docs/drift-lint.md) — if you remove or rename a user-facing API, add a rule in the same commit.
+- `npm run test:gcc` — the C/C++ suite under **gcc on Linux**, in Docker. **Run this if you touch `embedded_c/` or the C/C++ examples.** macOS ships clang, CI runs gcc, and they are not interchangeable: clang does not implement `-Wformat-truncation`, so a header that nests a same-sized buffer passes locally and fails CI. v2.1.11 reached main that way. Skips itself when Docker is absent.
+- `npm run ci:local` — **GitHub's CI job, locally**: `npm ci --ignore-scripts` → lint → build → test, on Linux with gcc, across the same Node matrix (22 and 24). Run it before pushing anything you expect CI to accept. The repo is mounted read-only and copied inside the container, so your `dist/` and `node_modules` are untouched.
 
 ## Code Rules
 

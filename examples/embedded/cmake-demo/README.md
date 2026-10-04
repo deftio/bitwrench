@@ -65,7 +65,9 @@ The UI is built in C and arrives over SSE. Nothing here reaches for the DOM.
 nodes, which is how a whole screen goes out in one message:
 
 ```c
-char lab[256], val[256], kids[1024], card[1024];
+char lab[256], val[256];
+char kids[1024];
+char card[2048];      /* larger than kids -- see the two rules below */
 BW_TACO_CLS(lab, "div", "bw_text_muted bw_text_sm", "Temperature");
 BW_TACO_ID(val, "div", "val-temp", "22.4 C");
 BW_ARRAY_START(kids);
@@ -80,9 +82,12 @@ Two rules:
 - **Each level needs its own buffer.** `BW_NEST(x, "div", x)` is `snprintf()`
   into the buffer it is reading from: undefined behaviour. The C++ helpers have
   no such trap.
-- **Size your buffers.** `BW_TACO_BUF_SIZE` (256 B) for leaves,
-  `BW_BUF_SIZE` (set to 1024 here) for subtrees. Everything truncates silently
-  if you get it wrong, so give a page-sized node room.
+- **Each level must be larger than the one below it.** Nesting grows the
+  string, so a same-sized destination can truncate. Build with `-Wall -Werror`
+  and gcc tells you via `-Wformat-truncation` -- which is why this demo's
+  buffers escalate (`BW_BUF_SIZE`, `* 2`, `* 4`, ... up to the whole page).
+  Clang does not implement that warning, so **a demo that compiles on macOS
+  can still fail on gcc**: build both before you trust it.
 
 Classes like `bw_bccl_card`, `bw_row` and `bw_col_md_4` are styled by the
 `bw.loadStyles()` call on the page, so changing the theme is one line of JS

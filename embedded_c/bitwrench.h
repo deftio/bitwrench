@@ -120,7 +120,9 @@ extern "C" {
  *
  * `children` is one TACO or a BW_ARRAY_* list, already built:
  *
- *   char row[256], col[256], page[512];
+ *   char row[256];
+ *   char col[512];           -- each level needs MORE room than the last
+ *   char page[1024];
  *   BW_TACO_ID(row, "span", "temp", "22.4 C");
  *   BW_NEST_CLS(col, "div", "bw_bccl_card", row);
  *   BW_NEST(page, "div", col);
@@ -129,9 +131,16 @@ extern "C" {
  * Children are run through BW_SKIP_R, so a tree of any depth stays one
  * parseable message -- one bw.mount() on the browser side.
  *
- * Each level needs its own buffer: `BW_NEST(x, "div", x)` is snprintf() into
- * the buffer it is reading from, which is undefined behaviour. The C++ half
- * (bw::nest) has no such trap, and no size limit either.
+ * Two buffer rules, and a compiler building with -Wall -Werror enforces both:
+ *
+ *   1. Each level needs its OWN buffer. `BW_NEST(x, "div", x)` is snprintf()
+ *      into the buffer it is reading from: undefined behaviour.
+ *   2. Each level must be LARGER than its source. Nesting grows the string, so
+ *      a same-sized destination can silently truncate -- gcc refuses it with
+ *      -Wformat-truncation, and is right to. Escalate the sizes as you go up.
+ *
+ * The C++ half (bw::nest) has neither trap: it builds with std::string, so
+ * there is no buffer to size and nothing to truncate.
  */
 #define BW_NEST(buf, tag, children) \
     snprintf(buf, sizeof(buf), "r{'t':'%s','c':%s}", tag, BW_SKIP_R(children))

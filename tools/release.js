@@ -79,10 +79,19 @@ function skipped(what) {
 function ask(question) {
   while (true) {
     try {
-      const answer = execSync(`/bin/sh -c 'printf "${question}" >&2 && read ans && echo "$ans"'`, {
-        stdio: ['inherit', 'pipe', 'inherit'],
-        encoding: 'utf8'
-      }).trim().toLowerCase();
+      // The prompt goes through the environment, not the command string. It
+      // used to be interpolated into a single-quoted `sh -c '...'`, so an
+      // apostrophe in the question ("branch's") produced a shell syntax error
+      // and aborted the release at the final confirmation. A `%` would have
+      // broken the bare `printf "$q"` the same way.
+      const answer = execSync(
+        '/bin/sh -c \'printf "%s" "$BW_PROMPT" >&2 && read ans && echo "$ans"\'',
+        {
+          stdio: ['inherit', 'pipe', 'inherit'],
+          encoding: 'utf8',
+          env: { ...process.env, BW_PROMPT: question }
+        }
+      ).trim().toLowerCase();
       if (answer === 'y' || answer === 'yes') return 'y';
       if (answer === 'n' || answer === 'no') return 'n';
       console.log('  Please answer y or n.');
@@ -97,8 +106,12 @@ function ask(question) {
 function askLine(question) {
   try {
     return execSync(
-      `/bin/sh -c 'printf "%s" "${question}" >&2 && read ans && printf "%s" "$ans"'`,
-      { stdio: ['inherit', 'pipe', 'inherit'], encoding: 'utf8' }
+      '/bin/sh -c \'printf "%s" "$BW_PROMPT" >&2 && read ans && printf "%s" "$ans"\'',
+      {
+        stdio: ['inherit', 'pipe', 'inherit'],
+        encoding: 'utf8',
+        env: { ...process.env, BW_PROMPT: question }
+      }
     ).trim();
   } catch {
     fail('Interactive terminal required to enter a commit message.');
@@ -284,6 +297,14 @@ step('4. Tests');
 
 // test:cli is part of `npm test` as of v2.1.4 -- no separate invocation.
 run('npm test');
+
+// Linux + gcc gate. `npm test` above ran on the host toolchain, which on macOS
+// is clang -- and clang does not implement -Wformat-truncation, so the C
+// headers can pass locally and fail CI. v2.1.11 shipped to main that way.
+// Skips itself with a warning when Docker is unavailable, like the clean-room
+// step below; CI remains the backstop.
+console.log('  Running the C/C++ suite under gcc (Docker)...');
+run('npm run test:gcc');
 
 // E2E gate: containerized by default (Linux browsers, reproducible env).
 // BW_E2E_NATIVE=1 npm run release  → use the native suite instead (e.g. no Docker).
@@ -599,10 +620,45 @@ if (answer === 'n') {
   process.exit(0);
 }
 
+// A squash-merge flattens the branch, so main is not a descendant of it. If
+// this branch was ALREADY squash-merged once, the merge base falls back to the
+// previous release and every file both sides touched conflicts -- mid-release,
+// on main. That is how v2.1.11 left main half-merged.
+//
+// `start-release` always cuts a fresh branch from main, so the normal flow
+// never hits this. It only happens when a release is retried from a branch
+// that already landed.
+const alreadyLanded = runQuiet(
+  `git log --oneline origin/main --grep="^v${version}" --max-count=1`);
+if (alreadyLanded) {
+  console.log(`
+  NOTE: origin/main already has a commit for v${version}:
+    ${alreadyLanded}
+
+  This branch was squash-merged once already, so a plain \`git merge --squash\`
+  will conflict on every shared file. Taking the branch's tree wholesale
+  instead, which is what a squash of a superset branch means.
+`);
+  if (ask('  Take the branch tree onto main? (y/n) ') === 'n') {
+    console.log('\n  Stopped. Nothing was merged or pushed.\n');
+    process.exit(0);
+  }
+}
+
 try {
   run('git checkout main');
   run('git pull --ff-only origin main');
-  run(`git merge --squash ${branch}`);
+  if (alreadyLanded) {
+    // Make main's tree exactly the branch's tree. read-tree, not
+    // `git checkout <branch> -- .`: the latter cannot stage a deletion, so a
+    // file that exists on main and not on the branch would survive and the
+    // commit would not match the branch. Verified in a scratch clone --
+    // read-tree reproduces the branch tree byte for byte and leaves untracked
+    // files (release.js permits untracked dev/) alone.
+    run(`git read-tree -u --reset ${branch}`);
+  } else {
+    run(`git merge --squash ${branch}`);
+  }
   run('git commit -F .git/BW_RELEASE_MSG');
   execSync('git push origin main', {
     cwd: root,
@@ -611,10 +667,19 @@ try {
   });
   console.log('\n  → git push origin main (BW_RELEASE_PUSH=1)');
 } catch (e) {
-  console.error(`\n✗ Merge/push failed. You are now on main with a partial merge.`);
-  console.error(`  Inspect the state, then either:`);
-  console.error(`    git merge --abort   (undo and go back)`);
-  console.error(`    git checkout ${branch}   (return to feature branch)`);
+  // Put main back where it was rather than leaving a partial merge behind.
+  // `git merge --abort` does NOT work after a squash merge (no MERGE_HEAD),
+  // which made the half-merged state confusing to recover from by hand.
+  console.error(`\n✗ Merge/push failed. Restoring main...`);
+  try {
+    execSync('git reset --hard HEAD', { cwd: root, stdio: 'inherit' });
+    execSync(`git checkout ${branch}`, { cwd: root, stdio: 'inherit' });
+    console.error(`  main restored; you are back on ${branch}. Nothing was pushed.`);
+  } catch (e2) {
+    console.error(`  Could not restore automatically. You are on main with a partial merge.`);
+    console.error(`    git reset --hard HEAD        (discard the partial merge)`);
+    console.error(`    git checkout ${branch}       (return to the feature branch)`);
+  }
   process.exit(1);
 }
 

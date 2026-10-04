@@ -339,8 +339,16 @@ npm run test           # Mocha + c8 coverage (80% min)
 npm run lint           # ESLint on src/
 npm run lint:drift     # Doc/API consistency checker
 npm run test:e2e       # Browser tests (Playwright)
+npm run test:gcc       # C/C++ suite under gcc on Linux (Docker)
+npm run ci:local       # GitHub's CI job locally: lint + build + test, Node 22 and 24
 npm run cleanbuild     # Full build + SRI hashes + README
 ```
+
+**If you touch `embedded_c/` or the C/C++ examples, run `npm run test:gcc`.**
+The host compiler on macOS is clang; CI uses gcc, which additionally enforces
+`-Wformat-truncation` and rejects a nesting destination that is not larger than
+its source. v2.1.11 reached main green locally and red in CI for exactly that
+reason. `npm run ci:local` runs the whole CI job the same way before you push.
 
 ## Key API
 

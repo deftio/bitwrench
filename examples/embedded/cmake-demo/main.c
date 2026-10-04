@@ -91,7 +91,7 @@ static int push_frame(int handle, const char *frame, void *user) {
 }
 
 static void broadcast(const char *msg) {
-    char frame[BW_BUF_SIZE * 4];
+    char frame[BW_BUF_SIZE * 56];
     int before;
     BW_SSE_FRAME(frame, msg);
     pthread_mutex_lock(&g_lock);
@@ -106,9 +106,17 @@ static void broadcast(const char *msg) {
  * The UI, built in C as TACO strings
  *
  * BW_TACO_* makes a leaf (its content is quoted text). BW_NEST* holds other
- * nodes, which is how a whole screen goes out in one message. Each level
- * needs its own buffer: building a node into the buffer it is reading from is
- * undefined behaviour.
+ * nodes, which is how a whole screen goes out in one message.
+ *
+ * Two buffer rules, both enforced by the compiler if you build with
+ * -Wall -Werror (and you should):
+ *
+ *   1. Each level needs its OWN buffer. Building a node into the buffer it is
+ *      reading from is undefined behaviour.
+ *   2. Each level must be LARGER than the level below it. Nesting grows the
+ *      string, so a same-sized destination can silently truncate -- gcc says
+ *      so via -Wformat-truncation, and it is right. Hence the escalating
+ *      sizes below.
  *
  * The device is not sending HTML and not sending code -- it sends a component
  * description, and bitwrench renders it with the classes the page's
@@ -128,7 +136,8 @@ static const char *led_btn_text(void) { return g_sensors.led_on ? "LED off" : "L
 static void stat_card(char *out, size_t out_size, const char *id,
                       const char *label, const char *value) {
     char lab[BW_TACO_BUF_SIZE], val[BW_TACO_BUF_SIZE];
-    char kids[BW_BUF_SIZE], card[BW_BUF_SIZE];
+    char kids[BW_BUF_SIZE];
+    char card[BW_BUF_SIZE * 2];        /* nesting grows the string: see note below */
     BW_TACO_CLS(lab, "div", "bw_text_muted bw_text_sm", label);
     BW_TACO_ID(val, "div", id, value);
     BW_ARRAY_START(kids);
@@ -151,13 +160,13 @@ static void format_readings(char *temp, char *hum, char *pres, char *light, char
 /** The whole page. Sent once per connected browser. */
 static void dashboard(char *out, size_t out_size) {
     char temp[32], hum[32], pres[32], light[32], up[32];
-    char c1[BW_BUF_SIZE], c2[BW_BUF_SIZE], c3[BW_BUF_SIZE];
-    char c4[BW_BUF_SIZE], c5[BW_BUF_SIZE];
-    char cards[BW_BUF_SIZE * 6], row[BW_BUF_SIZE * 6];
+    char c1[BW_BUF_SIZE * 4], c2[BW_BUF_SIZE * 4], c3[BW_BUF_SIZE * 4];
+    char c4[BW_BUF_SIZE * 4], c5[BW_BUF_SIZE * 4];
+    char cards[BW_BUF_SIZE * 24], row[BW_BUF_SIZE * 32];
     char title[BW_TACO_BUF_SIZE], lead[BW_TACO_BUF_SIZE];
     char b1[BW_TACO_BUF_SIZE], b2[BW_TACO_BUF_SIZE];
-    char btn_list[BW_BUF_SIZE], btns[BW_BUF_SIZE], led[BW_BUF_SIZE];
-    char body[BW_BUF_SIZE * 8];
+    char btn_list[BW_BUF_SIZE], btns[BW_BUF_SIZE * 2], led[BW_BUF_SIZE];
+    char body[BW_BUF_SIZE * 40];
 
     format_readings(temp, hum, pres, light, up, 32);
     stat_card(c1, sizeof c1, "val-temp", "Temperature", temp);
@@ -389,7 +398,7 @@ static void handle_request(int fd) {
      * problem to solve. */
     if (strcmp(method, "GET") == 0 && strcmp(path, "/events") == 0) {
         const char *headers = BW_SSE_HEADERS;
-        char page[BW_BUF_SIZE * 8], msg[BW_BUF_SIZE * 8], frame[BW_BUF_SIZE * 9];
+        char page[BW_BUF_SIZE * 48], msg[BW_BUF_SIZE * 52], frame[BW_BUF_SIZE * 56];
         write_all(fd, headers, strlen(headers));
 
         dashboard(page, sizeof(page));

@@ -19,6 +19,23 @@
  *
  * Skipped with a message when no compiler is present, so `npm test` still
  * works on a machine without build tools.
+ *
+ * WARNING -- clang and gcc are not interchangeable here, and CI uses gcc.
+ * Two failures shipped to main in v2.1.11 because these tests were only ever
+ * run against macOS clang:
+ *
+ *   1. gcc implements -Wformat-truncation (clang does not). Nesting a
+ *      same-sized buffer is a hard error under -Wall -Werror, correctly: it
+ *      can truncate. Every nesting level must be LARGER than its source.
+ *   2. Argument evaluation order is unspecified in C. Several side-effecting
+ *      calls in one printf() gave different results under the two compilers.
+ *      One call per statement.
+ *
+ * Before trusting a change here, run it against gcc:
+ *
+ *   docker run --rm -v "$PWD":/w -w /w node:24-bookworm sh -c \
+ *     'apt-get update -qq && apt-get install -y -qq build-essential && \
+ *      npx mocha test/bitwrench_test_embedded_c.js -r jsdom-global/register --exit'
  */
 
 import assert from "assert";
@@ -40,6 +57,38 @@ function compiler(lang) {
     if (!probe.error && probe.status === 0) return cc;
   }
   return null;
+}
+
+// Try to compile and report success, instead of throwing. Used by the
+// strictness tests below, where a FAILED compile is the expected result.
+function tryBuild(lang, source, extraFlags = []) {
+  const cc = compiler(lang);
+  if (!cc) return null;
+  const dir = mkdtempSync(join(tmpdir(), 'bw-strict-'));
+  const src = join(dir, lang === 'c++' ? 'probe.cpp' : 'probe.c');
+  writeFileSync(src, source);
+  const r = spawnSync(cc, [
+    src, '-I', inc, '-o', join(dir, 'probe'),
+    lang === 'c++' ? '-std=c++11' : '-std=c99',
+    '-Wall', '-Wextra', '-Werror', ...extraFlags
+  ], { encoding: 'utf8' });
+  return { ok: r.status === 0, stderr: r.stderr || '' };
+}
+
+// gcc implements -Wformat-truncation; clang does not. Several checks below only
+// mean something under gcc, so they are skipped elsewhere rather than asserted
+// falsely. `npm run test:gcc` runs this suite under gcc in Docker.
+function hasFormatTruncation() {
+  const probe = tryBuild('c', [
+    '#include <stdio.h>',
+    'int main(void) {',
+    '  char small[8]; char big[64];',
+    '  snprintf(big, sizeof big, "x");',
+    '  snprintf(small, sizeof small, "%s", big);',
+    '  return 0;',
+    '}'
+  ].join('\n'));
+  return probe === null ? null : !probe.ok;
 }
 
 function buildAndRun(lang, source, extraFlags = []) {
@@ -173,13 +222,23 @@ static int fake_send(int handle, const char *frame, void *user) {
 int main(void) {
   bw_clients_t c;
   bw_clients_init(&c);
-  printf("add=%d%d%d dup=%d count=%d\\n",
-    bw_clients_add(&c, 3), bw_clients_add(&c, 5), bw_clients_add(&c, 9),
-    bw_clients_add(&c, 3), c.count);
-  printf("sent=%d count=%d\\n", bw_clients_each(&c, fake_send, "data: x\\n\\n", 0), c.count);
-  printf("again=%d\\n", bw_clients_each(&c, fake_send, "data: y\\n\\n", 0));
-  printf("remove=%d missing=%d count=%d\\n",
-    bw_clients_remove(&c, 3), bw_clients_remove(&c, 77), c.count);
+  /* One call per statement. Argument evaluation order is UNSPECIFIED in C, so
+     several side-effecting calls in one printf() gave different results under
+     clang and gcc -- which is how this test passed locally and failed in CI. */
+  int a1 = bw_clients_add(&c, 3);
+  int a2 = bw_clients_add(&c, 5);
+  int a3 = bw_clients_add(&c, 9);
+  int dup = bw_clients_add(&c, 3);
+  printf("add=%d%d%d dup=%d count=%d\\n", a1, a2, a3, dup, c.count);
+
+  int sent = bw_clients_each(&c, fake_send, "data: x\\n\\n", 0);
+  printf("sent=%d count=%d\\n", sent, c.count);
+  int again = bw_clients_each(&c, fake_send, "data: y\\n\\n", 0);
+  printf("again=%d\\n", again);
+
+  int rm = bw_clients_remove(&c, 3);
+  int missing = bw_clients_remove(&c, 77);
+  printf("remove=%d missing=%d count=%d\\n", rm, missing, c.count);
   return 0;
 }
 `);
@@ -199,8 +258,13 @@ int main(void) {
 #include <stdio.h>
 #include "bwserve.h"
 int main(void) {
+  /* Each level up needs MORE room than its source: nesting grows the string.
+     GCC's -Wformat-truncation enforces this and is right to -- a same-sized
+     destination can silently truncate. */
   char a[BW_TACO_BUF_SIZE], b[BW_TACO_BUF_SIZE];
-  char kids[BW_BUF_SIZE], tree[BW_BUF_SIZE], msg[BW_BUF_SIZE];
+  char kids[BW_BUF_SIZE];
+  char tree[BW_BUF_SIZE * 2];
+  char msg[BW_BUF_SIZE * 4];
 
   BW_TACO_ID(a, "span", "temp", "22.4 C");
   BW_TACO_CLS(b, "span", "bw_text_muted", "Temperature");
@@ -213,13 +277,16 @@ int main(void) {
   BW_MOUNT(msg, "#app", tree);
   printf("%s\\n", msg);
 
-  /* three levels, and the attribute form. Each level needs its own buffer:
-     snprintf() into the buffer it is reading from is undefined. */
-  char mid[BW_BUF_SIZE];
+  /* Three levels, and the attribute form. Each level needs its own buffer --
+     snprintf() into the buffer it is reading from is undefined -- and each
+     must be larger than the level below it. */
+  char mid[BW_BUF_SIZE * 2];
+  char outer[BW_BUF_SIZE * 4];
+  char msg2[BW_BUF_SIZE * 8];
   BW_NEST_ATTR(mid, "section", "'id':'readings'", kids);
-  BW_NEST(tree, "div", mid);
-  BW_MOUNT(msg, "#app", tree);
-  printf("%s\\n", msg);
+  BW_NEST(outer, "div", mid);
+  BW_MOUNT(msg2, "#app", outer);
+  printf("%s\\n", msg2);
   return 0;
 }
 `);
@@ -407,6 +474,115 @@ int main() {
  * It is the end-to-end test for the embedded story -- if a header change
  * breaks the device-to-DOM path, it fails here.
  */
+/**
+ * The rules that only a strict Linux toolchain enforces.
+ *
+ * v2.1.11 shipped to main with three failures of exactly this kind, because
+ * the suite had only ever run against macOS clang. These tests encode the
+ * rules so the knowledge lives in the suite rather than in a commit message.
+ */
+describe('The headers survive a strict compiler', function() {
+  this.timeout(60000);
+
+  const NEST_SAME_SIZE = [
+    '#include <stdio.h>',
+    '#include "bitwrench.h"',
+    'int main(void) {',
+    '  char leaf[BW_TACO_BUF_SIZE];',
+    '  char kids[BW_BUF_SIZE];',
+    '  char same[BW_BUF_SIZE];        /* deliberately NOT larger than kids */',
+    '  BW_TACO_CLS(leaf, "div", "x", "y");',
+    '  BW_ARRAY_START(kids); BW_ARRAY_ITEM(kids, leaf); BW_ARRAY_END(kids);',
+    '  BW_NEST(same, "div", kids);',
+    '  printf("%s", same);',
+    '  return 0;',
+    '}'
+  ].join('\n');
+
+  const NEST_ESCALATING = NEST_SAME_SIZE
+    .replace('char same[BW_BUF_SIZE];        /* deliberately NOT larger than kids */',
+             'char same[BW_BUF_SIZE * 2];');
+
+  it('the headers compile clean on their own, with no nested comments', function() {
+    // A `/*` inside a doc block ends the comment early and the rest of the
+    // header becomes code. It broke bitwrench.h once, found only by gcc.
+    const out = tryBuild('c', [
+      '#include "bitwrench.h"',
+      '#include "bwserve.h"',
+      'int main(void) { return 0; }'
+    ].join('\n'));
+    if (out === null) return this.skip();
+    assert.ok(out.ok, 'the headers do not compile standalone:\n' + out.stderr);
+    assert.ok(!/within comment/.test(out.stderr), 'nested comment in a header');
+  });
+
+  it('a nesting destination must be larger than its source', function() {
+    const strict = hasFormatTruncation();
+    if (strict === null) return this.skip();
+    if (!strict) {
+      // clang: the rule still holds, it just is not enforced here.
+      return this.skip();
+    }
+    const same = tryBuild('c', NEST_SAME_SIZE);
+    assert.ok(!same.ok,
+      'a same-sized nest compiled clean -- the truncation rule is no longer enforced, ' +
+      'so this test can no longer protect the documented examples');
+    assert.match(same.stderr, /truncat/i);
+
+    const bigger = tryBuild('c', NEST_ESCALATING);
+    assert.ok(bigger.ok, 'escalating buffers should compile clean:\n' + bigger.stderr);
+  });
+
+  it('every documented buffer example compiles under -Wall -Wextra -Werror', function() {
+    // The examples in embedded_c/README.md and the BW_NEST docblock are what
+    // people copy. Before 2.1.11 they used same-sized buffers and could not
+    // be built by anyone using -Werror, which is normal in firmware.
+    const docExample = [
+      '#include <stdio.h>',
+      '#include "bwserve.h"',
+      'int main(void) {',
+      '  char label[256], value[256];',
+      '  char kids[512];',
+      '  char card[1024];',
+      '  char msg[2048];',
+      '  BW_TACO_CLS(label, "div", "bw_text_muted", "Temperature");',
+      '  BW_TACO_ID(value, "div", "val-temp", "22.4 C");',
+      '  BW_ARRAY_START(kids);',
+      '  BW_ARRAY_ITEM(kids, label);',
+      '  BW_ARRAY_ITEM(kids, value);',
+      '  BW_ARRAY_END(kids);',
+      '  BW_NEST_CLS(card, "div", "bw_bccl_card bw_p_3", kids);',
+      '  BW_MOUNT(msg, "#app", card);',
+      '  printf("%s", msg);',
+      '  return 0;',
+      '}'
+    ].join('\n');
+    const out = tryBuild('c', docExample);
+    if (out === null) return this.skip();
+    assert.ok(out.ok, 'the documented example does not compile:\n' + out.stderr);
+  });
+
+  it('the registry test does not depend on argument evaluation order', function() {
+    // Unspecified in C. Four side-effecting calls in one printf() gave
+    // different answers under clang and gcc, which is how a green local run
+    // became a red CI run.
+    const src = readFileSync(join(root, 'test', 'bitwrench_test_embedded_c.js'), 'utf8');
+    // Only the C probe inside the registry test, not this file's own prose --
+    // an earlier version of this check matched its own regex literal.
+    const probe = /bw_clients_init\(&c\);([\s\S]*?)return 0;/.exec(src);
+    assert.ok(probe, 'could not find the registry probe');
+    // Strip C comments first: the prose in this very probe mentions printf()
+    // and would otherwise match across the comment into the next statement.
+    const body = probe[1].replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    const calls = (body.match(/bw_clients_(add|remove|each)\(/g) || []).length;
+    const printfArgs = (body.match(/printf\([^;]*bw_clients_/g) || []).length;
+    assert.ok(calls > 0, 'no registry calls found');
+    assert.strictEqual(printfArgs, 0,
+      'a bw_clients_* call is still inside a printf() argument list; assign it ' +
+      'to a variable first so the order is specified');
+  });
+});
+
 describe('The POSIX C++ demo serves a real bitwrench app', function() {
   this.timeout(120000);
 
