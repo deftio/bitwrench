@@ -1119,6 +1119,12 @@ Buttons also support outline variants: `outline_primary`, `outline_secondary`, e
 
 ## Composition
 
+Every factory ignores options it does not read, and warns to the console the
+first time it sees one -- `bw.makeButton({ href })` tells you `href` is ignored
+and lists what the factory accepts. Set `bw.warnUnknownProps = false` to turn
+that off. Factories that forward event handlers (`makeInput`, `makeSelect`,
+`makeTextarea`) accept any `on*` key, so they do not warn.
+
 Because every factory returns a TACO object, you compose components with standard JavaScript:
 
 ```javascript

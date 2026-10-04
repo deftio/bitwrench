@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitwrench - SVG</title>
+  <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+  <script src="../dist/bitwrench.umd.min.js"></script>
+  <script src="shared-nav.js"></script>
+  <script src="site.js"></script>
+  <script src="../dist/bitwrench-code-edit.umd.min.js"></script>
+  <script src="shared-tryit.js"></script>
+</head>
+<body>
+  <div id="example-nav"></div>
+  <div id="app"></div>
+
+  <script>
+    var styles = initBitwrenchPage('18-svg.html');
+    var p = styles.palette;
+
+    // Styles for the demo shapes. Palette-driven, like everything else on the site.
+    bw.injectCSS(bw.css({
+      '.demo_bar':        { fill: p.primary.base, transition: 'fill 150ms ease-out' },
+      '.demo_bar:hover':  { fill: p.primary.hover },
+      '.demo_bar.warn':   { fill: p.warning.base },
+      '.demo_axis':       { stroke: p.light.border, 'stroke-width': 1 },
+      '.demo_label':      { fill: p.dark.base, 'font-size': '9px', 'pointer-events': 'none' },
+      '.demo_key':        { stroke: p.dark.base, 'stroke-width': 1, cursor: 'pointer' },
+      '.demo_key.white':  { fill: p.surface },
+      '.demo_key.black':  { fill: p.dark.base },
+      '.demo_key.down':   { fill: p.primary.base },
+      '.demo_cell':       { fill: p.light.base, stroke: p.light.border, cursor: 'pointer' },
+      '.demo_cell.on':    { fill: p.success.base }
+    }), { id: 'svg_page_css' });
+
+    function demo(id, title, desc, body) {
+      return {
+        t: 'div', a: { class: 'bw_site_pages_demo', id: 'section-' + id },
+        c: [
+          { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-' + id }, c: title } },
+          { t: 'div', a: { class: 'bw_site_pages_demo_body' },
+            c: [{ t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: desc }].concat(body) }
+        ]
+      };
+    }
+
+    // ---------------------------------------------------------------- 1
+    var s1 = demo('first', 'SVG Is Just TACO', [
+      'There is no SVG mode and no helper to learn. Start a tree with ',
+      { t: 'code', c: "t: 'svg'" },
+      ' and every child is created in the SVG namespace. Attribute names stay exactly as SVG spells them: ',
+      { t: 'code', c: 'viewBox' }, ', ', { t: 'code', c: 'stroke-width' }, ', ', { t: 'code', c: 'text-anchor' }, '.'
+    ], [
+      makeTryIt({
+        code: [
+          "bw.DOM(target, {",
+          "  t: 'svg', a: { viewBox: '0 0 240 60', width: 240 },",
+          "  c: [",
+          "    { t: 'rect', a: { x: 1, y: 1, width: 238, height: 58, rx: 8,",
+          "        fill: 'none', stroke: '#888' } },",
+          "    { t: 'circle', a: { cx: 40, cy: 30, r: 18, fill: '#336699' } },",
+          "    { t: 'text', a: { x: 70, y: 35, 'font-size': 14 }, c: 'hello, svg' }",
+          "  ]",
+          "});"
+        ].join('\n'),
+        height: '220px'
+      }),
+      site.makeCallout('concept', 'Why not just paste SVG markup?', {
+        t: 'p', c: [
+          'A string cannot carry an ', { t: 'code', c: 'onclick' }, ', cannot hold state, and cannot be patched later. ',
+          'As TACO, every shape is a normal element: handlers in ', { t: 'code', c: 'a:' },
+          ', state in ', { t: 'code', c: 'o:' }, ', and ', { t: 'code', c: 'bw.patch()' },
+          ' / ', { t: 'code', c: 'bw.toggleClass()' }, ' work on it afterwards.'
+        ]
+      })
+    ]);
+
+    // ---------------------------------------------------------------- 2
+    var s2 = demo('data', 'Shapes From Data', [
+      'Geometry is arithmetic, and arithmetic is JavaScript. A chart is a ',
+      { t: 'code', c: '.map()' }, ' over your numbers -- no template language, no plugin.'
+    ], [
+      makeTryIt({
+        code: [
+          "var values = [3, 9, 5, 12, 8, 6, 11];",
+          "var W = 240, H = 70, GAP = 3;",
+          "var max = Math.max.apply(null, values);",
+          "var bwid = (W - GAP * (values.length - 1)) / values.length;",
+          "",
+          "bw.DOM(target, {",
+          "  t: 'svg', a: { viewBox: '0 0 ' + W + ' ' + H, width: W,",
+          "                 role: 'img', 'aria-label': 'Example bar chart' },",
+          "  c: values.map(function (v, i) {",
+          "    var h = Math.round(v / max * (H - 12));",
+          "    return { t: 'g', c: [",
+          "      { t: 'rect', a: { x: i * (bwid + GAP), y: H - h, width: bwid, height: h,",
+          "          rx: 2, class: 'demo_bar' + (v > 10 ? ' warn' : '') },",
+          "        c: { t: 'title', c: String(v) } },   // native tooltip, no JS",
+          "      { t: 'text', a: { x: i * (bwid + GAP) + bwid / 2, y: H - h - 3,",
+          "          'text-anchor': 'middle', class: 'demo_label' }, c: String(v) }",
+          "    ]};",
+          "  })",
+          "});"
+        ].join('\n'),
+        height: '360px'
+      }),
+      site.makeCallout('tip', 'Classes, not fill attributes', {
+        t: 'p', c: [
+          'The bars above are styled by ', { t: 'code', c: '.demo_bar' }, ' and ',
+          { t: 'code', c: '.demo_bar.warn' }, ' rules generated with ', { t: 'code', c: 'bw.css()' },
+          ' from the page palette. That way a theme switch repaints them without re-rendering a single shape. ',
+          { t: 'code', c: "fill: 'currentColor'" }, ' is the other trick: the shape inherits the text colour around it.'
+        ]
+      })
+    ]);
+
+    // ---------------------------------------------------------------- 3
+    var s3 = demo('interact', 'Interaction: Handlers Go In a:', [
+      'Exactly like HTML. Put ', { t: 'code', c: 'onclick' }, ' in the attributes of the shape. ',
+      'For many small targets, one delegated handler on the root is less work and keeps working as shapes come and go.'
+    ], [
+      makeTryIt({
+        code: [
+          "// A row of cells with one handler on the <svg> root",
+          "bw.DOM(target, { t: 'div', c: [",
+          "  { t: 'svg', a: { viewBox: '0 0 240 40', width: 240,",
+          "      onclick: function (e) {",
+          "        var cell = e.target.closest('.demo_cell');",
+          "        if (!cell) return;",
+          "        bw.toggleClass(cell, 'on');               // flip just that cell",
+          "        var lit = bw.$('.demo_cell.on').length;",
+          "        bw.patch('out_cells_n', String(lit));",
+          "      } },",
+          "    c: [0,1,2,3,4,5].map(function (i) {",
+          "      return { t: 'rect', a: { x: i * 40, y: 0, width: 38, height: 38, rx: 4,",
+          "        id: 'cell_' + i, class: 'demo_cell' } };",
+          "    }) },",
+          "  { t: 'p', a: { id: 'out_cells' }, c: ['lit: ', { t: 'b', a: { id: 'out_cells_n' }, c: '0' }] }",
+          "]});"
+        ].join('\n'),
+        height: '340px'
+      }),
+      site.makeCallout('concept', 'Keyboard access is yours to add', {
+        t: 'p', c: [
+          'A ', { t: 'code', c: '<rect>' }, ' is not a button until you make it one: add ',
+          { t: 'code', c: 'tabindex: 0' }, ', a ', { t: 'code', c: 'role' }, ', an ',
+          { t: 'code', c: 'aria-label' }, ' and an ', { t: 'code', c: 'onkeydown' },
+          '. For a whole drawing that conveys information, put ', { t: 'code', c: "role: 'img'" },
+          ' and an ', { t: 'code', c: 'aria-label' }, ' on the ', { t: 'code', c: '<svg>' }, ' itself.'
+        ]
+      })
+    ]);
+
+    // ---------------------------------------------------------------- 4
+    var s4 = demo('update', 'Changing SVG That Is Already On The Page', [
+      'This is the payoff for building SVG as objects. You do not redraw the picture to change it: ',
+      'toggle a class for state, patch one attribute for geometry, sync children when the set of shapes changes.'
+    ], [
+      makeTryIt({
+        label: 'Edit & Run — click the buttons in the result',
+        code: [
+          "// Draw once...",
+          "bw.DOM(target, { t: 'div', c: [",
+          "  { t: 'svg', a: { viewBox: '0 0 240 60', width: 240 }, c: [",
+          "    { t: 'rect', a: { id: 'd_bar', x: 4, y: 20, width: 60, height: 20,",
+          "        rx: 3, class: 'demo_bar' } },",
+          "    { t: 'text', a: { id: 'd_txt', x: 4, y: 14, class: 'demo_label' }, c: '60' }",
+          "  ]},",
+          "  { t: 'div', a: { class: 'bw_mt_2' }, c: [",
+          "    bw.makeButton({ text: 'wider', size: 'sm', variant: 'primary', onclick: function () {",
+          "      var w = Number(bw.el('d_bar').getAttribute('width')) + 30;",
+          "      bw.patch('d_bar', { width: Math.min(w, 232) });     // one attribute",
+          "      bw.patch('d_txt', String(Math.min(w, 232)));        // one text node",
+          "    }}),",
+          "    ' ',",
+          "    bw.makeButton({ text: 'warn', size: 'sm', onclick: function () {",
+          "      bw.toggleClass('d_bar', 'warn');                    // a visual state",
+          "    }}),",
+          "    ' ',",
+          "    bw.makeButton({ text: 'reset', size: 'sm', onclick: function () {",
+          "      bw.patch('d_bar', { width: 60 });",
+          "      bw.patch('d_txt', '60');",
+          "      bw.toggleClass('d_bar', 'warn', false);             // force off",
+          "    }})",
+          "  ]}",
+          "]});"
+        ].join('\n'),
+        height: '420px'
+      }),
+      { t: 'div', a: { class: 'bw_mt_3' }, c: site.makeCallout('tip', 'Cost ladder, cheapest first', {
+        t: 'div', c: [
+          { t: 'p', c: [{ t: 'code', c: 'bw.toggleClass(ref, name, force?)' }, ' -- no node is touched. Focus, scroll and CSS transitions all survive.'] },
+          { t: 'p', c: [{ t: 'code', c: 'bw.patch(ref, text | {attrs} | taco)' }, ' -- one element.'] },
+          { t: 'p', c: [{ t: 'code', c: 'bw.syncChildren(svg, data, {key, create, update})' }, ' -- a series whose points come and go; kept shapes are the same nodes, so transitions continue.'] },
+          { t: 'p', c: [{ t: 'code', c: 'bw.mount(host, newSvg)' }, ' -- a different picture entirely. Correct, and sometimes clearest, but it throws away state the user can see.'] }
+        ]
+      }) }
+    ]);
+
+    // ---------------------------------------------------------------- 5
+    var s5 = demo('sync', 'A Live Series With syncChildren', [
+      'When the set of shapes changes, ', { t: 'code', c: 'bw.syncChildren()' },
+      ' matches them to your data by key. Points that stay keep their DOM nodes, so nothing flickers.'
+    ], [
+      makeTryIt({
+        code: [
+          "var svg = bw.mount(target, { t: 'svg', a: { viewBox: '0 0 240 60', width: 240 },",
+          "  c: { t: 'polyline', a: { id: 'ln', points: '', fill: 'none',",
+          "        stroke: '#336699', 'stroke-width': 2 } } });",
+          "",
+          "var opts = {",
+          "  key:    function (d) { return String(d.id); },",
+          "  create: function (d) { return { t: 'circle', a: { cx: d.x, cy: d.y, r: 4,",
+          "                                   fill: '#cc6633' } }; },",
+          "  update: function (el, d) { bw.patch(el, { cx: d.x, cy: d.y }); }",
+          "};",
+          "",
+          "function draw(points) {",
+          "  bw.syncChildren(svg, points, opts);",
+          "  bw.patch('ln', { points: points.map(function (d) {",
+          "    return d.x + ',' + d.y; }).join(' ') });",
+          "}",
+          "",
+          "var t = 0;",
+          "function tick() {",
+          "  t++;",
+          "  var pts = [0,1,2,3,4,5].map(function (i) {",
+          "    return { id: i, x: 15 + i * 42,",
+          "             y: 30 + Math.round(22 * Math.sin((t + i) / 2)) };",
+          "  });",
+          "  draw(pts);",
+          "}",
+          "tick();",
+          "var timer = setInterval(tick, 400);",
+          "setTimeout(function () { clearInterval(timer); }, 8000);  // demo stops itself"
+        ].join('\n'),
+        height: '460px'
+      })
+    ]);
+
+    // ---------------------------------------------------------------- 6
+    var s6 = demo('mix', 'Mixing SVG With Components', [
+      'An SVG tree is a TACO, so it goes anywhere a TACO goes: a card body, a button label, a table cell.'
+    ], [
+      makeTryIt({
+        code: [
+          "function spark(values, w, h) {",
+          "  var max = Math.max.apply(null, values);",
+          "  return { t: 'svg', a: { viewBox: '0 0 ' + w + ' ' + h, width: w,",
+          "      'aria-hidden': 'true' },",
+          "    c: { t: 'polyline', a: { fill: 'none', stroke: 'currentColor',",
+          "      'stroke-width': 1.5,",
+          "      points: values.map(function (v, i) {",
+          "        return (i * (w / (values.length - 1))) + ',' +",
+          "               (h - (v / max) * (h - 2));",
+          "      }).join(' ') } } };",
+          "}",
+          "",
+          "bw.DOM(target, bw.makeCard({",
+          "  title: 'Hosts',",
+          "  content: bw.makeTable({",
+          "    data: [",
+          "      { host: 'web-1', load: [2, 5, 3, 8, 6] },",
+          "      { host: 'web-2', load: [7, 6, 9, 4, 5] }",
+          "    ],",
+          "    columns: [",
+          "      { key: 'host', label: 'Host' },",
+          "      { key: 'load', label: 'Last 5m',",
+          "        render: function (v) { return spark(v, 90, 20); } }",
+          "    ]",
+          "  }),",
+          "  footer: bw.makeButton({ text: 'Refresh', variant: 'primary', size: 'sm' })",
+          "}));"
+        ].join('\n'),
+        height: '440px'
+      }),
+      site.makeCallout('concept', 'HTML inside SVG: foreignObject', {
+        t: 'p', c: [
+          'Text does not wrap in SVG. When you need paragraphs or a form control inside a drawing, ',
+          { t: 'code', c: 'foreignObject' }, ' switches back to the HTML namespace and bitwrench follows it automatically. ',
+          'Use it for prose and inputs, not for shapes.'
+        ]
+      })
+    ]);
+
+    // ---------------------------------------------------------------- 7
+    var s7 = demo('recipes', 'Recipes: Ring, Gauge, Keyboard', [
+      'Three shapes worth stealing. The keyboard is the pattern to copy for anything interactive: ',
+      'geometry from data, handlers in ', { t: 'code', c: 'a:' }, ', and per-key state driven by ',
+      { t: 'code', c: 'bw.toggleClass()' }, ' instead of a redraw.'
+    ], [
+      makeTryIt({
+        label: 'Progress ring — one attribute moves it',
+        code: [
+          "var SIZE = 72, STROKE = 8;",
+          "var r = (SIZE - STROKE) / 2, circ = 2 * Math.PI * r;",
+          "",
+          "function ring(pct) {",
+          "  return { t: 'svg', a: { viewBox: '0 0 ' + SIZE + ' ' + SIZE, width: SIZE,",
+          "      role: 'img', 'aria-label': pct + '% complete' }, c: [",
+          "    { t: 'circle', a: { cx: SIZE/2, cy: SIZE/2, r: r, fill: 'none',",
+          "        stroke: '#e5e7eb', 'stroke-width': STROKE } },",
+          "    { t: 'circle', a: { id: 'arc', cx: SIZE/2, cy: SIZE/2, r: r, fill: 'none',",
+          "        stroke: '#336699', 'stroke-width': STROKE, 'stroke-linecap': 'round',",
+          "        'stroke-dasharray': circ.toFixed(1),",
+          "        'stroke-dashoffset': (circ * (1 - pct/100)).toFixed(1),",
+          "        transform: 'rotate(-90 ' + SIZE/2 + ' ' + SIZE/2 + ')' } },",
+          "    { t: 'text', a: { id: 'pct', x: SIZE/2, y: SIZE/2 + 4,",
+          "        'text-anchor': 'middle', 'font-size': 14 }, c: pct + '%' }",
+          "  ]};",
+          "}",
+          "",
+          "var v = 25;",
+          "bw.DOM(target, { t: 'div', c: [ring(v), { t: 'div', c:",
+          "  bw.makeButton({ text: '+15%', size: 'sm', variant: 'primary', onclick: function () {",
+          "    v = (v + 15) % 115;",
+          "    bw.patch('arc', { 'stroke-dashoffset': (circ * (1 - v/100)).toFixed(1) });",
+          "    bw.patch('pct', v + '%');",
+          "  }}) }]});"
+        ].join('\n'),
+        height: '440px'
+      }),
+      makeTryIt({
+        label: 'Clickable keyboard — class per key, no redraw',
+        code: [
+          "var BLACK = { 1:1, 3:1, 6:1, 8:1, 10:1 };",
+          "",
+          "function keyboard(lo, hi) {",
+          "  var whites = [], blacks = [], x = 0;",
+          "  for (var n = lo; n <= hi; n++) {",
+          "    var isBlack = BLACK[n % 12];",
+          "    var a = { id: 'key_' + n,",
+          "      class: 'demo_key ' + (isBlack ? 'black' : 'white'),",
+          "      onpointerdown: function (e) {",
+          "        bw.toggleClass(e.target, 'down', true);",
+          "        bw.patch('kb_out', 'note ' + e.target.id.slice(4));",
+          "      },",
+          "      onpointerup: function (e) { bw.toggleClass(e.target, 'down', false); },",
+          "      onpointerleave: function (e) { bw.toggleClass(e.target, 'down', false); } };",
+          "    if (isBlack) {",
+          "      a.x = x - 6; a.y = 0; a.width = 12; a.height = 40;",
+          "      blacks.push({ t: 'rect', a: a });",
+          "    } else {",
+          "      a.x = x; a.y = 0; a.width = 18; a.height = 64; a.rx = 2;",
+          "      whites.push({ t: 'rect', a: a });",
+          "      x += 19;",
+          "    }",
+          "  }",
+          "  // blacks last so they paint on top",
+          "  return { t: 'svg', a: { viewBox: '0 0 ' + x + ' 64', width: x,",
+          "      role: 'img', 'aria-label': 'On-screen keyboard' },",
+          "    c: whites.concat(blacks) };",
+          "}",
+          "",
+          "bw.DOM(target, { t: 'div', c: [",
+          "  keyboard(60, 76),",
+          "  { t: 'p', a: { id: 'kb_out' }, c: 'press a key' },",
+          "  bw.makeButton({ text: 'all off', size: 'sm', onclick: function () {",
+          "    bw.toggleClass('.demo_key', 'down', false);   // every key, one call",
+          "  }})",
+          "]});"
+        ].join('\n'),
+        height: '520px'
+      })
+    ]);
+
+    // ---------------------------------------------------------------- 8
+    var s8 = demo('next', 'Where To Go Next', [
+      'The written guide covers the rest: coordinates and scaling, accessibility in detail, ',
+      'server-driven SVG over bwserve, exporting to a file, and the gotchas that cost people an afternoon.'
+    ], [
+      { t: 'div', a: { class: 'bw_feature_grid' }, c: [
+        { href: 'https://github.com/deftio/bitwrench/blob/main/docs/svg.md', title: 'SVG Guide (docs/svg.md)',
+          desc: 'The full written version of this page, plus recipes, accessibility, export and gotchas.' },
+        { href: 'https://github.com/deftio/bitwrench/blob/main/docs/core-api.md', title: 'Core API Card',
+          desc: 'patch, toggleClass, syncChildren, clear -- one line each. The verbs used all over this page.' },
+        { href: '03-styling.html', title: 'Styling',
+          desc: 'Where the palette comes from, and how bw.css() generates the rules these shapes use.' },
+        { href: '05-state.html', title: 'State & Interactivity',
+          desc: 'When to patch, when to sync, and when a full re-render is the right call.' }
+      ].map(function (item) {
+        return { t: 'div', a: { class: 'bw_site_pages_feature' }, c: [
+          { t: 'h4', c: { t: 'a', a: { href: item.href, style: 'text-decoration:none' }, c: item.title } },
+          { t: 'p', c: item.desc }
+        ]};
+      }) }
+    ]);
+
+    // ---------------------------------------------------------------- page
+    bw.DOM('#app', {
+      t: 'div', c: [
+        { t: 'div', a: { class: 'bw_site_pages_header' },
+          c: { t: 'div', a: { class: 'content-container wide', style: 'padding-top:0;padding-bottom:0' }, c: [
+            { t: 'h1', c: 'SVG' },
+            { t: 'p', a: { class: 'subtitle' },
+              c: 'Charts, gauges, diagrams and interactive drawings -- as plain objects, changed in place. Every example is editable.' }
+          ]}},
+        { t: 'div', a: { class: 'content-container wide' }, c: [
+          { t: 'div', a: { class: 'bw_site_pages_callout bw_site_pages_callout_concept' }, c: [
+            { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'No SVG mode, no plugin' },
+            { t: 'p', c: [
+              'SVG has worked since 2.0.26 and needs nothing special: ', { t: 'code', c: "t: 'svg'" },
+              ' starts a tree and children are created in the SVG namespace. What this page is really about is the second half -- ',
+              'changing a drawing after it is on the page without rebuilding it.'
+            ]}
+          ]},
+          s1, s2, s3, s4, s5, s6, s7, s8
+        ]}
+      ]
+    });
+  </script>
+</body>
+</html>

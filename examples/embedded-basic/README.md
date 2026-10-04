@@ -32,8 +32,8 @@ A live dashboard running entirely on a microcontroller that shows:
 
 | Board | Chip | LED | Sketch |
 |-------|------|-----|--------|
-| [Unexpected Maker ESP32-S3 Pro](https://unexpectedmaker.com/esp32s3pro) | ESP32-S3 | NeoPixel (GPIO 40) | `esp32s3-pro/esp32s3_basic.ino` |
-| [Raspberry Pi Pico 2W](https://www.raspberrypi.com/products/raspberry-pi-pico-2/) | RP2350 | Onboard LED (CYW43) | `pico2w/pico2w_basic.ino` |
+| [Unexpected Maker ESP32-S3 Pro](https://unexpectedmaker.com/esp32s3pro) | ESP32-S3 | NeoPixel (GPIO 40) | `esp32s3_basic/esp32s3_basic.ino` |
+| [Raspberry Pi Pico 2W](https://www.raspberrypi.com/products/raspberry-pi-pico-2/) | RP2350 | Onboard LED (CYW43) | `pico2w_basic/pico2w_basic.ino` |
 
 Both boards use the same `dashboard.html` served from flash.
 
@@ -374,7 +374,7 @@ function sendCmd(cmd, data) {
 
 ## Sketch Code Walkthrough (ESP32-S3 Pro)
 
-The Arduino sketch (`esp32s3-pro/esp32s3_basic.ino`) runs on the device. It
+The Arduino sketch (`esp32s3_basic/esp32s3_basic.ino`) runs on the device. It
 handles WiFi, file serving, SSE streaming, and commands.
 
 ### Includes -- Header-Only, No Compilation
@@ -549,7 +549,7 @@ void loop() {
 
 ## Pico 2W Differences
 
-The Pico 2W sketch (`pico2w/pico2w_basic.ino`) uses the same dashboard but
+The Pico 2W sketch (`pico2w_basic/pico2w_basic.ino`) uses the same dashboard but
 differs in the server layer:
 
 | Aspect | ESP32-S3 Pro | Pico 2W |

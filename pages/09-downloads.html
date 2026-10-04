@@ -304,7 +304,7 @@
                           { t: 'h3', c: 'Modern browsers' },
                           codeSnippet(null, '<script src="bitwrench.umd.min.js"><\/script>', 'html'),
                           { t: 'p', a: { style: 'font-size:0.85rem;color:#444;margin:0' }, c: [
-                            '~165 KB on disk, ~45 KB over the wire (most servers gzip automatically). Adds ', { t: 'code', c: 'bw' }, ' to the global scope.'
+                            '~169 KB on disk, ~46 KB over the wire (most servers gzip automatically). Adds ', { t: 'code', c: 'bw' }, ' to the global scope.'
                           ]}
                         ]
                       },
@@ -313,7 +313,7 @@
                         c: [
                           { t: 'h3', c: 'Legacy browsers (IE11+)' },
                           codeSnippet(null, '<script src="bitwrench.es5.min.js"><\/script>', 'html'),
-                          { t: 'p', a: { style: 'font-size:0.85rem;color:#444;margin:0' }, c: '~177 KB on disk, ~47 KB gzipped. Transpiled to ES5 syntax for older webviews.' }
+                          { t: 'p', a: { style: 'font-size:0.85rem;color:#444;margin:0' }, c: '~180 KB on disk, ~47 KB gzipped. Transpiled to ES5 syntax for older webviews.' }
                         ]
                       }
                     ]
@@ -535,7 +535,7 @@
                         { t: 'code', c: '<script src="/bitwrench.umd.min.js"><\/script>' },
                         '. Your server stores the .gz file (~45KB on flash) and sends it with a ',
                         { t: 'code', c: 'Content-Encoding: gzip' },
-                        ' header. The browser decompresses transparently -- the ~165KB uncompressed size is only in browser memory.'
+                        ' header. The browser decompresses transparently -- the 169KB uncompressed size is only in browser memory.'
                       ]},
                       { t: 'p', a: { style: 'margin-top:0.5rem;font-size:0.85rem' }, c: [
                         { t: 'strong', c: 'Troubleshooting: ' },
@@ -681,7 +681,7 @@
       // ---- Hero metadata ----
       var umdEntry = manifest.files.filter(function(f) { return /^bitwrench\./.test(f.file) && f.format === 'UMD' && f.minified; })[0];
       var gzKB = umdEntry ? fmtSize(umdEntry.gzipped) : '~45 KB';
-      var rawKB = umdEntry ? fmtSize(umdEntry.raw) : '~165 KB';
+      var rawKB = umdEntry ? fmtSize(umdEntry.raw) : '169 KB';
       bw.DOM('#hero-subtitle', {
         t: 'span',
         c: 'v' + manifest.version + ' \u00B7 ' + rawKB + ' (' + gzKB + ' gzipped) \u00B7 zero dependencies \u00B7 ' + manifest.files.length + ' dist files'

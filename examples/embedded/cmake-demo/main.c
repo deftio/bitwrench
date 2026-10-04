@@ -1,24 +1,25 @@
 /**
- * bwserve_demo — POSIX socket server speaking the bwserve protocol.
+ * bwserve_demo — the same app as ../posix-cpp, written in C99.
  *
- * This is a desktop simulation of what an ESP32 would do. It runs on
- * Linux/macOS without any hardware — just compile and run:
+ * A desktop program that serves a live bitwrench dashboard over POSIX
+ * sockets. No microcontroller, no WiFi, no filesystem -- just cmake, a C
+ * compiler and a browser. It is the ESP32 sketch with the transport swapped,
+ * so the protocol logic here moves to firmware unchanged.
  *
  *   mkdir build && cd build
  *   cmake .. && make
  *   ./bwserve_demo
+ *   # open http://localhost:8080
  *
- * Then open http://localhost:8080 in your browser.
+ * Read ../posix-cpp/main.cpp alongside this: it is the C++ version, where
+ * composing the UI is pleasanter (std::string, no fixed buffers). This file
+ * is the one to copy if your toolchain is C only.
  *
- * The server:
- *   - Serves a bitwrench bootstrap HTML page on GET /
- *   - Pushes sensor data via SSE on GET /events
- *   - Accepts commands via POST /api/command
- *   - Uses bitwrench.h + bwserve.h macros for all protocol messages
- *
- * This demonstrates the exact same wire protocol that would run on an
- * ESP32. The only difference is the transport layer (POSIX sockets vs
- * ESPAsyncWebServer). Copy the protocol logic to your embedded project.
+ * Routes:
+ *   GET  /bitwrench.js   the gzipped bundle out of flash (no CDN, no FS)
+ *   GET  /               a bootstrap page with no markup and no DOM code
+ *   GET  /events         SSE: mounts the UI, then patches it
+ *   POST /bw/events      what bw.actions sends when a bw_act_* is clicked
  *
  * License: BSD-2-Clause
  */
@@ -28,7 +29,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-#include <math.h>
 #include <pthread.h>
 #include <signal.h>
 #include <errno.h>
@@ -37,21 +37,22 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+/* Set before the headers: the registry and the send buffers size themselves
+ * from these. A board with less RAM lowers them. */
+#define BW_MAX_CLIENTS  8
+#define BW_BUF_SIZE     1024
+
 #include "bitwrench.h"
 #include "bwserve.h"
-
-/* ========================================================================
- * Configuration
- * ======================================================================== */
+#include "bitwrench_embedded.h"   /* generated: npm run build:generated */
 
 #define PORT            8080
-#define MAX_CLIENTS     8
-#define SENSOR_INTERVAL 2   /* seconds between SSE pushes */
+#define SENSOR_INTERVAL 2         /* seconds between SSE pushes */
 #define BACKLOG         16
 #define REQ_BUF_SIZE    4096
 
 /* ========================================================================
- * Simulated sensor state
+ * Simulated sensor state (on a board: ADC reads and a GPIO level)
  * ======================================================================== */
 
 typedef struct {
@@ -63,75 +64,180 @@ typedef struct {
     unsigned long uptime_s;
 } sensor_state_t;
 
-static sensor_state_t g_sensors = {
-    .temperature = 22.0f,
-    .humidity = 55.0f,
-    .pressure = 1013.25f,
-    .light = 512,
-    .led_on = 0,
-    .uptime_s = 0
-};
-
+static sensor_state_t g_sensors = { 22.0f, 55.0f, 1013.25f, 512, 0, 0 };
 static volatile int g_running = 1;
 
 /* ========================================================================
- * SSE client tracking
+ * Connected browsers
+ *
+ * bw_clients_t is the fixed-size registry from bwserve.h -- no allocation,
+ * and a socket that has gone away is dropped during the fan-out. The mutex is
+ * ours because this demo pushes from a second thread; a single-threaded
+ * firmware loop does not need one.
  * ======================================================================== */
 
-static int g_sse_clients[MAX_CLIENTS];
-static int g_sse_count = 0;
-static pthread_mutex_t g_sse_lock = PTHREAD_MUTEX_INITIALIZER;
+static bw_clients_t g_clients;
+static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static void sse_add_client(int fd) {
-    pthread_mutex_lock(&g_sse_lock);
-    if (g_sse_count < MAX_CLIENTS) {
-        g_sse_clients[g_sse_count++] = fd;
-        printf("[sse] client connected (fd=%d, total=%d)\n", fd, g_sse_count);
-    } else {
-        printf("[sse] max clients reached, rejecting fd=%d\n", fd);
-        close(fd);
+static int push_frame(int handle, const char *frame, void *user) {
+    size_t len = strlen(frame), sent = 0;
+    (void)user;
+    while (sent < len) {
+        ssize_t n = write(handle, frame + sent, len - sent);
+        if (n <= 0) return 0;          /* gone: bw_clients_each() drops it */
+        sent += (size_t)n;
     }
-    pthread_mutex_unlock(&g_sse_lock);
+    return 1;
 }
 
-static void sse_remove_client(int fd) {
-    pthread_mutex_lock(&g_sse_lock);
-    for (int i = 0; i < g_sse_count; i++) {
-        if (g_sse_clients[i] == fd) {
-            g_sse_clients[i] = g_sse_clients[--g_sse_count];
-            break;
-        }
-    }
-    pthread_mutex_unlock(&g_sse_lock);
-    close(fd);
-}
-
-static void sse_broadcast(const char* data) {
-    char frame[BW_BUF_SIZE * 2];
-    BW_SSE_FRAME(frame, data);
-    size_t frame_len = strlen(frame);
-
-    pthread_mutex_lock(&g_sse_lock);
-    for (int i = 0; i < g_sse_count; ) {
-        ssize_t written = write(g_sse_clients[i], frame, frame_len);
-        if (written <= 0) {
-            /* Client disconnected */
-            printf("[sse] client disconnected (fd=%d)\n", g_sse_clients[i]);
-            close(g_sse_clients[i]);
-            g_sse_clients[i] = g_sse_clients[--g_sse_count];
-        } else {
-            i++;
-        }
-    }
-    pthread_mutex_unlock(&g_sse_lock);
+static void broadcast(const char *msg) {
+    char frame[BW_BUF_SIZE * 4];
+    int before;
+    BW_SSE_FRAME(frame, msg);
+    pthread_mutex_lock(&g_lock);
+    before = g_clients.count;
+    bw_clients_each(&g_clients, push_frame, frame, NULL);
+    if (g_clients.count != before)
+        printf("[sse] dropped %d client(s), %d left\n", before - g_clients.count, g_clients.count);
+    pthread_mutex_unlock(&g_lock);
 }
 
 /* ========================================================================
- * Simulated sensor updates
+ * The UI, built in C as TACO strings
+ *
+ * BW_TACO_* makes a leaf (its content is quoted text). BW_NEST* holds other
+ * nodes, which is how a whole screen goes out in one message. Each level
+ * needs its own buffer: building a node into the buffer it is reading from is
+ * undefined behaviour.
+ *
+ * The device is not sending HTML and not sending code -- it sends a component
+ * description, and bitwrench renders it with the classes the page's
+ * bw.loadStyles() call already styled.
  * ======================================================================== */
 
+/* The LED alert's text and styling both follow one int, so both are derived
+ * in one place -- the mount and the later patch cannot disagree. */
+static const char *led_text(void) { return g_sensors.led_on ? "LED is ON" : "LED is off"; }
+static const char *led_class(void) {
+    return g_sensors.led_on ? "bw_bccl_alert bw_bccl_alert_success bw_mt_3"
+                            : "bw_bccl_alert bw_bccl_alert_info bw_mt_3";
+}
+static const char *led_btn_text(void) { return g_sensors.led_on ? "LED off" : "LED on"; }
+
+/** One labelled reading. `id` is the handle later patches address. */
+static void stat_card(char *out, size_t out_size, const char *id,
+                      const char *label, const char *value) {
+    char lab[BW_TACO_BUF_SIZE], val[BW_TACO_BUF_SIZE];
+    char kids[BW_BUF_SIZE], card[BW_BUF_SIZE];
+    BW_TACO_CLS(lab, "div", "bw_text_muted bw_text_sm", label);
+    BW_TACO_ID(val, "div", id, value);
+    BW_ARRAY_START(kids);
+    BW_ARRAY_ITEM(kids, lab);
+    BW_ARRAY_ITEM(kids, val);
+    BW_ARRAY_END(kids);
+    BW_NEST_CLS(card, "div", "bw_bccl_card bw_p_3", kids);
+    snprintf(out, out_size, "r{'t':'div','a':{'class':'bw_col_6 bw_col_md_4'},'c':%s}",
+             BW_SKIP_R(card));
+}
+
+static void format_readings(char *temp, char *hum, char *pres, char *light, char *up, size_t n) {
+    snprintf(temp, n, "%.1f C", g_sensors.temperature);
+    snprintf(hum, n, "%.1f %%", g_sensors.humidity);
+    snprintf(pres, n, "%.1f hPa", g_sensors.pressure);
+    snprintf(light, n, "%d lux", g_sensors.light);
+    snprintf(up, n, "%lus", g_sensors.uptime_s);
+}
+
+/** The whole page. Sent once per connected browser. */
+static void dashboard(char *out, size_t out_size) {
+    char temp[32], hum[32], pres[32], light[32], up[32];
+    char c1[BW_BUF_SIZE], c2[BW_BUF_SIZE], c3[BW_BUF_SIZE];
+    char c4[BW_BUF_SIZE], c5[BW_BUF_SIZE];
+    char cards[BW_BUF_SIZE * 6], row[BW_BUF_SIZE * 6];
+    char title[BW_TACO_BUF_SIZE], lead[BW_TACO_BUF_SIZE];
+    char b1[BW_TACO_BUF_SIZE], b2[BW_TACO_BUF_SIZE];
+    char btn_list[BW_BUF_SIZE], btns[BW_BUF_SIZE], led[BW_BUF_SIZE];
+    char body[BW_BUF_SIZE * 8];
+
+    format_readings(temp, hum, pres, light, up, 32);
+    stat_card(c1, sizeof c1, "val-temp", "Temperature", temp);
+    stat_card(c2, sizeof c2, "val-humidity", "Humidity", hum);
+    stat_card(c3, sizeof c3, "val-pressure", "Pressure", pres);
+    stat_card(c4, sizeof c4, "val-light", "Light", light);
+    stat_card(c5, sizeof c5, "val-uptime", "Uptime", up);
+
+    BW_ARRAY_START(cards);
+    BW_ARRAY_ITEM(cards, c1);
+    BW_ARRAY_ITEM(cards, c2);
+    BW_ARRAY_ITEM(cards, c3);
+    BW_ARRAY_ITEM(cards, c4);
+    BW_ARRAY_ITEM(cards, c5);
+    BW_ARRAY_END(cards);
+    BW_NEST_CLS(row, "div", "bw_row bw_g_3", cards);
+
+    /* bw_act_* is the whole event wiring: bw.actions.enable() on the page
+     * turns a click into a post-back carrying this name. No onclick, and no
+     * code from the device. */
+    BW_TACO_ATTR(b1, "button",
+        "'class':'bw_bccl_btn bw_bccl_btn_primary bw_act_led_toggle','id':'led-btn'",
+        led_btn_text());
+    BW_TACO_ATTR(b2, "button",
+        "'class':'bw_bccl_btn bw_bccl_btn_secondary bw_ml_2 bw_act_reset'", "Reset uptime");
+    BW_ARRAY_START(btn_list);
+    BW_ARRAY_ITEM(btn_list, b1);
+    BW_ARRAY_ITEM(btn_list, b2);
+    BW_ARRAY_END(btn_list);
+    /* btn_list, not btns, as the source: writing a node into the buffer it is
+     * reading from is undefined behaviour. */
+    BW_NEST_CLS(btns, "div", "bw_mt_3", btn_list);
+
+    {
+        char led_attrs[128];
+        snprintf(led_attrs, sizeof(led_attrs), "'class':'%s','id':'val-led'", led_class());
+        BW_TACO_ATTR(led, "div", led_attrs, led_text());
+    }
+
+    BW_TACO_CLS(title, "h1", "bw_mb_1", "bwserve C demo");
+    BW_TACO_CLS(lead, "p", "bw_text_muted",
+        "POSIX sockets, C99, no framework. Served from flash.");
+
+    BW_ARRAY_START(body);
+    BW_ARRAY_ITEM(body, title);
+    BW_ARRAY_ITEM(body, lead);
+    BW_ARRAY_ITEM(body, row);
+    BW_ARRAY_ITEM(body, btns);
+    BW_ARRAY_ITEM(body, led);
+    BW_ARRAY_END(body);
+
+    snprintf(out, out_size,
+        "r{'t':'div','a':{'class':'bw_bccl_container bw_py_4'},'c':%s}", body);
+}
+
+/* ========================================================================
+ * Updates: name what changed
+ *
+ * No diffing, on either side. The code knows which ids it touched, so it says
+ * so -- which is why one small buffer is enough for a page this size.
+ * ======================================================================== */
+
+static void broadcast_readings(void) {
+    char temp[32], hum[32], pres[32], light[32], up[32];
+    char msg[BW_BUF_SIZE], out[BW_BUF_SIZE * 4];
+    bw_batch_t batch;
+
+    format_readings(temp, hum, pres, light, up, 32);
+    bw_batch_begin(&batch);
+    BW_PATCH(msg, "val-temp", temp);        bw_batch_add(&batch, msg);
+    BW_PATCH(msg, "val-humidity", hum);     bw_batch_add(&batch, msg);
+    BW_PATCH(msg, "val-pressure", pres);    bw_batch_add(&batch, msg);
+    BW_PATCH(msg, "val-light", light);      bw_batch_add(&batch, msg);
+    BW_PATCH(msg, "val-uptime", up);        bw_batch_add(&batch, msg);
+    bw_batch_end(out, sizeof(out), &batch);
+
+    broadcast(out);                          /* one frame, one reflow */
+}
+
 static void update_sensors(void) {
-    /* Simulate slowly drifting sensor values */
     g_sensors.temperature += ((float)(rand() % 100) - 50) / 100.0f;
     if (g_sensors.temperature < 15.0f) g_sensors.temperature = 15.0f;
     if (g_sensors.temperature > 35.0f) g_sensors.temperature = 35.0f;
@@ -141,320 +247,242 @@ static void update_sensors(void) {
     if (g_sensors.humidity > 90.0f) g_sensors.humidity = 90.0f;
 
     g_sensors.pressure += ((float)(rand() % 100) - 50) / 200.0f;
-
     g_sensors.light = 400 + (rand() % 300);
-
     g_sensors.uptime_s += SENSOR_INTERVAL;
 }
 
 /* ========================================================================
- * Build and broadcast sensor UI updates using bwserve protocol
- * ======================================================================== */
-
-static void broadcast_sensor_update(void) {
-    /* Use batch to send all updates atomically */
-    bw_batch_t batch;
-    bw_batch_begin(&batch);
-
-    char temp_msg[BW_BUF_SIZE];
-    char temp_str[32];
-    snprintf(temp_str, sizeof(temp_str), "%.1f C", g_sensors.temperature);
-    BW_PATCH(temp_msg, "val-temp", temp_str);
-    bw_batch_add(&batch, temp_msg);
-
-    char hum_msg[BW_BUF_SIZE];
-    char hum_str[32];
-    snprintf(hum_str, sizeof(hum_str), "%.1f%%", g_sensors.humidity);
-    BW_PATCH(hum_msg, "val-humidity", hum_str);
-    bw_batch_add(&batch, hum_msg);
-
-    char pres_msg[BW_BUF_SIZE];
-    char pres_str[32];
-    snprintf(pres_str, sizeof(pres_str), "%.1f hPa", g_sensors.pressure);
-    BW_PATCH(pres_msg, "val-pressure", pres_str);
-    bw_batch_add(&batch, pres_msg);
-
-    char light_msg[BW_BUF_SIZE];
-    char light_str[32];
-    snprintf(light_str, sizeof(light_str), "%d lux", g_sensors.light);
-    BW_PATCH(light_msg, "val-light", light_str);
-    bw_batch_add(&batch, light_msg);
-
-    char up_msg[BW_BUF_SIZE];
-    char up_str[32];
-    snprintf(up_str, sizeof(up_str), "%lus", g_sensors.uptime_s);
-    BW_PATCH(up_msg, "val-uptime", up_str);
-    bw_batch_add(&batch, up_msg);
-
-    char led_msg[BW_BUF_SIZE];
-    BW_PATCH(led_msg, "val-led", g_sensors.led_on ? "ON" : "OFF");
-    bw_batch_add(&batch, led_msg);
-
-    char out[BW_BUF_SIZE * 4];
-    bw_batch_end(out, sizeof(out), &batch);
-
-    sse_broadcast(out);
-}
-
-/* ========================================================================
- * Bootstrap HTML — the page served on GET /
- *
- * In a real ESP32, this would come from SPIFFS. Here we build it inline
- * using standard C string concatenation.
- * ======================================================================== */
-
-static const char BOOTSTRAP_HTML[] =
-    "<!DOCTYPE html>"
-    "<html><head>"
-    "<meta charset=\"UTF-8\">"
-    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
-    "<title>bwserve C Demo</title>"
-    "<style>"
-    "body{font-family:system-ui,sans-serif;background:#0f172a;color:#e2e8f0;margin:0;padding:1rem}"
-    ".grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;max-width:700px;margin:1rem auto}"
-    ".card{background:#1e293b;border-radius:8px;padding:1rem;text-align:center}"
-    ".card h3{margin:0 0 0.5rem;font-size:0.85rem;color:#94a3b8;text-transform:uppercase}"
-    ".card .val{font-size:1.5rem;font-weight:700;color:#38bdf8}"
-    "h1{text-align:center;color:#10b981;font-size:1.5rem}"
-    ".controls{text-align:center;margin:1rem}"
-    "button{background:#334155;color:#e2e8f0;border:1px solid #475569;border-radius:6px;"
-    "padding:0.5rem 1.5rem;cursor:pointer;font-size:0.9rem;margin:0 0.25rem}"
-    "button:hover{background:#475569}"
-    "</style>"
-    "</head><body>"
-    "<h1>bwserve C Demo</h1>"
-    "<p style=\"text-align:center;color:#64748b\">POSIX socket server speaking bwserve protocol</p>"
-    "<div class=\"grid\">"
-    "<div class=\"card\"><h3>Temperature</h3><div class=\"val\" id=\"val-temp\">--</div></div>"
-    "<div class=\"card\"><h3>Humidity</h3><div class=\"val\" id=\"val-humidity\">--</div></div>"
-    "<div class=\"card\"><h3>Pressure</h3><div class=\"val\" id=\"val-pressure\">--</div></div>"
-    "<div class=\"card\"><h3>Light</h3><div class=\"val\" id=\"val-light\">--</div></div>"
-    "<div class=\"card\"><h3>Uptime</h3><div class=\"val\" id=\"val-uptime\">--</div></div>"
-    "<div class=\"card\"><h3>LED</h3><div class=\"val\" id=\"val-led\">OFF</div></div>"
-    "</div>"
-    "<div class=\"controls\">"
-    "<button onclick=\"sendCmd('led_on')\">LED On</button>"
-    "<button onclick=\"sendCmd('led_off')\">LED Off</button>"
-    "<button onclick=\"sendCmd('reset_uptime')\">Reset Uptime</button>"
-    "</div>"
-    "<script>"
-    "var es=new EventSource('/events');"
-    "es.onmessage=function(e){"
-    "  var msg;"
-    "  var raw=e.data;"
-    "  if(raw.charAt(0)==='r'){"
-    "    raw=raw.slice(1);"
-    "    raw=raw.replace(/'/g,'\"');"
-    "  }"
-    "  try{msg=JSON.parse(raw)}catch(x){return}"
-    "  if(msg.type==='batch'){"
-    "    msg.ops.forEach(function(op){applyOp(op)});"
-    "  }else{applyOp(msg)}"
-    "};"
-    "function applyOp(op){"
-    "  if(op.type==='patch'){"
-    "    var el=document.getElementById(op.ref);"
-    "    if(el&&op.text!=null)el.textContent=op.text;"
-    "  }else if(op.type==='mount'){"
-    "    var el2=document.querySelector(op.ref);"
-    "    if(el2)el2.innerHTML=op.taco;"
-    "  }"
-    "}"
-    "function sendCmd(cmd){"
-    "  fetch('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},"
-    "    body:JSON.stringify({cmd:cmd})});"
-    "}"
-    "</script>"
-    "</body></html>";
-
-/* ========================================================================
- * HTTP request routing
+ * HTTP — the only part that changes per platform
  * ======================================================================== */
 
 /**
- * Minimal HTTP request parser — extracts method and path.
+ * The page. It has no UI in it: load bitwrench, enable actions, connect.
+ * The C side owns the UI, so there is no markup, no CSS and no DOM code here.
  */
-static int parse_request(const char* buf, char* method, size_t mlen,
-                         char* path, size_t plen, const char** body) {
-    /* Method */
-    const char* sp1 = strchr(buf, ' ');
+static const char BOOTSTRAP_HTML[] =
+    "<!DOCTYPE html><html><head><meta charset=\"utf-8\">"
+    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+    "<title>bwserve C demo</title>"
+    "<script src=\"/bitwrench.js\"></script></head>"
+    "<body><div id=\"app\"></div><script>\n"
+    "  bw.loadStyles({ primary: '#2b8a3e', mode: 'auto' });\n"
+    "  bw.actions.enable();     // bw_act_* clicks post back to this server\n"
+    "  bw.connect('/events');   // the server mounts and patches from here\n"
+    "</script></body></html>";
+
+static int parse_request(const char *buf, char *method, size_t mlen,
+                         char *path, size_t plen, const char **body) {
+    const char *sp1 = strchr(buf, ' ');
+    const char *sp2;
+    size_t ml, pl;
     if (!sp1) return -1;
-    size_t ml = (size_t)(sp1 - buf);
+    ml = (size_t)(sp1 - buf);
     if (ml >= mlen) ml = mlen - 1;
     memcpy(method, buf, ml);
     method[ml] = '\0';
 
-    /* Path */
-    const char* sp2 = strchr(sp1 + 1, ' ');
+    sp2 = strchr(sp1 + 1, ' ');
     if (!sp2) return -1;
-    size_t pl = (size_t)(sp2 - sp1 - 1);
+    pl = (size_t)(sp2 - sp1 - 1);
     if (pl >= plen) pl = plen - 1;
     memcpy(path, sp1 + 1, pl);
     path[pl] = '\0';
 
-    /* Body: after \r\n\r\n */
     *body = strstr(buf, "\r\n\r\n");
     if (*body) *body += 4;
-
     return 0;
 }
 
-static void handle_request(int client_fd) {
-    char buf[REQ_BUF_SIZE];
-    ssize_t n = read(client_fd, buf, sizeof(buf) - 1);
-    if (n <= 0) { close(client_fd); return; }
-    buf[n] = '\0';
+static void write_all(int fd, const char *data, size_t len) {
+    size_t sent = 0;
+    while (sent < len) {
+        ssize_t n = write(fd, data + sent, len - sent);
+        if (n <= 0) return;
+        sent += (size_t)n;
+    }
+}
 
+/**
+ * The route that makes "works offline" true: the bundle out of flash.
+ *
+ * Identical on an ESP32 -- same array, same headers, server.send_P() instead
+ * of write(). The browser decompresses; the device never holds the
+ * uncompressed bundle.
+ */
+static void serve_bundle(int fd) {
+    char head[256];
+    snprintf(head, sizeof(head),
+        "HTTP/1.1 200 OK\r\nContent-Type: application/javascript\r\n"
+        "Content-Encoding: gzip\r\nContent-Length: %u\r\n"
+        "Cache-Control: max-age=31536000, immutable\r\n"
+        "Connection: close\r\n\r\n", bitwrench_js_gz_len);
+    write_all(fd, head, strlen(head));
+    write_all(fd, (const char *)bitwrench_js_gz, bitwrench_js_gz_len);
+}
+
+/** A click came back. Decide what changed, then patch exactly that. */
+static void handle_action(int fd, const char *body) {
+    char resp[256];
+    bw_action_t act;
+
+    if (body && bw_parse_action(body, &act)) {
+        printf("[action] %s\n", act.action);
+        if (strcmp(act.action, "led_toggle") == 0) {
+            /* Two things changed, so two patches -- not a re-mount. The alert's
+             * colour changes with its text, which is what BW_PATCH_ATTR is for. */
+            char attrs[128], a[BW_BUF_SIZE], b[BW_BUF_SIZE], out[BW_BUF_SIZE * 3];
+            bw_batch_t batch;
+            g_sensors.led_on = !g_sensors.led_on;
+            snprintf(attrs, sizeof(attrs), "'class':'%s'", led_class());
+            BW_PATCH_ATTR(a, "val-led", led_text(), attrs);
+            BW_PATCH(b, "led-btn", led_btn_text());
+            bw_batch_begin(&batch);
+            bw_batch_add(&batch, a);
+            bw_batch_add(&batch, b);
+            bw_batch_end(out, sizeof(out), &batch);
+            broadcast(out);
+        } else if (strcmp(act.action, "reset") == 0) {
+            char msg[BW_BUF_SIZE];
+            g_sensors.uptime_s = 0;
+            BW_PATCH(msg, "val-uptime", "0s");
+            broadcast(msg);
+        }
+    }
+    BW_HTTP_OK_JSON(resp, "{\"ok\":true}");
+    write_all(fd, resp, strlen(resp));
+    close(fd);
+}
+
+static void handle_request(int fd) {
+    char buf[REQ_BUF_SIZE];
     char method[16], path[256];
-    const char* body = NULL;
+    const char *body = NULL;
+    ssize_t n = read(fd, buf, sizeof(buf) - 1);
+
+    if (n <= 0) { close(fd); return; }
+    buf[n] = '\0';
     if (parse_request(buf, method, sizeof(method), path, sizeof(path), &body) < 0) {
-        close(client_fd);
+        close(fd);
         return;
     }
 
-    printf("[http] %s %s\n", method, path);
+    if (strcmp(method, "GET") == 0 && strcmp(path, "/bitwrench.js") == 0) {
+        serve_bundle(fd);
+        close(fd);
+        return;
+    }
 
-    /* GET / — serve bootstrap HTML */
     if (strcmp(method, "GET") == 0 && strcmp(path, "/") == 0) {
         char resp[sizeof(BOOTSTRAP_HTML) + 256];
         snprintf(resp, sizeof(resp),
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Type: text/html; charset=UTF-8\r\n"
-            "Content-Length: %d\r\n"
-            "Connection: close\r\n"
-            "\r\n"
-            "%s",
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\n"
+            "Content-Length: %d\r\nConnection: close\r\n\r\n%s",
             (int)strlen(BOOTSTRAP_HTML), BOOTSTRAP_HTML);
-        write(client_fd, resp, strlen(resp));
-        close(client_fd);
+        write_all(fd, resp, strlen(resp));
+        close(fd);
         return;
     }
 
-    /* GET /events — SSE stream */
+    /* SSE: open the stream, mount the whole UI into it, keep the socket.
+     * A reconnecting or second browser gets current state, not a blank
+     * screen -- the device is the source of truth, so there is no hydration
+     * problem to solve. */
     if (strcmp(method, "GET") == 0 && strcmp(path, "/events") == 0) {
-        const char* headers = BW_SSE_HEADERS;
-        write(client_fd, headers, strlen(headers));
-        sse_add_client(client_fd);
+        const char *headers = BW_SSE_HEADERS;
+        char page[BW_BUF_SIZE * 8], msg[BW_BUF_SIZE * 8], frame[BW_BUF_SIZE * 9];
+        write_all(fd, headers, strlen(headers));
 
-        /* Send initial state immediately */
-        broadcast_sensor_update();
-        return;  /* Don't close — kept alive for SSE */
+        dashboard(page, sizeof(page));
+        BW_MOUNT(msg, "#app", page);
+        BW_SSE_FRAME(frame, msg);
+        write_all(fd, frame, strlen(frame));
+
+        pthread_mutex_lock(&g_lock);
+        if (!bw_clients_add(&g_clients, fd)) {
+            pthread_mutex_unlock(&g_lock);
+            printf("[sse] registry full, rejecting fd=%d\n", fd);
+            close(fd);
+            return;
+        }
+        printf("[sse] client connected (fd=%d, total=%d)\n", fd, g_clients.count);
+        pthread_mutex_unlock(&g_lock);
+        return;                        /* do not close: this is the stream */
     }
 
-    /* POST /api/command — handle commands */
-    if (strcmp(method, "POST") == 0 && strcmp(path, "/api/command") == 0) {
-        int recognized = 0;
-        if (body) {
-            if (strstr(body, "led_on")) {
-                g_sensors.led_on = 1;
-                printf("[cmd] LED on\n");
-                recognized = 1;
-            } else if (strstr(body, "led_off")) {
-                g_sensors.led_on = 0;
-                printf("[cmd] LED off\n");
-                recognized = 1;
-            } else if (strstr(body, "reset_uptime")) {
-                g_sensors.uptime_s = 0;
-                printf("[cmd] Uptime reset\n");
-                recognized = 1;
-            }
-            if (recognized) {
-                /* Broadcast updated state immediately */
-                broadcast_sensor_update();
-            }
-        }
-        char resp[512];
-        if (recognized) {
-            BW_HTTP_OK_JSON(resp, "{\"ok\":true}");
-        } else {
-            BW_HTTP_OK_JSON(resp, "{\"ok\":false,\"error\":\"unknown cmd\"}");
-        }
-        write(client_fd, resp, strlen(resp));
-        close(client_fd);
+    if (strcmp(method, "POST") == 0 &&
+        (strcmp(path, "/bw/events") == 0 || strcmp(path, "/events") == 0)) {
+        handle_action(fd, body);
         return;
     }
 
-    /* 404 */
-    char resp[256];
-    BW_HTTP_404(resp);
-    write(client_fd, resp, strlen(resp));
-    close(client_fd);
+    {
+        char resp[256];
+        BW_HTTP_404(resp);
+        write_all(fd, resp, strlen(resp));
+        close(fd);
+    }
 }
 
 /* ========================================================================
- * SSE push thread — sends sensor updates every SENSOR_INTERVAL seconds
+ * Push thread and main
  * ======================================================================== */
 
-static void* sensor_thread(void* arg) {
+static void *sensor_thread(void *arg) {
     (void)arg;
     while (g_running) {
         sleep(SENSOR_INTERVAL);
         update_sensors();
-        broadcast_sensor_update();
+        if (g_clients.count) broadcast_readings();
     }
     return NULL;
 }
 
-/* ========================================================================
- * Signal handler — clean shutdown
- * ======================================================================== */
-
 static void handle_signal(int sig) {
     (void)sig;
-    printf("\n[server] shutting down...\n");
     g_running = 0;
 }
 
-/* ========================================================================
- * Main
- * ======================================================================== */
-
 int main(void) {
+    int server_fd, opt = 1, i;
+    struct sockaddr_in addr;
+    pthread_t sensor_tid;
+
+    setvbuf(stdout, NULL, _IOLBF, 0);
     srand((unsigned)time(NULL));
     signal(SIGINT, handle_signal);
-    signal(SIGPIPE, SIG_IGN);  /* Ignore broken pipe from SSE clients */
+    signal(SIGPIPE, SIG_IGN);          /* a closing tab must not kill us */
 
-    /* Create server socket */
-    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_fd < 0) {
-        perror("socket");
-        return 1;
-    }
+    bw_clients_init(&g_clients);
 
-    int opt = 1;
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) { perror("socket"); return 1; }
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
-    struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     addr.sin_port = htons(PORT);
 
-    if (bind(server_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         perror("bind");
         close(server_fd);
         return 1;
     }
-
     if (listen(server_fd, BACKLOG) < 0) {
         perror("listen");
         close(server_fd);
         return 1;
     }
 
-    printf("=== bwserve C demo ===\n");
-    printf("Listening on http://localhost:%d\n", PORT);
+    printf("=== bwserve C demo (bitwrench %s) ===\n", BITWRENCH_EMBEDDED_VERSION);
+    printf("http://localhost:%d  --  serving /bitwrench.js from flash (%u bytes gzipped)\n",
+           PORT, bitwrench_js_gz_len);
     printf("Press Ctrl+C to stop\n\n");
 
-    /* Start sensor update thread */
-    pthread_t sensor_tid;
     pthread_create(&sensor_tid, NULL, sensor_thread, NULL);
 
-    /* Accept loop */
     while (g_running) {
-        struct sockaddr_in client_addr;
-        socklen_t client_len = sizeof(client_addr);
-        int client_fd = accept(server_fd, (struct sockaddr*)&client_addr, &client_len);
+        int client_fd = accept(server_fd, NULL, NULL);
         if (client_fd < 0) {
             if (errno == EINTR) continue;
             perror("accept");
@@ -463,12 +491,11 @@ int main(void) {
         handle_request(client_fd);
     }
 
-    /* Cleanup */
-    pthread_mutex_lock(&g_sse_lock);
-    for (int i = 0; i < g_sse_count; i++) {
-        close(g_sse_clients[i]);
-    }
-    pthread_mutex_unlock(&g_sse_lock);
+    printf("\n[server] shutting down...\n");
+    pthread_mutex_lock(&g_lock);
+    for (i = 0; i < BW_MAX_CLIENTS; i++)
+        if (g_clients.handles[i] >= 0) close(g_clients.handles[i]);
+    pthread_mutex_unlock(&g_lock);
 
     close(server_fd);
     pthread_join(sensor_tid, NULL);

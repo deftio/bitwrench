@@ -307,7 +307,17 @@ bw._getFs = function() {
  */
 bw.typeOf = _typeOf;
 
-// Alias
+/**
+ * Short alias of `bw.typeOf()`.
+ *
+ * @param {*} x - Value to inspect
+ * @param {boolean} [baseTypeOnly] - Collapse subtypes to the base type
+ * @returns {string} Lowercase type name ('array', 'date', 'null', 'nan', ...)
+ * @category Utilities
+ * @see bw.typeOf
+ * @example
+ * bw.to([1, 2])        // => 'array'
+ */
 bw.to = bw.typeOf;
 
 /**
@@ -1640,6 +1650,126 @@ bw.unmountChildren = function(el) {
 };
 
 /**
+ * Empty a container: run unmount hooks on its children, then remove them.
+ *
+ * This is the verb to reach for instead of `el.innerHTML = ''`, which drops
+ * the children without firing `o.unmount`, leaking whatever they held
+ * (subscriptions, timers, observers).
+ *
+ * @param {string|Element} ref - Element ID, bw_uuid_* class, CSS selector, or element
+ * @returns {Element|null} The emptied element, or null if not found
+ * @category DOM Generation
+ * @see bw.unmountChildren
+ * @see bw.patch
+ * @example
+ * bw.clear('#list');                  // empties #list, hooks fire
+ * bw.mount('#list', rows.map(row));   // refill it
+ */
+bw.clear = function(ref) {
+  var el = bw.el(ref);
+  if (!el) return null;
+  bw.unmountChildren(el);
+  while (el.firstChild) el.removeChild(el.firstChild);
+  return el;
+};
+
+// ===================================================================================
+// Classes: the cheapest update there is
+// ===================================================================================
+
+// Elements for a class call: anything bw.$ takes (selector, element, array,
+// NodeList), plus a bare element id like bw.el() accepts.
+function _clsEls(ref) {
+  var els = bw.$(ref);
+  if (!els.length && _is(ref, 'string')) {
+    var one = bw.el(ref);
+    if (one) els = [one];
+  }
+  return els;
+}
+
+function _cls(ref, names, how, force) {
+  var list = _is(names, 'string') ? names.split(/\s+/) : (names || []);
+  var els = _clsEls(ref);
+  for (var i = 0; i < els.length; i++) {
+    for (var j = 0; j < list.length; j++) {
+      if (!list[j]) continue;
+      // classList.toggle's second argument is unsupported in older engines
+      if (how === 'toggle' && force !== undefined) els[i].classList[force ? 'add' : 'remove'](list[j]);
+      else els[i].classList[how](list[j]);
+    }
+  }
+  return els;
+}
+
+/**
+ * Add one or more classes to every matched element.
+ *
+ * Changing a class is the cheapest update a component can make: no node is
+ * created, nothing is unmounted, focus and scroll are untouched.
+ *
+ * @param {string|Element|Array} ref - Element id, CSS selector, element, or list of elements
+ * @param {string|Array<string>} names - Class name, space-separated names, or array
+ * @returns {Array<Element>} The elements that were changed
+ * @category DOM Selection
+ * @see bw.removeClass
+ * @see bw.toggleClass
+ * @example
+ * bw.addClass('save-btn', 'is_busy');
+ * bw.addClass('.row', ['zebra', 'tight']);
+ */
+bw.addClass = function(ref, names) { return _cls(ref, names, 'add'); };
+
+/**
+ * Remove one or more classes from every matched element.
+ *
+ * @param {string|Element|Array} ref - Element id, CSS selector, element, or list of elements
+ * @param {string|Array<string>} names - Class name, space-separated names, or array
+ * @returns {Array<Element>} The elements that were changed
+ * @category DOM Selection
+ * @see bw.addClass
+ * @example
+ * bw.removeClass('save-btn', 'is_busy');
+ */
+bw.removeClass = function(ref, names) { return _cls(ref, names, 'remove'); };
+
+/**
+ * Toggle one or more classes on every matched element, or force them on/off.
+ *
+ * With a third argument the class is set rather than flipped, which is what
+ * you want when driving a class from state: `bw.toggleClass(keys, 'down', isDown)`.
+ *
+ * @param {string|Element|Array} ref - Element id, CSS selector, element, or list of elements
+ * @param {string|Array<string>} names - Class name, space-separated names, or array
+ * @param {boolean} [force] - true adds, false removes, omitted flips
+ * @returns {Array<Element>} The elements that were changed
+ * @category DOM Selection
+ * @see bw.addClass
+ * @see bw.hasClass
+ * @example
+ * bw.toggleClass('#panel', 'open');                         // flip
+ * bw.toggleClass('#onscreen rect', 'down', false);          // force off, every match
+ * bw.toggleClass(el, 'wrong', result !== 'ok');             // drive it from state
+ */
+bw.toggleClass = function(ref, names, force) { return _cls(ref, names, 'toggle', force); };
+
+/**
+ * Does the first matched element carry this class?
+ *
+ * @param {string|Element|Array} ref - Element id, CSS selector, element, or list of elements
+ * @param {string} name - Class name
+ * @returns {boolean} true when the first match has it
+ * @category DOM Selection
+ * @see bw.toggleClass
+ * @example
+ * if (bw.hasClass('#panel', 'open')) bw.removeClass('#panel', 'open');
+ */
+bw.hasClass = function(ref, name) {
+  var el = _clsEls(ref)[0];
+  return !!el && el.classList.contains(name);
+};
+
+/**
  * Remove an element from the DOM and clean it up. Convenience compound:
  * unmount(el) + el.remove().
  *
@@ -2021,7 +2151,19 @@ bw.mount = function(target, taco, options) {
   return firstEl;
 };
 
-// bw.DOM is an exact alias of bw.mount (v2.1 §2)
+/**
+ * Mount a TACO into a target element. Exact alias of `bw.mount()` (v2.1 §2):
+ * same function, same return value -- keep it to call `el.bw.*`.
+ *
+ * @param {string|Element} target - Element ID, CSS selector, bw_uuid_* class, or element
+ * @param {Object|Array|string} taco - TACO (or array of TACOs) to mount
+ * @param {Object} [options] - Passed through to bw.create()
+ * @returns {Element|null} The mounted root element
+ * @category DOM Generation
+ * @see bw.mount
+ * @example
+ * var el = bw.DOM('#app', { t: 'h1', c: 'Hello' });
+ */
 bw.DOM = bw.mount;
 
 /**
@@ -3216,35 +3358,36 @@ bw.parseJSONFlex = function(str) {
   return JSON.parse(out.join(''));
 };
 
-/**
- * Apply a bwserve protocol message to the DOM.
- *
- * Dispatches one of 12 v:1 message types:
- *   mount    — bw.mount(ref, taco)
- *   patch    — bw.patch(ref, text/attrs/content)
- *   append   — bw.append(ref, taco)
- *   replace  — bw.replace(ref, taco)
- *   remove   — bw.remove(ref)
- *   refresh  — bw.refresh(ref)
- *   update   — bw.update(ref, data)
- *   message  — bw.message(ref, action, data)
- *   batch    — iterate ops, call bw.apply for each
- *   listen   — subscribe to a pub/sub topic
- *   unlisten — unsubscribe from a topic
- *   call     — invoke a registered remote function
- *
- * Target resolution:
- *   Starts with '#' or '.' → CSS selector (querySelector)
- *   Otherwise → getElementById, then bw._el fallback
- *
- * @param {Object} msg - Protocol message
- * @returns {boolean} true if the message was applied successfully
- * @category Core
- */
 // ===================================================================================
 // bw.actions — document-level delegated action dispatcher (§5.4)
 // ===================================================================================
 
+/**
+ * Delegated dispatcher for `bw_act_*` class tokens: `{ enable, disable }`.
+ *
+ * Server-driven pages carry interactivity as classes, not code: a button with
+ * `class: 'bw_act_save'` fires the `save` action, which the client posts back
+ * to the server. One document-level listener handles every such element, so
+ * elements mounted later need no wiring.
+ *
+ * Off by default, and nothing turns it on for you: call `bw.actions.enable()`
+ * yourself. In particular `bw.connect()` does **not** enable it, so a page that
+ * only connects gets a live stream and dead clicks.
+ *
+ * Where the action goes depends on which client the page uses. With
+ * `bw.connect(url)` it posts to that same `url` as
+ * `{v:1, type:'event', action, value, name, ref, owner}`. With the bwserve thin
+ * client it posts to `/bw/return/action/<clientId>` as
+ * `{result:{action, data}}`. The C helper `bw_parse_action()` reads either.
+ *
+ * @type {Object}
+ * @category Server (bwserve)
+ * @see bw.connect
+ * @see bw.apply
+ * @example
+ * bw.actions.enable();
+ * bw.mount('#app', { t: 'button', a: { class: 'bw_act_save' }, c: 'Save' });
+ */
 bw.actions = (function() {
   var _enabled = false;
   var _installed = false;
@@ -3341,8 +3484,38 @@ bw.remote = null;
 bw._clientRemotes = {};
 bw._wireListeners = {};
 
+/**
+ * Register a function the server may invoke by name over bwserve.
+ *
+ * The wire protocol carries data, never code: a `call` message names a remote
+ * registered here, and anything not registered is ignored. This is how a
+ * server-driven page exposes capabilities (`_bw_screenshot`, `_bw_query`)
+ * without the server sending executable code.
+ *
+ * @param {string} name - Name the server will call
+ * @param {Function} fn - Handler, called with the message's argument object
+ * @category Server (bwserve)
+ * @see bw.connect
+ * @example
+ * bw.registerRemote('refreshChart', function(opts) { drawChart(opts.data); });
+ */
 bw.registerRemote = function(name, fn) { bw._clientRemotes[name] = fn; };
 
+/**
+ * Connect this page to a bwserve endpoint over Server-Sent Events.
+ *
+ * Once connected, the server can mount, patch, append, remove and call
+ * registered remotes; the client posts actions and responses back. Publishes
+ * `bw:diag` with `code: 'remote_status'` as the connection state changes.
+ *
+ * @param {string} url - SSE endpoint, e.g. '/bw/events'
+ * @returns {Object|null} The client object, or null outside a browser
+ * @category Server (bwserve)
+ * @see bw.apply
+ * @see bw.registerRemote
+ * @example
+ * bw.connect('/bw/events');
+ */
 bw.connect = function(url) {
   bw.pub('bw:diag', { code: 'remote_status', status: 'connecting', url: url });
   var es = new EventSource(url);
@@ -3358,7 +3531,10 @@ bw.connect = function(url) {
     close: function() { es.close(); }
   };
   es.onopen = function() { bw.pub('bw:diag', { code: 'remote_status', status: 'connected' }); };
-  es.onmessage = function(e) { try { bw.apply(JSON.parse(e.data)); } catch (ex) {} };
+  // parseJSONFlex, not JSON.parse: a device speaking the relaxed `r{'v':1,...}`
+  // form (what every embedded_c macro emits, to keep quoting out of firmware)
+  // would otherwise be dropped silently. Strict JSON parses identically.
+  es.onmessage = function(e) { try { bw.apply(bw.parseJSONFlex(e.data)); } catch (ex) {} };
   es.onerror = function() { bw.pub('bw:diag', { code: 'remote_status', status: 'disconnected' }); };
   bw.remote = remote;
   return remote;
@@ -3383,6 +3559,38 @@ function _sanitizeWireTaco(taco) {
   return taco;
 }
 
+/**
+ * Apply one bwserve protocol message to the DOM.
+ *
+ * This is the client half of server-driven UI. Dispatches one of the v:1
+ * message types:
+ *   mount    -- bw.mount(ref, taco)
+ *   patch    -- bw.patch(ref, text/attrs/content)
+ *   append   -- bw.append(ref, taco)
+ *   replace  -- bw.replace(ref, taco)
+ *   remove   -- bw.remove(ref)
+ *   refresh  -- bw.refresh(ref)
+ *   update   -- bw.update(ref, data)
+ *   message  -- bw.message(ref, action, data)
+ *   batch    -- iterate ops, calling bw.apply for each
+ *   listen   -- subscribe to a pub/sub topic
+ *   unlisten -- unsubscribe from a topic
+ *   call     -- invoke a function registered with bw.registerRemote
+ *
+ * Target resolution: a ref starting with '#' or '.' is a CSS selector,
+ * otherwise it is an element id, then a bw.el() lookup.
+ *
+ * String `on*` attributes are stripped from wire TACOs, so a message can
+ * carry structure but never code.
+ *
+ * @param {Object} msg - Protocol message, e.g. { type: 'mount', ref: '#app', taco: {...} }
+ * @returns {boolean} true when the message was understood and applied
+ * @category Server (bwserve)
+ * @see bw.connect
+ * @see bw.registerRemote
+ * @example
+ * bw.apply({ type: 'patch', ref: 'score', text: '42' });
+ */
 bw.apply = function(msg) {
   if (!msg || !msg.type) return false;
   if (msg.type === 'hello') return true; // handshake -- no-op ack
@@ -3405,9 +3613,12 @@ bw.apply = function(msg) {
   } else if (type === 'patch') {
     var patchEl = bw.el(ref);
     if (!patchEl) return false;
+    // text and attrs can both be present -- that is what BW_PATCH_ATTR and
+    // bwserve::patch_attr emit, for a value whose styling changes with it.
+    // An else-if chain here dropped the attributes without saying so.
     if (msg.text !== undefined) bw.patch(patchEl, msg.text);
-    else if (msg.attrs) bw.patch(patchEl, msg.attrs);
     else if (msg.content) bw.patch(patchEl, _sanitizeWireTaco(msg.content));
+    if (msg.attrs) bw.patch(patchEl, msg.attrs);
     return true;
   } else if (type === 'append') {
     var appendTarget = bw.el(ref);
@@ -3439,6 +3650,17 @@ bw.apply = function(msg) {
     bw.update(updateEl, msg.data);
     return true;
   } else if (type === 'message') {
+    // Two unrelated things are called "message" on this wire: a component
+    // method dispatch (ref + action), and a device notification (level + text
+    // -- what BW_MESSAGE and bwserve::message emit). Tell them apart by
+    // `action`. Without this, every notification a device sent was rejected.
+    //
+    // A notification is published, not rendered: where a toast belongs and how
+    // long it lives is the page's decision, not the library's.
+    if (msg.action === undefined && (msg.text !== undefined || msg.level !== undefined)) {
+      bw.pub('bw:message', { level: msg.level || 'info', text: msg.text });
+      return true;
+    }
     return bw.message(ref, msg.action, msg.data) !== false;
   } else if (type === 'batch') {
     if (!_isA(msg.ops)) return false;
@@ -4862,6 +5084,13 @@ bw.makeTableFromArray = function(config) {
     return bw.makeTable({ data: [], columns: columns || [], ...rest });
   }
 
+  // Row-of-objects is the common mix-up (#92): say which factory wants that
+  // shape instead of failing later with "data[0].map is not a function".
+  if (!_isA(data[0])) {
+    throw new TypeError('bw.makeTableFromArray: data must be an array of arrays (rows of cells); ' +
+      'got ' + bw.typeOf(data[0]) + ' at data[0]. For an array of objects use bw.makeTable or bw.makeDataTable.');
+  }
+
   // Determine headers
   let headers;
   let rows;
@@ -5197,6 +5426,67 @@ bw.catalog = function(type) {
     };
   });
 };
+
+/**
+ * Warn when a component factory is handed an option it does not read.
+ *
+ * Why this exists: a wrong option name used to fail silently --
+ * `makeButton({ href })` rendered a button that styled correctly and did not
+ * navigate; `makeTable({ headers, rows })` rendered an empty table. Both
+ * reviewed clean and shipped. See issue #92.
+ *
+ * The accepted keys come from each factory's own destructuring pattern, read
+ * from its source at call time, so there is no per-factory list to keep in
+ * sync. Property names survive minification. A factory that collects the rest
+ * of its props (`...eventHandlers`) accepts anything, so it is skipped, and so
+ * is any factory whose pattern cannot be parsed (older transpiled builds).
+ *
+ * Set `bw.warnUnknownProps = false` to silence it.
+ * @type {boolean}
+ */
+bw.warnUnknownProps = true;
+
+var _propKeys = {};   // factory name -> accepted keys, or null (accepts anything)
+var _propWarned = {};
+
+// Accepted keys = the identifiers in the factory's own destructuring pattern,
+// read from its source so there is no list to keep in sync. Property names
+// survive minification. Returns null when the factory takes the rest of the
+// props (it accepts anything) or when the pattern cannot be read.
+function _parseKeys(fn) {
+  var m = /(?:const|let|var)\s*\{([^{}]*)\}\s*=/.exec(String(fn));
+  if (!m || m[1].indexOf('...') !== -1) return null;
+  var keys = [], re = /(?:^|,)\s*([A-Za-z_$][\w$]*)\s*(?=[,:=]|$)/g, k;
+  while ((k = re.exec(m[1]))) keys.push(k[1]);
+  return keys.length ? keys : null;
+}
+
+/** Clear the warn-once memo for unknown options. Test helper. @category Internal */
+bw._propWarnReset = function() { _propWarned = {}; };
+
+function _checkProps(name, fn, props) {
+  if (!bw.warnUnknownProps || !props || !_is(props, 'object') || _isA(props)) return;
+  if (!_hop.call(_propKeys, name)) _propKeys[name] = _parseKeys(fn);
+  var known = _propKeys[name];
+  if (!known) return;
+  _keys(props).forEach(function(k) {
+    if (known.indexOf(k) !== -1 || _propWarned[name + k]) return;
+    _propWarned[name + k] = 1;
+    _cw('bw.' + name + ': unknown option "' + k + '" ignored. Accepted: ' + known.join(', '));
+  });
+}
+
+// Wrap every make*() so the check runs once per unknown key, for bw.makeX()
+// and for bw.make(type, props) through the BCCL registry.
+_keys(bw).forEach(function(name) {
+  if (!/^make[A-Z]/.test(name) || name === 'makeStyles' || !_is(bw[name], 'function')) return;
+  var fn = bw[name];
+  var wrapped = function(props) { _checkProps(name, fn, props); return fn.apply(this, arguments); };
+  // bw.catalog() reads def.make.name, so the wrapper keeps the original's
+  try { Object.defineProperty(wrapped, 'name', { value: fn.name }); } catch (e) { /* older engines */ }
+  bw[name] = wrapped;
+  _keys(bw.BCCL).forEach(function(type) { if (bw.BCCL[type].make === fn) bw.BCCL[type].make = wrapped; });
+});
 
 // Export for different environments
 export default bw;

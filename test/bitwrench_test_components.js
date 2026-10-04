@@ -5054,3 +5054,162 @@ describe('makeRow gap: 0 means no gutter (found by tests/layout.spec.js)', funct
     assert.ok(bw.html(bw.makeRow({ children: [] })).indexOf('bw_g_') < 0);
   });
 });
+
+// ===================================================================================
+// #92 -- unknown option keys warn instead of failing silently
+// ===================================================================================
+
+describe('Unknown factory options warn (#92)', function() {
+  var warnings, realWarn;
+
+  beforeEach(function() {
+    freshDOM();
+    warnings = [];
+    realWarn = console.warn;
+    console.warn = function() { warnings.push(Array.prototype.join.call(arguments, ' ')); };
+    bw.warnUnknownProps = true;
+    bw._propWarnReset();
+  });
+  afterEach(function() { console.warn = realWarn; });
+
+  it('names the factory, the key and the accepted keys', function() {
+    bw.makeButton({ text: 'Try the demo', href: './demo/' });
+    assert.strictEqual(warnings.length, 1);
+    assert.match(warnings[0], /^bw\.makeButton: unknown option "href" ignored\. Accepted: .*\btext\b/);
+  });
+
+  it('warns once per factory and key, not once per call', function() {
+    bw.makeButton({ href: 'a' });
+    bw.makeButton({ href: 'b' });
+    bw.makeCard({ href: 'c' });
+    assert.strictEqual(warnings.length, 2, warnings.join(' | '));
+  });
+
+  it('stays quiet for correct props, and for factories that take a rest spread', function() {
+    bw.makeButton({ text: 'ok', variant: 'primary', size: 'sm' });
+    bw.makeCard({ title: 't', content: 'c' });
+    bw.makeSelect({ options: [{ value: 'a', label: 'A' }], onchange: function() {}, onblur: function() {} });
+    bw.makeInput({ type: 'text', oninput: function() {} });
+    assert.deepStrictEqual(warnings, []);
+  });
+
+  it('catches the reported cases: makeTable({headers, rows}) and a label typo', function() {
+    bw.makeTable({ headers: ['A'], rows: [['1']] });
+    bw.makeTabs({ tabs: [], onChange: function() {} });
+    assert.strictEqual(warnings.length, 3);
+    assert.ok(warnings.some(function(w) { return /makeTable: unknown option "headers"/.test(w); }));
+    assert.ok(warnings.some(function(w) { return /makeTabs: unknown option "onChange" ignored\. Accepted: tabs, activeIndex, onTabChange/.test(w); }));
+  });
+
+  it('warns through bw.make(type, props) too', function() {
+    bw.make('card', { titel: 'typo' });
+    assert.strictEqual(warnings.length, 1);
+    assert.match(warnings[0], /makeCard: unknown option "titel"/);
+  });
+
+  it('can be switched off, and string shorthand is not an options object', function() {
+    bw.warnUnknownProps = false;
+    bw.makeButton({ nope: 1 });
+    bw.warnUnknownProps = true;
+    bw.makeButton('just text');
+    bw.makeCard('just text');
+    assert.deepStrictEqual(warnings, []);
+  });
+
+  it('keeps factory names, so bw.catalog() still reports them', function() {
+    assert.strictEqual(bw.makeButton.name, 'makeButton');
+    assert.strictEqual(bw.catalog('card').factory, 'makeCard');
+  });
+
+  it('makeTableFromArray names the right factory for rows of objects', function() {
+    assert.throws(function() { bw.makeTableFromArray({ data: [{ ts: '1', ch: 'a' }] }); },
+      /array of arrays.*use bw\.makeTable or bw\.makeDataTable/s);
+    assert.ok(bw.html(bw.makeTableFromArray({ data: [['A'], ['1']] })).indexOf('<td>1</td>') > 0);
+  });
+});
+
+// ===================================================================================
+// Class verbs and bw.clear (2.1.11) -- the cheapest updates, found missing by the
+// jazzmac audit: the app wrote classList.toggle loops because we had no verb.
+// ===================================================================================
+
+describe('bw.addClass / removeClass / toggleClass / hasClass', function() {
+  beforeEach(function() {
+    freshDOM();
+    bw.mount('#app', { t: 'div', a: { id: 'panel' }, c: [
+      { t: 'span', a: { class: 'k' }, c: 'a' },
+      { t: 'span', a: { class: 'k' }, c: 'b' }
+    ]});
+  });
+
+  it('takes a bare element id, like bw.el()', function() {
+    bw.addClass('panel', 'open');
+    assert.ok(bw.hasClass('panel', 'open'));
+  });
+
+  it('takes a CSS selector and changes every match', function() {
+    var changed = bw.addClass('.k', 'down');
+    assert.strictEqual(changed.length, 2);
+    assert.deepStrictEqual(bw.$('.k').map(function(e) { return e.className; }), ['k down', 'k down']);
+  });
+
+  it('takes an element or a list of elements', function() {
+    bw.addClass(bw.el('panel'), 'open');
+    bw.addClass(bw.$('.k'), 'lit');
+    assert.ok(bw.hasClass('panel', 'open'));
+    assert.strictEqual(bw.$('.k.lit').length, 2);
+  });
+
+  it('accepts several classes as a string or an array', function() {
+    bw.addClass('panel', 'a b');
+    bw.addClass('panel', ['c', 'd']);
+    ['a', 'b', 'c', 'd'].forEach(function(c) { assert.ok(bw.hasClass('panel', c), c); });
+    bw.removeClass('panel', 'a c');
+    assert.deepStrictEqual([bw.hasClass('panel', 'a'), bw.hasClass('panel', 'b'), bw.hasClass('panel', 'c')], [false, true, false]);
+  });
+
+  it('toggles, and forces when given a third argument', function() {
+    bw.toggleClass('.k', 'down');
+    assert.strictEqual(bw.$('.k.down').length, 2);
+    bw.toggleClass('.k', 'down');
+    assert.strictEqual(bw.$('.k.down').length, 0);
+    bw.toggleClass('.k', 'down', true);
+    bw.toggleClass('.k', 'down', true);          // idempotent when forced
+    assert.strictEqual(bw.$('.k.down').length, 2);
+    bw.toggleClass('.k', 'down', false);
+    assert.strictEqual(bw.$('.k.down').length, 0);
+  });
+
+  it('does not touch nodes, so focus survives', function() {
+    var el = bw.mount('#app', { t: 'input', a: { id: 'f', type: 'text' } });
+    el.focus();
+    bw.toggleClass('f', 'is_busy', true);
+    assert.strictEqual(document.activeElement, el);
+    assert.ok(bw.hasClass('f', 'is_busy'));
+  });
+
+  it('is quiet about refs that match nothing', function() {
+    assert.deepStrictEqual(bw.addClass('#nope', 'x'), []);
+    assert.deepStrictEqual(bw.toggleClass(null, 'x'), []);
+    assert.strictEqual(bw.hasClass('#nope', 'x'), false);
+  });
+});
+
+describe('bw.clear()', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('empties a container and fires unmount hooks on what was inside', function() {
+    var unmounted = 0;
+    var host = bw.mount('#app', { t: 'div', a: { id: 'list' }, c: [
+      { t: 'b', c: 'x', o: { unmount: function() { unmounted++; } } },
+      { t: 'i', c: 'y', o: { unmount: function() { unmounted++; } } }
+    ]});
+    assert.strictEqual(bw.clear('list'), host);
+    assert.strictEqual(host.innerHTML, '');
+    assert.strictEqual(unmounted, 2, 'innerHTML = "" would have skipped these');
+  });
+
+  it('returns null for a ref that matches nothing', function() {
+    assert.strictEqual(bw.clear('#nope'), null);
+  });
+});

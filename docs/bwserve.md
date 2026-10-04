@@ -147,8 +147,11 @@ All messages include `v: 1` (wire protocol version).
 { "v": 1, "type": "call", "name": "focus", "args": ["#search-input"] }
 { "v": 1, "type": "call", "name": "download", "args": ["report.csv", "id,name\n1,Alice", "text/csv"] }
 
-// message — component dispatch
+// message — component dispatch (has `action`)
 { "v": 1, "type": "message", "ref": "#my-component", "action": "update", "data": {"value": 42} }
+
+// message — device notification (no `action`; what BW_MESSAGE emits)
+{ "v": 1, "type": "message", "level": "info", "text": "Sensor calibrated" }
 
 // listen — subscribe to topic
 { "v": 1, "type": "listen", "topic": "bw:lifecycle" }
@@ -480,7 +483,9 @@ bw.parseJSONFlex("r{'text':'Barry\\'s Room'}");
 // → { text: "Barry's Room" }
 ```
 
-The shell connection calls `bw.parseJSONFlex()` on every incoming SSE message automatically. You only need to call it directly if you're building a custom transport or testing.
+`bw.connect()` and the shell connection both call `bw.parseJSONFlex()` on every incoming SSE message, so a device may send either form and the page needs no adapter. You only need to call it directly if you're building a custom transport or testing.
+
+> Fixed in 2.1.11: `bw.connect()` previously used `JSON.parse`, which rejects the relaxed form every C macro emits -- and swallowed the error, so the page connected and then did nothing.
 
 ## Transport
 
@@ -516,9 +521,53 @@ Keep-alive comments are sent every 15 seconds:
 
 ```
 
+### Device notifications (`bw:message`)
+
+`message` carries two unrelated things, told apart by whether `action` is
+present. With `action` it dispatches a method on a component handle. Without
+it -- `{level, text}`, which is what `BW_MESSAGE` and `bwserve::message()`
+emit -- it is a notification from the device.
+
+A notification is **published, not rendered**: where it belongs and how long it
+lives is the page's decision, so bitwrench puts it on the `bw:message` topic
+and stops there.
+
+```javascript
+bw.sub('bw:message', function(m) {
+  bw.patch('status', m.text);          // a status line
+  // or: bw.mount('#toasts', bw.makeToast({ text: m.text, variant: m.level }));
+});
+```
+
+`level` defaults to `'info'` when the device omits it.
+
+> Fixed in 2.1.11: the client previously rejected the notification form, so
+> every `BW_MESSAGE` a device sent was dropped silently.
+
+### Embedded Device (SSE) Transport
+
+A device that can hold a socket open should push instead of being polled. The
+whole page is then three calls, with the UI composed on the device:
+
+```html
+<script src="/bitwrench.js"></script>   <!-- from the device's flash -->
+<script>
+  bw.loadStyles({ primary: '#0b7285', mode: 'auto' });
+  bw.actions.enable();        // bw_act_* clicks post back to the device
+  bw.connect('/bw/events');   // the device mounts and patches from here
+</script>
+```
+
+Working servers, buildable on a development machine with no hardware:
+[`examples/embedded/posix-cpp/`](../examples/embedded/posix-cpp/) (C++11) and
+[`examples/embedded/cmake-demo/`](../examples/embedded/cmake-demo/) (C99). Both
+serve the bundle from a flash array, compose their UI with `BW_NEST` /
+`bw::nest`, and keep several browsers in sync with `bw_clients_t`. See
+[`embedded_c/README.md`](../embedded_c/README.md) for the header reference.
+
 ### Embedded Device (Polling) Transport
 
-For ESP32, Arduino, and other constrained devices. The device serves compact JSON; the browser does all rendering.
+For devices that cannot hold a connection open. The device serves compact JSON; the browser does all rendering.
 
 ```javascript
 // Browser side: poll the device and apply messages

@@ -74,6 +74,41 @@ test.describe('Bitwrench v2 Examples', () => {
     expect(page.errors).toHaveLength(0);
   });
 
+  test('18-svg.html renders SVG and updates it in place', async ({ page }) => {
+    await page.goto('/pages/18-svg.html');
+
+    // every try-it on the page rendered real SVG in the SVG namespace
+    const svgCount = await page.locator('.tryit-output svg').count();
+    expect(svgCount).toBeGreaterThanOrEqual(6);
+    const ns = await page.locator('#section-first .tryit-output svg').evaluate(el => el.namespaceURI);
+    expect(ns).toBe('http://www.w3.org/2000/svg');
+
+    // delegated handler on the <svg> root toggles a class on one child
+    const cells = page.locator('#section-interact .tryit-output rect.demo_cell');
+    await expect(cells).toHaveCount(6);
+    await cells.nth(2).click();
+    await expect(cells.nth(2)).toHaveClass(/on/);
+    await expect(page.locator('#section-interact #out_cells_n')).toHaveText('1');
+
+    // bw.patch on an attribute, and bw.toggleClass for state -- no rebuild
+    const bar = page.locator('#section-update .tryit-output #d_bar');
+    const before = await bar.getAttribute('width');
+    await page.locator('#section-update .tryit-output button', { hasText: 'wider' }).click();
+    expect(Number(await bar.getAttribute('width'))).toBeGreaterThan(Number(before));
+    await page.locator('#section-update .tryit-output button', { hasText: 'warn' }).click();
+    await expect(bar).toHaveClass(/warn/);
+
+    // the keyboard recipe: pointer events per key, and "all off" clears every one
+    const keys = page.locator('#section-recipes rect.demo_key');
+    expect(await keys.count()).toBeGreaterThan(10);
+    await keys.first().dispatchEvent('pointerdown');
+    await expect(keys.first()).toHaveClass(/down/);
+    await page.locator('#section-recipes button', { hasText: 'all off' }).click();
+    await expect(page.locator('#section-recipes rect.demo_key.down')).toHaveCount(0);
+
+    expect(page.errors).toHaveLength(0);
+  });
+
   test('01-components.html loads without errors', async ({ page }) => {
     await page.goto('/pages/01-components.html');
 

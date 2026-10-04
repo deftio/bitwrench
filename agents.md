@@ -66,8 +66,10 @@ Before writing or modifying bitwrench code, read these docs in order:
 6. **docs/core-api.md** -- One-page card of the core calls (mount, patch,
    syncChildren, css, pub/sub). Keep it open while writing code.
 
-SVG is ordinary TACO (`{t: 'svg', ...}`) -- see docs/taco-format.md#svg.
-Never build SVG as strings with bw.raw().
+SVG is ordinary TACO (`{t: 'svg', ...}`) -- full guide in **docs/svg.md**,
+short version in docs/taco-format.md#svg. Never build SVG as strings with
+bw.raw(), and update a mounted drawing with bw.toggleClass / bw.patch /
+bw.syncChildren rather than re-mounting it.
 
 ## The bitwrench mental model
 
@@ -297,10 +299,15 @@ Four levels -- use the simplest that fits:
 1. **Static TACO**: plain objects, no state. Most UI is this.
 2. **Re-render on demand**: call bw.mount() again with new data (replaces the
    elements -- an input mid-edit or mid-drag loses it).
-3. **Targeted updates**: `bw.patch()`, `bw.syncChildren()` for keyed lists,
-   handle methods (`el.bw.*`). Nothing is rebuilt.
+3. **Targeted updates**: `bw.toggleClass()` for a visual state, `bw.patch()` for
+   content or one attribute, `bw.syncChildren()` for keyed lists, handle methods
+   (`el.bw.*`). Nothing is rebuilt, so focus and transitions survive.
 4. **Stateful TACO**: o.state + o.render + bw.refresh() -- full rebuild, the most
    expensive update.
+
+Never write `el.innerHTML = ''` to empty something: `bw.clear(ref)` does it and
+fires the unmount hooks. Never write `classList.toggle` loops: `bw.toggleClass`
+takes a selector and changes every match.
 
 ## Source layout
 
@@ -348,6 +355,10 @@ npm run cleanbuild     # Full build + SRI hashes + README
 | bw.h(tag, a?, c?, o?) | TACO object | Shorthand TACO constructor |
 | bw.replace(el, taco) | new element | Swap one element (old one unmounted) |
 | bw.syncChildren(parent, items, opts) | -- | Keyed list update; kept rows are the same nodes |
+| bw.toggleClass(ref, names, force?) | elements changed | Flip/force classes on every match |
+| bw.addClass / bw.removeClass / bw.hasClass | elements / boolean | The rest of the class verbs |
+| bw.clear(ref) | element | Empty a container, unmount hooks fire |
+| bw.el(ref, apply) / bw.$(sel, apply) | element / array | Find and apply: text, TACO, or a function per element |
 
 ### Styling
 | Function | What it does |
@@ -376,6 +387,37 @@ handles -- table (sort, setData, update, getData), modal, carousel, tabs,
 accordion, progress, chipInput -- expose them on el.bw. Update through the
 handle instead of re-mounting.
 
+### Server and device-driven UI (bwserve)
+
+The browser renders; the logic can live in a C++ program, a Python process or a
+shell script. Agents touching this path must keep the asymmetry: the device
+sends *descriptions*, never code or CSS.
+
+| Function | What it does |
+|----------|-------------|
+| bw.connect(url) | Open an SSE stream; every frame goes through bw.apply(). Accepts strict JSON and the relaxed `r{'v':1,...}` form |
+| bw.apply(msg) | Dispatch one protocol message (mount, patch, append, replace, remove, refresh, update, message, batch, call, listen) |
+| bw.actions.enable() | Turn clicks/changes on `bw_act_*` elements into post-backs. For inputs and selects the `value` and `name` ride along |
+| bw.registerRemote(name, fn) | Expose a capability the server may invoke with `{type:'call', name, args}` |
+| bw.sub('bw:message', fn) | Receive device notifications (`{type:'message', level, text}`). They are published, NOT rendered -- the page decides |
+
+Rules:
+
+- A `patch` may carry `text` and `attrs` together; both apply.
+- `message` means two things, told apart by `action`: with it, dispatch to
+  `el.bw[action]`; without it, a notification on `bw:message`.
+- String `on*` attributes are stripped from wire TACOs. Events return only via
+  `bw_act_*` classes.
+- The device never authors CSS. It sends a seed (`{type:'call', name:'theme',
+  args:[{primary:'#...'}]}`) and the page calls `bw.loadStyles(cfg)`.
+- BCCL factories are browser-side. A device sends TACO with `bw_bccl_*` classes,
+  or sends data and the page composes with `makeTable`.
+
+C/C++ helpers are in `embedded_c/` (header-only, zero I/O). They are
+example-grade and unpublished as of 2.1.11; before changing them read
+`dev/bw-embedded-release-plan-2.1.x.md`, which holds the scope boundary, the
+inconsistency register and the open decisions.
+
 ## Commit and release rules
 
 - NEVER commit directly to main -- work on feature branches
@@ -402,6 +444,7 @@ Essential reading for code changes:
 - docs/quickstart.md -- hello world, which file to load, annotated 100-line app
 - docs/thinking-in-bitwrench.md -- progressive walkthrough, design rationale
 - docs/llm-bitwrench-guide.md -- compact tutorial with all API patterns
-- docs/core-api.md -- one-page core API card
+- docs/core-api.md -- one-page core API card (also: what is in the lean build)
+- docs/svg.md -- SVG as TACO: charts, diagrams, interaction, in-place updates
 - docs/component-cheatsheet.md -- all 51 components, props, handles
 - docs/bitwrench-northstar-principles.md -- core design philosophy

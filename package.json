@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.1.10",
+	"version": "2.1.11",
 	"description": "Zero-dependency JavaScript UI library. Describe UI as plain objects (TACO), render to DOM or HTML strings. Theming, components, pub/sub, server-driven UI (bwserve). No build step.",
 	"main": "./dist/bitwrench.cjs",
 	"repository": {
@@ -120,7 +120,7 @@
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_cli.js ./test/bitwrench_test_bccl_contract.js ./test/bitwrench_test_semantic_html.js ./test/bitwrench_test_contract.js ./test/bitwrench_test_contract_live.js ./test/bitwrench_test_html_golden.js ./test/bitwrench_test_util_color.js ./test/bitwrench_test_uuid.js ./test/bitwrench_test_stable.js ./test/bitwrench_test_v2.js ./test/bitwrench_test_invariants.js ./test/bitwrench_test_meta.js ./test/bitwrench_test_doc_examples.js -r jsdom-global/register --exit && npm run test:bundles",
+		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_cli.js ./test/bitwrench_test_bccl_contract.js ./test/bitwrench_test_semantic_html.js ./test/bitwrench_test_contract.js ./test/bitwrench_test_contract_live.js ./test/bitwrench_test_html_golden.js ./test/bitwrench_test_util_color.js ./test/bitwrench_test_uuid.js ./test/bitwrench_test_stable.js ./test/bitwrench_test_v2.js ./test/bitwrench_test_invariants.js ./test/bitwrench_test_meta.js ./test/bitwrench_test_doc_examples.js ./test/bitwrench_test_embedded_c.js -r jsdom-global/register --exit && npm run test:bundles",
 		"posttest": "node tools/drift-lint.js && npm run verify-sri",
 		"test:bundles": "mocha ./test/bitwrench_test_bundles.js -r jsdom-global/register --exit",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
@@ -157,7 +157,8 @@
 		"build:api-md": "node tools/build-api-markdown.js",
 		"build:builds": "node tools/build-builds-manifest.js",
 		"build:metrics": "node tools/build-metrics.cjs",
-		"build:generated": "npm run sri && npm run build:readme && npm run build:api-reference && npm run build:api-md",
+		"build:generated": "npm run sri && npm run build:readme && npm run build:api-reference && npm run build:api-md && npm run build:embedded",
+		"build:embedded": "node tools/build-embedded-header.js",
 		"build:release": "npm run cleanbuild && npm run test && node tools/build-release.js",
 		"release": "node tools/release.js",
 		"release:dry": "node tools/release.js --dry-run",

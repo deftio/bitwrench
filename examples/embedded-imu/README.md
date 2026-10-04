@@ -17,8 +17,8 @@ magnetometer visualizations to the basic board dashboard.
 
 | Board | IMU | Connection | Sketch |
 |-------|-----|------------|--------|
-| ESP32-S3 Pro | MPU6050 or ICM-20948 | STEMMA QT | `esp32s3-pro/esp32s3_imu.ino` |
-| Pico 2W | MPU6050 or ICM-20948 | I2C (GP4/GP5) | `pico2w/pico2w_imu.ino` |
+| ESP32-S3 Pro | MPU6050 or ICM-20948 | STEMMA QT | `esp32s3_imu/esp32s3_imu.ino` |
+| Pico 2W | MPU6050 or ICM-20948 | I2C (GP4/GP5) | `pico2w_imu/pico2w_imu.ino` |
 
 Both boards use the same `dashboard.html` served from flash.
 

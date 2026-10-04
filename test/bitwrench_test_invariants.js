@@ -53,6 +53,10 @@ var SIZES = {
   makeModal: ['sm', 'lg', 'xl']
 };
 
+// These suites pass one props bag to every factory on purpose; the unknown-key
+// warnings (#92) are correct but would bury the output.
+bw.warnUnknownProps = false;
+
 function allFactories() {
   return Object.keys(bw).filter(function(k) {
     return /^make[A-Z]/.test(k) && k !== 'makeStyles' && typeof bw[k] === 'function';

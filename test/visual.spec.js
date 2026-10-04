@@ -16,7 +16,8 @@ const EXAMPLES = [
   { path: '/pages/09-downloads.html', name: 'Downloads' },
   { path: '/pages/10-themes.html', name: 'Themes' },
   { path: '/pages/11-debugging.html', name: 'Debugging' },
-  { path: '/pages/12-bwserve-protocol.html', name: 'bwserve Protocol' }
+  { path: '/pages/12-bwserve-protocol.html', name: 'bwserve Protocol' },
+  { path: '/pages/18-svg.html', name: 'SVG' }
 ];
 
 // Visual regression test for each page

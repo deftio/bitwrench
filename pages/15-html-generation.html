@@ -345,7 +345,7 @@
               ["'none'", 'No', 'No', '0', 'Pure static HTML \u2014 no event handlers, no bitwrench API. The consumer provides bitwrench externally if needed.'],
               ["'shim'", 'Yes', 'No', '~1 KB', 'A tiny shim is injected so that onclick and other serialized event handlers work. Bitwrench itself is NOT loaded \u2014 no BCCL components, no bw.DOM(), no theming at runtime.'],
               ["'cdn'", 'Yes', 'Yes (CDN)', '~200 B tag', 'A <script> tag loads the full bitwrench library from jsdelivr. The page has full bitwrench capability (BCCL, themes, bw.DOM) but requires an internet connection on first load.'],
-              ["'inline'", 'Yes', 'Yes (embedded)', '~120 KB', 'The entire bitwrench UMD bundle is embedded in a <script> tag inside the file. Completely self-contained \u2014 works offline, from a USB stick, in an email, or from an ESP32.']
+              ["'inline'", 'Yes', 'Yes (embedded)', '~170 KB', 'The entire bitwrench UMD bundle is embedded in a <script> tag inside the file. Completely self-contained \u2014 works offline, from a USB stick, in an email, or from an ESP32.']
             ]
           }),
 

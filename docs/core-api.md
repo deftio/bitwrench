@@ -6,7 +6,21 @@ HTML, CSS from JS, updates, and messaging. One line each. No built-in components
 work, the [lean build](../README.md#build-formats) has everything on this page.
 
 The full reference is [bitwrench_api.md](bitwrench_api.md); the object format is
-[taco-format.md](taco-format.md).
+[taco-format.md](taco-format.md); SVG has its own guide, [svg.md](svg.md).
+
+## What is in which build
+
+Everything on this page is in both builds. The difference is the component
+library:
+
+| Build | Has | Does not have | Size (gzip) |
+|-------|-----|---------------|-------------|
+| `bitwrench.umd.min.js` (full) | TACO → DOM/HTML, CSS generation + theming, state, pub/sub, `derive`, router, the class and DOM helpers, `makeTable`/`makeTableFromArray`/`makeDataTable`/`makeBarChart`, **and all 47 BCCL components** (`makeButton`, `makeCard`, `makeModal`, `makeTooltip`, …) | -- | ~46 KB |
+| `bitwrench-lean.umd.min.js` | everything in the first column **except** the BCCL components | the 47 BCCL factories (`makeButton`, `makeCard`, `makeTooltip`, ...) | ~36 KB |
+
+So the router, pub/sub, `syncChildren`, `patch` and the class verbs are all in
+lean -- you do not need the full build to get them. `bwserve` and the code
+editor are separate files; see [Build Formats](../README.md#build-formats).
 
 ## Build
 
@@ -37,6 +51,9 @@ Cheapest first -- see [Names carry cost](bitwrench-northstar-principles.md#10-na
 | `el.bw.method(...)` | Call a component's own method (`o.handle`, `o.slots`) |
 | `bw.patch(ref, content)` | Replace one element's content: text, TACO, array or `bw.raw()` |
 | `bw.syncChildren(parent, items, {key, create, update})` | Keyed list update; existing nodes move instead of being rebuilt ([example](state-management.md#keyed-lists-with-bwsyncchildren)) |
+| `bw.toggleClass(ref, names, force?)` | Flip classes, or force them on/off. Touches no node, so focus and transitions survive |
+| `bw.addClass(ref, names)` / `bw.removeClass(ref, names)` / `bw.hasClass(ref, name)` | The rest of the class verbs; `names` is a string, space-separated list, or array |
+| `bw.clear(ref)` | Empty a container: unmount hooks fire, then children go. Use instead of `innerHTML = ''` |
 | `bw.refresh(ref)` | Re-run a component's `o.render` |
 
 ## Find
@@ -45,6 +62,7 @@ Cheapest first -- see [Names carry cost](bitwrench-northstar-principles.md#10-na
 |------|------|
 | `bw.el(ref)` | One element by id, selector, `bw_uuid_*` class, or element |
 | `bw.$(selector)` | All matches, always an array |
+| `bw.el(ref, apply)` / `bw.$(sel, apply)` | Find **and** apply in one call: a string sets text, a TACO or array replaces content, a function runs per element |
 
 ## Style
 
@@ -72,4 +90,5 @@ passes them through. See [Bring your own design](theming.md#bring-your-own-desig
 | Call | Does |
 |------|------|
 | `bw.inspect(ref, depth)` | Component tree as text |
+| `bw.warnUnknownProps` | `true` by default: a `make*()` factory warns once when handed an option it does not read. Set `false` to silence |
 | `bwcli attach` | Drive a live page from a terminal: REPL, inspect, screenshot ([bw-attach.md](bw-attach.md)) |

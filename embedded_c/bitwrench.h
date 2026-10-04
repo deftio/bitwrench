@@ -58,6 +58,16 @@ extern "C" {
  * ======================================================================== */
 
 /**
+ * BW_SKIP_R — Drop the leading `r` of a TACO that is about to be nested.
+ *
+ * The r-prefix marks the start of a relaxed-JSON *message*. Inside one it is
+ * not valid: `'c':[r{...}]` fails to parse, and bw.connect() swallows the
+ * error, so the symptom is a frame that silently does nothing. Every macro
+ * that embeds a TACO inside something else runs it through this.
+ */
+#define BW_SKIP_R(taco_str) ((taco_str)[0] == 'r' ? (taco_str) + 1 : (taco_str))
+
+/**
  * BW_TACO — Simple element: tag + text content
  *   BW_TACO(buf, "h1", "Hello World")
  *   → r{'t':'h1','c':'Hello World'}
@@ -101,6 +111,48 @@ extern "C" {
     snprintf(buf, sizeof(buf), "r{'t':'%s','c':'%g'}", tag, (double)(value))
 
 /**
+ * BW_NEST — Element whose content is other TACOs, not text.
+ *
+ * Every macro above quotes its content, which makes it a leaf: good for a
+ * reading or a label, no use for a card that holds two of them. BW_NEST puts
+ * `children` in unquoted, so a device can send a tree in one message instead
+ * of one message per node (or, worse, a string of HTML).
+ *
+ * `children` is one TACO or a BW_ARRAY_* list, already built:
+ *
+ *   char row[256], col[256], page[512];
+ *   BW_TACO_ID(row, "span", "temp", "22.4 C");
+ *   BW_NEST_CLS(col, "div", "bw_bccl_card", row);
+ *   BW_NEST(page, "div", col);
+ *   → r{'t':'div','c':{'t':'div','a':{'class':'bw_bccl_card'},...}}
+ *
+ * Children are run through BW_SKIP_R, so a tree of any depth stays one
+ * parseable message -- one bw.mount() on the browser side.
+ *
+ * Each level needs its own buffer: `BW_NEST(x, "div", x)` is snprintf() into
+ * the buffer it is reading from, which is undefined behaviour. The C++ half
+ * (bw::nest) has no such trap, and no size limit either.
+ */
+#define BW_NEST(buf, tag, children) \
+    snprintf(buf, sizeof(buf), "r{'t':'%s','c':%s}", tag, BW_SKIP_R(children))
+
+/**
+ * BW_NEST_CLS — BW_NEST with a class attribute (the common case).
+ *   BW_NEST_CLS(buf, "div", "bw_row bw_g_3", cards)
+ */
+#define BW_NEST_CLS(buf, tag, cls, children) \
+    snprintf(buf, sizeof(buf), \
+        "r{'t':'%s','a':{'class':'%s'},'c':%s}", tag, cls, BW_SKIP_R(children))
+
+/**
+ * BW_NEST_ATTR — BW_NEST with a pre-composed attribute string.
+ *   BW_NEST_ATTR(buf, "section", "'id':'readings'", cards)
+ */
+#define BW_NEST_ATTR(buf, tag, attr_str, children) \
+    snprintf(buf, sizeof(buf), \
+        "r{'t':'%s','a':{%s},'c':%s}", tag, attr_str, BW_SKIP_R(children))
+
+/**
  * BW_TACO_ARRAY — Begin an array content wrapper
  *   Use with BW_ARRAY_ITEM and BW_ARRAY_END to build arrays:
  *   char items[512] = "[";
@@ -116,7 +168,7 @@ extern "C" {
     do { \
         size_t _len = strlen(buf); \
         if (_len > 1) strncat(buf, ",", sizeof(buf) - _len - 1); \
-        strncat(buf, item, sizeof(buf) - strlen(buf) - 1); \
+        strncat(buf, BW_SKIP_R(item), sizeof(buf) - strlen(buf) - 1); \
     } while(0)
 
 #define BW_ARRAY_END(buf) \
@@ -185,6 +237,7 @@ static inline void bw_format_bytes(char* buf, size_t buf_size, unsigned long byt
 #ifdef __cplusplus
 
 #include <string>
+#include <vector>
 
 namespace bw {
 
@@ -218,6 +271,42 @@ inline std::string taco_num(const char* tag, double value) {
     return std::string(buf);
 }
 
+/** A child TACO, with the message-level r-prefix removed (see BW_SKIP_R). */
+inline std::string inner(const std::string& taco) {
+    return (!taco.empty() && taco[0] == 'r') ? taco.substr(1) : taco;
+}
+
+/**
+ * taco_attr() — Element with a pre-composed attribute string.
+ *
+ *   bw::taco_attr("button", "'class':'bw_bccl_btn bw_act_save','id':'save'", "Save")
+ */
+inline std::string taco_attr(const char* tag, const std::string& attrs, const char* content) {
+    return std::string("r{'t':'") + tag + "','a':{" + attrs + "},'c':'" + content + "'}";
+}
+
+/**
+ * nest() — Element whose content is other TACOs rather than text.
+ *
+ * The buffered C macros cap a node at BW_TACO_BUF_SIZE; these build with
+ * std::string, so a page-sized tree is fine on a target with a heap.
+ *
+ *   bw::nest("div", "bw_row", bw::array({ card_a, card_b }))
+ */
+inline std::string nest(const char* tag, const std::string& children) {
+    return std::string("r{'t':'") + tag + "','c':" + inner(children) + "}";
+}
+
+/** nest() with a class attribute. */
+inline std::string nest(const char* tag, const char* cls, const std::string& children) {
+    return std::string("r{'t':'") + tag + "','a':{'class':'" + cls + "'},'c':" + inner(children) + "}";
+}
+
+/** nest() with a pre-composed attribute string. */
+inline std::string nest_attr(const char* tag, const std::string& attrs, const std::string& children) {
+    return std::string("r{'t':'") + tag + "','a':{" + attrs + "},'c':" + inner(children) + "}";
+}
+
 /**
  * array() — Compose a TACO array from a vector of TACO strings.
  *
@@ -231,8 +320,26 @@ inline std::string array(const std::initializer_list<std::string>& items) {
     bool first = true;
     for (const auto& item : items) {
         if (!first) result += ",";
-        result += item;
+        result += inner(item);
         first = false;
+    }
+    result += "]";
+    return result;
+}
+
+/**
+ * array() over a vector — the data-driven case, where the count is not known
+ * until the device has read its sensors.
+ *
+ *   std::vector<std::string> rows;
+ *   for (int i = 0; i < n; i++) rows.push_back(bw::taco("li", name[i]));
+ *   return bw::nest("ul", bw::array(rows));
+ */
+inline std::string array(const std::vector<std::string>& items) {
+    std::string result = "[";
+    for (size_t i = 0; i < items.size(); i++) {
+        if (i) result += ",";
+        result += inner(items[i]);
     }
     result += "]";
     return result;

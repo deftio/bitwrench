@@ -80,6 +80,20 @@ function _ms(x, i0, i1, o0, o1, opts) {
   return r;
 }
 
+/**
+ * HSL to RGB, in the v1 array format.
+ *
+ * @param {number|Array} h - Hue 0-360, or the whole `[h, s, l, a]` array
+ * @param {number} [s] - Saturation 0-100
+ * @param {number} [l] - Lightness 0-100
+ * @param {number} [a=255] - Alpha 0-255
+ * @param {boolean} [rnd=true] - Round the result
+ * @returns {Array} `[r, g, b, a, 'rgb']`
+ * @category Color
+ * @see bw.colorRgbToHsl
+ * @example
+ * bw.colorHslToRgb(180, 50, 50)     // => [64, 191, 191, 255, 'rgb']
+ */
 export function colorHslToRgb(h, s, l, a, rnd) {
   if (a === undefined) a = 255;
   if (rnd === undefined) rnd = true;
@@ -89,6 +103,20 @@ export function colorHslToRgb(h, s, l, a, rnd) {
   return [rgb[0], rgb[1], rgb[2], a, "rgb"];
 }
 
+/**
+ * RGB to HSL, in the v1 array format.
+ *
+ * @param {number|Array} r - Red 0-255, or the whole `[r, g, b, a]` array
+ * @param {number} [g] - Green 0-255
+ * @param {number} [b] - Blue 0-255
+ * @param {number} [a=255] - Alpha 0-255
+ * @param {boolean} [rnd=true] - Round the result
+ * @returns {Array} `[h, s, l, a, 'hsl']`
+ * @category Color
+ * @see bw.colorHslToRgb
+ * @example
+ * bw.colorRgbToHsl(64, 191, 191)    // => [180, 50, 50, 255, 'hsl']
+ */
 export function colorRgbToHsl(r, g, b, a, rnd) {
   if (a === undefined) a = 255;
   if (rnd === undefined) rnd = true;
@@ -98,6 +126,22 @@ export function colorRgbToHsl(r, g, b, a, rnd) {
   return [hsl[0], hsl[1], hsl[2], a, "hsl"];
 }
 
+/**
+ * Parse any CSS colour string into the v1 array format.
+ *
+ * Accepts `#rgb`, `#rrggbb`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, named
+ * colours and an existing array. The fifth element records which space the
+ * value is in, so `colorInterp` and friends can round-trip it.
+ *
+ * @param {string|Array} s - Colour string, or an array to normalise
+ * @param {number} [defAlpha=255] - Alpha to use when the input has none
+ * @returns {Array} `[r, g, b, a, 'rgb']` or `[h, s, l, a, 'hsl']`
+ * @category Color
+ * @see bw.colorInterp
+ * @example
+ * bw.colorParse('#006666')          // => [0, 102, 102, 255, 'rgb']
+ * bw.colorParse('hsl(180 50% 50%)') // => [180, 50, 50, 255, 'hsl']
+ */
 export function colorParse(s, defAlpha) {
   if (defAlpha === undefined) defAlpha = 255;
   var r = [0, 0, 0, defAlpha, "rgb"];

@@ -65,9 +65,11 @@ bitwrench is closer to Qt/MFC than to React or jQuery. The key differences:
 
 4. **State is explicit, not reactive.** There is no virtual DOM and no
    automatic re-rendering. Components own their DOM; you call them. Cheapest
-   first: a handle method (`el.bw.setTitle('new')`), `bw.patch(id, value)`
+   first: `bw.toggleClass(ref, 'open', isOpen)` for a visual state (no node is
+   touched), a handle method (`el.bw.setTitle('new')`), `bw.patch(id, value)`
    for one element, `bw.syncChildren()` for a keyed list, and `bw.refresh(el)`
-   (full rebuild of an `o.render` component) last.
+   (full rebuild of an `o.render` component) last. Empty a container with
+   `bw.clear(ref)`, never `innerHTML = ''` -- that skips unmount hooks.
 
 5. **Events go in attributes.** `{t: 'button', a: {onclick: fn}, c: 'Go'}`
    -- never addEventListener in lifecycle hooks. Handlers in attributes
@@ -218,11 +220,17 @@ CSS. `data-bw-action` existed in bwserve by mistake and was removed in v2.1.0. S
 
 No build step. No npm. Open the file in a browser.
 
-Which file: `dist/bitwrench.umd.min.js` for a script tag (everything, ~45 KB
-gzipped); `bitwrench-lean.umd.min.js` (~35 KB) if you bring your own design and
+Which file: `dist/bitwrench.umd.min.js` for a script tag (everything, ~46 KB
+gzipped); `bitwrench-lean.umd.min.js` (~36 KB) if you bring your own design and
 don't need the built-in components; `bitwrench.umd.js` / `bitwrench.esm.js` are
 **unminified, for readable stack traces only** -- never vendor them into a page
 you ship. `dist/builds.json` lists every file.
+
+Lean is not a stripped-down core: the router, pub/sub, `derive`, `patch`,
+`syncChildren`, the class verbs and `makeTable`/`makeDataTable`/`makeBarChart`
+are all in it. The only thing it drops is the 47 BCCL component factories
+(`makeButton`, `makeCard`, `makeTooltip`, …). Do not hand-roll a router or a
+DOM helper because you are on lean -- check `docs/core-api.md` first.
 
 ## TACO Format
 
@@ -252,7 +260,9 @@ the same object from positional arguments.
 **SVG is ordinary TACO**: `{ t: 'svg', a: { viewBox: '0 0 100 20' }, c: [ { t: 'rect', ... } ] }`.
 Children are created in the SVG namespace, attribute names stay as SVG spells
 them (`viewBox`, `stroke-width`), and handlers and `o.*` work. Never build SVG
-as strings through `bw.raw()`.
+as strings through `bw.raw()`. Update deployed SVG in place -- `bw.toggleClass`
+for state, `bw.patch(ref, { attr })` for geometry, `bw.syncChildren` for a
+series -- rather than re-mounting the drawing. Full guide: `docs/svg.md`.
 
 ## Rendering Functions
 
@@ -264,6 +274,10 @@ as strings through `bw.raw()`.
 | bw.replace(el, taco) | new element | Swap one element for another |
 | bw.patch(ref, content) | element | Change one element's content (text, TACO, array, bw.raw) |
 | bw.syncChildren(parent, items, {key, create, update}) | -- | Keyed list update; kept rows are the same nodes |
+| bw.toggleClass(ref, names, force?) | elements changed | Flip/force classes on every match -- the cheapest update there is |
+| bw.addClass / bw.removeClass / bw.hasClass | elements / boolean | The rest of the class verbs |
+| bw.clear(ref) | element | Empty a container, firing unmount hooks |
+| bw.el(ref, apply) / bw.\$(sel, apply) | element / array | Find and apply in one call: text, TACO, or a function per element |
 | bw.create(taco) | detached element | Build before inserting (does not fire `o.mounted`) |
 | bw.html(taco) | HTML string | SSR, emails, Node.js, CLI |
 
@@ -320,6 +334,70 @@ el.bw.setTitle('Revenue');      // slot setter -- updates just the title
 el.bw.setContent({ t: 'b', c: '$42k' });  // content can be a TACO too
 ```
 
+## Driving the UI from a device or server
+
+The browser can be a display and input device while the logic lives elsewhere
+(a C++ program on an ESP32, a Python process, a shell script). The page is four
+calls and owns no UI:
+
+<!-- doc-test: skip (needs a live SSE endpoint on a device) -->
+```html
+<script src="/bitwrench.js"></script>   <!-- served from the device, not a CDN -->
+<div id="app"></div>
+<script>
+  bw.loadStyles({ primary: '#0b7285', mode: 'auto' });
+  bw.actions.enable();        // bw_act_* events post back to the server
+  bw.connect('/bw/events');   // the server mounts and patches from here
+  bw.sub('bw:message', function(m) { bw.patch('status', m.text); });
+</script>
+```
+
+The server sends protocol messages; `bw.apply()` dispatches them. Both strict
+JSON and the relaxed `r{'v':1,...}` form are accepted, so firmware does not
+have to escape double quotes.
+
+| Message | Effect |
+|---------|--------|
+| `{type:'mount', ref, taco}` | Replace the target's children with this tree |
+| `{type:'patch', ref, text}` | New text content |
+| `{type:'patch', ref, text, attrs}` | Text and attributes in one op |
+| `{type:'append'/'replace'/'remove', ref, taco?}` | Add, swap, delete |
+| `{type:'batch', ops:[...]}` | Several ops, one frame, one reflow |
+| `{type:'message', level, text}` | A notification; published on `bw:message`, NOT rendered |
+| `{type:'message', ref, action, data}` | Dispatch a method on `el.bw` |
+| `{type:'call', name, args}` | Invoke a function registered with `bw.registerRemote` |
+
+Rules that matter when writing the device side:
+
+- **Name what changed.** The device knows which ids it touched, so it patches
+  those. There is no diffing on either side, which is why a 2 KB send buffer is
+  enough for a page-sized UI.
+- **Give every element you will later update an `id`** when you build it.
+- **The device never authors CSS.** It sends a theme seed and the page derives
+  the palette: `{type:'call', name:'theme', args:[{primary:'#b5179e'}]}` with
+  `bw.registerRemote('theme', function(cfg) { bw.loadStyles(cfg); })`. ~70 bytes
+  on the wire becomes a full stylesheet.
+- **The device sends descriptions, not code.** String `on*` attributes are
+  stripped from wire TACOs. Events come back by `bw_act_*` class only.
+- **BCCL factories are browser-side.** A device cannot call `makeCard()`; it
+  sends TACO carrying `bw_bccl_*` classes, or sends data and lets the page
+  compose with `makeTable`.
+- **Escape dynamic text** before putting it in a relaxed-JSON value: an
+  apostrophe would end the string early. C/C++: `bw_escape_string()` /
+  `bw::escape()`.
+
+Two post-back shapes exist and both are supported. `bw.actions` sends
+`{v:1,type:'event',action,value,name}` with fields at top level; the bwserve
+thin client POSTs `{result:{action,data:{...}}}` to
+`/bw/return/action/<clientId>`. On the device, `bw_parse_action()` reads either.
+
+C/C++ helpers live in `embedded_c/` (header-only, zero I/O, no dependencies
+beyond stdio/string). `embedded_c/bitwrench_embedded.h` is the gzipped bundle
+as a flash array, so a board with no filesystem can answer
+`GET /bitwrench.js`. Status as of 2.1.11: these are example-grade and not yet
+published to any package registry -- see
+`dev/bw-embedded-release-plan-2.1.x.md`.
+
 ## Documentation Map
 
 Start here:
@@ -329,7 +407,8 @@ Start here:
 - docs/core-api.md -- One-page core API card (bring-your-own-design path)
 
 Core concepts:
-- docs/taco-format.md -- TACO object specification, including SVG
+- docs/taco-format.md -- TACO object specification
+- docs/svg.md -- SVG as TACO: charts, gauges, diagrams, interaction, in-place updates
 - docs/component-lifecycle.md -- mounted, unmount, handles, slots, state
 - docs/state-management.md -- o.state, o.render, bw.refresh(), pub/sub
 
@@ -350,6 +429,10 @@ Reference:
 
 Specialized:
 - docs/tutorial-embedded.md -- ESP32, Pico W, Arduino
+- embedded_c/README.md -- C/C++ headers: TACO macros, BW_NEST, protocol,
+  bw_clients_t, serving the bundle from flash
+- examples/embedded/posix-cpp/ -- a C++ web app you can build on a laptop
+  (same headers and protocol as the ESP32 path, POSIX sockets instead of WiFi)
 - docs/bitwrench_typescript_usage.md -- TypeScript types and usage
 - docs/cli.md -- bwcli command-line tool
 - docs/bitwrench-for-wasm.md -- WebAssembly integration

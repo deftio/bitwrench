@@ -10,10 +10,20 @@ generates HTML.
 
 | Example | Platform | Language | Level | Server Code |
 |---------|----------|----------|-------|-------------|
-| [ESP32 Dashboard](esp32-dashboard.html) | ESP32 DevKit | Arduino C++ | Beginner | [sketch.ino](sketch.ino) |
-| [Pico W / Pico 2W Tutorial](../embedded-pico-w/) | Pico W / Pico 2W | MicroPython, CircuitPython, C++ | Intermediate | [server.py](../embedded-pico-w/server.py), [server_circuitpython.py](../embedded-pico-w/server_circuitpython.py), [server.ino](../embedded-pico-w/server.ino) |
+| [ESP32 Dashboard](esp32-dashboard.html) | ESP32 DevKit | Arduino C++ | Beginner | [esp32_dashboard.ino](esp32_dashboard/esp32_dashboard.ino) |
+| [Pico W / Pico 2W Tutorial](../embedded-pico-w/) | Pico W / Pico 2W | MicroPython, CircuitPython, C++ | Intermediate | [server.py](../embedded-pico-w/server.py), [server_circuitpython.py](../embedded-pico-w/server_circuitpython.py), [pico_w_server.ino](../embedded-pico-w/pico_w_server/pico_w_server.ino) |
 | [NFC Tag Scanner](../esp32-adafruitST25DV16/static/) | QT Py ESP32 + ST25DV16 | CircuitPython | Advanced | [code.py](../esp32-adafruitST25DV16/code.py) |
 | [CMake Demo](cmake-demo/) | Linux/macOS | C | Beginner | [main.c](cmake-demo/main.c) |
+
+### Your development machine (no hardware)
+
+| Example | Platform | Language | Level | Server Code |
+|---------|----------|----------|-------|-------------|
+| [POSIX C++ web app](posix-cpp/) | macOS / Linux / Windows | C++11 | Beginner | [main.cpp](posix-cpp/main.cpp) |
+
+Same headers, same protocol, same flash-resident bundle as the ESP32 examples
+-- only `main()` and the HTTP handlers differ. Build the app here with a
+debugger, then move it to a board.
 
 ### Raspberry Pi
 
@@ -52,11 +62,11 @@ Device                          Browser
 
 | Platform | Language | Example |
 |----------|----------|---------|
-| ESP32 (Arduino) | C/C++ | sketch.ino + cmake-demo/ |
+| ESP32 (Arduino) | C/C++ | esp32_dashboard.ino + cmake-demo/ |
 | ESP32 (CircuitPython) | Python | esp32-adafruitST25DV16/code.py |
 | Raspberry Pi Pico W | MicroPython | embedded-pico-w/server.py |
 | Raspberry Pi Pico W | CircuitPython | embedded-pico-w/server_circuitpython.py |
-| Raspberry Pi Pico W | Arduino C++ | embedded-pico-w/server.ino |
+| Raspberry Pi Pico W | Arduino C++ | embedded-pico-w/pico_w_server/pico_w_server.ino |
 | Raspberry Pi (Linux) | Python | embedded-rpi/server.py |
 | Raspberry Pi (Linux) | Node.js | embedded-rpi/server.js (bwserve) |
 | Any language | CLI pipe | bwcli serve --stdin |
@@ -69,6 +79,11 @@ is talking.
 Each example directory has an `index.html` tutorial page that works in any
 browser (no hardware needed). The `dashboard.html` files connect to real
 device endpoints and require the actual hardware to be running.
+
+For a complete running server with no hardware at all, build
+[`posix-cpp/`](posix-cpp/) (C++) or [`cmake-demo/`](cmake-demo/) (C): both
+serve the bundle out of a flash array and push real protocol frames to a real
+browser.
 
 ## Production (ESP32 Hardware)
 
@@ -88,7 +103,7 @@ device endpoints and require the actual hardware to be running.
      bitwrench.umd.min.js.gz    <- gzip -k dist/bitwrench.umd.min.js
    ```
 
-2. **Edit sketch.ino**: Set `WIFI_SSID` and `WIFI_PASSWORD`.
+2. **Edit esp32_dashboard.ino**: Set `WIFI_SSID` and `WIFI_PASSWORD`.
 
 3. **Upload SPIFFS**: Arduino IDE -> Tools -> ESP32 Sketch Data Upload.
 
@@ -112,7 +127,7 @@ device endpoints and require the actual hardware to be running.
 embedded/
   index.html              <- landing page (links to all examples)
   esp32-dashboard.html    <- ESP32 IoT dashboard (real device only)
-  sketch.ino              <- Arduino sketch for ESP32
+  esp32_dashboard.ino              <- Arduino sketch for ESP32
   cmake-demo/             <- C bwserve server (Linux/macOS)
   data/                   <- SPIFFS data for ESP32 upload
   README.md               <- this file

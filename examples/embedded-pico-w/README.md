@@ -324,7 +324,7 @@ pwm_channels = [pwmio.PWMOut(pin, frequency=1000, duty_cycle=0) for pin in [boar
 
 Uses `adafruit_httpserver` with `SSEResponse` for streaming.
 
-### Arduino C++ (`server.ino`)
+### Arduino C++ (`pico_w_server.ino`)
 
 Uses `WebServer` from the arduino-pico core. Dynamic route registration:
 
@@ -377,7 +377,7 @@ void loop() {
 |------|----------|-----------|
 | [server.py](server.py) | MicroPython | microdot + SSE |
 | [server_circuitpython.py](server_circuitpython.py) | CircuitPython | adafruit_httpserver |
-| [server.ino](server.ino) | Arduino C++ | arduino-pico WiFi + WebServer |
+| [pico_w_server.ino](pico_w_server/pico_w_server.ino) | Arduino C++ | arduino-pico WiFi + WebServer |
 
 All three serve the same `dashboard.html` and expose the same REST API + SSE endpoints.
 
@@ -502,7 +502,7 @@ Upload with: Tools > "Pico LittleFS Data Upload"
 
 ### Step 3: Configure WiFi
 
-Edit `server.ino` and set your WiFi credentials:
+Edit `pico_w_server.ino` and set your WiFi credentials:
 
 ```cpp
 const char* WIFI_SSID = "YOUR_SSID";

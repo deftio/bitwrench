@@ -1,5 +1,11 @@
 # Embedded tutorial series — design doc (2.1.x)
 
+> **See also `dev/bw-embedded-release-plan-2.1.x.md`** -- the consolidated
+> embedded plan for 2.1.12. This doc remains the authority on the teaching
+> ladder, board choices and the "what already exists" survey. Its section 9
+> (the C receive path, now shipped) and section 12 (distribution, now
+> decided as a narrow-scope library) are superseded there.
+
 Status: design, not yet implemented. Target branch: `feature/embedded-workflows`.
 
 This is the plan for the embedded story: what we teach, in what order, on which

@@ -98,6 +98,37 @@ function matchRoute(routes, rawPath) {
 export function initRouter(bw) {
   var _activeRouter = null;
 
+  /**
+   * Create a client-side router: URLs in, TACOs out.
+   *
+   * Route handlers return TACO; the router mounts the result into `target`.
+   * Hash mode needs no server config; history mode needs the server to serve
+   * the app for unknown paths. Returns a router object with `navigate`,
+   * `stop` and the compiled route table.
+   *
+   * @param {Object} config - Router configuration
+   * @param {Object} config.routes - Map of path pattern to handler, e.g.
+   *   `{ '/': fn, '/users/:id': fn, '*': fn }`. Handlers get (params, query)
+   *   and return a TACO.
+   * @param {string|Element} [config.target] - Where to mount each view
+   * @param {string} [config.mode='hash'] - 'hash' or 'history'
+   * @param {string} [config.base='/'] - Base path for history mode
+   * @param {Function} [config.before] - Guard: return false to block navigation
+   * @param {Function} [config.after] - Called after each successful navigation
+   * @returns {Object} Router object
+   * @category Routing
+   * @see bw.navigate
+   * @see bw.link
+   * @example
+   * bw.router({
+   *   target: '#app',
+   *   routes: {
+   *     '/':          function() { return { t: 'h1', c: 'Home' }; },
+   *     '/users/:id': function(params) { return { t: 'h1', c: 'User ' + params.id }; },
+   *     '*':          function() { return { t: 'h1', c: 'Not found' }; }
+   *   }
+   * });
+   */
   bw.router = function(config) {
     if (!config || !config.routes) throw new Error('bw.router: config.routes is required');
     if (!bw._isBrowser) throw new Error('bw.router: requires a browser environment');
@@ -245,6 +276,21 @@ export function initRouter(bw) {
     return routerObj;
   };
 
+  /**
+   * Navigate the active router to a path.
+   *
+   * Warns and does nothing when no router is running, so a stray call cannot
+   * leave the page half-navigated.
+   *
+   * @param {string} path - Target path, e.g. '/users/123'
+   * @param {Object} [opts] - { replace: true } to replace the history entry
+   *   instead of pushing one
+   * @category Routing
+   * @see bw.router
+   * @example
+   * bw.navigate('/users/123');
+   * bw.navigate('/login', { replace: true });
+   */
   bw.navigate = function(path, opts) {
     if (_activeRouter) {
       _activeRouter.navigate(path, opts);
@@ -255,6 +301,18 @@ export function initRouter(bw) {
     }
   };
 
+  /**
+   * A TACO anchor that navigates through the router instead of reloading.
+   *
+   * @param {string} path - Target path
+   * @param {string|Object|Array} content - Link content (text or TACO)
+   * @param {Object} [attrs] - Extra attributes, e.g. `{ class: 'nav_item' }`
+   * @returns {Object} TACO for an `<a>` wired to the router
+   * @category Routing
+   * @see bw.navigate
+   * @example
+   * bw.link('/about', 'About', { class: 'bw_bccl_btn' })
+   */
   bw.link = function(path, content, attrs) {
     var a = {};
     if (attrs) {

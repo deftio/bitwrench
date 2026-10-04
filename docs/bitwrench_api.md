@@ -4,33 +4,227 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.10 |
-| Generated | 2026-09-24 |
-| Total APIs | 112 |
-| Categories | 14 |
-| bitwrench.js | 5216 lines |
+| Version | 2.1.11 |
+| Generated | 2026-10-04 |
+| Total APIs | 169 |
+| Categories | 23 |
+| bitwrench.js | 5506 lines |
 | bitwrench-bccl.js | 3968 lines |
 
 ## Table of Contents
 
-- [Core](#core) (3)
-- [DOM Generation](#dom-generation) (17)
-- [DOM Selection](#dom-selection) (1)
+- [Core](#core) (8)
+- [DOM Generation](#dom-generation) (19)
+- [DOM Selection](#dom-selection) (6)
 - [Identifiers](#identifiers) (4)
 - [State Management](#state-management) (3)
 - [Events (DOM)](#events-dom-) (2)
 - [Pub/Sub](#pub-sub) (5)
-- [CSS & Styling](#css-styling) (12)
-- [Component Builders](#component-builders) (50)
+- [CSS & Styling](#css-styling) (14)
+- [Component Builders](#component-builders) (52)
+- [Routing](#routing) (3)
+- [Color](#color) (4)
+- [Color Utilities](#color-utilities) (12)
+- [Math](#math) (2)
+- [Array Utilities](#array-utilities) (6)
+- [Text Generation](#text-generation) (1)
+- [Timing](#timing) (2)
 - [Browser Utilities](#browser-utilities) (4)
-- [Utilities](#utilities) (1)
+- [File I/O](#file-i-o) (6)
+- [Utilities](#utilities) (2)
 - [Function Registry](#function-registry) (5)
 - [Component](#component) (4)
 - [Data Utilities](#data-utilities) (1)
+- [Server (bwserve)](#server-bwserve-) (4)
+
+## Index
+
+Every public API, with how it is called. Click a signature for the
+full entry: parameters, return value and an example.
+
+| API | Category | What it does |
+|-----|----------|--------------|
+| [`bw.getVersion()`](#bwgetversion) | Core | Get version metadata object (v1-compatible callable API) |
+| [`bw.isNodeJS()`](#bwisnodejs) | Core | Detect if running in Node.js environment |
+| [`bw.debug`](#bwdebug) | Core | Debug flag |
+| [`bw.typeOf(x, baseTypeOnly)`](#bwtypeofxbasetypeonly) | Core | Enhanced type detection that distinguishes arrays, dates, regexps, and more |
+| [`bw.janitor`](#bwjanitor) | Core | Janitor: document-level cleanup for ungraceful teardown |
+| [`bw.parseJSONFlex(str)`](#bwparsejsonflexstr) | Core | Parse a bwserve protocol message string, supporting both strict JSON and r-prefixed relaxed JSON (single-quoted strings, trailing commas) |
+| [`bw.makeDataTable(config)`](#bwmakedatatableconfig) | Core | Create a ready-to-use data table with title and responsive wrapper |
+| [`bw.warnUnknownProps`](#bwwarnunknownprops) | Core | Warn when a component factory is handed an option it does not read |
+| [`bw.raw(str)`](#bwrawstr) | DOM Generation | Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create() |
+| [`bw.html(taco, options = {})`](#bwhtmltacooptions) | DOM Generation | Convert a TACO object (or array of TACOs) to an HTML string |
+| [`bw.htmlPage(opts)`](#bwhtmlpageopts) | DOM Generation | Generate a complete, self-contained HTML document from TACO content |
+| [`bw.create(taco, options)`](#bwcreatetacooptions) | DOM Generation | Create a hydrated, detached DOM element from a TACO object (browser only) |
+| [`bw.hydrate(el, taco)`](#bwhydrateeltaco) | DOM Generation | Wire lifecycle from taco.o onto an existing DOM node |
+| [`bw.mountTree(el)`](#bwmounttreeel) | DOM Generation | Walk a subtree, register every addressable node, fire mounted() hooks |
+| [`bw.unmount(el)`](#bwunmountel) | DOM Generation | Unmount an element and its entire subtree |
+| [`bw.unmountChildren(el)`](#bwunmountchildrenel) | DOM Generation | Unmount descendants only; the element's own state/subs/registration are untouched |
+| [`bw.clear(ref)`](#bwclearref) | DOM Generation | Empty a container: run unmount hooks on its children, then remove them |
+| [`bw.remove(ref)`](#bwremoveref) | DOM Generation | Remove an element from the DOM and clean it up |
+| [`bw.detach(el)`](#bwdetachel) | DOM Generation | Detach an element from the DOM but keep it registered (keep-alive) |
+| [`bw.mount(target, taco, options)`](#bwmounttargettacooptions) | DOM Generation | Mount a TACO into a target element |
+| [`bw.DOM(target, taco, options)`](#bwdomtargettacooptions) | DOM Generation | Mount a TACO into a target element |
+| [`bw.append(target, content, opts)`](#bwappendtargetcontentopts) | DOM Generation | Append content to a target |
+| [`bw.replace(ref, taco)`](#bwreplacereftaco) | DOM Generation | Replace an existing element with new content |
+| [`bw.refresh(ref)`](#bwrefreshref) | DOM Generation | Refresh a component: unmountChildren → re-render → mountTree |
+| [`bw.updateSlot(ref, name, value)`](#bwupdateslotrefnamevalue) | DOM Generation | Update a specific slot on a component by reference |
+| [`bw.syncChildren(parentEl, items, opts)`](#bwsyncchildrenparentelitemsopts) | DOM Generation | Keyed reconciliation: match existing children by `el._bw_key`, move/add/remove to match `items` order |
+| [`bw.render(target, position, taco)`](#bwrendertargetpositiontaco) | DOM Generation | Render a TACO into the DOM at a specific position relative to a target |
+| [`bw.el(target, apply)`](#bweltargetapply) | DOM Selection | Look up a single DOM element by ID, CSS selector, UUID, or element ref |
+| [`bw.addClass(ref, names)`](#bwaddclassrefnames) | DOM Selection | Add one or more classes to every matched element |
+| [`bw.removeClass(ref, names)`](#bwremoveclassrefnames) | DOM Selection | Remove one or more classes from every matched element |
+| [`bw.toggleClass(ref, names, force)`](#bwtoggleclassrefnamesforce) | DOM Selection | Toggle one or more classes on every matched element, or force them on/off |
+| [`bw.hasClass(ref, name)`](#bwhasclassrefname) | DOM Selection | Does the first matched element carry this class? |
+| [`bw.$(selector, apply)`](#bwselectorapply) | DOM Selection | DOM selection helper that always returns an array (browser only) |
+| [`bw.uuid(prefix)`](#bwuuidprefix) | Identifiers | Generate a unique identifier string for DOM elements or application use |
+| [`bw.assignUUID(taco, forceNew)`](#bwassignuuidtacoforcenew) | Identifiers | Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class` |
+| [`bw.getUUID(tacoOrElement)`](#bwgetuuidtacoorelement) | Identifiers | Read the UUID from a TACO object or DOM element |
+| [`bw.escapeHTML(str)`](#bwescapehtmlstr) | Identifiers | Escape HTML special characters to prevent XSS |
+| [`bw.update(ref, data)`](#bwupdaterefdata) | State Management | Update a component by dispatching to el.bw.update(data) if defined |
+| [`bw.patch(id, content, attr)`](#bwpatchidcontentattr) | State Management | Targeted DOM update by element ID — change one element's content or attribute without rebuilding the entire component tree |
+| [`bw.patchAll(patches)`](#bwpatchallpatches) | State Management | Batch version of `bw.patch()` — update multiple elements in one call |
+| [`bw.emit(target, eventName, detail)`](#bwemittargeteventnamedetail) | Events (DOM) | Emit a custom DOM event on an element |
+| [`bw.on(target, eventName, handler)`](#bwontargeteventnamehandler) | Events (DOM) | Listen for a custom bitwrench event on a DOM element |
+| [`bw.pub(topic, detail)`](#bwpubtopicdetail) | Pub/Sub | Publish to a topic, calling all subscribers in registration order |
+| [`bw.sub(topic, handler, el)`](#bwsubtopichandlerel) | Pub/Sub | Subscribe to a topic |
+| [`bw.unsub(topic, handler)`](#bwunsubtopichandler) | Pub/Sub | Unsubscribe a handler by reference from a topic |
+| [`bw.once(topic, handler, el)`](#bwoncetopichandlerel) | Pub/Sub | Subscribe to a topic for a single event only |
+| [`bw.derive(inputs, fn, outTopic, opts)`](#bwderiveinputsfnouttopicopts) | Pub/Sub | Declared dataflow: recompute fn(inputs...) on any input publish |
+| [`bw.css(rules, options = {})`](#bwcssrulesoptions) | CSS & Styling | Generate CSS from JavaScript objects |
+| [`bw.injectCSS(css, options = {})`](#bwinjectcsscssoptions) | CSS & Styling | Inject CSS into the document head (browser only) |
+| [`bw.s()`](#bws) | CSS & Styling | Merge multiple style objects into one (left-to-right) |
+| [`bw.responsive(selector, breakpoints)`](#bwresponsiveselectorbreakpoints) | CSS & Styling | Generate responsive CSS with media query breakpoints |
+| [`bw.makeStyles(config)`](#bwmakestylesconfig) | CSS & Styling | Generate a complete styles object from seed colors and layout config |
+| [`bw.applyStyles(styles, scope)`](#bwapplystylesstylesscope) | CSS & Styling | Inject styles into the DOM with optional scoping |
+| [`bw.loadStyles(config, scope)`](#bwloadstylesconfigscope) | CSS & Styling | Generate and apply styles in one call |
+| [`bw.loadStructural()`](#bwloadstructural) | CSS & Styling | Inject structural (theme-independent) CSS only |
+| [`bw.scopeRulesUnder(rules, prefix)`](#bwscoperulesunderrulesprefix) | CSS & Styling | Prefix every selector in a rules object with a scope selector |
+| [`bw.loadReset()`](#bwloadreset) | CSS & Styling | Inject the CSS reset (box-sizing, html/body font, reduced-motion) |
+| [`bw.setThemeMode(mode, scope)`](#bwsetthememodemodescope) | CSS & Styling | Set the theme mode on all matching elements |
+| [`bw.toggleThemeMode(scope)`](#bwtogglethememodescope) | CSS & Styling | Toggle between primary and alternate theme palettes |
+| [`bw.clearStyles(scope)`](#bwclearstylesscope) | CSS & Styling | Remove injected styles for a given scope |
+| [`bw.generateTypeScale(base, ratio)`](#bwgeneratetypescalebaseratio) | CSS & Styling | Generate a modular type scale from a base size and ratio |
+| [`bw.makeTable(config)`](#bwmaketableconfig) | Component Builders | Create a sortable TACO table from an array of row objects |
+| [`bw.makeTableFromArray(config)`](#bwmaketablefromarrayconfig) | Component Builders | Create a table from a 2D array |
+| [`bw.makeBarChart(config)`](#bwmakebarchartconfig) | Component Builders | Create a vertical bar chart from data |
+| [`bw.variantClass(v)`](#bwvariantclassv) | Component Builders | Convert a variant name to a single palette class |
+| [`bw.makeCard(props = {})`](#bwmakecardprops) | Component Builders | Create a card component with optional header, body, footer, and image support Supports images (top, bottom, left, right), shadow levels, subtitle, hover animation, and custom section class overrides |
+| [`bw.makeButton(props = {})`](#bwmakebuttonprops) | Component Builders | Create a button component |
+| [`bw.makeContainer(props = {})`](#bwmakecontainerprops) | Component Builders | Create a container component for centering and constraining content width |
+| [`bw.makeRow(props = {})`](#bwmakerowprops) | Component Builders | Create a flexbox row for the grid system |
+| [`bw.makeCol(props = {})`](#bwmakecolprops) | Component Builders | Create a grid column with responsive sizing Supports both fixed and responsive column sizes |
+| [`bw.makeNav(props = {})`](#bwmakenavprops) | Component Builders | Create a navigation component with tabs or pills styling |
+| [`bw.makeNavbar(props = {})`](#bwmakenavbarprops) | Component Builders | Create a navbar component with brand and navigation links |
+| [`bw.makeTabs(props = {})`](#bwmaketabsprops) | Component Builders | Create a tabbed interface with accessible tab navigation Each tab is rendered as a button with ARIA attributes for accessibility |
+| [`bw.makeAlert(props = {})`](#bwmakealertprops) | Component Builders | Create an alert/notification component |
+| [`bw.makeBadge(props = {})`](#bwmakebadgeprops) | Component Builders | Create an inline badge/label component |
+| [`bw.makeProgress(props = {})`](#bwmakeprogressprops) | Component Builders | Create a progress bar component with ARIA accessibility |
+| [`bw.makeListGroup(props = {})`](#bwmakelistgroupprops) | Component Builders | Create a list group component for displaying lists of items Items can be simple strings or objects with text, active, disabled, href, and onclick properties |
+| [`bw.makeBreadcrumb(props = {})`](#bwmakebreadcrumbprops) | Component Builders | Create a breadcrumb navigation component The last item with active:true is rendered as plain text (no link) |
+| [`bw.makeForm(props = {})`](#bwmakeformprops) | Component Builders | Create a form wrapper with default submit prevention |
+| [`bw.makeFormGroup(props = {})`](#bwmakeformgroupprops) | Component Builders | Create a form group with label, input, optional help text and validation feedback |
+| [`bw.makeInput(props = {})`](#bwmakeinputprops) | Component Builders | Create an input element with form control styling Additional event handlers (oninput, onchange, etc.) can be passed as extra properties and are spread onto the element attributes |
+| [`bw.makeTextarea(props = {})`](#bwmaketextareaprops) | Component Builders | Create a textarea element with form control styling |
+| [`bw.makeSelect(props = {})`](#bwmakeselectprops) | Component Builders | Create a select dropdown with options |
+| [`bw.makeCheckbox(props = {})`](#bwmakecheckboxprops) | Component Builders | Create a checkbox input with label |
+| [`bw.makeStack(props = {})`](#bwmakestackprops) | Component Builders | Create a flexbox stack layout (vertical or horizontal) |
+| [`bw.makeSpinner(props = {})`](#bwmakespinnerprops) | Component Builders | Create a loading spinner indicator |
+| [`bw.makeHero(props = {})`](#bwmakeheroprops) | Component Builders | Create a hero section for landing pages and headers Supports gradient backgrounds, background images with overlays, and action buttons |
+| [`bw.makeFeatureGrid(props = {})`](#bwmakefeaturegridprops) | Component Builders | Create a responsive feature grid for showcasing capabilities Renders features in an equal-width column grid with optional icons, titles, and descriptions |
+| [`bw.makeCTA(props = {})`](#bwmakectaprops) | Component Builders | Create a call-to-action section with title, description, and action buttons |
+| [`bw.makeSection(props = {})`](#bwmakesectionprops) | Component Builders | Create a page section with optional centered header and background |
+| [`bw.makeCodeDemo(props = {})`](#bwmakecodedemoprops) | Component Builders | Create a code demo component for documentation pages Displays a live result alongside source code in a tabbed interface |
+| [`bw.makePagination(props = {})`](#bwmakepaginationprops) | Component Builders | Create a pagination navigation component |
+| [`bw.makeRadio(props = {})`](#bwmakeradioprops) | Component Builders | Create a radio button input with label |
+| [`bw.makeButtonGroup(props = {})`](#bwmakebuttongroupprops) | Component Builders | Create a button group wrapper |
+| [`bw.makeAccordion(props = {})`](#bwmakeaccordionprops) | Component Builders | Create an accordion component with collapsible items |
+| [`bw.makeModal(props = {})`](#bwmakemodalprops) | Component Builders | Create a modal dialog overlay |
+| [`bw.makeToast(props = {})`](#bwmaketoastprops) | Component Builders | Create a toast notification popup |
+| [`bw.makeDropdown(props = {})`](#bwmakedropdownprops) | Component Builders | Create a dropdown menu triggered by a button |
+| [`bw.makeSwitch(props = {})`](#bwmakeswitchprops) | Component Builders | Create a toggle switch (styled checkbox) |
+| [`bw.makeSkeleton(props = {})`](#bwmakeskeletonprops) | Component Builders | Create a skeleton loading placeholder |
+| [`bw.makeAvatar(props = {})`](#bwmakeavatarprops) | Component Builders | Create a user avatar with image or initials fallback |
+| [`bw.makeCarousel(props = {})`](#bwmakecarouselprops) | Component Builders | Create a carousel/slideshow component with slide transitions Supports image slides, TACO content slides, captions, prev/next controls, dot indicators, and optional auto-play |
+| [`bw.makeStatCard(props = {})`](#bwmakestatcardprops) | Component Builders | Create a stat card for dashboard metrics display Shows a large value with a label and optional change indicator |
+| [`bw.makeTooltip(props = {})`](#bwmaketooltipprops) | Component Builders | Create a tooltip wrapper around trigger content Wraps the trigger element in a container that shows tooltip text on hover and focus |
+| [`bw.makePopover(props = {})`](#bwmakepopoverprops) | Component Builders | Create a popover wrapper around trigger content Like a tooltip but richer — supports title + body content and is triggered by click rather than hover |
+| [`bw.makeSearchInput(props = {})`](#bwmakesearchinputprops) | Component Builders | Create a search input with clear button Wraps a text input with a clear (×) button that appears when the field has content |
+| [`bw.makeRange(props = {})`](#bwmakerangeprops) | Component Builders | Create a styled range slider input |
+| [`bw.makeMediaObject(props = {})`](#bwmakemediaobjectprops) | Component Builders | Create a media object layout (image + text side-by-side) Classic media object pattern: image/icon on one side, text content on the other, using flexbox |
+| [`bw.makeFileUpload(props = {})`](#bwmakefileuploadprops) | Component Builders | Create a file upload zone with drag-and-drop support Styled drop zone with file input |
+| [`bw.makeTimeline(props = {})`](#bwmaketimelineprops) | Component Builders | Create a vertical timeline for chronological event display Renders events as a vertical line with markers and content cards |
+| [`bw.makeStepper(props = {})`](#bwmakestepperprops) | Component Builders | Create a multi-step wizard/progress indicator Displays numbered steps with active and completed states |
+| [`bw.makeChipInput(props = {})`](#bwmakechipinputprops) | Component Builders | Create a chip/tag input for managing a list of items Displays existing chips with remove buttons and an input field for adding new ones |
+| [`bw.make(type, props)`](#bwmaketypeprops) | Component Builders | Factory function — create any BCCL component by type name |
+| [`bw.router(config)`](#bwrouterconfig) | Routing | Create a client-side router: URLs in, TACOs out |
+| [`bw.navigate(path, opts)`](#bwnavigatepathopts) | Routing | Navigate the active router to a path |
+| [`bw.link(path, content, attrs)`](#bwlinkpathcontentattrs) | Routing | A TACO anchor that navigates through the router instead of reloading |
+| [`bw.colorHslToRgb(h, s, l, a, rnd)`](#bwcolorhsltorgbhslarnd) | Color | HSL to RGB, in the v1 array format |
+| [`bw.colorRgbToHsl(r, g, b, a, rnd)`](#bwcolorrgbtohslrgbarnd) | Color | RGB to HSL, in the v1 array format |
+| [`bw.colorParse(s, defAlpha)`](#bwcolorparsesdefalpha) | Color | Parse any CSS colour string into the v1 array format |
+| [`bw.colorInterp(x, in0, in1, colors, stretch, colorParseFn)`](#bwcolorinterpxin0in1colorsstretchcolorparsefn) | Color | Interpolate between an array of colors based on a value in a range |
+| [`bw.hexToHsl(hex)`](#bwhextohslhex) | Color Utilities | Convert hex color to HSL array [h, s, l] |
+| [`bw.hslToHex(hsl)`](#bwhsltohexhsl) | Color Utilities | Convert HSL array to hex color string |
+| [`bw.adjustLightness(hex, amount)`](#bwadjustlightnesshexamount) | Color Utilities | Adjust lightness of a hex color by a percentage amount |
+| [`bw.mixColor(hex1, hex2, ratio)`](#bwmixcolorhex1hex2ratio) | Color Utilities | Mix two hex colors via RGB linear interpolation |
+| [`bw.relativeLuminance(hex)`](#bwrelativeluminancehex) | Color Utilities | Compute WCAG 2.0 relative luminance of a hex color |
+| [`bw.textOnColor(hex)`](#bwtextoncolorhex) | Color Utilities | Return '#fff' or '#000' for readable text on a given background color |
+| [`bw.harmonize(sourceHex, targetHex, amount)`](#bwharmonizesourcehextargethexamount) | Color Utilities | Shift a color's hue toward a target hue by a given amount |
+| [`bw.deriveShades(hex)`](#bwderiveshadeshex) | Color Utilities | Derive a full shade palette for a single semantic color |
+| [`bw.deriveAlternateSeed(hex)`](#bwderivealternateseedhex) | Color Utilities | Derive the alternate (luminance-inverted) version of a single seed color |
+| [`bw.isLightPalette(config)`](#bwislightpaletteconfig) | Color Utilities | Determine whether a palette config is "light-flavored" based on the average luminance of its seed colors |
+| [`bw.deriveAlternateConfig(config)`](#bwderivealternateconfigconfig) | Color Utilities | Derive a complete alternate config from a primary theme config |
+| [`bw.derivePalette(config)`](#bwderivepaletteconfig) | Color Utilities | Derive complete palette from a theme config object |
+| [`bw.mapScale(x, in0, in1, out0, out1, options, options.clip, options.expScale)`](#bwmapscalexin0in1out0out1optionsoptionsclipoptionsexpscale) | Math | Map/scale a value from one range to another (linear interpolation) |
+| [`bw.clip(value, min, max)`](#bwclipvalueminmax) | Math | Clamp a value between min and max bounds |
+| [`bw.choice(x, choices, def)`](#bwchoicexchoicesdef) | Array Utilities | Use a dictionary as a switch statement, with support for function values |
+| [`bw.arrayUniq(x)`](#bwarrayuniqx) | Array Utilities | Return unique elements of an array (preserves first occurrence order) |
+| [`bw.arrayBinA(a, b)`](#bwarraybinaab) | Array Utilities | Return the intersection of two arrays (elements present in both) |
+| [`bw.arrayBNotInA(a, b)`](#bwarraybnotinaab) | Array Utilities | Return elements of b that are not present in a (set difference) |
+| [`bw.multiArray(value, dims)`](#bwmultiarrayvaluedims) | Array Utilities | Create a multidimensional array filled with a value or function result |
+| [`bw.naturalCompare(as, bs)`](#bwnaturalcompareasbs) | Array Utilities | Natural sort comparison function for use with `Array.sort()` |
+| [`bw.loremIpsum(numChars, startSpot, startWithCapitalLetter = true)`](#bwloremipsumnumcharsstartspotstartwithcapitallettertrue) | Text Generation | Generate Lorem Ipsum placeholder text |
+| [`bw.setIntervalX(callback, delay, repetitions)`](#bwsetintervalxcallbackdelayrepetitions) | Timing | Run `setInterval` with a maximum number of repetitions |
+| [`bw.repeatUntil(testFn, successFn, failFn, delay = 250, maxReps = 10, lastFn)`](#bwrepeatuntiltestfnsuccessfnfailfndelay250maxreps10lastfn) | Timing | Repeat a test function until it returns truthy, or give up after max attempts |
+| [`bw.setCookie(cname, cvalue, exdays, options = {})`](#bwsetcookiecnamecvalueexdaysoptions) | Browser Utilities | Set a browser cookie with expiration and options |
+| [`bw.getCookie(cname, defaultValue)`](#bwgetcookiecnamedefaultvalue) | Browser Utilities | Get a browser cookie value by name |
+| [`bw.getURLParam(key, defaultValue)`](#bwgeturlparamkeydefaultvalue) | Browser Utilities | Get a URL query parameter value from the current page URL |
+| [`bw.copyToClipboard(text)`](#bwcopytoclipboardtext) | Browser Utilities | Copy text to the system clipboard (browser only) |
+| [`bw.saveClientFile(fname, data)`](#bwsaveclientfilefnamedata) | File I/O | Save data to a file |
+| [`bw.saveClientJSON(fname, data)`](#bwsaveclientjsonfnamedata) | File I/O | Save data as a JSON file with pretty formatting |
+| [`bw.loadClientFile(fname, callback, options)`](#bwloadclientfilefnamecallbackoptions) | File I/O | Load a file by path (Node.js) or URL (browser via XHR) |
+| [`bw.loadClientJSON(fname, callback)`](#bwloadclientjsonfnamecallback) | File I/O | Load a JSON file by path (Node.js) or URL (browser) |
+| [`bw.loadLocalFile(callback, options)`](#bwloadlocalfilecallbackoptions) | File I/O | Prompt user to pick a local file via file dialog (browser only) |
+| [`bw.loadLocalJSON(callback)`](#bwloadlocaljsoncallback) | File I/O | Prompt user to pick a local JSON file via file dialog (browser only) |
+| [`bw.to(x, baseTypeOnly)`](#bwtoxbasetypeonly) | Utilities | Short alias of `bw.typeOf()` |
+| [`bw.h(tag, attrs, content, options)`](#bwhtagattrscontentoptions) | Utilities | Hyperscript-style TACO constructor |
+| [`bw.funcRegister(fn, name)`](#bwfuncregisterfnname) | Function Registry | Register a function in the global function registry |
+| [`bw.funcGetById(name, errFn)`](#bwfuncgetbyidnameerrfn) | Function Registry | Retrieve a registered function by name |
+| [`bw.funcGetDispatchStr(name, argStr)`](#bwfuncgetdispatchstrnameargstr) | Function Registry | Generate a dispatch string suitable for inline HTML event attributes |
+| [`bw.funcUnregister(name)`](#bwfuncunregistername) | Function Registry | Remove a function from the registry |
+| [`bw.funcGetRegistry()`](#bwfuncgetregistry) | Function Registry | Get a shallow copy of the function registry for inspection |
+| [`bw.message(target, action, data)`](#bwmessagetargetactiondata) | Component | Dispatch a message to a component by UUID, CSS class, or selector |
+| [`bw.formData(target)`](#bwformdatatarget) | Component | Collect form data from all input, select, and textarea elements within a container |
+| [`bw.inspect(target, depth)`](#bwinspecttargetdepth) | Component | Inspect a DOM element and its subtree, returning a plain-object representation with bitwrench metadata at each node |
+| [`bw.catalog(type)`](#bwcatalogtype) | Component | Query the BCCL component registry |
+| [`bw.jsonPatch(obj, ops)`](#bwjsonpatchobjops) | Data Utilities | Apply RFC 6902 JSON Patch operations to a plain object |
+| [`bw.actions`](#bwactions) | Server (bwserve) | Delegated dispatcher for `bw_act_*` class tokens: `{ enable, disable }` |
+| [`bw.registerRemote(name, fn)`](#bwregisterremotenamefn) | Server (bwserve) | Register a function the server may invoke by name over bwserve |
+| [`bw.connect(url)`](#bwconnecturl) | Server (bwserve) | Connect this page to a bwserve endpoint over Server-Sent Events |
+| [`bw.apply(msg)`](#bwapplymsg) | Server (bwserve) | Apply one bwserve protocol message to the DOM |
 
 ---
 
 ## Core
+
+### `bw.getVersion()`
+
+Get version metadata object (v1-compatible callable API). Returns a copy of the build-time version info including version string, name, build date, and git hash.
+
+**Returns:** `Object` — of VERSION_INFO with version, name, buildDate, etc.
+
+---
 
 ### `bw.isNodeJS()`
 
@@ -42,6 +236,38 @@ Detect if running in Node.js environment. Useful for writing isomorphic code tha
 ```javascript
 if (bw.isNodeJS()) { console.log('Running in Node.js'); } else { console.log('Running in browser'); }
 ```
+
+---
+
+### `bw.debug`
+
+Debug flag. When true, emits console.warn for silent binding failures (missing paths, null refs, auto-created intermediate objects).
+
+---
+
+### `bw.typeOf(x, baseTypeOnly)`
+
+Enhanced type detection that distinguishes arrays, dates, regexps, and more. Goes beyond `typeof` by using `Object.prototype.toString` to identify specific object types. Returns lowercase strings for primitives and arrays, PascalCase for built-in classes (Date, RegExp, Map, Set, etc.).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `x` | `*` | - Value to examine |
+| `baseTypeOnly` | `boolean` | - If true, return only the base type ("object" for all objects) |
+
+**Returns:** `string` — name as shown in table below
+
+**Example:**
+```javascript
+// Primitives (lowercase): bw.typeOf("hello")         // => "string" bw.typeOf(42)              // => "number" bw.typeOf(true)            // => "boolean" bw.typeOf(undefined)       // => "undefined" bw.typeOf(null)            // => "null" bw.typeOf(Symbol('x'))     // => "symbol" bw.typeOf(42n)             // => "bigint" bw.typeOf(() => {})        // => "function" // Arrays (lowercase): bw.typeOf([1, 2, 3])       // => "array" // Built-in classes (PascalCase): bw.typeOf(new Date())      // => "Date" bw.typeOf(/abc/)           // => "RegExp" bw.typeOf(new Error())     // => "Error" bw.typeOf(new Map())       // => "Map" bw.typeOf(new Set())       // => "Set" bw.typeOf(new WeakMap())   // => "WeakMap" bw.typeOf(new WeakSet())   // => "WeakSet" bw.typeOf(Promise.resolve()) // => "Promise" // Typed arrays (PascalCase): bw.typeOf(new Uint8Array())   // => "Uint8Array" bw.typeOf(new Float64Array()) // => "Float64Array" bw.typeOf(new ArrayBuffer(8)) // => "ArrayBuffer" // Plain objects and custom classes: bw.typeOf({a: 1})          // => "Object" bw.typeOf(new MyClass())   // => "MyClass" (constructor.name) // baseTypeOnly mode: bw.typeOf([1,2], true)     // => "object"
+```
+
+---
+
+### `bw.janitor`
+
+Janitor: document-level cleanup for ungraceful teardown. Detects rude el.remove() / innerHTML='' and fires full unmount. flush() = synchronous process all pending disconnected nodes. enable()/disable() toggle monitoring. ON by default.
 
 ---
 
@@ -82,6 +308,12 @@ Create a ready-to-use data table with title and responsive wrapper. Convenience 
 ```javascript
 const table = bw.makeDataTable({ title: "Users", data: [{ name: "Alice", role: "Admin" }], responsive: true });
 ```
+
+---
+
+### `bw.warnUnknownProps`
+
+Warn when a component factory is handed an option it does not read. Why this exists: a wrong option name used to fail silently -- `makeButton({ href })` rendered a button that styled correctly and did not navigate; `makeTable({ headers, rows })` rendered an empty table. Both reviewed clean and shipped. See issue #92. The accepted keys come from each factory's own destructuring pattern, read from its source at call time, so there is no per-factory list to keep in sync. Property names survive minification. A factory that collects the rest of its props (`...eventHandlers`) accepts anything, so it is skipped, and so is any factory whose pattern cannot be parsed (older transpiled builds). Set `bw.warnUnknownProps = false` to silence it.
 
 ---
 
@@ -220,6 +452,25 @@ Unmount descendants only; the element's own state/subs/registration are untouche
 
 ---
 
+### `bw.clear(ref)`
+
+Empty a container: run unmount hooks on its children, then remove them. This is the verb to reach for instead of `el.innerHTML = ''`, which drops the children without firing `o.unmount`, leaking whatever they held (subscriptions, timers, observers).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or element |
+
+**Returns:** `Element|null` — emptied element, or null if not found
+
+**Example:**
+```javascript
+bw.clear('#list');                  // empties #list, hooks fire bw.mount('#list', rows.map(row));   // refill it
+```
+
+---
+
 ### `bw.remove(ref)`
 
 Remove an element from the DOM and clean it up. Convenience compound: unmount(el) + el.remove().
@@ -257,6 +508,27 @@ Mount a TACO into a target element. Returns the root element (single root), firs
 | `options` | `Object` | - Creation options |
 
 **Returns:** `Element|null` — root element, or null
+
+---
+
+### `bw.DOM(target, taco, options)`
+
+Mount a TACO into a target element. Exact alias of `bw.mount()` (v2.1 §2): same function, same return value -- keep it to call `el.bw.*`.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | `string|Element` | - Element ID, CSS selector, bw_uuid_* class, or element |
+| `taco` | `Object|Array|string` | - TACO (or array of TACOs) to mount |
+| `options` | `Object` | - Passed through to bw.create() |
+
+**Returns:** `Element|null` — mounted root element
+
+**Example:**
+```javascript
+var el = bw.DOM('#app', { t: 'h1', c: 'Hello' });
+```
 
 ---
 
@@ -374,6 +646,107 @@ Look up a single DOM element by ID, CSS selector, UUID, or element ref. Optional
 **Example:**
 ```javascript
 bw.el('#title')                         // lookup bw.el('#title', 'Hello')                // set text content bw.el('#app', { t: 'h1', c: 'Hi' })    // mount TACO bw.el('.card', function(el) {           // apply function el.style.opacity = '0.5'; })
+```
+
+---
+
+### `bw.addClass(ref, names)`
+
+Add one or more classes to every matched element. Changing a class is the cheapest update a component can make: no node is created, nothing is unmounted, focus and scroll are untouched.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element|Array` | - Element id, CSS selector, element, or list of elements |
+| `names` | `string|Array<string>` | - Class name, space-separated names, or array |
+
+**Returns:** `Array<Element>` — elements that were changed
+
+**Example:**
+```javascript
+bw.addClass('save-btn', 'is_busy'); bw.addClass('.row', ['zebra', 'tight']);
+```
+
+---
+
+### `bw.removeClass(ref, names)`
+
+Remove one or more classes from every matched element.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element|Array` | - Element id, CSS selector, element, or list of elements |
+| `names` | `string|Array<string>` | - Class name, space-separated names, or array |
+
+**Returns:** `Array<Element>` — elements that were changed
+
+**Example:**
+```javascript
+bw.removeClass('save-btn', 'is_busy');
+```
+
+---
+
+### `bw.toggleClass(ref, names, force)`
+
+Toggle one or more classes on every matched element, or force them on/off. With a third argument the class is set rather than flipped, which is what you want when driving a class from state: `bw.toggleClass(keys, 'down', isDown)`.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element|Array` | - Element id, CSS selector, element, or list of elements |
+| `names` | `string|Array<string>` | - Class name, space-separated names, or array |
+| `force` | `boolean` | - true adds, false removes, omitted flips |
+
+**Returns:** `Array<Element>` — elements that were changed
+
+**Example:**
+```javascript
+bw.toggleClass('#panel', 'open');                         // flip bw.toggleClass('#onscreen rect', 'down', false);          // force off, every match bw.toggleClass(el, 'wrong', result !== 'ok');             // drive it from state
+```
+
+---
+
+### `bw.hasClass(ref, name)`
+
+Does the first matched element carry this class?
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `ref` | `string|Element|Array` | - Element id, CSS selector, element, or list of elements |
+| `name` | `string` | - Class name |
+
+**Returns:** `boolean` — when the first match has it
+
+**Example:**
+```javascript
+if (bw.hasClass('#panel', 'open')) bw.removeClass('#panel', 'open');
+```
+
+---
+
+### `bw.$(selector, apply)`
+
+DOM selection helper that always returns an array (browser only). Wraps `querySelectorAll` and normalizes the result to a plain Array so you can use `.map()`, `.filter()`, etc. directly. Accepts CSS selectors, single elements, NodeLists, or arrays. With an optional second argument, applies content or a function to every matched element (same apply rules as `bw.el()`): - string/number: sets `el.textContent` - function: calls `apply(el)` for each element - TACO object: clears children, mounts TACO via `bw.create()` - array: clears children, appends each item
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `selector` | `string|Element|Array` | - CSS selector, element, or array |
+| `apply` | `string|number|Function|Object|Array` | - Content or function to apply |
+
+**Returns:** `Array` — of DOM elements
+
+**Example:**
+```javascript
+bw.$('.card')                           // => [div.card, div.card, ...] bw.$('.status', 'Online')               // set text on all .status elements bw.$('.card', function(el) {            // apply function to each el.style.opacity = '0.5'; })
 ```
 
 ---
@@ -809,6 +1182,26 @@ Inject structural (theme-independent) CSS only. Idempotent.
 
 ---
 
+### `bw.scopeRulesUnder(rules, prefix)`
+
+Prefix every selector in a rules object with a scope selector. Useful for wrapping site-level CSS under `.bw_theme_alt` for dark mode.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `rules` | `Object` | - CSS rules object (selector -> declarations) |
+| `prefix` | `string` | - Scope prefix (e.g. '.bw_theme_alt') |
+
+**Returns:** `Object` — rules object with scoped selectors
+
+**Example:**
+```javascript
+var altRules = bw.scopeRulesUnder(myRules, '.bw_theme_alt'); bw.injectCSS(bw.css(altRules));
+```
+
+---
+
 ### `bw.loadReset()`
 
 Inject the CSS reset (box-sizing, html/body font, reduced-motion). Idempotent — if already injected, returns the existing `<style>` element.
@@ -865,6 +1258,21 @@ Remove injected styles for a given scope. Finds the `<style>` element by id and 
 ```javascript
 bw.clearStyles();                    // remove global styles bw.clearStyles('#my-dashboard');     // remove scoped styles bw.clearStyles('reset');             // remove the CSS reset
 ```
+
+---
+
+### `bw.generateTypeScale(base, ratio)`
+
+Generate a modular type scale from a base size and ratio.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `base` | `number` | - Base font size in px (default 16) |
+| `ratio` | `number` | - Scale ratio (default 1.200) |
+
+**Returns:** `Object` — xs, sm, base, lg, xl, '2xl', '3xl', '4xl' } in px
 
 ---
 
@@ -954,6 +1362,20 @@ Create a vertical bar chart from data. Renders a pure-CSS bar chart using flexbo
 ```javascript
 bw.makeBarChart({ data: [ { label: 'Jan', value: 12400 }, { label: 'Feb', value: 15800 }, { label: 'Mar', value: 9200 } ], title: 'Monthly Revenue', color: '#0077b6', formatValue: (v) => '$' + (v / 1000).toFixed(1) + 'k' });
 ```
+
+---
+
+### `bw.variantClass(v)`
+
+Convert a variant name to a single palette class. All BCCL components use this: variant='primary' → class includes 'bw_primary'. The CSS palette class (.bw-primary) sets bg/color/border; component-specific overrides in generatePaletteClasses() adjust per component type.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `v` | `string` | - Variant name (e.g. 'primary', 'danger', 'outline_primary') |
+
+**Returns:** `string` — class string
 
 ---
 
@@ -2164,6 +2586,596 @@ const tags = makeChipInput({ chips: ['JavaScript', 'CSS'], placeholder: 'Add tag
 
 ---
 
+### `bw.make(type, props)`
+
+Factory function — create any BCCL component by type name.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `type` | `string` | - Component type (e.g. 'card', 'button', 'alert') |
+| `props` | `Object` | - Component properties |
+
+**Returns:** `Object` — object
+
+**Example:**
+```javascript
+var card = make('card', { title: 'Hello', variant: 'primary' }); var btn = make('button', { text: 'Click', variant: 'success' }); var types = Object.keys(BCCL); // list all available types
+```
+
+---
+
+## Routing
+
+### `bw.router(config)`
+
+Create a client-side router: URLs in, TACOs out. Route handlers return TACO; the router mounts the result into `target`. Hash mode needs no server config; history mode needs the server to serve the app for unknown paths. Returns a router object with `navigate`, `stop` and the compiled route table.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `config` | `Object` | - Router configuration |
+| `config.routes` | `Object` | - Map of path pattern to handler, e.g. `{ '/': fn, '/users/:id': fn, '*': fn }`. Handlers get (params, query) and return a TACO. |
+| `config.target` | `string|Element` | - Where to mount each view |
+| `config.mode` | `string` | - 'hash' or 'history' |
+| `config.base` | `string` | - Base path for history mode |
+| `config.before` | `Function` | - Guard: return false to block navigation |
+| `config.after` | `Function` | - Called after each successful navigation |
+
+**Returns:** `Object` — object
+
+**Example:**
+```javascript
+bw.router({ target: '#app', routes: { '/':          function() { return { t: 'h1', c: 'Home' }; }, '/users/:id': function(params) { return { t: 'h1', c: 'User ' + params.id }; }, '*':          function() { return { t: 'h1', c: 'Not found' }; } } });
+```
+
+---
+
+### `bw.navigate(path, opts)`
+
+Navigate the active router to a path. Warns and does nothing when no router is running, so a stray call cannot leave the page half-navigated.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `path` | `string` | - Target path, e.g. '/users/123' |
+| `opts` | `Object` | - { replace: true } to replace the history entry instead of pushing one |
+
+**Example:**
+```javascript
+bw.navigate('/users/123'); bw.navigate('/login', { replace: true });
+```
+
+---
+
+### `bw.link(path, content, attrs)`
+
+A TACO anchor that navigates through the router instead of reloading.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `path` | `string` | - Target path |
+| `content` | `string|Object|Array` | - Link content (text or TACO) |
+| `attrs` | `Object` | - Extra attributes, e.g. `{ class: 'nav_item' }` |
+
+**Returns:** `Object` — for an `<a>` wired to the router
+
+**Example:**
+```javascript
+bw.link('/about', 'About', { class: 'bw_bccl_btn' })
+```
+
+---
+
+## Color
+
+### `bw.colorHslToRgb(h, s, l, a, rnd)`
+
+HSL to RGB, in the v1 array format.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `h` | `number|Array` | - Hue 0-360, or the whole `[h, s, l, a]` array |
+| `s` | `number` | - Saturation 0-100 |
+| `l` | `number` | - Lightness 0-100 |
+| `a` | `number` | - Alpha 0-255 |
+| `rnd` | `boolean` | - Round the result |
+
+**Returns:** `Array`
+
+**Example:**
+```javascript
+bw.colorHslToRgb(180, 50, 50)     // => [64, 191, 191, 255, 'rgb']
+```
+
+---
+
+### `bw.colorRgbToHsl(r, g, b, a, rnd)`
+
+RGB to HSL, in the v1 array format.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `r` | `number|Array` | - Red 0-255, or the whole `[r, g, b, a]` array |
+| `g` | `number` | - Green 0-255 |
+| `b` | `number` | - Blue 0-255 |
+| `a` | `number` | - Alpha 0-255 |
+| `rnd` | `boolean` | - Round the result |
+
+**Returns:** `Array`
+
+**Example:**
+```javascript
+bw.colorRgbToHsl(64, 191, 191)    // => [180, 50, 50, 255, 'hsl']
+```
+
+---
+
+### `bw.colorParse(s, defAlpha)`
+
+Parse any CSS colour string into the v1 array format. Accepts `#rgb`, `#rrggbb`, `rgb()`, `rgba()`, `hsl()`, `hsla()`, named colours and an existing array. The fifth element records which space the value is in, so `colorInterp` and friends can round-trip it.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `s` | `string|Array` | - Colour string, or an array to normalise |
+| `defAlpha` | `number` | - Alpha to use when the input has none |
+
+**Returns:** `Array` — or `[h, s, l, a, 'hsl']`
+
+**Example:**
+```javascript
+bw.colorParse('#006666')          // => [0, 102, 102, 255, 'rgb'] bw.colorParse('hsl(180 50% 50%)') // => [180, 50, 50, 255, 'hsl']
+```
+
+---
+
+### `bw.colorInterp(x, in0, in1, colors, stretch, colorParseFn)`
+
+Interpolate between an array of colors based on a value in a range.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `x` | `number` | - Value to interpolate |
+| `in0` | `number` | - Input range start |
+| `in1` | `number` | - Input range end |
+| `colors` | `Array` | - Array of CSS color strings to interpolate between |
+| `stretch` | `number` | - Exponential scaling factor (1 = linear) |
+| `colorParseFn` | `Function` | - Color parse function (injected to avoid circular dep) |
+
+**Returns:** `Array` — color as [r, g, b, a, "rgb"]
+
+**Example:**
+```javascript
+colorInterp(50, 0, 100, ['#ff0000', '#00ff00'], undefined, bw.colorParse)
+```
+
+---
+
+## Color Utilities
+
+### `bw.hexToHsl(hex)`
+
+Convert hex color to HSL array [h, s, l].
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hex` | `string` | - Hex color e.g. '#006666' |
+
+**Returns:** `Array` — where h=0-360, s=0-100, l=0-100
+
+---
+
+### `bw.hslToHex(hsl)`
+
+Convert HSL array to hex color string.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hsl` | `Array` | - [h, s, l] where h=0-360, s=0-100, l=0-100 |
+
+**Returns:** `string` — color e.g. '#006666'
+
+---
+
+### `bw.adjustLightness(hex, amount)`
+
+Adjust lightness of a hex color by a percentage amount. Positive = lighten, negative = darken.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hex` | `string` | - Hex color |
+| `amount` | `number` | - Lightness change in percentage points (-100 to 100) |
+
+**Returns:** `string` — hex color
+
+---
+
+### `bw.mixColor(hex1, hex2, ratio)`
+
+Mix two hex colors via RGB linear interpolation.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hex1` | `string` | - First hex color |
+| `hex2` | `string` | - Second hex color (e.g. '#ffffff' for tinting) |
+| `ratio` | `number` | - 0 = all hex1, 1 = all hex2 |
+
+**Returns:** `string` — hex color
+
+---
+
+### `bw.relativeLuminance(hex)`
+
+Compute WCAG 2.0 relative luminance of a hex color.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hex` | `string` | - Hex color |
+
+**Returns:** `number` — luminance 0-1
+
+---
+
+### `bw.textOnColor(hex)`
+
+Return '#fff' or '#000' for readable text on a given background color. Uses WCAG luminance threshold.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hex` | `string` | - Background hex color |
+
+**Returns:** `string` — or '#000'
+
+---
+
+### `bw.harmonize(sourceHex, targetHex, amount)`
+
+Shift a color's hue toward a target hue by a given amount. Uses shortest-arc interpolation on the hue wheel.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `sourceHex` | `string` | - Color to shift |
+| `targetHex` | `string` | - Color whose hue to shift toward |
+| `amount` | `number` | - 0 = no shift, 1 = full shift to target hue |
+
+**Returns:** `string` — hex color
+
+---
+
+### `bw.deriveShades(hex)`
+
+Derive a full shade palette for a single semantic color.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hex` | `string` | - Base color hex |
+
+**Returns:** `Object` — base, hover, active, light, darkText, border, focus, textOn }
+
+---
+
+### `bw.deriveAlternateSeed(hex)`
+
+Derive the alternate (luminance-inverted) version of a single seed color. Preserves hue, mirrors lightness, adjusts saturation for readability.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `hex` | `string` | - Seed hex color |
+
+**Returns:** `string` — hex color
+
+---
+
+### `bw.isLightPalette(config)`
+
+Determine whether a palette config is "light-flavored" based on the average luminance of its seed colors.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `config` | `Object` | - Theme config with primary, secondary hex colors |
+
+**Returns:** `boolean` — if the seeds are predominantly light
+
+---
+
+### `bw.deriveAlternateConfig(config)`
+
+Derive a complete alternate config from a primary theme config. Each seed color is luminance-inverted; semantic colors are adjusted for the new luminance context.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `config` | `Object` | - Primary theme config |
+
+**Returns:** `Object` — theme config (same shape, inverted lightness)
+
+---
+
+### `bw.derivePalette(config)`
+
+Derive complete palette from a theme config object.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `config` | `Object` | - Theme config with primary, secondary, tertiary, etc. |
+| `config.harmonize` | `number` | - Hue shift amount for semantic colors (0-1) |
+
+**Returns:** `Object` — palette with shades for all 9 semantic colors
+
+---
+
+## Math
+
+### `bw.mapScale(x, in0, in1, out0, out1, options, options.clip, options.expScale)`
+
+Map/scale a value from one range to another (linear interpolation). Useful for converting sensor data, normalizing values, or creating visual scales. Supports optional clamping and exponential scaling.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `x` | `number` | - Input value |
+| `in0` | `number` | - Input range start |
+| `in1` | `number` | - Input range end |
+| `out0` | `number` | - Output range start |
+| `out1` | `number` | - Output range end |
+| `options` | `Object` | - Mapping options |
+| `options.clip` | `boolean` | - Clamp result to output range |
+| `options.expScale` | `number` | - Exponential scaling factor |
+
+**Returns:** `number` — value
+
+**Example:**
+```javascript
+bw.mapScale(50, 0, 100, 0, 1)  // => 0.5 bw.mapScale(75, 0, 100, 0, 255) // => 191.25
+```
+
+---
+
+### `bw.clip(value, min, max)`
+
+Clamp a value between min and max bounds.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `number` | - Value to clamp |
+| `min` | `number` | - Minimum allowed value |
+| `max` | `number` | - Maximum allowed value |
+
+**Returns:** `number` — value
+
+**Example:**
+```javascript
+bw.clip(150, 0, 100)  // => 100 bw.clip(-5, 0, 100)   // => 0 bw.clip(50, 0, 100)   // => 50
+```
+
+---
+
+## Array Utilities
+
+### `bw.choice(x, choices, def)`
+
+Use a dictionary as a switch statement, with support for function values.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `x` | `*` | - Key to look up |
+| `choices` | `Object` | - Dictionary of choices (values can be functions) |
+| `def` | `*` | - Default value if key not found |
+
+**Returns:** `*` — or function result
+
+**Example:**
+```javascript
+var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } }; choice('red', colors, '0')   // => 1 choice('aqua', colors)       // => 'aquamarine'
+```
+
+---
+
+### `bw.arrayUniq(x)`
+
+Return unique elements of an array (preserves first occurrence order).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `x` | `Array` | - Input array |
+
+**Returns:** `Array` — with unique elements
+
+**Example:**
+```javascript
+arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
+```
+
+---
+
+### `bw.arrayBinA(a, b)`
+
+Return the intersection of two arrays (elements present in both).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `a` | `Array` | - First array |
+| `b` | `Array` | - Second array |
+
+**Returns:** `Array` — elements found in both a and b
+
+**Example:**
+```javascript
+arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
+```
+
+---
+
+### `bw.arrayBNotInA(a, b)`
+
+Return elements of b that are not present in a (set difference).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `a` | `Array` | - First array (the "exclude" set) |
+| `b` | `Array` | - Second array (source of results) |
+
+**Returns:** `Array` — elements in b but not in a
+
+**Example:**
+```javascript
+arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
+```
+
+---
+
+### `bw.multiArray(value, dims)`
+
+Create a multidimensional array filled with a value or function result.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `*` | - Value or function to fill array with |
+| `dims` | `number|Array` | - Dimensions (number for 1D, array for multi-D) |
+
+**Returns:** `Array` — array
+
+**Example:**
+```javascript
+multiArray(0, [4, 5])            // 4x5 array of 0s multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
+```
+
+---
+
+### `bw.naturalCompare(as, bs)`
+
+Natural sort comparison function for use with `Array.sort()`. Sorts strings with embedded numbers in human-expected order (e.g. "file2" before "file10") instead of lexicographic order.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `as` | `*` | - First value |
+| `bs` | `*` | - Second value |
+
+**Returns:** `number` — order (-1, 0, 1)
+
+**Example:**
+```javascript
+['item10', 'item2', 'item1'].sort(naturalCompare) // => ['item1', 'item2', 'item10']
+```
+
+---
+
+## Text Generation
+
+### `bw.loremIpsum(numChars, startSpot, startWithCapitalLetter = true)`
+
+Generate Lorem Ipsum placeholder text.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `numChars` | `number` | - Number of characters (random 25-150 if not provided) |
+| `startSpot` | `number` | - Starting index in Lorem text (random if undefined) |
+| `startWithCapitalLetter` | `boolean` | - Start with a capital letter |
+
+**Returns:** `string` — ipsum text
+
+**Example:**
+```javascript
+loremIpsum(50) // => "Lorem ipsum dolor sit amet, consectetur adipiscin"
+```
+
+---
+
+## Timing
+
+### `bw.setIntervalX(callback, delay, repetitions)`
+
+Run `setInterval` with a maximum number of repetitions.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `callback` | `Function` | - Function to call (receives iteration index) |
+| `delay` | `number` | - Delay between calls in ms |
+| `repetitions` | `number` | - Maximum number of times to call |
+
+**Returns:** `number` — ID (can be passed to clearInterval)
+
+**Example:**
+```javascript
+setIntervalX(function(i) { console.log('Iteration', i); }, 1000, 5); // Runs 5 times, 1 second apart
+```
+
+---
+
+### `bw.repeatUntil(testFn, successFn, failFn, delay = 250, maxReps = 10, lastFn)`
+
+Repeat a test function until it returns truthy, or give up after max attempts.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `testFn` | `Function` | - Test function that returns truthy when done |
+| `successFn` | `Function` | - Called with test result when test passes |
+| `failFn` | `Function` | - Called on each failed test attempt |
+| `delay` | `number` | - Delay between attempts in ms |
+| `maxReps` | `number` | - Maximum number of attempts |
+| `lastFn` | `Function` | - Called when done with (success, count) |
+
+**Returns:** `string|number` — if invalid params, otherwise interval ID
+
+---
+
 ## Browser Utilities
 
 ### `bw.setCookie(cname, cvalue, exdays, options = {})`
@@ -2229,7 +3241,114 @@ Copy text to the system clipboard (browser only). Uses the modern Clipboard API 
 
 ---
 
+## File I/O
+
+### `bw.saveClientFile(fname, data)`
+
+Save data to a file. Works in both Node.js (fs.writeFile) and browser (download link).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fname` | `string` | - Filename to save as |
+| `data` | `*` | - Data to save (string or buffer) |
+
+---
+
+### `bw.saveClientJSON(fname, data)`
+
+Save data as a JSON file with pretty formatting.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fname` | `string` | - Filename to save as |
+| `data` | `*` | - Data to serialize as JSON |
+
+---
+
+### `bw.loadClientFile(fname, callback, options)`
+
+Load a file by path (Node.js) or URL (browser via XHR).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fname` | `string` | - File path (Node) or URL (browser) |
+| `callback` | `Function` | - Called with (data, error). data is null on error. |
+| `options` | `Object` | - Options |
+| `options.parser` | `string` | - "raw" for string, "JSON" to auto-parse |
+
+**Returns:** `string`
+
+---
+
+### `bw.loadClientJSON(fname, callback)`
+
+Load a JSON file by path (Node.js) or URL (browser).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `fname` | `string` | - File path (Node) or URL (browser) |
+| `callback` | `Function` | - Called with (parsedData, error) |
+
+**Returns:** `string`
+
+---
+
+### `bw.loadLocalFile(callback, options)`
+
+Prompt user to pick a local file via file dialog (browser only).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `callback` | `Function` | - Called with (data, filename, error) |
+| `options` | `Object` | - Options |
+| `options.accept` | `string` | - File type filter (e.g. ".json,.txt") |
+| `options.parser` | `string` | - "raw" for string, "JSON" to auto-parse |
+
+---
+
+### `bw.loadLocalJSON(callback)`
+
+Prompt user to pick a local JSON file via file dialog (browser only).
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `callback` | `Function` | - Called with (parsedData, filename, error) |
+
+---
+
 ## Utilities
+
+### `bw.to(x, baseTypeOnly)`
+
+Short alias of `bw.typeOf()`.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `x` | `*` | - Value to inspect |
+| `baseTypeOnly` | `boolean` | - Collapse subtypes to the base type |
+
+**Returns:** `string` — type name ('array', 'date', 'null', 'nan', ...)
+
+**Example:**
+```javascript
+bw.to([1, 2])        // => 'array'
+```
+
+---
 
 ### `bw.h(tag, attrs, content, options)`
 
@@ -2425,6 +3544,75 @@ Apply RFC 6902 JSON Patch operations to a plain object. Supported operations: ad
 **Example:**
 ```javascript
 var obj = { a: 1, b: { c: 2 } }; bw.jsonPatch(obj, [ { op: 'replace', path: '/a', value: 10 }, { op: 'add', path: '/b/d', value: 3 }, { op: 'remove', path: '/b/c' } ]); // obj => { a: 10, b: { d: 3 } }
+```
+
+---
+
+## Server (bwserve)
+
+### `bw.actions`
+
+Delegated dispatcher for `bw_act_*` class tokens: `{ enable, disable }`. Server-driven pages carry interactivity as classes, not code: a button with `class: 'bw_act_save'` fires the `save` action, which the client posts back to the server. One document-level listener handles every such element, so elements mounted later need no wiring. Off by default, and nothing turns it on for you: call `bw.actions.enable()` yourself. In particular `bw.connect()` does **not** enable it, so a page that only connects gets a live stream and dead clicks. Where the action goes depends on which client the page uses. With `bw.connect(url)` it posts to that same `url` as `{v:1, type:'event', action, value, name, ref, owner}`. With the bwserve thin client it posts to `/bw/return/action/<clientId>` as `{result:{action, data}}`. The C helper `bw_parse_action()` reads either.
+
+**Example:**
+```javascript
+bw.actions.enable(); bw.mount('#app', { t: 'button', a: { class: 'bw_act_save' }, c: 'Save' });
+```
+
+---
+
+### `bw.registerRemote(name, fn)`
+
+Register a function the server may invoke by name over bwserve. The wire protocol carries data, never code: a `call` message names a remote registered here, and anything not registered is ignored. This is how a server-driven page exposes capabilities (`_bw_screenshot`, `_bw_query`) without the server sending executable code.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `string` | - Name the server will call |
+| `fn` | `Function` | - Handler, called with the message's argument object |
+
+**Example:**
+```javascript
+bw.registerRemote('refreshChart', function(opts) { drawChart(opts.data); });
+```
+
+---
+
+### `bw.connect(url)`
+
+Connect this page to a bwserve endpoint over Server-Sent Events. Once connected, the server can mount, patch, append, remove and call registered remotes; the client posts actions and responses back. Publishes `bw:diag` with `code: 'remote_status'` as the connection state changes.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `url` | `string` | - SSE endpoint, e.g. '/bw/events' |
+
+**Returns:** `Object|null` — client object, or null outside a browser
+
+**Example:**
+```javascript
+bw.connect('/bw/events');
+```
+
+---
+
+### `bw.apply(msg)`
+
+Apply one bwserve protocol message to the DOM. This is the client half of server-driven UI. Dispatches one of the v:1 message types: mount    -- bw.mount(ref, taco) patch    -- bw.patch(ref, text/attrs/content) append   -- bw.append(ref, taco) replace  -- bw.replace(ref, taco) remove   -- bw.remove(ref) refresh  -- bw.refresh(ref) update   -- bw.update(ref, data) message  -- bw.message(ref, action, data) batch    -- iterate ops, calling bw.apply for each listen   -- subscribe to a pub/sub topic unlisten -- unsubscribe from a topic call     -- invoke a function registered with bw.registerRemote Target resolution: a ref starting with '#' or '.' is a CSS selector, otherwise it is an element id, then a bw.el() lookup. String `on*` attributes are stripped from wire TACOs, so a message can carry structure but never code.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `msg` | `Object` | - Protocol message, e.g. { type: 'mount', ref: '#app', taco: {...} } |
+
+**Returns:** `boolean` — when the message was understood and applied
+
+**Example:**
+```javascript
+bw.apply({ type: 'patch', ref: 'score', text: '42' });
 ```
 
 ---

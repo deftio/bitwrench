@@ -30,6 +30,7 @@
     { text: 'Styling', href: '03-styling.html' },
     { text: 'Themes', href: '10-themes.html' },
     { text: 'Utility CSS', href: '16-utility-css.html' },
+    { text: 'SVG', href: '18-svg.html' },
     { text: 'Tables & Forms', href: '02-tables-forms.html' },
     { text: 'State', href: '05-state.html' },
     { text: 'HTML Gen', href: '15-html-generation.html' }

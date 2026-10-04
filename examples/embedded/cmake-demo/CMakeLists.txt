@@ -8,6 +8,13 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 # Include the embedded_c headers from repo root
 set(BW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../embedded_c")
 
+if(NOT EXISTS "${BW_INCLUDE_DIR}/bitwrench_embedded.h")
+  message(FATAL_ERROR
+    "embedded_c/bitwrench_embedded.h is missing.\n"
+    "It holds the gzipped bundle this demo serves. Generate it with:\n"
+    "  npm run build && npm run build:generated")
+endif()
+
 add_executable(bwserve_demo main.c)
 target_include_directories(bwserve_demo PRIVATE ${BW_INCLUDE_DIR})
 

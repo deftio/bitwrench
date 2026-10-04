@@ -88,7 +88,7 @@
           'LDR, and LED control. Arduino C++ with ESPAsyncWebServer. ' +
           'SSE pushes sensor data every 2 seconds.',
           [['HTML', 'html'], ['Arduino', 'ino'], ['Beginner', 'level']],
-          [['Open Tutorial', 'esp32-tutorial.html'], ['View sketch.ino', 'sketch.ino'], ['Open Dashboard Demo', 'esp32-dashboard.html']]
+          [['Open Tutorial', 'esp32-tutorial.html'], ['View esp32_dashboard.ino', 'esp32_dashboard/esp32_dashboard.ino'], ['Open Dashboard Demo', 'esp32-dashboard.html']]
         ),
         card(
           'Pico W / Pico 2W Dashboard',
@@ -97,7 +97,7 @@
           'Onboard temperature, 3 ADC channels, 4 PWM outputs, 8 digital outputs, digital inputs, WiFi RSSI. ' +
           'Optional: Freenove Breakout Board (FNK0081) for visible GPIO LEDs.',
           [['HTML', 'html'], ['MicroPython', 'py'], ['C++', 'ino'], ['Intermediate', 'level']],
-          [['Open Tutorial', '../embedded-pico-w/'], ['View server.py', '../embedded-pico-w/server.py'], ['View server.ino', '../embedded-pico-w/server.ino']]
+          [['Open Tutorial', '../embedded-pico-w/'], ['View server.py', '../embedded-pico-w/server.py'], ['View pico_w_server.ino', '../embedded-pico-w/pico_w_server/pico_w_server.ino']]
         ),
         card(
           'NFC Tag Scanner (ESP32 + ST25DV16)',
@@ -163,11 +163,11 @@
         bw.makeTable({
           headers: ['Platform', 'Language', 'Example'],
           rows: [
-            ['ESP32 (Arduino)', 'C/C++', 'embedded/sketch.ino + cmake-demo/'],
+            ['ESP32 (Arduino)', 'C/C++', 'embedded/esp32_dashboard/esp32_dashboard.ino + cmake-demo/'],
             ['ESP32 (CircuitPython)', 'Python', 'esp32-adafruitST25DV16/code.py'],
             ['Raspberry Pi Pico W', 'MicroPython', 'embedded-pico-w/server.py'],
             ['Raspberry Pi Pico W', 'CircuitPython', 'embedded-pico-w/server_circuitpython.py'],
-            ['Raspberry Pi Pico W', 'Arduino C++', 'embedded-pico-w/server.ino'],
+            ['Raspberry Pi Pico W', 'Arduino C++', 'embedded-pico-w/pico_w_server/pico_w_server.ino'],
             ['Raspberry Pi (Linux)', 'Python', 'embedded-rpi/server.py'],
             ['Raspberry Pi (Linux)', 'Node.js', 'embedded-rpi/server.js (bwserve)'],
             ['Any language', 'CLI pipe', 'bwcli serve --stdin']

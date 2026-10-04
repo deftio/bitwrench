@@ -98,6 +98,25 @@ describe("bw.apply()", function() {
   });
 
   describe("patch", function() {
+    it("applies text and attrs together (BW_PATCH_ATTR / patch_attr)", function() {
+      // A reading whose styling changes with its value is one op, not two.
+      // This used to be an else-if chain, so the attributes were dropped and
+      // nothing said so -- the device's colour change simply never arrived.
+      bw.DOM('#app', { t: 'span', a: { id: 'temp', class: 'bw_text_muted' }, c: '21.0' });
+      const ok = bw.apply({
+        v: 1,
+        type: 'patch',
+        ref: 'temp',
+        text: '41.2 C',
+        attrs: { class: 'bw_text_danger', title: 'over range' }
+      });
+      assert.strictEqual(ok, true);
+      const el = bw.el('temp');
+      assert.strictEqual(el.textContent, '41.2 C');
+      assert.strictEqual(el.className, 'bw_text_danger');
+      assert.strictEqual(el.getAttribute('title'), 'over range');
+    });
+
     it("should patch text content by id", function() {
       bw.DOM('#app', { t: 'span', a: { id: 'counter' }, c: '0' });
       bw.apply({
@@ -171,6 +190,41 @@ describe("bw.apply()", function() {
     it("should return false for unknown target", function() {
       var result = bw.apply({ v: 1, type: 'remove', ref: '#nonexistent' });
       assert.strictEqual(result, false);
+    });
+  });
+
+  describe("message", function() {
+    it("publishes a device notification on bw:message (BW_MESSAGE)", function() {
+      // The headers document BW_MESSAGE as "send a notification to the
+      // browser", but this type also means component method dispatch, so the
+      // notification form used to be rejected outright.
+      const seen = [];
+      const un = bw.sub('bw:message', function(m) { seen.push(m); });
+      const ok = bw.apply(bw.parseJSONFlex(
+        "r{'v':1,'type':'message','level':'warn','text':'calibration due'}"));
+      assert.strictEqual(ok, true);
+      assert.deepStrictEqual(seen, [{ level: 'warn', text: 'calibration due' }]);
+      if (typeof un === 'function') un();
+    });
+
+    it("defaults a notification with no level to info", function() {
+      const seen = [];
+      const un = bw.sub('bw:message', function(m) { seen.push(m); });
+      assert.strictEqual(bw.apply({ v: 1, type: 'message', text: 'hello' }), true);
+      assert.strictEqual(seen[0].level, 'info');
+      if (typeof un === 'function') un();
+    });
+
+    it("still dispatches to a component handle when action is present", function() {
+      const calls = [];
+      bw.mount('#app', {
+        t: 'div', a: { id: 'widget' },
+        o: { handle: { setTo: function() { calls.push([].slice.call(arguments)); } } }
+      });
+      assert.strictEqual(
+        bw.apply({ v: 1, type: 'message', ref: 'widget', action: 'setTo', data: 7 }), true);
+      assert.strictEqual(calls.length, 1, 'the handle method was not called');
+      assert.ok(calls[0].indexOf(7) !== -1, 'the data never reached the handle: ' + calls[0]);
     });
   });
 
@@ -3149,5 +3203,73 @@ describe("BwServeApp — path traversal prevention", function() {
       fs.unlinkSync(path.join(tmpDir, 'safe.txt'));
       fs.rmdirSync(tmpDir);
     }
+  });
+});
+
+// ===================================================================================
+// bw.connect() — the transport, with a stubbed EventSource
+// ===================================================================================
+
+describe("bw.connect()", function() {
+  var saved;
+
+  beforeEach(function() {
+    resetApp();
+    saved = global.EventSource;
+  });
+
+  afterEach(function() {
+    if (saved === undefined) delete global.EventSource;
+    else global.EventSource = saved;
+    bw.remote = null;
+  });
+
+  function stubEventSource() {
+    var instances = [];
+    global.EventSource = function(url) {
+      this.url = url;
+      this.close = function() { this.closed = true; };
+      instances.push(this);
+    };
+    return instances;
+  }
+
+  it("applies relaxed r-prefix frames, which is all a device sends", function() {
+    // Every embedded_c macro emits r{'v':1,...} so firmware does not have to
+    // escape double quotes. JSON.parse() rejects it; this used to be dropped
+    // silently, which made the whole embedded path look like a no-op.
+    var es = stubEventSource();
+    bw.connect('/bw/events');
+    es[0].onmessage({ data: "r{'v':1,'type':'mount','ref':'#app','taco':{'t':'p','c':'from a device'}}" });
+    assert.strictEqual(bw.$('#app p').length, 1);
+    assert.strictEqual(bw.$('#app p')[0].textContent, 'from a device');
+  });
+
+  it("still applies strict JSON frames", function() {
+    var es = stubEventSource();
+    bw.connect('/bw/events');
+    es[0].onmessage({ data: '{"v":1,"type":"mount","ref":"#app","taco":{"t":"span","c":"strict"}}' });
+    assert.strictEqual(bw.$('#app span')[0].textContent, 'strict');
+  });
+
+  it("survives a malformed frame without tearing down the connection", function() {
+    var es = stubEventSource();
+    bw.connect('/bw/events');
+    es[0].onmessage({ data: 'not json at all' });
+    es[0].onmessage({ data: "r{'v':1,'type':'mount','ref':'#app','taco':{'t':'b','c':'ok'}}" });
+    assert.strictEqual(bw.$('#app b')[0].textContent, 'ok');
+  });
+
+  it("publishes connection status and exposes a closable remote", function() {
+    var es = stubEventSource();
+    var seen = [];
+    bw.sub('bw:diag', function(d) { if (d.code === 'remote_status') seen.push(d.status); });
+    var remote = bw.connect('/bw/events');
+    es[0].onopen();
+    es[0].onerror();
+    assert.deepStrictEqual(seen, ['connecting', 'connected', 'disconnected']);
+    assert.strictEqual(typeof remote.send, 'function');
+    remote.close();
+    assert.strictEqual(es[0].closed, true);
   });
 });

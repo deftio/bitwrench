@@ -113,7 +113,7 @@
           { t: 'h3', c: 'Server implementation' },
           bw.makeTable({
             data: [
-              { File: 'sketch.ino', Language: 'Arduino C++', Framework: 'ESPAsyncWebServer + AsyncTCP' }
+              { File: 'esp32_dashboard.ino', Language: 'Arduino C++', Framework: 'ESPAsyncWebServer + AsyncTCP' }
             ],
             columns: [
               { key: 'File', label: 'File' },
@@ -209,7 +209,7 @@
 
     var step4 = step('4', 'Configure WiFi', [
       { t: 'p', c: [
-        'Open ', { t: 'code', c: 'sketch.ino' }, ' and set your WiFi credentials:'
+        'Open ', { t: 'code', c: 'esp32_dashboard.ino' }, ' and set your WiFi credentials:'
       ]},
       codeBlock(
         'const char* WIFI_SSID     = "YOUR_SSID";\n' +
@@ -295,7 +295,7 @@
         '  |  <-- {"ok":true}                 |',
         'text'
       ),
-      { t: 'h3', c: 'Server (sketch.ino)' },
+      { t: 'h3', c: 'Server (esp32_dashboard.ino)' },
       { t: 'ul', c: [
         { t: 'li', c: 'Boots, connects to WiFi, starts ESPAsyncWebServer on port 80' },
         { t: 'li', c: 'Serves index.html and bitwrench.js from SPIFFS (auto-decompresses .gz)' },
@@ -445,7 +445,7 @@
               ' -- the HTML dashboard (runs on the ESP32)'
             ]},
             { t: 'li', c: [
-              { t: 'a', a: { href: 'sketch.ino', download: '' }, c: 'sketch.ino' },
+              { t: 'a', a: { href: 'esp32_dashboard/esp32_dashboard.ino', download: '' }, c: 'esp32_dashboard.ino' },
               ' -- Arduino C++ server (ESPAsyncWebServer + SSE)'
             ]},
             { t: 'li', c: [

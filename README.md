@@ -3,7 +3,7 @@
 [<img class="quikdown-img" src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License" data-qd-alt="License" data-qd-src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" data-qd="!">](https://opensource.org/licenses/BSD-2-Clause)
 [<img class="quikdown-img" src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version" data-qd-alt="NPM version" data-qd-src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" data-qd="!">](https://www.npmjs.com/package/bitwrench)
 [<img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI" data-qd-alt="CI" data-qd-src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" data-qd="!">](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-97.9%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-97.9%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
+[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-98%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-98%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
 
 [<img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench" data-qd-alt="bitwrench" data-qd-src="./images/bitwrench-logo-med.png" data-qd="!">](https://deftio.github.io/bitwrench/pages/)
 
@@ -252,18 +252,48 @@ Because TACOs are plain objects, they serialize as JSON. This means a backend in
 
 Bitwrench includes bwserve, a protocol that sends TACO objects and patches over SSE. Button clicks come back as actions, `client.inspect()` reads DOM state, and `client.screenshot()` captures the live page as a PNG. The browser becomes a display and input device; the application logic lives wherever you want it.
 
-Here is a C program on an ESP32 pushing a sensor reading to the browser:
+Here is a C++ program building a card and pushing a reading, with no HTML anywhere:
 
-```c
-char msg[96], frame[128];
-BW_PATCH(msg, "office-temp", "23.5");
-BW_SSE_FRAME(frame, msg);
-events.send(frame, NULL, millis());    // the browser updates
+```cpp
+std::string card = bw::nest("div", "bw_bccl_card bw_p_3", bw::array({
+    bw::taco("div", "bw_text_muted", "Office"),
+    bw::taco_attr("div", "'id':'temp'", "23.5 C")        // the id it will patch later
+}));
+send(bwserve::sse_frame(bwserve::mount("#app", card)));   // first frame: the whole UI
+send(bwserve::sse_frame(bwserve::patch("temp", "24.1 C")));  // later: 50 bytes
 ```
 
-The same protocol works from Python, Go, Rust, or a shell script with `curl`. See the [bwserve docs](docs/bwserve.md) for the full protocol, and the [ESP32 tutorial](docs/tutorial-embedded.md) for a complete embedded walkthrough.
+The page that renders it is four calls and owns no UI:
 
-The library is ~165KB on disk (~45KB gzipped). A lean build without the component library (BCCL) is ~128KB (~35KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
+<!-- doc-test: skip (needs a live SSE endpoint on a device) -->
+```html
+<script src="/bitwrench.js"></script>   <!-- from the device's flash, no CDN -->
+<div id="app"></div>
+<script>
+  bw.loadStyles({ primary: '#0b7285', mode: 'auto' });
+  bw.actions.enable();        // bw_act_* clicks post back to the device
+  bw.connect('/bw/events');   // the device mounts and patches from here
+</script>
+```
+
+**You can run this on your laptop right now, with no hardware.**
+[`examples/embedded/posix-cpp/`](examples/embedded/posix-cpp/) is a ~400-line
+C++11 program -- one compiler, no Node, no network -- whose README walks the
+whole round trip in seven steps with the actual bytes at each one. It is the
+ESP32 sketch with the transport swapped: the bundle, the protocol frames, the
+client registry and the post-back parsing come from the same headers, and only
+`main()` and the HTTP handlers know about sockets. Moving to a board means
+replacing those.
+
+The same protocol works from Python, Go, Rust, or a shell script with `curl`. See the [bwserve docs](docs/bwserve.md) for the full protocol, the [C/C++ headers](embedded_c/README.md) for the device side, and the [ESP32 tutorial](docs/tutorial-embedded.md) for a hardware walkthrough.
+
+> The C/C++ headers in `embedded_c/` are header-only with zero dependencies, and
+> are **example-grade: not yet published to Arduino Library Manager, PlatformIO
+> or the ESP Component Registry.** Copy the two headers for now. The plan for
+> making them a first-class library is in
+> [`dev/bw-embedded-release-plan-2.1.x.md`](dev/bw-embedded-release-plan-2.1.x.md).
+
+The library is 169KB on disk (46KB gzipped). A lean build without the component library (BCCL) is 130KB (36KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
 
 ## CLI
 
@@ -346,6 +376,9 @@ See the [Framework Translation Table](docs/framework-translation-table.md) for s
 | bw.clearStyles() | Remove injected theme styles |
 | bw.patch(id, content) | Update a specific element by id or UUID |
 | bw.syncChildren(parent, items, opts) | Keyed list update; rows that stay keep their DOM nodes |
+| bw.toggleClass(ref, names, force?) | Flip or force classes on every match; no node is touched |
+| bw.addClass / bw.removeClass / bw.hasClass | The rest of the class verbs |
+| bw.clear(ref) | Empty a container, firing unmount hooks (instead of innerHTML = '') |
 | bw.refresh(el) | Re-render a stateful component via its o.render function |
 | bw.update(el, data) | Dispatch to el.bw.update(data) |
 | bw.message(target, action, data) | Dispatch to el.bw[action]() by selector or UUID |
@@ -369,10 +402,13 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 | ESM, lean | bitwrench-lean.esm.min.js | As above, without the built-in components |
 | CJS | bitwrench.min.cjs | Node.js require() |
 | ES5 | bitwrench.es5.min.js | Legacy browsers (IE11) |
-| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~110 KB gz) |
+| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~114 KB gz) |
 
 The lean builds still include `makeTable`, `makeDataTable`, `makeTableFromArray` and
-`makeBarChart`. `dist/builds.json` lists every file with its size and SRI hash.
+`makeBarChart` -- and the router, pub/sub, `bw.syncChildren`, `bw.patch` and the
+class helpers. The only thing they drop is the 47 BCCL component factories
+(`makeButton`, `makeCard`, `makeTooltip`, …), which is the ~10 KB difference.
+`dist/builds.json` lists every file with its size and SRI hash.
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.
 
@@ -389,7 +425,8 @@ Every release is gated at 46KB gzipped for the UMD and ESM builds, measured agai
 
 **Reference guides** (in `docs/`):
 
-- [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format, including SVG
+- [TACO Format](docs/taco-format.md) -- the `{t, a, c, o}` object format
+- [SVG](docs/svg.md) -- charts, diagrams, interactive drawings, and how to update them in place
 - [Component Lifecycle Walkthrough](docs/component-lifecycle.md) -- one stats card through all four phases
 - [State Management](docs/state-management.md) -- component model, explicit updates, cross-component communication
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
@@ -423,12 +460,13 @@ Every release is gated at 46KB gzipped for the UMD and ESM builds, measured agai
 - [Signup Wizard](examples/wizard/) -- multi-step form, state transitions, bw.raw()
 - [Live Feed](examples/live-feed/) -- real-time stream, bw.patch(), slide-in animation
 - [IoT Dashboard](examples/embedded/) -- ESP32-style sensor dashboard with SSE
+- [C++ web app on your own machine](examples/embedded/posix-cpp/) -- the embedded pattern with no hardware: bundle from flash, SSE, clicks back
 - [bwserve Counter](examples/client-server/) -- server-driven UI demo
 - [LLM Chat](examples/llm-chat/) -- streaming chat via bwserve + Ollama/OpenAI
 
 ## FAQ
 
-**Is this a framework?** -- No. It is a library (165KB on disk, 45KB gzipped). No lifecycle ceremony, no project structure. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
+**Is this a framework?** -- No. It is a library (169KB on disk, 46KB gzipped). No lifecycle ceremony, no project structure. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
 
 **How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine.
 
@@ -438,7 +476,7 @@ Every release is gated at 46KB gzipped for the UMD and ESM builds, measured agai
 
 **What is bwserve?** -- A protocol that turns the browser into a display and input device for a program running anywhere. The server pushes TACO objects and patches over SSE; button clicks come back as actions; `client.inspect()` returns DOM state; `client.screenshot()` returns a PNG. Language-agnostic: Python, Go, Rust, C, or a shell script with `curl`. See the [bwserve docs](docs/bwserve.md).
 
-**Can I use bitwrench on embedded devices?** -- Yes. The device serves one HTML page plus the library from flash, no CDN required. Build the UI as TACOs in whatever language the device speaks (C, C++, MicroPython), push updates over SSE, and get button presses back the same way. C macros ship in `embedded_c/`. See the [ESP32 tutorial](docs/tutorial-embedded.md) and the [Pico W example](examples/embedded-pico-w/).
+**Can I use bitwrench on embedded devices?** -- Yes. The device serves one HTML page plus the library from flash, no CDN required. Build the UI as TACOs in whatever language the device speaks (C, C++, MicroPython), push updates over SSE, and get button presses back the same way. C macros and a C++ layer ship in [`embedded_c/`](embedded_c/README.md) (header-only, zero dependencies), and the gzipped bundle ships as a flash array so a board with no filesystem can serve it. Try it with no hardware first: [`examples/embedded/posix-cpp/`](examples/embedded/posix-cpp/). See also the [ESP32 tutorial](docs/tutorial-embedded.md) and the [Pico W example](examples/embedded-pico-w/).
 
 **Can I use it with TypeScript?** -- Yes. Type declarations ship with the package (`dist/bitwrench.d.ts`). See the [TypeScript Usage Guide](docs/bitwrench_typescript_usage.md).
 

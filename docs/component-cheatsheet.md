@@ -66,6 +66,30 @@
 | makeCol | size, offset, content | Responsive: size as number or {xs,sm,md,lg,xl} | -- |
 | makeStack | children, direction, gap | Vertical/horizontal flex stack | -- |
 
+## Updating what is already on screen
+
+Cheapest first. None of these rebuild anything:
+
+| Need | Call |
+|------|------|
+| A visual state (open, selected, error, pressed) | `bw.toggleClass(ref, 'open', isOpen)` |
+| A value or label | `bw.patch('readout', '42%')` |
+| An attribute | `bw.patch(ref, { width: 120 })` |
+| A list whose items come and go | `bw.syncChildren(parent, items, { key, create, update })` |
+| A component's own behaviour | `el.bw.method(...)` |
+| Empty a container | `bw.clear(ref)` -- not `innerHTML = ''`, which skips unmount hooks |
+| Re-render a stateful component | `bw.refresh(el)` -- the full rebuild, last resort |
+
+`bw.el(ref, apply)` and `bw.$(sel, apply)` also take a second argument: a
+string sets text, a TACO replaces content, a function runs for each match.
+
+## When a prop does nothing
+
+Factories warn once per unknown option: `bw.makeButton({ href: '/x' })` prints
+that `href` is ignored and lists the accepted keys. If a prop seems to have no
+effect, check the console before checking the source. `bw.warnUnknownProps = false`
+silences it.
+
 ## How to Use Handles
 
 Components with handles expose imperative methods via `el.bw`. `bw.mount()` returns the mounted element (so does `bw.DOM()`, which is the same function) -- keep it:

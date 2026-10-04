@@ -1,359 +1,162 @@
-# bwserve C Demo (Desktop)
+# bwserve C demo (desktop)
 
-A desktop program that demonstrates the bwserve protocol macros without any
-hardware. Runs a POSIX socket HTTP server on your development machine, serving
-a live dashboard that simulates sensor readings.
+A C99 program that serves a live bitwrench dashboard over POSIX sockets. No
+microcontroller, no WiFi, no flash filesystem -- just `cmake`, a C compiler and
+a browser.
 
-No microcontroller, no WiFi, no flash filesystem -- just `cmake`, a C compiler,
-and a browser.
+It is the ESP32 sketch with the transport swapped, so the protocol logic here
+moves to firmware unchanged. Use it to get an app right on a machine with a
+debugger before you flash anything.
 
-## What This Is
+**Writing C++?** [`../posix-cpp/`](../posix-cpp/) is the same app with
+`std::string` helpers -- no fixed buffers, no truncation, and a fuller
+walkthrough in its README. Start there unless your toolchain is C only.
 
-This is a fully functional bwserve application that:
+## Build and run
 
-- Serves a self-contained HTML dashboard from a C string literal
-- Pushes simulated sensor data over SSE every 2 seconds
-- Accepts POST commands (LED on/off, reset uptime)
-- Demonstrates every bwserve.h macro in working context
-- Supports multiple simultaneous browser connections
-
-Use it to understand the bwserve protocol before deploying to real hardware,
-or as a starting point for porting bwserve to a new platform.
-
-## Prerequisites
-
-- CMake 3.10+
-- C99 compiler (gcc, clang, or MSVC)
-- POSIX threads support (Linux, macOS, WSL)
-- A web browser
-
-## Build and Run
-
-```bash
-cd examples/embedded/cmake-demo
+```sh
 mkdir build && cd build
-cmake ..
-make
+cmake .. && make
 ./bwserve_demo
+# open http://localhost:8080
 ```
 
-Open `http://localhost:8080` in your browser.
+Needs `embedded_c/bitwrench_embedded.h` (the gzipped bundle as a flash array).
+If it is missing:
 
-The server prints connection events to the terminal. Press Ctrl+C to stop.
-
-## Architecture
-
-```
-main.c
-  |
-  |-- HTTP server (POSIX sockets, port 8080)
-  |     GET /              -> bootstrap HTML (inline string)
-  |     GET /events        -> SSE stream (bwserve protocol)
-  |     POST /api/command  -> command handler
-  |
-  |-- Sensor thread (simulated, updates every 2s)
-  |     Generates random temperature, humidity, pressure, light
-  |     Broadcasts batch updates to all SSE clients
-  |
-  +-- Uses bitwrench.h + bwserve.h
-        BW_PATCH(), BW_BATCH(), bw_batch_t
-        BW_SSE_FRAME(), BW_SSE_HEADERS
-        BW_HTTP_OK_JSON(), BW_HTTP_404()
+```sh
+npm run build && npm run build:generated
 ```
 
----
+Prerequisites: CMake 3.10+, a C99 compiler, POSIX threads (Linux, macOS, WSL).
 
-## Code Walkthrough
+## What it does
 
-The entire application is in `main.c`. It includes two header-only files from
-the `embedded_c/` directory:
+| Route | Purpose |
+|-------|---------|
+| `GET /bitwrench.js` | The gzipped bundle straight out of the flash array, `Content-Encoding: gzip`. ~46 KB, no filesystem, works air-gapped. |
+| `GET /` | A bootstrap page with no markup, no CSS and no DOM code. |
+| `GET /events` | SSE. Mounts the whole UI on connect, then patches readings every 2 s. |
+| `POST /bw/events` | What `bw.actions` sends when a `bw_act_*` element is clicked. |
 
-```c
-#include "bitwrench.h"   // BW_BUF_SIZE, bw_format_bytes, bw_escape_string
-#include "bwserve.h"     // All protocol macros + batch builder + HTTP helpers
-```
+Open it in two tabs: both stay in sync, because the device is the source of
+truth and every connection is mounted from current state.
 
-### Sensor State
+## The page
 
-Simulated sensor data lives in a struct:
-
-```c
-typedef struct {
-    float temperature;     // Drifts around 22 C
-    float humidity;        // Drifts around 55%
-    float pressure;        // Drifts around 1013 hPa
-    int   light;           // 0-1023
-    int   led_on;          // Toggle state
-    unsigned long uptime_s;
-} sensor_state_t;
-```
-
-A background thread updates these values every 2 seconds with small random
-perturbations, then broadcasts patches to all connected browsers.
-
-### Building Patches with `BW_PATCH`
-
-The `broadcast_sensor_update()` function uses the batch builder pattern:
-
-```c
-void broadcast_sensor_update(void) {
-    bw_batch_t batch;
-    bw_batch_begin(&batch);       // Initialize the batch
-
-    char m[BW_BUF_SIZE];
-    char str[32];
-
-    // Temperature patch
-    snprintf(str, sizeof(str), "%.1f C", g_sensors.temperature);
-    BW_PATCH(m, "val-temp", str);
-    bw_batch_add(&batch, m);     // Add to batch
-
-    // Humidity patch
-    snprintf(str, sizeof(str), "%.1f%%", g_sensors.humidity);
-    BW_PATCH(m, "val-humidity", str);
-    bw_batch_add(&batch, m);
-
-    // ... more patches for pressure, light, uptime, LED ...
-
-    // Serialize and broadcast
-    char out[BW_BUF_SIZE * 4];
-    bw_batch_end(out, sizeof(out), &batch);  // Produces the batch JSON
-    sse_broadcast(out);
-}
-```
-
-The `BW_PATCH(m, "val-temp", "22.3 C")` macro produces:
-```
-r{'v':1,'type':'patch','ref':'val-temp','text':'22.3 C'}
-```
-
-The batch builder collects these, strips the `r` prefix from each, and wraps
-them in a single batch message:
-```
-r{'v':1,'type':'batch','ops':[{'v':1,'type':'patch','ref':'val-temp','text':'22.3 C'},{'v':1,...}]}
-```
-
-### SSE Broadcasting
-
-The server tracks connected SSE clients (file descriptors) and broadcasts
-using the `BW_SSE_FRAME` macro:
-
-```c
-void sse_broadcast(const char* data) {
-    char frame[BW_BUF_SIZE * 2];
-    BW_SSE_FRAME(frame, data);   // Wraps as "data: {...}\n\n"
-    size_t len = strlen(frame);
-
-    for (int i = 0; i < g_sse_count; ) {
-        ssize_t written = write(g_sse_clients[i], frame, len);
-        if (written <= 0) {
-            // Client disconnected -- remove from list
-            close(g_sse_clients[i]);
-            g_sse_clients[i] = g_sse_clients[--g_sse_count];
-        } else {
-            i++;
-        }
-    }
-}
-```
-
-### HTTP Request Routing
-
-The server uses bwserve HTTP helper macros for responses:
-
-```c
-// GET / -- serve the dashboard HTML
-if (strcmp(method, "GET") == 0 && strcmp(path, "/") == 0) {
-    char resp[32768];
-    BW_HTTP_OK_HTML(resp, BOOTSTRAP_HTML);
-    write(client_fd, resp, strlen(resp));
-    close(client_fd);
-    return;
-}
-
-// GET /events -- SSE stream
-if (strcmp(method, "GET") == 0 && strcmp(path, "/events") == 0) {
-    const char* headers = BW_SSE_HEADERS;
-    write(client_fd, headers, strlen(headers));
-    sse_add_client(client_fd);
-    broadcast_sensor_update();  // Send current state immediately
-    return;  // Don't close -- kept alive for SSE
-}
-
-// POST /api/command -- handle commands
-if (strcmp(method, "POST") == 0 && strcmp(path, "/api/command") == 0) {
-    // ... parse JSON, handle led_on/led_off/reset_uptime ...
-    char resp[512];
-    BW_HTTP_OK_JSON(resp, "{\"ok\":true}");
-    write(client_fd, resp, strlen(resp));
-    close(client_fd);
-    return;
-}
-
-// 404
-char resp[256];
-BW_HTTP_404(resp);
-write(client_fd, resp, strlen(resp));
-close(client_fd);
-```
-
-### Inline Dashboard HTML
-
-The dashboard is embedded as a C string literal. It contains inline CSS and
-minimal JavaScript that directly parses bwserve messages:
-
-```javascript
-// Inline JS inside the C string
-var es = new EventSource('/events');
-es.onmessage = function(e) {
-    var raw = e.data;
-    if (raw.charAt(0) === 'r') {       // r-prefix = relaxed JSON
-        raw = raw.slice(1);
-        raw = raw.replace(/'/g, '"');   // Single quotes -> double quotes
-    }
-    try { var msg = JSON.parse(raw); } catch(x) { return; }
-    if (msg.type === 'batch') {
-        msg.ops.forEach(applyOp);       // Process each op in the batch
-    } else {
-        applyOp(msg);
-    }
-};
-
-function applyOp(op) {
-    if (op.type === 'patch') {
-        var el = document.getElementById(op.ref);
-        if (el && op.text != null) el.textContent = op.text;
-    }
-}
-
-function sendCmd(cmd) {
-    fetch('/api/command', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cmd: cmd })
-    });
-}
-```
-
-This is a minimal approach -- no bitwrench.js is loaded. The JavaScript directly
-parses bwserve messages and updates DOM elements by ID. For real projects, you'd
-serve bitwrench.js from flash and use TACO/BCCL components for a richer UI.
-
-The HTML creates sensor cards with `id` attributes matching the `ref` values
-used in `BW_PATCH`:
+All of it:
 
 ```html
-<div class="card"><h3>Temperature</h3><div class="val" id="val-temp">--</div></div>
-<div class="card"><h3>Humidity</h3><div class="val" id="val-humidity">--</div></div>
+<script src="/bitwrench.js"></script>
+...
+<div id="app"></div>
+<script>
+  bw.loadStyles({ primary: '#2b8a3e', mode: 'auto' });
+  bw.actions.enable();     // bw_act_* clicks post back to this server
+  bw.connect('/events');   // the server mounts and patches from here
+</script>
 ```
 
----
+The UI is built in C and arrives over SSE. Nothing here reaches for the DOM.
 
-## bwserve.h Macro Reference
+## Composing a UI in C
 
-### Protocol Messages
+`BW_TACO_*` makes a leaf -- its content is quoted text. `BW_NEST*` holds other
+nodes, which is how a whole screen goes out in one message:
 
-| Macro | Signature | Output | Description |
-|-------|-----------|--------|-------------|
-| `BW_PATCH` | `(buf, ref, text)` | `r{'v':1,'type':'patch','ref':'REF','text':'TEXT'}` | Update element text content |
-| `BW_PATCH_NUM` | `(buf, ref, value)` | `r{...,'text':'23.5'}` | Patch with numeric value (formatted as `%g`) |
-| `BW_PATCH_SAFE` | `(buf, size, ref, text)` | Same as PATCH with escaped quotes | Patch with user-provided text |
-| `BW_PATCH_ATTR` | `(buf, ref, text, attrs)` | `...,'attrs':{'class':'ok'}}` | Patch text and attributes |
-| `BW_MOUNT` | `(buf, ref, taco)` | `r{...,'type':'mount','taco':{...}}` | Replace element children with TACO |
-| `BW_APPEND` | `(buf, ref, taco)` | `r{...,'type':'append','taco':{...}}` | Append TACO as child |
-| `BW_REMOVE` | `(buf, ref)` | `r{...,'type':'remove','ref':'REF'}` | Remove element from DOM |
-| `BW_MESSAGE` | `(buf, level, text)` | `r{...,'type':'message','level':'info',...}` | Send notification/toast |
-| `BW_BATCH` | `(buf, ops)` | `r{...,'type':'batch','ops':[...]}` | Wrap multiple ops in batch |
-
-### Batch Builder (C Functions)
-
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `bw_batch_begin` | `(bw_batch_t* b)` | Initialize a batch |
-| `bw_batch_add` | `(bw_batch_t* b, const char* msg)` | Add a message (auto-strips `r` prefix) |
-| `bw_batch_end` | `(char* buf, size_t size, const bw_batch_t* b)` | Serialize to batch JSON string |
-
-### SSE and HTTP Helpers
-
-| Macro | Description |
-|-------|-------------|
-| `BW_SSE_FRAME(buf, data)` | Wrap data as SSE frame: `data: ...\n\n` |
-| `BW_SSE_HEADERS` | HTTP response headers for SSE endpoint |
-| `BW_SSE_KEEPALIVE` | SSE keep-alive comment `:keepalive\n\n` |
-| `BW_HTTP_RESPONSE(buf, status, type, body)` | Build complete HTTP response |
-| `BW_HTTP_OK_JSON(buf, body)` | 200 OK with `application/json` content type |
-| `BW_HTTP_OK_HTML(buf, body)` | 200 OK with `text/html` content type |
-| `BW_HTTP_404(buf)` | 404 Not Found response |
-| `BW_BOOTSTRAP_HTML` | Minimal HTML shell that loads bitwrench.js |
-
-### C++ Wrappers (namespace `bwserve`)
-
-If compiling as C++, you get `std::string`-returning functions:
-
-```cpp
-auto msg = bwserve::batch({
-    bwserve::patch("val-temp", "23.5 C"),
-    bwserve::patch("val-humidity", "55%")
-});
-auto frame = bwserve::sse_frame(msg);
+```c
+char lab[256], val[256], kids[1024], card[1024];
+BW_TACO_CLS(lab, "div", "bw_text_muted bw_text_sm", "Temperature");
+BW_TACO_ID(val, "div", "val-temp", "22.4 C");
+BW_ARRAY_START(kids);
+BW_ARRAY_ITEM(kids, lab);
+BW_ARRAY_ITEM(kids, val);
+BW_ARRAY_END(kids);
+BW_NEST_CLS(card, "div", "bw_bccl_card bw_p_3", kids);
 ```
 
----
+Two rules:
 
-## CMakeLists.txt
+- **Each level needs its own buffer.** `BW_NEST(x, "div", x)` is `snprintf()`
+  into the buffer it is reading from: undefined behaviour. The C++ helpers have
+  no such trap.
+- **Size your buffers.** `BW_TACO_BUF_SIZE` (256 B) for leaves,
+  `BW_BUF_SIZE` (set to 1024 here) for subtrees. Everything truncates silently
+  if you get it wrong, so give a page-sized node room.
 
-```cmake
-cmake_minimum_required(VERSION 3.10)
-project(bwserve_demo C)
+Classes like `bw_bccl_card`, `bw_row` and `bw_col_md_4` are styled by the
+`bw.loadStyles()` call on the page, so changing the theme is one line of JS
+and no firmware change.
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
+## Updates: name what changed
 
-set(BW_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../embedded_c")
+Readings go out as one batch, not five messages:
 
-add_executable(bwserve_demo main.c)
-target_include_directories(bwserve_demo PRIVATE ${BW_INCLUDE_DIR})
-
-find_package(Threads REQUIRED)
-target_link_libraries(bwserve_demo Threads::Threads)
+```c
+bw_batch_t batch;
+bw_batch_begin(&batch);
+BW_PATCH(msg, "val-temp", temp);      bw_batch_add(&batch, msg);
+BW_PATCH(msg, "val-humidity", hum);   bw_batch_add(&batch, msg);
+bw_batch_end(out, sizeof(out), &batch);
+broadcast(out);                        /* one frame, one reflow */
 ```
 
-The `BW_INCLUDE_DIR` points to `embedded_c/` in the bitwrench repo root, where
-`bitwrench.h` and `bwserve.h` live.
+No diffing on either side. The code knows which ids it touched, so it says so.
+The ids come from the `BW_TACO_ID()` calls that built the cards.
 
----
+## Clicks
 
-## Using This as a Starting Point
+A button carries `bw_act_led_toggle`. `bw.actions.enable()` turns the click
+into a POST, and the device reads it with no JSON parser:
 
-To port bwserve to a new platform (e.g., a different microcontroller, an RTOS,
-or a desktop application):
+```c
+bw_action_t act;
+if (bw_parse_action(body, &act)) {
+    if (strcmp(act.action, "led_toggle") == 0) { ... }
+}
+```
 
-1. **Copy the headers:** `bitwrench.h` and `bwserve.h` into your project
-2. **Add an HTTP server:** Any server that can serve static files and handle
-   SSE connections works
-3. **Use the macros:** `BW_PATCH` for text updates, `bw_batch_*` for batching,
-   `BW_SSE_FRAME` for SSE framing
-4. **Serve the dashboard:** Either embed the HTML as a string (like this demo)
-   or serve `dashboard.html` + `bitwrench.umd.min.js` from a filesystem
+`bw_action_field(&act, "pin", buf, sizeof buf)` reads one field when the action
+carries values.
 
-The only platform-specific code is the HTTP server and the actual sensor reads.
-The bwserve protocol layer (macros and batch builder) is pure C99 with no
-platform dependencies.
+## Many browsers
+
+`bw_clients_t` is the fixed-size registry from `bwserve.h` -- no allocation,
+and a socket that has gone away is dropped during the fan-out:
+
+```c
+bw_clients_init(&g_clients);                        /* once, at startup */
+bw_clients_add(&g_clients, fd);                     /* on GET /events   */
+bw_clients_each(&g_clients, push_frame, frame, NULL);  /* broadcast     */
+```
+
+Raise `BW_MAX_CLIENTS` (default 4; this demo uses 8) before including the
+headers. The mutex in this file is ours, because the demo pushes from a second
+thread -- a single-threaded firmware loop does not need one.
 
 ## Porting to ESP32
 
-Copy the protocol logic (the `broadcast_sensor_update()` function pattern) to
-your ESP32 sketch. Replace:
+Replace `main()`, `handle_request()` and the `serve_*`/`write_all` helpers with
+your HTTP stack. Everything else compiles unchanged:
 
-- POSIX `socket()`/`accept()`/`write()` with `ESPAsyncWebServer` + `AsyncEventSource`
-- `pthread` sensor thread with `loop()` + `millis()` timing
-- `strstr()` command parsing with `ArduinoJson` (optional)
+```c
+server.on("/bitwrench.js", HTTP_GET, []() {
+    server.sendHeader("Content-Encoding", "gzip");
+    server.send_P(200, "application/javascript",
+                  (const char *)bitwrench_js_gz, bitwrench_js_gz_len);
+});
+```
 
-The `bitwrench.h` and `bwserve.h` macros work identically on both platforms.
+See [`../esp32_dashboard/`](../esp32_dashboard/) and
+[`../../../embedded_c/README.md`](../../../embedded_c/README.md) for the full
+header reference.
 
-## Demo Scope Notes
+## Scope notes
 
-- This demo focuses on wire-protocol flow, not hardened command security.
-- Command parsing in `main.c` is intentionally simple for readability.
-- Authentication/authorization is intentionally out of scope and should be
-  added in production deployments.
+- Binds `127.0.0.1`. Change `INADDR_LOOPBACK` to `INADDR_ANY` to reach it from
+  a phone, and note that this is a demo server: no auth, no TLS, fixed-size
+  request buffer, one request per connection. Do not expose it.
+- Authentication and authorization are deliberately out of scope here and
+  belong in production firmware.
+- `test/bitwrench_test_embedded_c.js` compiles the headers and the C++ demo
+  with `-Wall -Wextra -Werror` and drives them over a real socket.

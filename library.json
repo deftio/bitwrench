@@ -1,6 +1,6 @@
 {
     "name": "bitwrench",
-    "version": "2.1.10",
+    "version": "2.1.11",
     "description": "Header-only C/C++ library for composing bwserve protocol messages (TACO UI nodes, patch, mount, batch) as relaxed JSON. Enables microcontrollers to serve bitwrench-powered web dashboards via SSE.",
     "keywords": [
         "bitwrench",
@@ -35,7 +35,9 @@
     "frameworks": "*",
     "platforms": "*",
     "build": {
-        "srcFilter": ["-<*>"],
+        "srcFilter": [
+            "-<*>"
+        ],
         "includeDir": "embedded_c"
     },
     "export": {
@@ -43,6 +45,8 @@
             "embedded_c/*",
             "src/bitwrench.h",
             "src/bwserve.h",
+            "src/bitwrench_embedded.h",
+            "src/bitwrench_embedded_lean.h",
             "examples/embedded/*",
             "examples/embedded-basic/*",
             "examples/embedded-imu/*",
@@ -53,7 +57,9 @@
             "README.md"
         ],
         "exclude": [
-            "examples/embedded/cmake-demo/build/*"
+            "examples/embedded/cmake-demo/build/*",
+            "examples/embedded/posix-cpp/build/*",
+            "examples/embedded/*/build/*"
         ]
     }
 }

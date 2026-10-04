@@ -145,13 +145,13 @@
       { t: 'h4', c: 'macOS / Linux' },
       codeBlock(
         'curl -o bitwrench.umd.min.js \\\n' +
-        '  https://cdn.jsdelivr.net/npm/bitwrench@2.0.17/dist/bitwrench.umd.min.js\n' +
+        '  https://cdn.jsdelivr.net/npm/bitwrench@2.1.11/dist/bitwrench.umd.min.js\n' +
         'gzip -9 bitwrench.umd.min.js',
         'bash'
       ),
       { t: 'h4', c: 'Windows (PowerShell)' },
       codeBlock(
-        'Invoke-WebRequest -Uri "https://cdn.jsdelivr.net/npm/bitwrench@2.0.17/dist/bitwrench.umd.min.js" `\n' +
+        'Invoke-WebRequest -Uri "https://cdn.jsdelivr.net/npm/bitwrench@2.1.11/dist/bitwrench.umd.min.js" `\n' +
         '  -OutFile bitwrench.umd.min.js\n' +
         '# Use WSL or 7zip to create the .gz file:\n' +
         '# In WSL: gzip -9 bitwrench.umd.min.js',

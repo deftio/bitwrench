@@ -971,6 +971,60 @@ See [Component Library](component-library.md) for the full method table per comp
 3. BCCL is optional. Use it for everything, use it selectively, or ignore it entirely.
 
 
+## 8b. Changing What Is Already On Screen
+
+Sections 2-8 build UI. Most of an app's life is *changing* UI that already
+exists, and bitwrench has a verb for each size of change. Reaching for the
+biggest one by habit is the most common way to make a bitwrench app feel slow
+and to lose focus, carets and animations.
+
+Cheapest first:
+
+```js
+// 1. A visual state. No node is created or destroyed, so focus, scroll
+//    position and CSS transitions all survive.
+bw.toggleClass('#panel', 'open');                  // flip it
+bw.toggleClass('#panel', 'open', isOpen);          // or drive it from state
+bw.toggleClass('.key', 'down', false);             // every match, one call
+bw.addClass('save-btn', 'is_busy');                // addClass / removeClass / hasClass
+
+// 2. A value, a label, an attribute. One element, one call.
+bw.patch('readout', '42%');                        // text
+bw.patch('bar', { width: 120 });                   // a plain object patches attributes
+bw.patch('info', { t: 'em', c: 'done' });          // a TACO replaces content
+
+// 3. A list whose items come and go. Items that stay keep their DOM nodes,
+//    so an <input> being typed into survives a re-order.
+bw.syncChildren(listEl, items, {
+    key:    function(i) { return i.id; },
+    create: function(i) { return { t: 'li', c: i.name }; },
+    update: function(el, i) { bw.patch(el, i.name); }
+});
+
+// 4. The component's own API, when it has one.
+el.bw.setTitle('Revenue');
+el.bw.sort('age');
+
+// 5. Empty a container. Not innerHTML = '', which drops children without
+//    firing their unmount hooks.
+bw.clear('#list');
+
+// 6. Full rebuild, last resort: re-run a stateful component's o.render.
+bw.refresh(el);
+```
+
+`bw.el(ref, apply)` and `bw.$(sel, apply)` fold "find" and "change" into one
+call -- a string sets text, a TACO or array replaces content, a function runs
+for each match:
+
+```js
+bw.$('.status', 'Online');                             // set text on all of them
+bw.$('.card', function(el) { bw.addClass(el, 'lit'); });
+```
+
+If you find yourself writing `document.querySelectorAll(...)` and a
+`classList.toggle` loop, that is this section's job instead.
+
 ## 9. Routing, Utilities, Advanced
 
 Sections 2-8 cover the core model. This section covers the remaining tools bitwrench provides: routing, declared dataflow, color utilities, and general-purpose helpers.
@@ -1214,6 +1268,7 @@ These are low-level lifecycle primitives. Most applications only need `bw.mount(
 | `bw.mountTree(el)` | Register inserted subtree; fire `mounted` hooks |
 | `bw.unmount(el)` | Tear down subtree lifecycle; fire `unmount` hooks |
 | `bw.unmountChildren(el)` | Unmount descendants only; element untouched |
+| `bw.clear(ref)` | = `unmountChildren` + remove the children (use instead of `innerHTML = ''`) |
 | `bw.detach(el)` | Remove from document, keep lifecycle intact (keep-alive) |
 
 ### Convenience verbs (compound)
@@ -1248,7 +1303,10 @@ These are low-level lifecycle primitives. Most applications only need `bw.mount(
 | `o.render(el, state)` | Render function; called on mount and `bw.refresh()` |
 | `bw.refresh(ref)` | Re-invoke render -- tears down and rebuilds children |
 | `bw.update(ref, data)` | Dispatch to `el.bw.update(data)` -- never falls back to rebuild |
-| `bw.patch(id, content)` | Update addressed element's content |
+| `bw.patch(id, content)` | Update addressed element's content, or its attributes with a plain object |
+| `bw.toggleClass(ref, names, force?)` | Flip or force classes on every match; the cheapest update |
+| `bw.addClass` / `bw.removeClass` / `bw.hasClass` | The rest of the class verbs |
+| `bw.syncChildren(parent, items, opts)` | Keyed list update; items that stay keep their nodes |
 
 ### Component handles
 

@@ -8,7 +8,7 @@ These guides cover how to build UIs with bitwrench.
 |----------|-------|
 | Where do I start? | [Quickstart](quickstart.md) -- hello world, which file to load, then a full app |
 | I bring my own design -- what's the core API? | [Core API Card](core-api.md) -- one page, one line per call |
-| How do I draw SVG? | [TACO Format: SVG](taco-format.md#svg) -- SVG is ordinary TACO |
+| How do I draw SVG? | [SVG](svg.md) -- the full guide; [the short version](taco-format.md#svg) |
 | How do I use my own CSS and tokens? | [Theming: Bring your own design](theming.md#bring-your-own-design) |
 | What components does bitwrench have? | [Component Cheat Sheet](component-cheatsheet.md) |
 | How do I build a page? | [Building a Website tutorial](tutorial-website.md) |
@@ -37,6 +37,7 @@ These guides cover how to build UIs with bitwrench.
 | [Core API Card](core-api.md) | One-page reference for mount/patch/css/pub-sub/syncChildren |
 | [Thinking in Bitwrench](thinking-in-bitwrench.md) | Design philosophy: why TACO exists, component model vs. DOM templates |
 | [TACO Format](taco-format.md) | The `{t, a, c, o}` object format that bitwrench uses for everything |
+| [SVG](svg.md) | Charts, gauges, diagrams and interactive drawings as TACO; updating deployed SVG in place |
 | [State Management](state-management.md) | Component model, explicit stateful components, cross-component communication |
 | [Component Cheat Sheet](component-cheatsheet.md) | Scannable table of all components with capabilities and handles |
 | [Component Library](component-library.md) | All `make*()` functions with full signatures and examples |
@@ -62,6 +63,7 @@ These guides cover how to build UIs with bitwrench.
 | [Building a Website](tutorial-website.md) | Build a complete landing page from scratch |
 | [Server App with bwserve](tutorial-bwserve.md) | Build a Streamlit-style server-driven dashboard |
 | [ESP32 Embedded](tutorial-embedded.md) | ESP32 IoT dashboard with C/C++ macros |
+| [A C++ web app on your own machine](../examples/embedded/posix-cpp/) | The same headers and protocol as the ESP32 path, over POSIX sockets: no hardware, no Node, no CDN |
 | [Component Lifecycle Walkthrough](component-lifecycle.md) | Stats card: define, create, mount, update, unmount — every phase of a v2.1 component |
 
 ## Interactive Docs

@@ -119,7 +119,7 @@
             data: [
               { File: 'server.py', Language: 'MicroPython', Framework: 'microdot + SSE' },
               { File: 'server_circuitpython.py', Language: 'CircuitPython', Framework: 'adafruit_httpserver' },
-              { File: 'server.ino', Language: 'Arduino C++', Framework: 'WebServer + LittleFS' }
+              { File: 'pico_w_server.ino', Language: 'Arduino C++', Framework: 'WebServer + LittleFS' }
             ],
             columns: [
               { key: 'File', label: 'File' },
@@ -282,7 +282,7 @@
           ]},
 
           { t: 'h3', c: '2. Prepare LittleFS data' },
-          { t: 'p', c: 'Create a data/ directory next to server.ino:' },
+          { t: 'p', c: 'Create a data/ directory next to pico_w_server.ino:' },
           codeBlock(
             'data/\n' +
             '  index.html                  <- copy of dashboard.html\n' +
@@ -293,7 +293,7 @@
           { t: 'p', c: 'Upload with: Tools > "Pico LittleFS Data Upload"' },
 
           { t: 'h3', c: '3. Configure WiFi' },
-          { t: 'p', c: 'Edit server.ino:' },
+          { t: 'p', c: 'Edit pico_w_server.ino:' },
           codeBlock(
             'const char* WIFI_SSID = "YOUR_SSID";\n' +
             'const char* WIFI_PASSWORD = "YOUR_PASSWORD";',
@@ -520,7 +520,7 @@
             { t: 'li', c: [{ t: 'a', a: { href: 'dashboard.html', download: '' }, c: 'dashboard.html' }, ' -- the HTML dashboard (runs on the Pico)'] },
             { t: 'li', c: [{ t: 'a', a: { href: 'server.py', download: '' }, c: 'server.py' }, ' -- MicroPython web server (microdot + SSE)'] },
             { t: 'li', c: [{ t: 'a', a: { href: 'server_circuitpython.py', download: '' }, c: 'server_circuitpython.py' }, ' -- CircuitPython web server (adafruit_httpserver)'] },
-            { t: 'li', c: [{ t: 'a', a: { href: 'server.ino', download: '' }, c: 'server.ino' }, ' -- Arduino C++ web server (WebServer + LittleFS)'] },
+            { t: 'li', c: [{ t: 'a', a: { href: 'pico_w_server/pico_w_server.ino', download: '' }, c: 'pico_w_server.ino' }, ' -- Arduino C++ web server (WebServer + LittleFS)'] },
             { t: 'li', c: [{ t: 'a', a: { href: 'settings.toml', download: '' }, c: 'settings.toml' }, ' -- WiFi credentials template (CircuitPython)'] }
           ]},
           callout('tip', 'Standalone HTML (no .gz needed)',

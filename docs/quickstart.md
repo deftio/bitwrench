@@ -54,8 +54,13 @@ bw.mount('#app', h('ul', null, ['one', 'two', 'three'].map(function(x) {
 })));
 ```
 
-SVG is written the same way, starting from `{ t: 'svg', ... }` -- see
-[SVG in taco-format.md](taco-format.md#svg).
+SVG is written the same way, starting from `{ t: 'svg', ... }` -- see the
+[SVG guide](svg.md).
+
+To change something already on screen, you do not rebuild it: `bw.toggleClass`
+for a visual state, `bw.patch` for one value or attribute, `bw.syncChildren`
+for a list, `bw.clear` to empty a container. The
+[core API card](core-api.md) is one page of exactly these.
 
 ## Which file do I load?
 
@@ -63,7 +68,7 @@ SVG is written the same way, starting from `{ t: 'svg', ... }` -- see
 |----------|------|-------------|
 | A `<script>` tag, everything included | `dist/bitwrench.umd.min.js` | ~45 KB |
 | Your own design, no built-in components | `dist/bitwrench-lean.umd.min.js` | ~35 KB |
-| Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | ~110 KB |
+| Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | ~114 KB |
 | `import bw from ...` without npm | `dist/bitwrench.esm.min.js` (or `-lean.esm.min.js`) | ~45 KB |
 | npm | `npm install bitwrench`, then `import bw from 'bitwrench'` | -- |
 
@@ -227,7 +232,8 @@ function addTask() {
 ## What to read next
 
 - **docs/core-api.md** -- one-page card: mount, patch, css, pub/sub, syncChildren. Start here if you bring your own design
-- **docs/taco-format.md** -- the object format, including [SVG](taco-format.md#svg) and `bw.h()`
+- **docs/taco-format.md** -- the object format and `bw.h()`
+- **docs/svg.md** -- SVG as TACO: charts, gauges, diagrams, and changing them in place
 - **docs/bw-attach.md** -- `bwcli attach`: drive a live page from a terminal (REPL, inspect, screenshots). Useful for anything a headless browser can't do, like Web MIDI or hardware
 - **docs/thinking-in-bitwrench.md** -- full progressive walkthrough (1300 lines)
 - **docs/component-cheatsheet.md** -- all 51 built-in components

@@ -3,6 +3,275 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.11 (2026-10-04)
+
+Option warnings, class verbs, an SVG guide and a C++ embedded app.
+
+A wrong option name is now visible instead of silent, the cheapest update
+finally has a verb, SVG has a guide, and an embedded board can serve the bundle
+straight from flash.
+
+Most of this came from reading a real app (a Web MIDI practice tool built on
+2.1.10) rather than from reports. Every call it hand-rolled -- a router, a
+surgical-update mechanism, an element finder, a tooltip -- was already in the
+build it had loaded. That is a discoverability bug, and it set the agenda here.
+
+### Added
+
+- **Class verbs: `bw.toggleClass`, `bw.addClass`, `bw.removeClass`,
+  `bw.hasClass`.** Changing a class is the cheapest update there is -- no node
+  is created, nothing unmounts, focus and transitions survive -- and the library
+  had no verb for it, so apps wrote `classList.toggle` loops over
+  `querySelectorAll`. They take anything `bw.$` takes (selector, element, array,
+  NodeList) plus a bare element id, apply to **every** match, and accept a
+  class, a space-separated list, or an array. A third argument forces instead of
+  flipping: `bw.toggleClass('.key', 'down', isDown)`.
+- **`bw.clear(ref)`** empties a container: unmount hooks fire, then the children
+  go. `el.innerHTML = ''` skips the hooks, which is what people were writing.
+  (It is not an alias for `bw.unmountChildren`, which fires the hooks but leaves
+  the children in place.)
+- **`docs/svg.md`** -- a full SVG guide: the five rules, viewBox versus width,
+  shapes from data, styling with classes and `currentColor`, handlers in `a:`
+  and delegation, **changing SVG that is already on the page** (class, attribute
+  patch, `syncChildren`, when to rebuild), mixing SVG with components,
+  `foreignObject`, accessibility, recipes (progress ring, gauge, clickable
+  keyboard, annotated diagram), server-driven SVG, export, and the gotchas.
+  Every block in it runs in CI.
+- **`pages/18-svg.html`** -- the same material as editable demos: a chart from
+  data, a delegated click handler, in-place updates, a live `syncChildren`
+  series, SVG inside a card and a table, a progress ring and a clickable
+  keyboard. Covered by a browser test that drives the demos.
+- The SVG guide and page address elements by **id and class, not `data-*`**.
+  bitwrench emits no `data-*` itself, and the teaching examples should match the
+  library: identity is a `bw_uuid_*` class, state is a class, and anything you
+  look up has an id. Application markup may still use `data-*` -- the guide says
+  so -- but it is no longer what the examples demonstrate.
+
+- **Factories warn on options they do not read (#92).** `makeButton({ href })`
+  rendered a styled button that did not navigate; `makeTable({ headers, rows })`
+  rendered an empty table. Both reviewed clean and shipped to real sites. Every
+  `bw.make*()` call now warns once per factory and key, naming the key and
+  listing what the factory accepts, through `bw.makeX()` and `bw.make(type)`
+  alike. The accepted keys are read from each factory's own source, so there is
+  no list to keep in sync; factories that forward arbitrary `on*` handlers are
+  skipped. `bw.warnUnknownProps = false` turns it off. Costs ~560 bytes gzipped.
+- `makeTableFromArray` given rows of objects now throws a message naming
+  `bw.makeTable` / `bw.makeDataTable` instead of failing later with
+  `data[0].map is not a function` from inside the minified bundle (#92).
+
+### Embedded (#91)
+
+The embedded packaging was missing the piece the issue was actually about, and
+the C path had a bug that made its own README's recipe unusable. Both fixed.
+The registry submissions are still not done -- the manifests are version-locked
+and ready, and `embedded_c/README.md` now says so plainly instead of implying
+you can install from Library Manager today.
+
+**This release is groundwork, not the embedded release.** The C/C++ side is
+example-grade: header-only and tested, but with no per-stack glue, no published
+package and an undecided name. If you are here for embedded, read
+[`dev/bw-embedded-release-plan-2.1.x.md`](dev/bw-embedded-release-plan-2.1.x.md)
+-- it holds the intended scope (a narrow compose/protocol/asset library, not a
+web framework), the inconsistency register, the hygiene backlog and the open
+decisions. 2.1.12 is the embedded release.
+
+- **`embedded_c/bitwrench_embedded.h`** (and `_lean.h`): the gzipped bundle as
+  a `PROGMEM` array, generated at release time from the file that ships. A board
+  with no filesystem can now answer `GET /bitwrench.js` from flash -- ~46 KB for
+  the full build, ~36 KB for lean -- served with `Content-Encoding: gzip`, which
+  the browser unpacks and the device never touches. Each header carries
+  `BITWRENCH_EMBEDDED_VERSION` and the SRI hash of its source, so a stale copy
+  is visible.
+- **Fixed: the C protocol macros produced messages the client rejected.**
+  `BW_MOUNT` and `BW_APPEND` embedded a nested TACO with its `r` prefix intact,
+  giving `'taco':r{...}`, which `bw.parseJSONFlex()` throws on. The C++ helpers
+  and `bw_batch_add()` had always stripped it; the macros had not, so every C
+  example following the README emitted unparseable frames. Both macros now
+  strip it (`BW_SKIP_R`).
+- **`bw_parse_action()` / `bw_action_field()`**: read the action name and one
+  data field out of a `bw_act_*` post-back without a JSON parser, accepting both
+  strict and relaxed quoting, with no allocation.
+- **`bw_clients_t`**: a fixed-size SSE client registry (`init`, `add`, `remove`,
+  `each`), so two browsers watching one board is not something every project
+  re-implements. A send that reports failure drops that client.
+- **A generated size table** in `embedded_c/README.md`: on-disk and gzipped per
+  build, flash cost per header, and where the RAM actually goes. These are the
+  numbers embedded developers decide on, and they were absent.
+- **A C++ web app you can build on your laptop:**
+  [`examples/embedded/posix-cpp/`](examples/embedded/posix-cpp/). ~400 lines of
+  C++11, one compiler, no Node and no network: it serves the bundle out of the
+  flash array, mounts a themed dashboard over SSE, and keeps several browsers in
+  sync. It is the ESP32 sketch with the transport swapped, so the app is written
+  and debugged on a machine with a debugger and then moved to a board unchanged.
+
+  Its README walks the **whole round trip** in seven numbered steps, each with
+  the bytes that actually go over the wire: bundle from flash, a page that is
+  four `bw.*` calls, the server mounting the UI, batched patches, a `bw_act_*`
+  control posting a typed value back, the device escaping it and patching what
+  changed, and a device notification landing on `bw:message`. Getting a value
+  *from* the browser was the half the embedded examples never showed.
+- Registry packaging, ahead of the Library Manager / PlatformIO / ESP Component
+  Registry submissions (#91):
+  - **Every Arduino example now lives in a folder named after its sketch.** All
+    six were `examples/<something>/<other_name>.ino`, which arduino-lint flags
+    and which makes the IDE prompt the user to relocate the sketch before it
+    will open. Renamed to `esp32_dashboard/`, `pico_w_server/`, `pico2w_basic/`,
+    `esp32s3_basic/`, `pico2w_imu/` and `esp32s3_imu/`, with every reference
+    updated. The MicroPython and CircuitPython files stay where they were --
+    only Arduino has this rule.
+  - `keywords.txt` covers the API added since 2.1.9, so the Arduino IDE
+    highlights it.
+  - `library.json` no longer ships an `examples/*/build/` directory if someone
+    built a demo in-tree, and lists the new `src/` shims.
+- **Composition primitives, because the headers could not nest a node.** Every
+  `BW_TACO_*` macro quotes its content, which makes it a leaf -- there was no
+  way to put one node inside another, in C or in C++. A device could therefore
+  only send flat, one-element UIs, which is why the C demo had given up and
+  hand-written HTML. Added `BW_NEST`, `BW_NEST_CLS`, `BW_NEST_ATTR` and, for
+  C++, `bw::nest()`, `bw::nest_attr()`, `bw::taco_attr()`, plus `bw::array()`
+  and `bwserve::batch()` over a `std::vector` for the data-driven case.
+- **Fixed: `BW_ARRAY_ITEM` built child lists the client rejected.** It appended
+  each item with its `r` prefix intact, so any array content gave
+  `'c':[r{...}]`, which does not parse. Same bug class as the `BW_MOUNT` one
+  below, same fix (`BW_SKIP_R`, now applied on every nesting path). Arrays were
+  unusable before this.
+- **Fixed: `bw.connect()` dropped every message a device sent.** It parsed
+  frames with `JSON.parse`, which rejects the relaxed `r{'v':1,...}` form that
+  all the C macros emit -- and the error was swallowed, so the symptom was a
+  page that connected and then did nothing. It now uses `bw.parseJSONFlex()`,
+  which reads strict JSON identically. Without this, an embedded project had to
+  hand-write its own SSE client, and both desktop demos did.
+- **Fixed: a device's notifications were rejected outright.** `BW_MESSAGE` and
+  `bwserve::message()` are documented as "send a notification to the browser",
+  but `message` also means component-method dispatch on this wire, and
+  `bw.apply()` only handled that second meaning -- so every notification a
+  device sent was dropped with a confusing warning. The two forms are now told
+  apart by whether `action` is present. A notification is **published** on the
+  `bw:message` topic rather than rendered, because where a toast belongs and
+  how long it lives is the page's decision:
+  `bw.sub('bw:message', function(m) { bw.patch('status', m.text); })`.
+- **Fixed: the C++ protocol wrappers truncated anything over `BW_BUF_SIZE`.**
+  `bwserve::mount`, `append`, `patch`, `patch_num`, `remove` and `message`
+  copied through a fixed 512-byte buffer, so a UI composed with the unbounded
+  `bw::nest()` helpers was silently cut mid-frame and arrived unparseable, with
+  no error on either side. They build with `std::string` now. This was the
+  single worst trap on the C++ path: composition had no limit, but the message
+  wrapper did. The C macros still take a caller-supplied buffer, which is the
+  right behaviour for firmware.
+- **Fixed: `#include <bitwrench_embedded.h>` did not compile in the Arduino
+  IDE.** Arduino's recursive layout puts only `src/` on the include path, which
+  is why `src/bitwrench.h` and `src/bwserve.h` are forwarding shims -- but the
+  new flash-array headers had none, so the include line printed in their own
+  documentation failed. Added `src/bitwrench_embedded.h` and
+  `src/bitwrench_embedded_lean.h`, and a test that compiles every header with
+  `-I src` alone, exactly as the Arduino toolchain does.
+- **Fixed: `bw.apply()` dropped the attributes of a combined patch.** The
+  `patch` branch was an else-if chain, so a message carrying both `text` and
+  `attrs` -- which is exactly what `BW_PATCH_ATTR` and the new
+  `bwserve::patch_attr()` emit -- applied the text and silently discarded the
+  styling. A device telling the browser "41.2 C, and make it red" got half of
+  that. Both are applied now.
+- `bwserve::patch_attr()` added for parity: `BW_PATCH_ATTR` existed in C with no
+  C++ counterpart, so the C++ path had to re-mount a node to restyle it.
+- `bw_action_field()` now also reads top-level fields, so the post-back shape
+  that bitwrench core sends (`bw.actions.enable()` + `bw.connect()`:
+  `{v,type,action,value,name}`, no `data` object) works without a second code
+  path in firmware.
+- **Rewrote the C demo** (`examples/embedded/cmake-demo/`), which served a
+  hand-written SSE client built on `document.getElementById` and `innerHTML`
+  with its styling inlined as a CSS string -- the one thing the north star
+  forbids, in the file people copy from. It now serves the bundle from flash and
+  a bootstrap page that is four lines of `bw.*` calls, and builds its UI with
+  `BW_NEST`, `bw_clients_t` and `bw_parse_action` like the C++ one.
+- Documented all of it: serving from flash, handling clicks, multiple clients,
+  composing a tree, and the two buffer rules the C macros impose (own buffer per
+  level, size it for the subtree).
+- The `esp32-adafruitST25DV16` example told people to download **2.0.17** in
+  four places, including its curl and PowerShell commands. Pinned to the current
+  release, and drift-lint now has a **`stale-cdn-pin`** rule so an explicit pin
+  that is not the current version fails the build (channel pins like `@2` or
+  `@2.1` are fine).
+
+### Tests: the C headers are compiled now
+
+`test/bitwrench_test_embedded_c.js` builds small programs against `embedded_c/`
+with the system compiler (`-std=c99 -Wall -Werror`, and again as C++), runs
+them, and checks their output. Nothing was compiling these headers before, which
+is how the nested-prefix bug survived.
+
+The test that matters most is cross-language: every message the C macros emit is
+fed to `bw.parseJSONFlex()`, so the device half and the browser half are checked
+against each other rather than against a regex. It skips with a message when no
+compiler is available, so `npm test` still works without build tools.
+
+It now also runs the whole path end to end: the POSIX C++ demo is compiled with
+`-Wall -Wextra -Werror`, started, driven over a real socket (bundle fetch,
+bootstrap page, SSE stream, a click posted back the way `bw.actions` posts it),
+and every frame it pushes is rendered into jsdom with `bw.apply()` and asserted
+against the resulting DOM. Both desktop demos are also checked for teaching the
+pattern -- the page they serve must contain no `document.*`, no `innerHTML` and
+no markup, and the UI must come from TACO.
+
+That end-to-end test is what found the `bw.connect()` and `BW_ARRAY_ITEM` bugs
+above. Both were invisible to unit tests on either side.
+
+### Docs: the API reference is now complete
+
+- **`docs/bitwrench_api.md` opens with an Index table**: every public API, its
+  call signature, its category and a one-line summary, each linked to its full
+  entry. That is the "every API in one table" view the reference never had.
+- **It was missing a quarter of the API.** `bw` exposes 166 public functions and
+  the reference documented 117 -- `bw.$`, `bw.DOM`, `bw.router`, `bw.navigate`,
+  `bw.link`, `bw.make`, `bw.apply`, `bw.typeOf` and every colour, array, timing
+  and file helper were absent, not merely thin. It now documents 165 of 166
+  (the last is `bw.compile`, a removed stub that throws).
+- **Cause, and the fix:** the two generators (`docs/bitwrench_api.md` and
+  `pages/08-api-reference.html`) each carried their own copy of the same JSDoc
+  parser, with the same blind spots -- it read two source files, required a
+  function literal on the right-hand side, and could not match `bw.$`. There is
+  now one shared extractor (`tools/lib/api-extract.js`) that reads every API
+  source file and understands aliases, re-exports, arrow functions, object
+  literal methods, IIFE namespaces and `export function` in helper modules
+  (where the real JSDoc already lived, so no documentation was duplicated).
+- Wrote the JSDoc that was genuinely missing: `bw.DOM`, `bw.to`, `bw.apply`,
+  `bw.connect`, `bw.registerRemote`, `bw.actions`, `bw.router`, `bw.navigate`,
+  `bw.link`, `bw.colorParse`, `bw.colorHslToRgb`, `bw.colorRgbToHsl`.
+- Fixed a stranded JSDoc block: the documentation for `bw.apply` had been left
+  behind by an earlier code move and was sitting above `bw.actions`, which the
+  new parser surfaced immediately.
+
+### Docs
+
+- **The `apply` second argument of `bw.el` and `bw.$` is documented.** It has
+  existed since 2.0.26 and was missing from the core API card, so readers went
+  back to raw DOM for anything beyond "find this element".
+- **What is in which build is written down.** "Everything except the built-in
+  components" did not say that the router, pub/sub, `derive`, `patch`,
+  `syncChildren`, the class verbs and the table factories are all in the lean
+  build -- nor that `makeTooltip` is not. That one omission explains both a
+  hand-rolled router and a hand-rolled tooltip in the field.
+- The update-cost ladder now appears where people actually read: a new section
+  in `thinking-in-bitwrench.md`, a table in the cheat sheet, the core API card,
+  the quickstart, `llms.txt` and `agents.md`.
+
+### Tests and tooling: three checks for whole-project consistency
+
+Each of these would have caught something that actually went wrong this week:
+
+- **API completeness** (`test/bitwrench_test_meta.js`): every public `bw.*` name
+  appears in the generated reference, and every documented entry appears in the
+  Index table. Values, data tables and removed stubs sit on a declared
+  allowlist with a reason each. This test fails at 117/166.
+- **`undocumented-api`** (drift-lint): a public `bw.*` with no JSDoc at its
+  assignment, reported with the source file and line. Catches the problem when
+  the API is written, not a release later.
+- **`stale-size`** (drift-lint): every `NN KB` claim in prose is compared with
+  the real `raw`/`gzipped` numbers in `dist/builds.json`. It found six stale
+  claims on first run (the README, the quickstart, the downloads page and the
+  home page's meta description all still said 165 KB / 110 KB). Lines about RAM,
+  flash, images or another library's bundle are skipped, and `CHANGELOG.md` is
+  exempt so history stays historical.
+
 ## v2.1.10 (2026-09-23)
 
 Supply-chain and toolchain release. No API changes and no behavioural changes

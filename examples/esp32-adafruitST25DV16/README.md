@@ -51,13 +51,13 @@ Download and compress bitwrench on your computer (not on the ESP32):
 **macOS / Linux:**
 ```bash
 curl -o bitwrench.umd.min.js \
-  https://cdn.jsdelivr.net/npm/bitwrench@2.0.17/dist/bitwrench.umd.min.js
+  https://cdn.jsdelivr.net/npm/bitwrench@2.1.11/dist/bitwrench.umd.min.js
 gzip -9 bitwrench.umd.min.js
 ```
 
 **Windows (PowerShell):**
 ```powershell
-Invoke-WebRequest -Uri "https://cdn.jsdelivr.net/npm/bitwrench@2.0.17/dist/bitwrench.umd.min.js" `
+Invoke-WebRequest -Uri "https://cdn.jsdelivr.net/npm/bitwrench@2.1.11/dist/bitwrench.umd.min.js" `
   -OutFile bitwrench.umd.min.js
 # Install 7zip if needed, or use WSL:
 # In WSL: gzip -9 bitwrench.umd.min.js

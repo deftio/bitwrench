@@ -7,7 +7,7 @@
  */
 
 import bw from '../src/bitwrench.js';
-import { parse } from 'comment-parser';
+import { extractAll } from './lib/api-extract.js';
 import { readFileSync, writeFileSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -144,22 +144,19 @@ const sourceFiles = [
   { path: join(srcDir, 'bitwrench-bccl.js'), category: 'Component Builders' }
 ];
 
-const v2Source = readFileSync(sourceFiles[0].path, 'utf8');
-const compSource = readFileSync(sourceFiles[1].path, 'utf8');
-
-const coreAPIs = parseAPIs(v2Source, 'Core');
-const componentAPIs = parseComponents(compSource, 'Component Builders');
-const allAPIs = [...coreAPIs, ...componentAPIs];
+// Shared with build-api-reference.js: one parser, every API source file.
+const publicNames = new Set(Object.keys(bw).filter((k) => !/^_/.test(k)));
+const allAPIs = extractAll(srcDir, publicNames);
 
 // ─── Categorize ──────────────────────────────────────────────────────────────
 
 const categoryOrder = [
   'Core', 'DOM Generation', 'DOM Selection', 'Identifiers',
   'State Management', 'Events (DOM)', 'Pub/Sub',
-  'CSS & Styling', 'Component Builders',
-  'Color', 'Math', 'Array Utilities', 'Text Generation',
+  'CSS & Styling', 'Component Builders', 'Routing',
+  'Color', 'Color Utilities', 'Math', 'Array Utilities', 'Text Generation',
   'Timing', 'Browser Utilities', 'File I/O',
-  'Component Handles'
+  'Component Handles', 'Utilities'
 ];
 
 const grouped = {};
@@ -218,6 +215,37 @@ lines.push('');
 for (const cat of orderedCategories) {
   const anchor = cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   lines.push('- [' + cat.name + '](#' + anchor + ') (' + cat.entries.length + ')');
+}
+lines.push('');
+
+// ─── Index: every API in one table ───────────────────────────────────────────
+// The per-category sections below carry the detail. This table is the lookup:
+// one row per API, its call signature, and what it is for.
+
+function anchorFor(sig) {
+  // GitHub's anchor for '### `bw.mount(target, taco)`'
+  return sig.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function firstSentence(desc) {
+  if (!desc) return '';
+  const line = desc.split('\n')[0].trim();
+  const stop = line.search(/\.(\s|$)/);
+  const out = stop === -1 ? line : line.slice(0, stop);
+  return out.replace(/\|/g, '\\|').trim();
+}
+
+lines.push('## Index');
+lines.push('');
+lines.push('Every public API, with how it is called. Click a signature for the');
+lines.push('full entry: parameters, return value and an example.');
+lines.push('');
+lines.push('| API | Category | What it does |');
+lines.push('|-----|----------|--------------|');
+for (const cat of orderedCategories) {
+  for (const api of cat.entries) {
+    lines.push('| [`' + api.sig + '`](#' + anchorFor(api.sig) + ') | ' + cat.name + ' | ' + firstSentence(api.desc) + ' |');
+  }
 }
 lines.push('');
 lines.push('---');

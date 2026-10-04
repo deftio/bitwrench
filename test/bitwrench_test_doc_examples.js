@@ -28,6 +28,7 @@ const { JSDOM } = jsdom;
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const FILES = [
+  'docs/svg.md',
   'docs/component-library.md',
   'docs/llm-bitwrench-guide.md',
   'docs/component-cheatsheet.md',
@@ -125,24 +126,43 @@ FILES.forEach(function(file) {
       return;
     }
 
+    // A guide written as a progression defines something in one block and uses
+    // it in the next. Those files opt in with `<!-- doc-test: sequential -->`,
+    // and each block then runs after the ones before it (in a fresh page), so
+    // the examples stay copy-pasteable instead of being padded to stand alone.
+    // Reference-style files stay isolated: their blocks are independent and
+    // would otherwise collide over names like `items`.
+    var sequential = /doc-test:\s*sequential/.test(readFileSync(resolve(root, file), 'utf8'));
+    var prior = [];
+
     runnable.forEach(function(b) {
       it('block at line ' + b.line + ' (' + b.lang + ')', function() {
-        var code = scriptOf(b);
+        // Earlier blocks are wrapped in a block scope: their `const`/`let` stay
+        // out of the way (a later block may redeclare `items`), while function
+        // declarations still hoist into the shared scope.
+        var code = prior.map(function(p) { return '{\n' + p + '\n}'; }).join('\n') + '\n' + scriptOf(b);
         freshPage(code);
+        var ranAsStatements = false;
         try {
           try {
             new Function('bw', FIXTURES + '\nreturn function() {\n' + code + '\n};')(bw)();
+            ranAsStatements = true;
           } catch (e) {
             if (!(e instanceof SyntaxError)) throw e;
             // A block of bare TACO literals: render each through both paths.
-            var objs = topLevelObjects(code);
+            // Parse only this block; earlier blocks stay available as setup.
+            var objs = topLevelObjects(scriptOf(b));
             if (!objs.length) throw e;
+            var setup = prior.map(function(p) { return '{\n' + p + '\n}'; }).join('\n');
             objs.forEach(function(src) {
-              var taco = new Function('bw', FIXTURES + '\nreturn (' + src + ');')(bw);
+              var taco = new Function('bw', FIXTURES + '\n' + setup + '\nreturn (' + src + ');')(bw);
               bw.html(taco);
               bw.create(taco);
             });
           }
+          // Later blocks may build on this one -- but only carry forward code that
+          // is valid as statements. A block of bare TACO literals is not.
+          if (ranAsStatements && sequential) prior.push(scriptOf(b));
         } catch (e) {
           assert.fail(file + ':' + b.line + ' threw ' + e.name + ': ' + e.message +
             '\n  (fix the example, or mark it <!-- doc-test: skip (reason) --> if it is a fragment)');

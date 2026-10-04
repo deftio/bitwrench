@@ -221,6 +221,9 @@ export interface NavConfig {
 /** `{ selector: { prop: value } }`; at-rules (`@media`, `@keyframes`) nest as objects. */
 export type CssRules = Record<string, any>;
 
+/** Anything the DOM helpers accept: an element id, CSS selector, bw_uuid_* class, element, or list of elements. */
+export type ElementRef = string | HTMLElement | Element | ArrayLike<Element>;
+
 export interface TabItem { label: string | Taco; content: TacoContent; active?: boolean; [key: string]: any }
 
 export interface TabsConfig {
@@ -460,6 +463,17 @@ export interface Bitwrench {
 
   // -- CSS & Styles ---------------------------------------------------------
   /** Generate CSS string from JS object */
+  /** Add one or more classes to every matched element. Returns the elements changed. */
+  addClass(ref: ElementRef, names: string | string[]): HTMLElement[];
+  /** Remove one or more classes from every matched element. */
+  removeClass(ref: ElementRef, names: string | string[]): HTMLElement[];
+  /** Toggle classes, or force them on (true) / off (false). */
+  toggleClass(ref: ElementRef, names: string | string[], force?: boolean): HTMLElement[];
+  /** Does the first matched element carry this class? */
+  hasClass(ref: ElementRef, name: string): boolean;
+  /** Empty a container: unmount hooks fire, then children are removed. */
+  clear(ref: ElementRef): HTMLElement | null;
+
   /** CSS text from rule objects. Pass an array to repeat a selector or fix the order. */
   css(rules: CssRules | CssRules[] | string, options?: { minify?: boolean }): string;
   /** Inject CSS into document */

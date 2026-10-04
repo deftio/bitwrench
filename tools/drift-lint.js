@@ -14,12 +14,15 @@
  */
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
+import bwLib from '../src/bitwrench.js';
+import { extractAll } from './lib/api-extract.js';
 import { resolve, relative, extname, join } from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 var __dirname = dirname(fileURLToPath(import.meta.url));
 var ROOT = resolve(__dirname, '..');
+var PKG_VERSION = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')).version;
 
 // ── CLI flags ───────────────────────────────────────────────────────
 var VERBOSE = process.argv.indexOf('--verbose') !== -1;
@@ -259,6 +262,16 @@ var RULES = [
     message: 't is required -- an object with no t renders as text, not a div'
   },
   {
+    // An explicit CDN pin that is not this version. Channel pins (@2, @2.1) are
+    // fine and stay current on their own; a full version pin goes stale
+    // silently, and the embedded examples sat on 2.0.17 for months, telling
+    // people to download a bundle from two minor versions back.
+    id: 'stale-cdn-pin',
+    pattern: new RegExp('bitwrench@(?!' + PKG_VERSION.replace(/\./g, '\\.') + '\\b)\\d+\\.\\d+\\.\\d+', 'g'),
+    message: 'pinned bitwrench version is not ' + PKG_VERSION + ' (use @2 or @2.1 for a channel, or pin the current release)',
+    contextExclude: [/upgrade|migrat|older|previous|was pinned|history/i]
+  },
+  {
     // Class names with no rule in the stylesheet. makeButton/makeCard/makeTable
     // emit bw_bccl_*; the bare forms were never generated. Until 2.1.9 this rule
     // only read .md files and exempted class: lines, so ~100 dead uses sat in
@@ -404,6 +417,9 @@ if (LIST_RULES) {
     var kind = r.src ? 'src' : (r.followedBy ? 'structural' : 'name');
     console.log('    ' + r.id.padEnd(25) + ' [' + kind + ']  ' + r.message);
   }
+  console.log('\n  Whole-project checks:');
+  console.log('    undocumented-api          [api]       a public bw.* with no JSDoc at its assignment');
+  console.log('    stale-size                [api]       a KB claim in prose with no matching artifact in dist/builds.json');
   console.log('\n  API rules:');
   console.log('    stale-api                 [api]       bw.XXX() in docs must match a real public API name');
   console.log('                                          (' + PUBLIC_API.size + ' API names extracted from src/)');
@@ -677,6 +693,132 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
     allHits = allHits.concat(hits);
   }
 }
+
+// ── Whole-project checks (not per-line patterns) ─────────────────────
+//
+// These two compare the docs against the code as a whole, which a pattern
+// cannot do. Both exist because the same drift happened more than once:
+// public APIs with no JSDoc never reached the generated reference (49 of 166
+// at one point), and size claims in prose went stale three times in a week.
+
+// 1. undocumented-api -- a public bw.* with no JSDoc block at its assignment.
+(function checkUndocumentedAPI() {
+  var rule = { id: 'undocumented-api', fileFilter: null, fileExclude: null };
+  if (!ruleApplies(rule, 'src')) return;
+
+  // Values and removed stubs whose docs live elsewhere; mirrors the allowlist
+  // in test/bitwrench_test_meta.js.
+  var ALLOW = {
+    compile: 1, remote: 1, version: 1, versionInfo: 1, BCCL: 1,
+    THEME_PRESETS: 1, DEFAULT_PALETTE_CONFIG: 1, SPACING_PRESETS: 1,
+    RADIUS_PRESETS: 1, ELEVATION_PRESETS: 1, MOTION_PRESETS: 1, TYPE_RATIO_PRESETS: 1
+  };
+
+  var srcDir = resolve(ROOT, 'src');
+  var publicNames = Object.keys(bwLib).filter(function(k) { return !/^_/.test(k) && !ALLOW[k]; });
+  var documented = {};
+  extractAll(srcDir, new Set(Object.keys(bwLib).filter(function(k) { return !/^_/.test(k); })))
+    .forEach(function(e) { documented[e.name.replace(/^bw\./, '')] = true; });
+
+  var undocumented = publicNames.filter(function(n) { return !documented[n]; });
+  if (!undocumented.length) return;
+
+  // Point at the assignment so the fix is one jump away.
+  var files = ['bitwrench.js', 'bitwrench-bccl.js', 'bitwrench-router.js',
+    'bitwrench-file-ops.js', 'bitwrench-color-utils.js', 'bitwrench-utils.js', 'bitwrench-styles.js'];
+  undocumented.forEach(function(name) {
+    var where = { file: 'src', line: 0 };
+    for (var i = 0; i < files.length; i++) {
+      var full = resolve(srcDir, files[i]);
+      if (!existsSync(full)) continue;
+      var lines = readFileSync(full, 'utf8').split('\n');
+      for (var l = 0; l < lines.length; l++) {
+        if (new RegExp('^\\s*bw\\.' + name.replace('$', '\\$') + '\\s*=').test(lines[l])) {
+          where = { file: 'src/' + files[i], line: l + 1 };
+          break;
+        }
+      }
+      if (where.line) break;
+    }
+    allHits.push({
+      file: where.file,
+      line: where.line,
+      rule: 'undocumented-api',
+      message: 'bw.' + name + ' is public but has no JSDoc at its assignment, so it is missing from docs/bitwrench_api.md',
+      text: 'add a /** ... @param ... @returns ... @category ... */ block, or allowlist it with a reason'
+    });
+  });
+})();
+
+// 2. stale-size -- a size claim in prose that matches no shipped artifact.
+(function checkSizeClaims() {
+  var rule = { id: 'stale-size', fileFilter: null, fileExclude: null };
+  var buildsPath = resolve(ROOT, 'dist', 'builds.json');
+  if (!existsSync(buildsPath)) return;
+
+  var builds;
+  try { builds = JSON.parse(readFileSync(buildsPath, 'utf8')); } catch (_) { return; }
+  var entries = Array.isArray(builds.files) ? builds.files : Object.values(builds.files || {});
+
+  // Every size a doc could legitimately be quoting, in KB.
+  var realKB = {};
+  entries.forEach(function(f) {
+    [f.gzipped, f.raw].forEach(function(bytes) {
+      if (!bytes) return;
+      var kb = Math.round(bytes / 1024);
+      for (var d = -2; d <= 2; d++) realKB[kb + d] = true;   // prose rounds; drift is bigger than 2KB
+    });
+  });
+  realKB[46] = true;   // the bundle budget, quoted as a ceiling in several docs
+
+  var SIZE = /(?:~|about\s+)?(\d{2,3})\s?KB\b/gi;
+  // Only claims about bitwrench's own artifacts, and never a line that is
+  // comparing against another library.
+  var OURS = /bitwrench|dist\/|\bgz|gzip|minif|lean|bundle budget|on disk/i;
+  var THEIRS = /react|vue|svelte|angular|preact|alpine|jquery|htmx|lit\b|solid|\bframework\b/i;
+  // A size that is a memory or third-party-asset cost rather than a claim about
+  // one of our bundles. Tested against a window around the number, not the
+  // whole line -- see the note at the skip below.
+  var NOT_A_BUNDLE = /\b(RAM|flash|heap|PSRAM|image|photo|screenshot|html2canvas|Playwright|Tauri|Electron|node_modules|download)\b/i;
+  var scanned = SCAN_ROOT_FILES.map(function(f) { return resolve(ROOT, f); })
+    .concat(['docs', 'pages'].reduce(function(acc, d) { return acc.concat(collectFiles(resolve(ROOT, d))); }, []));
+
+  scanned.forEach(function(full) {
+    var relPath = relative(ROOT, full);
+    if (!/\.(md|txt|html)$/.test(relPath) || !ruleApplies(rule, relPath)) return;
+    if (/CHANGELOG|releases\//.test(relPath)) return;        // history is allowed to be historical
+    var lines;
+    try { lines = readFileSync(full, 'utf8').split('\n'); } catch (_) { return; }
+    var ig = computeIgnores(lines, relPath);
+    lines.forEach(function(line, i) {
+      if (ig.ignored[i]) return;
+      if (!OURS.test(line) || THEIRS.test(line)) return;
+      SIZE.lastIndex = 0;
+      var m;
+      while ((m = SIZE.exec(line))) {
+        var claimed = Number(m[1]);
+        if (realKB[claimed]) continue;
+        // Skip only when THIS size is about a memory/asset cost, not whenever
+        // one of those words appears somewhere on the line. The README's
+        // "165KB on disk ... from a microcontroller's flash" hid behind a
+        // whole-line test for a year: the number was a bundle size and only
+        // the trailing clause mentioned flash.
+        if (NOT_A_BUNDLE.test(line.slice(Math.max(0, m.index - 28),
+                                         m.index + m[0].length + 28))) continue;
+        allHits.push({
+          file: relPath,
+          line: i + 1,
+          rule: 'stale-size',
+          message: claimed + 'KB matches no shipped artifact in dist/builds.json' +
+            ' (nearest: ' + Object.keys(realKB).map(Number).sort(function(a, b) {
+              return Math.abs(a - claimed) - Math.abs(b - claimed);
+            }).slice(0, 3).join('KB, ') + 'KB)',
+          text: line.trim().substring(0, 120)
+        });
+      }
+    });
+  });
+})();
 
 // ── Report ───────────────────────────────────────────────────────────
 
