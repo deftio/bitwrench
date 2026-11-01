@@ -18,6 +18,7 @@ const binPath = resolve(__dirname, '..', 'bin', 'bwcli.js');
 // Dynamically import CLI modules
 let convertFile, resolveTheme, deriveOutputPath, extractMarkdownTitle, extractHtmlTitle, THEME_PRESETS;
 let getInjectionHead, getInjectionBodyEnd;
+let verifyFn;
 
 before(async () => {
     const convert = await import('../src/cli/convert.js');
@@ -27,6 +28,9 @@ before(async () => {
     extractMarkdownTitle = convert.extractMarkdownTitle;
     extractHtmlTitle = convert.extractHtmlTitle;
     THEME_PRESETS = convert.THEME_PRESETS;
+
+    const verifyMod = await import('../src/bitwrench-verify.js');
+    verifyFn = verifyMod.verify;
 
     const inject = await import('../src/cli/inject.js');
     getInjectionHead = inject.getInjectionHead;
@@ -427,5 +431,242 @@ describe('CLI: integration tests', function () {
         const html = readFileSync(output, 'utf8');
         assert.ok(html.includes('name="generator"'));
         assert.ok(html.includes('bitwrench v'));
+    });
+});
+
+// =========================================================================
+// bwcli verify -- the CLI door of the TACO checker
+//
+// Verify is one checker with two doors (dev/bw-verify-design.md section 9): a
+// JavaScript sender imports the library, anything else pipes the CLI. These
+// assert the door, not the checker -- the rules are tested in
+// test/bitwrench_test_verify.js. What matters here is that a file and a pipe
+// behave identically, and that the EXIT CODE reaches the shell, because a
+// checker CI cannot branch on is useless.
+// =========================================================================
+
+describe('CLI: bwcli verify', function () {
+    this.timeout(20000);
+
+    // Run the real binary so the exit-code plumbing in bin/bwcli.js is covered.
+    function runCli(args, stdin) {
+        try {
+            const out = execSync('node ' + JSON.stringify(binPath) + ' verify ' + args, {
+                encoding: 'utf8',
+                input: stdin === undefined ? '' : stdin,
+                stdio: ['pipe', 'pipe', 'pipe']
+            });
+            return { code: 0, out: out, err: '' };
+        } catch (e) {
+            return {
+                code: e.status,
+                out: e.stdout ? e.stdout.toString() : '',
+                err: e.stderr ? e.stderr.toString() : ''
+            };
+        }
+    }
+
+    it('exits 0 and says so on a clean payload', function () {
+        const f = writeFixture('v-clean.json', '{"t":"p","c":"hello"}');
+        const r = runCli(JSON.stringify(f));
+        assert.equal(r.code, 0);
+        assert.match(r.out, /nothing to report/);
+        assert.match(r.out, /wire mode/, 'wire is the CLI default');
+    });
+
+    it('exits 1 and names the finding on an error', function () {
+        const f = writeFixture('v-bad.json', '{"t":"h1","cc":"oops"}');
+        const r = runCli(JSON.stringify(f));
+        assert.equal(r.code, 1, 'an error must fail the command');
+        assert.match(r.out, /unknown-key/);
+        assert.match(r.out, /did you mean c\?/, 'the hint reaches the terminal');
+    });
+
+    it('reads stdin when given no file, and reports identically', function () {
+        const f = writeFixture('v-same.json', '{"t":"h1","cc":"oops"}');
+        const viaFile = runCli(JSON.stringify(f));
+        const viaPipe = runCli('', '{"t":"h1","cc":"oops"}');
+        assert.equal(viaPipe.code, viaFile.code);
+        // Only the source label differs between the two doors.
+        assert.equal(
+            viaPipe.out.replace(/<stdin>/, 'X'),
+            viaFile.out.replace(new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), 'X')
+        );
+    });
+
+    it('checks newline-delimited frames and indexes them', function () {
+        const r = runCli('', '{"t":"p","c":"a"}\n{"t":"p","cc":"b"}\n{"t":"p","c":"c"}\n');
+        assert.equal(r.code, 1);
+        assert.match(r.out, /3 payloads/);
+        assert.match(r.out, /\[1\]/, 'the offending frame is identified by index');
+    });
+
+    it('accepts the r-prefixed relaxed form the embedded senders emit', function () {
+        const f = writeFixture('v-relaxed.json', "r{'t':'p','c':'relaxed'}");
+        const r = runCli(JSON.stringify(f));
+        assert.equal(r.code, 0);
+    });
+
+    it('explains that relaxed JSON still needs quoted keys', function () {
+        // parseJSONFlex relaxes quotes and trailing commas, not keys. The bare
+        // JSON error does not say that, so the CLI does.
+        const r = runCli('', "r{t:'p'}");
+        assert.equal(r.code, 2, 'unparseable input is 2, not 1');
+        assert.match(r.err, /keys must still be quoted/);
+    });
+
+    it('suggests the r prefix when relaxed JSON arrives without it', function () {
+        const r = runCli('', "{'t':'p','c':'x'}");
+        assert.equal(r.code, 2);
+        assert.match(r.err, /prefix the payload with `r`/);
+    });
+
+    it('--authored allows a function, wire mode does not', function () {
+        // A function cannot be expressed in JSON, so this comes through the
+        // library in both modes rather than the CLI -- but the CLI must at
+        // least not reject a string handler under --authored.
+        const f = writeFixture('v-handler.json', '{"t":"button","a":{"onclick":"save()"},"c":"Go"}');
+        const wire = runCli(JSON.stringify(f));
+        const authored = runCli(JSON.stringify(f) + ' --authored');
+        assert.equal(wire.code, 1, 'wire: a string handler is dead, so it is an error');
+        assert.equal(authored.code, 0, 'authored: legal for bw.html(), so a warning only');
+        assert.match(authored.out, /handler-string/);
+    });
+
+    it('--strict promotes a warning to a failure', function () {
+        const f = writeFixture('v-warn.json', '{"t":"button","a":{"onclick":"save()"},"c":"Go"}');
+        assert.equal(runCli(JSON.stringify(f) + ' --authored').code, 0);
+        assert.equal(runCli(JSON.stringify(f) + ' --authored --strict').code, 1);
+    });
+
+    it('--ignore suppresses a code by name', function () {
+        const f = writeFixture('v-ign.json', '{"t":"button","a":{"onclick":"save()"},"c":"Go"}');
+        const r = runCli(JSON.stringify(f) + ' --ignore handler-string');
+        assert.equal(r.code, 0);
+        assert.doesNotMatch(r.out, /handler-string/);
+    });
+
+    it('--json emits machine-readable findings', function () {
+        const f = writeFixture('v-json.json', '{"t":"h1","cc":"oops"}');
+        const r = runCli(JSON.stringify(f) + ' --json');
+        assert.equal(r.code, 1);
+        const parsed = JSON.parse(r.out);
+        assert.equal(parsed.ok, false);
+        assert.equal(parsed.mode, 'wire');
+        assert.equal(parsed.payloads, 1);
+        assert.equal(parsed.findings.length, 1);
+        assert.equal(parsed.findings[0].code, 'unknown-key');
+    });
+
+    it('--quiet prints nothing and still sets the code', function () {
+        const f = writeFixture('v-quiet.json', '{"t":"h1","cc":"oops"}');
+        const r = runCli(JSON.stringify(f) + ' --quiet');
+        assert.equal(r.code, 1);
+        assert.equal(r.out.trim(), '');
+    });
+
+    it('exits 2 on a missing file', function () {
+        const r = runCli(JSON.stringify(join(fixtureDir, 'does-not-exist.json')));
+        assert.equal(r.code, 2);
+        assert.match(r.err, /cannot read/);
+    });
+
+    it('rejects an unknown flag rather than ignoring it', function () {
+        const f = writeFixture('v-flag.json', '{"t":"p","c":"x"}');
+        const r = runCli(JSON.stringify(f) + ' --nope');
+        assert.equal(r.code, 2);
+        assert.match(r.err, /--help/);
+    });
+
+    it('--help exits 0 and documents the exit codes', function () {
+        const r = runCli('--help');
+        assert.equal(r.code, 0);
+        assert.match(r.out, /Exit codes/);
+        assert.match(r.out, /--authored/);
+    });
+
+    it('appears in the top-level bwcli help', function () {
+        let out;
+        try {
+            out = execSync('node ' + JSON.stringify(binPath) + ' --help', { encoding: 'utf8' });
+        } catch (e) {
+            out = e.stdout ? e.stdout.toString() : '';
+        }
+        assert.match(out, /bwcli verify/, 'the subcommand must be discoverable from bwcli --help');
+    });
+
+    it('reports the same findings as the library, for the same payload', function () {
+        // The design's central claim: one checker, two doors.
+        const payload = '{"t":"h1","cc":"oops","a":{"clas":"x"}}';
+        const f = writeFixture('v-parity.json', payload);
+        const cli = JSON.parse(runCli(JSON.stringify(f) + ' --json').out);
+        const lib = verifyFn(JSON.parse(payload), { mode: 'wire' });
+        assert.deepEqual(
+            cli.findings.map(function (x) { return x.code; }).sort(),
+            lib.map(function (x) { return x.code; }).sort(),
+            'the CLI must not grow its own rules'
+        );
+    });
+});
+
+describe('CLI: bwcli verify plumbing', function () {
+    // The stdin branches cannot be reached through execSync (the test harness
+    // always pipes, so isTTY is false). Drive runVerify() directly instead.
+    let runVerify;
+    let origIsTTY, origStdinOn, origSetEncoding, errs;
+
+    before(async function () {
+        runVerify = (await import('../src/cli/verify.js')).runVerify;
+    });
+
+    beforeEach(function () {
+        errs = [];
+        origIsTTY = process.stdin.isTTY;
+        origStdinOn = process.stdin.on;
+        origSetEncoding = process.stdin.setEncoding;
+        this.origError = console.error;
+        console.error = function () { errs.push(Array.prototype.join.call(arguments, ' ')); };
+    });
+
+    afterEach(function () {
+        Object.defineProperty(process.stdin, 'isTTY', { value: origIsTTY, configurable: true });
+        process.stdin.on = origStdinOn;
+        process.stdin.setEncoding = origSetEncoding;
+        console.error = this.origError;
+    });
+
+    it('tells an interactive user how to give it input', async function () {
+        Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
+        const code = await runVerify([]);
+        assert.equal(code, 2, 'no input is unparseable, not clean');
+        assert.match(errs.join('\n'), /no input/);
+        assert.match(errs.join('\n'), /--help/);
+    });
+
+    it('exits 2 when stdin errors', async function () {
+        Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
+        process.stdin.setEncoding = function () {};
+        process.stdin.on = function (event, fn) {
+            if (event === 'error') setImmediate(function () { fn(new Error('pipe broke')); });
+            return process.stdin;
+        };
+        const code = await runVerify([]);
+        assert.equal(code, 2);
+        assert.match(errs.join('\n'), /stdin: pipe broke/);
+    });
+
+    it('reports the whole-buffer error when no line parses either', async function () {
+        Object.defineProperty(process.stdin, 'isTTY', { value: false, configurable: true });
+        process.stdin.setEncoding = function () {};
+        process.stdin.on = function (event, fn) {
+            if (event === 'data') setImmediate(function () { fn('not json\nalso not json\n'); });
+            if (event === 'end') setImmediate(function () { setImmediate(fn); });
+            return process.stdin;
+        };
+        const code = await runVerify([]);
+        assert.equal(code, 2);
+        // The whole-buffer message, not a pile of per-line ones: the input was
+        // never NDJSON to begin with.
+        assert.equal(errs.length, 1, 'one message, got: ' + errs.join(' | '));
     });
 });

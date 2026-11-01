@@ -25,6 +25,7 @@ inferring what changed in a DOM you do not control.
 **What it would emit.** The bwserve protocol already has `patch` and `batch`
 operations, so a differ has a natural output format:
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```js
 diff(prevTaco, nextTaco)
 // -> [ {type:'patch', ref:'temp', text:'22.4'},

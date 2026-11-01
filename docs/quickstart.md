@@ -68,7 +68,7 @@ for a list, `bw.clear` to empty a container. The
 |----------|------|-------------|
 | A `<script>` tag, everything included | `dist/bitwrench.umd.min.js` | ~45 KB |
 | Your own design, no built-in components | `dist/bitwrench-lean.umd.min.js` | ~35 KB |
-| Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | ~114 KB |
+| Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | ~118 KB |
 | `import bw from ...` without npm | `dist/bitwrench.esm.min.js` (or `-lean.esm.min.js`) | ~45 KB |
 | npm | `npm install bitwrench`, then `import bw from 'bitwrench'` | -- |
 
@@ -234,6 +234,7 @@ function addTask() {
 - **docs/core-api.md** -- one-page card: mount, patch, css, pub/sub, syncChildren. Start here if you bring your own design
 - **docs/taco-format.md** -- the object format and `bw.h()`
 - **docs/svg.md** -- SVG as TACO: charts, gauges, diagrams, and changing them in place
+- **docs/verify.md** -- `bitwrench/verify`: an opt-in checker for TACO. Not needed to render, and never in production -- reach for it when TACOs are generated, numerous, or leaving your hands (a test, a wire frame, a CI pipe)
 - **docs/bw-attach.md** -- `bwcli attach`: drive a live page from a terminal (REPL, inspect, screenshots). Useful for anything a headless browser can't do, like Web MIDI or hardware
 - **docs/thinking-in-bitwrench.md** -- full progressive walkthrough (1300 lines)
 - **docs/component-cheatsheet.md** -- all 51 built-in components

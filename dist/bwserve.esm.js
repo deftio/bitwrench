@@ -1,4 +1,4 @@
-/*! bwserve v2.1.11 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bwserve v2.1.12 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 import { fileURLToPath } from 'url';
 import { dirname, resolve, sep, extname, join } from 'path';
 import { createServer } from 'http';
@@ -9,7 +9,7 @@ import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.1.11';
+const VERSION = '2.1.12';
 
 /**
  * BwServeClient — per-client connection for bwserve.
@@ -117,7 +117,7 @@ class BwServeClient {
     /**
      * Send a bw.message() dispatch to a tagged component on the client.
      *
-     * @param {string} ref - Component userTag or UUID
+     * @param {string} ref - Element id, UUID class, or class token (bw.el())
      * @param {string} action - Method name to call
      * @param {*} data - Data to pass to the method
      */
@@ -155,7 +155,7 @@ class BwServeClient {
     /**
      * Register a handler for client actions (button clicks, form submits, etc.).
      *
-     * @param {string} action - Action name (from o.events declarative handler)
+     * @param {string} action - Action name (from the element's bw_act_* class)
      * @param {Function} handler - Called with (data, client)
      * @returns {BwServeClient} this (for chaining)
      */
@@ -629,11 +629,36 @@ function generateShell(opts) {
   ];
 
   if (opts.theme) {
-    script.push('  bw.loadStyles(' + JSON.stringify(
-      typeof opts.theme === 'string'
-        ? { primary: '#006666', secondary: '#333333' }
-        : opts.theme
-    ) + ');');
+    // A string theme used to be discarded and replaced with a hardcoded teal
+    // pair, so `theme: 'ocean'` and `bwcli serve --theme forest` both silently
+    // produced the default -- while the CLI help and the docs promised both a
+    // preset name and a "#pri,#sec" hex pair. Both forms now work:
+    //
+    //   'ocean'            -> resolved from bw.THEME_PRESETS in the browser
+    //   '#336699,#cc6633'  -> parsed into {primary, secondary} here
+    //   { primary: ... }   -> passed through unchanged
+    //
+    // An unrecognised preset name falls back to the default seed and says so,
+    // rather than looking like it worked.
+    var themeArg;
+    if (typeof opts.theme === 'string') {
+      var raw = opts.theme.trim();
+      if (raw.charAt(0) === '#') {
+        var parts = raw.split(',').map(function(x) { return x.trim(); });
+        themeArg = JSON.stringify({ primary: parts[0], secondary: parts[1] || parts[0] });
+      } else {
+        // Resolve in the browser, where bw.THEME_PRESETS lives.
+        themeArg = 'bw.THEME_PRESETS[' + JSON.stringify(raw) + ']';
+        script.push('  if (!bw.THEME_PRESETS[' + JSON.stringify(raw) + ']) {');
+        script.push('    console.warn("bwserve: unknown theme preset ' + raw +
+                    '; using the default. Available: " + Object.keys(bw.THEME_PRESETS).join(", "));');
+        script.push('  }');
+        themeArg = themeArg + ' || undefined';
+      }
+    } else {
+      themeArg = JSON.stringify(opts.theme);
+    }
+    script.push('  bw.loadStyles(' + themeArg + ');');
   }
 
   script.push('})();');

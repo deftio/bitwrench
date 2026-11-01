@@ -1,5 +1,7 @@
 # App Patterns
 
+<!-- doc-test: sequential -->
+
 Five canonical layouts for bitwrench apps. Each section shows when to use it, directory structure, a code skeleton, and state flow.
 
 ---
@@ -131,6 +133,7 @@ my-bwserve-app/
   server.js            <- Node.js server (the only file)
 ```
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 // server.js
 import bwserve from 'bitwrench/bwserve';

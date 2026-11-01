@@ -119,7 +119,7 @@
     var iconSrc = baseHref
       ? baseHref.replace(/pages\/$/, 'images/') + 'bitwrench-icon.svg'
       : '../images/bitwrench-icon.svg';
-    var ver = window.bw && window.bw.version || '2.0.4';
+    var ver = window.bw && window.bw.version || '';
     var onLearnPage = isLearnPage(currentPage);
     var onExamplePage = isExamplePage(currentPage);
     var onDocsPage = isDocsPage(currentPage);
@@ -297,17 +297,14 @@
                     id: 'bw_theme_toggle_btn',
                     title: 'Toggle theme palette',
                     onclick: function() {
-                      var isAlt = document.documentElement.classList.contains('bw_theme_alt');
-                      var currentStyles = window._bw_current_styles;
-                      if (currentStyles) {
-                        if (isAlt) {
-                          bw.applyStyles(currentStyles);
-                        } else if (currentStyles.alternateCss) {
-                          bw.applyStyles({ css: currentStyles.alternateCss });
-                        }
-                      }
-                      document.documentElement.classList.toggle('bw_theme_alt');
-                      var mode = document.documentElement.classList.contains('bw_theme_alt') ? 'alternate' : 'primary';
+                      // bw.applyStyles() already injected the alternate palette
+                      // scoped under .bw_theme_alt, so switching mode is only a
+                      // class flip -- which is exactly what toggleThemeMode does.
+                      // This used to hand-roll the class and first call
+                      // bw.applyStyles({css: ...}), an object with no `rules`,
+                      // which applyStyles rejects: it warned "invalid styles
+                      // object" and returned null on every toggle, on every page.
+                      var mode = bw.toggleThemeMode();
                       this.textContent = mode === 'alternate' ? '\u2600' : '\u263D';
                       bw.setCookie('bw_theme_mode', mode, 365, { path: '/' });
                     }
@@ -422,19 +419,17 @@
       // were generated on this page (bw_style_global injected by applyStyles).
       // Otherwise ensure clean state: remove stale alt class and cookie.
       var savedMode = bw.getCookie('bw_theme_mode');
-      if ((savedMode === 'alternate' || savedMode === 'primary') && document.getElementById('bw_style_global')) {
-        var currentStyles = window._bw_current_styles;
-        if (savedMode === 'alternate' && currentStyles && currentStyles.alternateCss) {
-          bw.applyStyles({ css: currentStyles.alternateCss });
-          document.documentElement.classList.add('bw_theme_alt');
+      if ((savedMode === 'alternate' || savedMode === 'primary') && bw.$('#bw_style_global').length) {
+        if (savedMode === 'alternate') {
+          bw.setThemeMode('alternate');
         }
         var btns = bw.$('#bw_theme_toggle_btn');
         if (btns.length) {
           btns[0].textContent = savedMode === 'alternate' ? '\u2600' : '\u263D';
         }
       } else {
-        // No active theme — force clean state
-        document.documentElement.classList.remove('bw_theme_alt');
+        // No active theme -- force clean state
+        bw.setThemeMode('primary');
         if (savedMode) {
           // Clear stale cookie (try all likely paths)
           bw.setCookie('bw_theme_mode', '', -1);

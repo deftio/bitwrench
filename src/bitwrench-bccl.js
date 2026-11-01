@@ -79,7 +79,7 @@ export function variantClass(v) {
  * @returns {Object} TACO object representing a card component
  * @category Component Builders
  * @example
- * const card = makeCard({
+ * const card = bw.makeCard({
  *   title: "Status",
  *   content: "All systems operational",
  *   variant: "success"
@@ -213,13 +213,13 @@ export function makeCard(props = {}) {
  * @returns {Object} TACO object representing a button element
  * @category Component Builders
  * @example
- * const btn = makeButton({
+ * const btn = bw.makeButton({
  *   text: "Save",
  *   variant: "success",
  *   onclick: () => console.log("saved")
  * });
  * // String shorthand:
- * const ok = makeButton("OK");
+ * const ok = bw.makeButton("OK");
  */
 export function makeButton(props = {}) {
   if (typeof props === 'string') props = { text: props };
@@ -267,9 +267,9 @@ export function makeButton(props = {}) {
  * @returns {Object} TACO object representing a container div
  * @category Component Builders
  * @example
- * const container = makeContainer({
+ * const container = bw.makeContainer({
  *   fluid: true,
- *   children: [makeRow({ children: [...] })]
+ *   children: [bw.makeRow({ children: [bw.makeCol({ size: 12, content: 'Hi' })] })]
  * });
  */
 export function makeContainer(props = {}) {
@@ -292,9 +292,9 @@ export function makeContainer(props = {}) {
  * @returns {Object} TACO object representing a grid row
  * @category Component Builders
  * @example
- * const row = makeRow({
+ * const row = bw.makeRow({
  *   gap: 4,
- *   children: [makeCol({ size: 6, content: "Left" }), makeCol({ size: 6, content: "Right" })]
+ *   children: [bw.makeCol({ size: 6, content: "Left" }), bw.makeCol({ size: 6, content: "Right" })]
  * });
  */
 export function makeRow(props = {}) {
@@ -326,7 +326,7 @@ export function makeRow(props = {}) {
  * @returns {Object} TACO object representing a grid column
  * @category Component Builders
  * @example
- * const col = makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
+ * const col = bw.makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
  */
 export function makeCol(props = {}) {
   const { size, offset, push, pull, content, children, className = '' } = props;
@@ -374,7 +374,7 @@ export function makeCol(props = {}) {
  * @returns {Object} TACO object representing a nav element
  * @category Component Builders
  * @example
- * const nav = makeNav({
+ * const nav = bw.makeNav({
  *   pills: true,
  *   items: [
  *     { text: "Home", href: "/", active: true },
@@ -425,7 +425,7 @@ export function makeNav(props = {}) {
  * @returns {Object} TACO object representing a navbar element
  * @category Component Builders
  * @example
- * const navbar = makeNavbar({
+ * const navbar = bw.makeNavbar({
  *   brand: "MyApp",
  *   dark: true,
  *   items: [
@@ -496,7 +496,7 @@ export function makeNavbar(props = {}) {
  * @returns {Object} TACO object representing a tabbed interface
  * @category Component Builders
  * @example
- * const tabs = makeTabs({
+ * const tabs = bw.makeTabs({
  *   tabs: [
  *     { label: "Overview", content: "Tab 1 content", active: true },
  *     { label: "Details", content: "Tab 2 content" }
@@ -629,13 +629,13 @@ export function makeTabs(props = {}) {
  * @returns {Object} TACO object representing an alert element
  * @category Component Builders
  * @example
- * const alert = makeAlert({
+ * const alert = bw.makeAlert({
  *   content: "Operation completed successfully!",
  *   variant: "success",
  *   dismissible: true
  * });
  * // String shorthand:
- * const msg = makeAlert("Something happened");
+ * const msg = bw.makeAlert("Something happened");
  */
 export function makeAlert(props = {}) {
   if (typeof props === 'string') props = { content: props };
@@ -689,10 +689,10 @@ export function makeAlert(props = {}) {
  * @returns {Object} TACO object representing a badge span
  * @category Component Builders
  * @example
- * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
- * const small = makeBadge({ text: "3", variant: "info", size: "sm" });
+ * const badge = bw.makeBadge({ text: "New", variant: "danger", pill: true });
+ * const small = bw.makeBadge({ text: "3", variant: "info", size: "sm" });
  * // String shorthand:
- * const tag = makeBadge("New");
+ * const tag = bw.makeBadge("New");
  */
 export function makeBadge(props = {}) {
   if (typeof props === 'string') props = { text: props };
@@ -729,7 +729,7 @@ export function makeBadge(props = {}) {
  * @returns {Object} TACO object representing a progress bar
  * @category Component Builders
  * @example
- * const progress = makeProgress({
+ * const progress = bw.makeProgress({
  *   value: 75,
  *   variant: "success",
  *   striped: true,
@@ -812,7 +812,7 @@ export function makeProgress(props = {}) {
  * @returns {Object} TACO object representing a list group
  * @category Component Builders
  * @example
- * const list = makeListGroup({
+ * const list = bw.makeListGroup({
  *   interactive: true,
  *   items: [
  *     { text: "Active item", active: true },
@@ -885,7 +885,7 @@ export function makeListGroup(props = {}) {
  * @returns {Object} TACO object representing a breadcrumb nav
  * @category Component Builders
  * @example
- * const crumbs = makeBreadcrumb({
+ * const crumbs = bw.makeBreadcrumb({
  *   items: [
  *     { text: "Home", href: "/" },
  *     { text: "Products", href: "/products" },
@@ -931,11 +931,11 @@ export function makeBreadcrumb(props = {}) {
  * @returns {Object} TACO object representing a form element
  * @category Component Builders
  * @example
- * const form = makeForm({
+ * const form = bw.makeForm({
  *   onsubmit: (e) => { e.preventDefault(); handleSubmit(); },
  *   children: [
- *     makeFormGroup({ label: "Name", input: makeInput({ placeholder: "Enter name" }) }),
- *     makeButton({ text: "Submit", type: "submit" })
+ *     bw.makeFormGroup({ label: "Name", input: bw.makeInput({ placeholder: "Enter name" }) }),
+ *     bw.makeButton({ text: "Submit", type: "submit" })
  *   ]
  * });
  */
@@ -1089,7 +1089,7 @@ export function makeForm(props = {}) {
  * @returns {Object} TACO object representing a form group
  * @category Component Builders
  * @example
- * const group = makeFormGroup({
+ * const group = bw.makeFormGroup({
  *   label: "Email",
  *   id: "email",
  *   input: makeInput({ type: "email", id: "email", placeholder: "you@example.com" }),
@@ -1154,7 +1154,7 @@ export function makeFormGroup(props = {}) {
  * @returns {Object} TACO object representing an input element
  * @category Component Builders
  * @example
- * const input = makeInput({
+ * const input = bw.makeInput({
  *   type: "email",
  *   placeholder: "you@example.com",
  *   required: true,
@@ -1210,7 +1210,7 @@ export function makeInput(props = {}) {
  * @returns {Object} TACO object representing a textarea element
  * @category Component Builders
  * @example
- * const textarea = makeTextarea({
+ * const textarea = bw.makeTextarea({
  *   rows: 5,
  *   placeholder: "Enter your message...",
  *   required: true
@@ -1263,7 +1263,7 @@ export function makeTextarea(props = {}) {
  * @returns {Object} TACO object representing a select element
  * @category Component Builders
  * @example
- * const select = makeSelect({
+ * const select = bw.makeSelect({
  *   value: "b",
  *   options: [
  *     { value: "a", text: "Option A" },
@@ -1318,7 +1318,7 @@ export function makeSelect(props = {}) {
  * @returns {Object} TACO object representing a checkbox form group
  * @category Component Builders
  * @example
- * const checkbox = makeCheckbox({
+ * const checkbox = bw.makeCheckbox({
  *   label: "I agree to the terms",
  *   id: "agree",
  *   checked: false
@@ -1373,12 +1373,12 @@ export function makeCheckbox(props = {}) {
  * @returns {Object} TACO object representing a stack layout
  * @category Component Builders
  * @example
- * const stack = makeStack({
+ * const stack = bw.makeStack({
  *   direction: "horizontal",
  *   gap: 2,
  *   children: [
- *     makeButton({ text: "Cancel", variant: "secondary" }),
- *     makeButton({ text: "Save", variant: "primary" })
+ *     bw.makeButton({ text: "Cancel", variant: "secondary" }),
+ *     bw.makeButton({ text: "Save", variant: "primary" })
  *   ]
  * });
  */
@@ -1409,7 +1409,7 @@ export function makeStack(props = {}) {
  * @returns {Object} TACO object representing a spinner with screen-reader text
  * @category Component Builders
  * @example
- * const spinner = makeSpinner({ variant: "info", size: "sm" });
+ * const spinner = bw.makeSpinner({ variant: "info", size: "sm" });
  */
 export function makeSpinner(props = {}) {
   const {
@@ -1455,13 +1455,13 @@ export function makeSpinner(props = {}) {
  * @returns {Object} TACO object representing a hero section
  * @category Component Builders
  * @example
- * const hero = makeHero({
+ * const hero = bw.makeHero({
  *   title: "Welcome to Bitwrench",
  *   subtitle: "Build UIs with pure JavaScript",
  *   variant: "dark",
  *   actions: [
- *     makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
- *     makeButton({ text: "Learn More", variant: "outline_light", size: "lg" })
+ *     bw.makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
+ *     bw.makeButton({ text: "Learn More", variant: "outline_light", size: "lg" })
  *   ]
  * });
  */
@@ -1547,7 +1547,7 @@ export function makeHero(props = {}) {
  * @returns {Object} TACO object representing a feature grid
  * @category Component Builders
  * @example
- * const features = makeFeatureGrid({
+ * const features = bw.makeFeatureGrid({
  *   columns: 3,
  *   features: [
  *     { icon: "⚡", title: "Fast", description: "Zero build step" },
@@ -1620,11 +1620,11 @@ export function makeFeatureGrid(props = {}) {
  * @returns {Object} TACO object representing a CTA section
  * @category Component Builders
  * @example
- * const cta = makeCTA({
+ * const cta = bw.makeCTA({
  *   title: "Ready to get started?",
  *   description: "Join thousands of developers using Bitwrench.",
  *   actions: [
- *     makeButton({ text: "Sign Up Free", variant: "primary", size: "lg" })
+ *     bw.makeButton({ text: "Sign Up Free", variant: "primary", size: "lg" })
  *   ]
  * });
  */
@@ -1674,11 +1674,11 @@ export function makeCTA(props = {}) {
  * @returns {Object} TACO object representing a content section
  * @category Component Builders
  * @example
- * const section = makeSection({
+ * const section = bw.makeSection({
  *   title: "Features",
  *   subtitle: "Everything you need to build great UIs",
  *   spacing: "lg",
- *   content: makeFeatureGrid({ features: [...] })
+ *   content: bw.makeFeatureGrid({ features: [{ title: 'Fast', description: 'No build step' }] })
  * });
  */
 export function makeSection(props = {}) {
@@ -1748,11 +1748,11 @@ export function makeSection(props = {}) {
  * @returns {Object} TACO object representing a code demo with tabbed Result/Code views
  * @category Component Builders
  * @example
- * const demo = makeCodeDemo({
+ * const demo = bw.makeCodeDemo({
  *   title: "Button Example",
  *   description: "A simple primary button",
- *   code: 'makeButton({ text: "Click me" })',
- *   result: makeButton({ text: "Click me" })
+ *   code: 'bw.makeButton({ text: "Click me" })',
+ *   result: bw.makeButton({ text: "Click me" })
  * });
  */
 export function makeCodeDemo(props = {}) {
@@ -1860,7 +1860,7 @@ export function makeCodeDemo(props = {}) {
  * @returns {Object} TACO object representing a pagination nav
  * @category Component Builders
  * @example
- * const pager = makePagination({
+ * const pager = bw.makePagination({
  *   pages: 10,
  *   currentPage: 3,
  *   onPageChange: (page) => loadPage(page)
@@ -1969,7 +1969,7 @@ export function makePagination(props = {}) {
  * @returns {Object} TACO object representing a radio form group
  * @category Component Builders
  * @example
- * const radio = makeRadio({
+ * const radio = bw.makeRadio({
  *   label: "Option A",
  *   name: "choice",
  *   value: "a",
@@ -2025,11 +2025,11 @@ export function makeRadio(props = {}) {
  * @returns {Object} TACO object representing a button group
  * @category Component Builders
  * @example
- * const group = makeButtonGroup({
+ * const group = bw.makeButtonGroup({
  *   children: [
- *     makeButton({ text: "Left", variant: "primary" }),
- *     makeButton({ text: "Middle", variant: "primary" }),
- *     makeButton({ text: "Right", variant: "primary" })
+ *     bw.makeButton({ text: "Left", variant: "primary" }),
+ *     bw.makeButton({ text: "Middle", variant: "primary" }),
+ *     bw.makeButton({ text: "Right", variant: "primary" })
  *   ]
  * });
  */
@@ -2068,7 +2068,7 @@ export function makeButtonGroup(props = {}) {
  * @returns {Object} TACO object representing an accordion
  * @category Component Builders
  * @example
- * const accordion = makeAccordion({
+ * const accordion = bw.makeAccordion({
  *   items: [
  *     { title: "Section 1", content: "Content 1", open: true },
  *     { title: "Section 2", content: "Content 2" }
@@ -2233,10 +2233,10 @@ export function makeAccordion(props = {}) {
  * @returns {Object} TACO object representing a modal
  * @category Component Builders
  * @example
- * const modal = makeModal({
+ * const modal = bw.makeModal({
  *   title: "Confirm",
  *   content: "Are you sure?",
- *   footer: makeButton({ text: "OK", variant: "primary" })
+ *   footer: bw.makeButton({ text: "OK", variant: "primary" })
  * });
  */
 export function makeModal(props = {}) {
@@ -2374,7 +2374,7 @@ export function makeModal(props = {}) {
  * @returns {Object} TACO object representing a toast
  * @category Component Builders
  * @example
- * const toast = makeToast({
+ * const toast = bw.makeToast({
  *   title: "Success",
  *   content: "File saved!",
  *   variant: "success"
@@ -2474,7 +2474,7 @@ export function makeToast(props = {}) {
  * @returns {Object} TACO object representing a dropdown
  * @category Component Builders
  * @example
- * const dropdown = makeDropdown({
+ * const dropdown = bw.makeDropdown({
  *   trigger: "Actions",
  *   items: [
  *     { text: "Edit", onclick: () => edit() },
@@ -2576,7 +2576,7 @@ export function makeDropdown(props = {}) {
  * @returns {Object} TACO object representing a toggle switch
  * @category Component Builders
  * @example
- * const toggle = makeSwitch({
+ * const toggle = bw.makeSwitch({
  *   label: "Dark mode",
  *   checked: false,
  *   onchange: (e) => toggleDark(e.target.checked)
@@ -2631,7 +2631,7 @@ export function makeSwitch(props = {}) {
  * @returns {Object} TACO object representing a skeleton placeholder
  * @category Component Builders
  * @example
- * const skeleton = makeSkeleton({ variant: "text", count: 3, width: "100%" });
+ * const skeleton = bw.makeSkeleton({ variant: "text", count: 3, width: "100%" });
  */
 export function makeSkeleton(props = {}) {
   const {
@@ -2714,8 +2714,8 @@ export function makeSkeleton(props = {}) {
  * @returns {Object} TACO object representing an avatar
  * @category Component Builders
  * @example
- * const avatar = makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" });
- * const avatarInitials = makeAvatar({ initials: "JD", variant: "success" });
+ * const avatar = bw.makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" });
+ * const avatarInitials = bw.makeAvatar({ initials: "JD", variant: "success" });
  */
 export function makeAvatar(props = {}) {
   const {
@@ -2767,7 +2767,7 @@ export function makeAvatar(props = {}) {
  * @returns {Object} TACO object representing a carousel
  * @category Component Builders
  * @example
- * const carousel = makeCarousel({
+ * const carousel = bw.makeCarousel({
  *   items: [
  *     { content: { t: 'img', a: { src: 'photo.jpg' } }, caption: 'Photo 1' },
  *     { content: { t: 'div', c: 'Text slide' } }
@@ -2996,7 +2996,7 @@ export function makeCarousel(props = {}) {
  * @returns {Object} TACO object representing a stat card
  * @category Component Builders
  * @example
- * const stat = makeStatCard({
+ * const stat = bw.makeStatCard({
  *   value: 2345,
  *   label: 'Active Users',
  *   change: 5.3,
@@ -3102,8 +3102,8 @@ export function makeStatCard(props = {}) {
  * @returns {Object} TACO object representing a tooltip wrapper
  * @category Component Builders
  * @example
- * const tip = makeTooltip({
- *   content: makeButton({ text: 'Hover me' }),
+ * const tip = bw.makeTooltip({
+ *   content: bw.makeButton({ text: 'Hover me' }),
  *   text: 'This is a tooltip!',
  *   placement: 'top'
  * });
@@ -3166,8 +3166,8 @@ export function makeTooltip(props = {}) {
  * @returns {Object} TACO object representing a popover wrapper
  * @category Component Builders
  * @example
- * const pop = makePopover({
- *   trigger: makeButton({ text: 'Click me' }),
+ * const pop = bw.makePopover({
+ *   trigger: bw.makeButton({ text: 'Click me' }),
  *   title: 'Popover Title',
  *   content: 'Some helpful information here.',
  *   placement: 'bottom'
@@ -3262,7 +3262,7 @@ export function makePopover(props = {}) {
  * @returns {Object} TACO object representing a search input
  * @category Component Builders
  * @example
- * const search = makeSearchInput({
+ * const search = bw.makeSearchInput({
  *   placeholder: 'Search users...',
  *   onSearch: (val) => filterUsers(val)
  * });
@@ -3349,7 +3349,7 @@ export function makeSearchInput(props = {}) {
  * @returns {Object} TACO object representing a range input
  * @category Component Builders
  * @example
- * const slider = makeRange({
+ * const slider = bw.makeRange({
  *   min: 0, max: 100, value: 50,
  *   label: 'Volume',
  *   showValue: true,
@@ -3447,7 +3447,7 @@ export function makeRange(props = {}) {
  * @returns {Object} TACO object representing a media object
  * @category Component Builders
  * @example
- * const media = makeMediaObject({
+ * const media = bw.makeMediaObject({
  *   src: '/avatar.jpg',
  *   title: 'Jane Doe',
  *   content: 'Posted a comment 5 minutes ago.'
@@ -3509,7 +3509,7 @@ export function makeMediaObject(props = {}) {
  * @returns {Object} TACO object representing a file upload zone
  * @category Component Builders
  * @example
- * const upload = makeFileUpload({
+ * const upload = bw.makeFileUpload({
  *   accept: 'image/*',
  *   multiple: true,
  *   onFiles: (files) => uploadFiles(files)
@@ -3606,7 +3606,7 @@ export function makeFileUpload(props = {}) {
  * @returns {Object} TACO object representing a timeline
  * @category Component Builders
  * @example
- * const timeline = makeTimeline({
+ * const timeline = bw.makeTimeline({
  *   items: [
  *     { title: 'Project Started', date: 'Jan 2026', variant: 'primary' },
  *     { title: 'Beta Release', date: 'Mar 2026', content: 'v2.0 beta shipped' },
@@ -3674,7 +3674,7 @@ export function makeTimeline(props = {}) {
  * @returns {Object} TACO object representing a stepper
  * @category Component Builders
  * @example
- * const stepper = makeStepper({
+ * const stepper = bw.makeStepper({
  *   currentStep: 1,
  *   steps: [
  *     { label: 'Account', description: 'Create account' },
@@ -3739,7 +3739,7 @@ export function makeStepper(props = {}) {
  * @returns {Object} TACO object representing a chip input
  * @category Component Builders
  * @example
- * const tags = makeChipInput({
+ * const tags = bw.makeChipInput({
  *   chips: ['JavaScript', 'CSS'],
  *   placeholder: 'Add tag...',
  *   onAdd: (val) => addTag(val),
@@ -3952,9 +3952,9 @@ export var BCCL = {
  * @returns {Object} TACO object
  * @throws {Error} If type is not found in the registry
  * @example
- * var card = make('card', { title: 'Hello', variant: 'primary' });
- * var btn = make('button', { text: 'Click', variant: 'success' });
- * var types = Object.keys(BCCL); // list all available types
+ * var card = bw.make('card', { title: 'Hello', variant: 'primary' });
+ * var btn = bw.make('button', { text: 'Click', variant: 'success' });
+ * var types = Object.keys(bw.BCCL); // list all available types
  */
 export function make(type, props) {
   var def = BCCL[type];

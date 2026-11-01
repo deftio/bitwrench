@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="generator" content="bitwrench v2.1.11">
+  <meta name="generator" content="bitwrench v2.1.12">
   <title>bitwrench.js - README</title>
   <link rel="icon" type="image/x-icon" href="images/favicon.ico">
   <script src="dist/bitwrench.umd.min.js"></script>
@@ -69,7 +69,7 @@
 <a class="quikdown-a" href="https://opensource.org/licenses/BSD-2-Clause" rel="noopener noreferrer">&lt;img class=&quot;quikdown-img&quot; src=&quot;https://img.shields.io/badge/License-BSD%202--Clause-blue.svg&quot; alt=&quot;License&quot; data-qd-alt=&quot;License&quot; data-qd-src=&quot;https://img.shields.io/badge/License-BSD%202--Clause-blue.svg&quot; data-qd=&quot;!&quot;&gt;</a>
 <a class="quikdown-a" href="https://www.npmjs.com/package/bitwrench" rel="noopener noreferrer">&lt;img class=&quot;quikdown-img&quot; src=&quot;https://img.shields.io/npm/v/bitwrench.svg?style=flat-square&quot; alt=&quot;NPM version&quot; data-qd-alt=&quot;NPM version&quot; data-qd-src=&quot;https://img.shields.io/npm/v/bitwrench.svg?style=flat-square&quot; data-qd=&quot;!&quot;&gt;</a>
 <a class="quikdown-a" href="https://github.com/deftio/bitwrench/actions/workflows/ci.yml" rel="noopener noreferrer">&lt;img class=&quot;quikdown-img&quot; src=&quot;https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg&quot; alt=&quot;CI&quot; data-qd-alt=&quot;CI&quot; data-qd-src=&quot;https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg&quot; data-qd=&quot;!&quot;&gt;</a>
-<a class="quikdown-a" href="https://github.com/deftio/bitwrench" rel="noopener noreferrer">&lt;img class=&quot;quikdown-img&quot; src=&quot;https://img.shields.io/badge/coverage-98%25-brightgreen.svg&quot; alt=&quot;Coverage&quot; data-qd-alt=&quot;Coverage&quot; data-qd-src=&quot;https://img.shields.io/badge/coverage-98%25-brightgreen.svg&quot; data-qd=&quot;!&quot;&gt;</a></p><p><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/" rel="noopener noreferrer">&lt;img class=&quot;quikdown-img&quot; src=&quot;./images/bitwrench-logo-med.png&quot; alt=&quot;bitwrench&quot; data-qd-alt=&quot;bitwrench&quot; data-qd-src=&quot;./images/bitwrench-logo-med.png&quot; data-qd=&quot;!&quot;&gt;</a></p><p>Bitwrench is a UI library that builds interfaces from plain JavaScript objects -- one format for components, styling, state, and server rendering, with no build step and zero dependencies.</p><pre class="quikdown-pre"><code class="language-javascript">// A &quot;TACO&quot; -- Tag, Attributes, Content, Options object can hold a component or even an entire page
+<a class="quikdown-a" href="https://github.com/deftio/bitwrench" rel="noopener noreferrer">&lt;img class=&quot;quikdown-img&quot; src=&quot;https://img.shields.io/badge/coverage-99%25-brightgreen.svg&quot; alt=&quot;Coverage&quot; data-qd-alt=&quot;Coverage&quot; data-qd-src=&quot;https://img.shields.io/badge/coverage-99%25-brightgreen.svg&quot; data-qd=&quot;!&quot;&gt;</a></p><p><a class="quikdown-a" href="https://deftio.github.io/bitwrench/pages/" rel="noopener noreferrer">&lt;img class=&quot;quikdown-img&quot; src=&quot;./images/bitwrench-logo-med.png&quot; alt=&quot;bitwrench&quot; data-qd-alt=&quot;bitwrench&quot; data-qd-src=&quot;./images/bitwrench-logo-med.png&quot; data-qd=&quot;!&quot;&gt;</a></p><p>Bitwrench is a UI library that builds interfaces from plain JavaScript objects -- one format for components, styling, state, and server rendering, with no build step and zero dependencies.</p><pre class="quikdown-pre"><code class="language-javascript">// A &quot;TACO&quot; -- Tag, Attributes, Content, Options object can hold a component or even an entire page
 var page = {
   t: &#39;div&#39;, a: { class: &#39;card&#39; },
   c: [
@@ -89,7 +89,11 @@ import bw from &#39;bitwrench&#39;;
 
 // CommonJS
 const bw = require(&#39;bitwrench&#39;);</code></pre></p><p>Or include directly in a page:</p><pre class="quikdown-pre"><code class="language-html">&lt;script src=&quot;https://cdn.jsdelivr.net/npm/bitwrench/dist/bitwrench.umd.min.js&quot;&gt;&lt;/script&gt;</code></pre><p>Vendoring a copy instead? Take a <strong class="quikdown-strong">minified</strong> file -- see <a class="quikdown-a" href="#build-formats">Build Formats</a>
-for which one. The unminified builds are for debugging.</p><h2 class="quikdown-h2">Getting Started</h2>
+for which one. The unminified builds are for debugging.</p><p>The TACO checker ships as its own artifact (under 3 KB gzipped), outside the core
+bundle, because it is a development-time tool: <code class="quikdown-code">import verify from &#39;bitwrench/verify&#39;</code>,
+<code class="quikdown-code">const { verify } = require(&#39;bitwrench/verify&#39;)</code>, or a script tag
+(<code class="quikdown-code">dist/bitwrench-verify.min.js</code>, loaded after bitwrench) for the global <code class="quikdown-code">bwv</code>.
+See <a class="quikdown-a" href="docs/verify.md">Verify</a>.</p><h2 class="quikdown-h2">Getting Started</h2>
 <p>A complete page -- no build step, no imports, everything is a plain object:</p><pre class="quikdown-pre"><code class="language-html">&lt;!DOCTYPE html&gt;
 &lt;html lang=&quot;en&quot;&gt;
 &lt;head&gt;
@@ -534,7 +538,12 @@ bw&gt; /tree                               # full DOM tree as JSON</code></pre><
 <tr class="quikdown-tr">
 <td class="quikdown-td">Debug</td>
 <td class="quikdown-td">bitwrench.umd.js, bitwrench.esm.js</td>
-<td class="quikdown-td">Unminified, for readable stack traces. Don&#39;t ship these (~114 KB gz)</td>
+<td class="quikdown-td">Unminified, for readable stack traces. Don&#39;t ship these (~118 KB gz)</td>
+</tr>
+<tr class="quikdown-tr">
+<td class="quikdown-td">Verify</td>
+<td class="quikdown-td">bitwrench-verify.min.js (+ <code class="quikdown-code">.cjs</code>, <code class="quikdown-code">.esm.js</code>, <code class="quikdown-code">.esm.min.js</code>, <code class="quikdown-code">.d.ts</code>)</td>
+<td class="quikdown-td">The opt-in TACO checker (under 3 KB gz). Separate on purpose -- a development-time tool, outside the core budget. <a class="quikdown-a" href="docs/verify.md">Guide</a></td>
 </tr>
 </tbody>
 </table><p>The lean builds still include <code class="quikdown-code">makeTable</code>, <code class="quikdown-code">makeDataTable</code>, <code class="quikdown-code">makeTableFromArray</code> and
@@ -554,6 +563,7 @@ class helpers. The only thing they drop is the 47 BCCL component factories
 <li class="quikdown-li"><a class="quikdown-a" href="docs/state-management.md">State Management</a> -- component model, explicit updates, cross-component communication</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/component-library.md">Component Library</a> -- all <code class="quikdown-code">make*()</code> functions with signatures and examples</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/theming.md">Theming</a> -- palette-driven theme generation, presets, design tokens</li>
+<li class="quikdown-li"><a class="quikdown-a" href="docs/verify.md">Verify</a> -- <code class="quikdown-code">bitwrench-verify</code>: an opt-in checker for TACO that is generated, numerous, or leaving your hands</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/cli.md">CLI</a> -- the <code class="quikdown-code">bwcli</code> command for file conversion and pipe server</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/bw-attach.md">Dev Server &amp; Attach</a> -- REPL, DOM inspection, and screenshots from the terminal</li>
 <li class="quikdown-li"><a class="quikdown-a" href="docs/bwserve.md">bwserve</a> -- server-driven UI protocol (SSE, actions, embedded devices)</li>

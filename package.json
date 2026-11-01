@@ -1,6 +1,6 @@
 {
 	"name": "bitwrench",
-	"version": "2.1.11",
+	"version": "2.1.12",
 	"description": "Zero-dependency JavaScript UI library. Describe UI as plain objects (TACO), render to DOM or HTML strings. Theming, components, pub/sub, server-driven UI (bwserve). No build step.",
 	"main": "./dist/bitwrench.cjs",
 	"repository": {
@@ -61,6 +61,12 @@
 			"require": "./dist/bitwrench-code-edit.cjs",
 			"default": "./dist/bitwrench-code-edit.umd.js"
 		},
+		"./verify": {
+			"types": "./dist/bitwrench-verify.d.ts",
+			"import": "./dist/bitwrench-verify.esm.js",
+			"require": "./dist/bitwrench-verify.cjs",
+			"default": "./dist/bitwrench-verify.js"
+		},
 		"./debug": {
 			"require": "./dist/bitwrench-debug.cjs",
 			"default": "./dist/bitwrench-debug.js"
@@ -113,14 +119,14 @@
 		"generate-version": "node tools/generate-version.cjs",
 		"prebuild": "npm run generate-version && npm run lint",
 		"build": "rollup --config && npm run build:css && npm run build:types && npm run build:metrics && npm run build:builds",
-		"build:types": "cp src/bitwrench.d.ts dist/bitwrench.d.ts && cp src/bwserve.d.ts dist/bwserve.d.ts",
+		"build:types": "cp src/bitwrench.d.ts dist/bitwrench.d.ts && cp src/bwserve.d.ts dist/bwserve.d.ts && cp src/bitwrench-verify.d.ts dist/bitwrench-verify.d.ts",
 		"build:css": "node src/generate-css.js",
 		"build:readme": "node tools/build-readme.js",
 		"build:watch": "rollup --config --watch",
 		"update_rm": "echo 'DEPRECATED: use build:index instead'",
 		"cleanbuild": "npm run clean && npm run build && npm run build:generated",
 		"oldtest": "./node_modules/mocha/bin/mocha test/bitwrench_test.js --reporter spec",
-		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_cli.js ./test/bitwrench_test_bccl_contract.js ./test/bitwrench_test_semantic_html.js ./test/bitwrench_test_contract.js ./test/bitwrench_test_contract_live.js ./test/bitwrench_test_html_golden.js ./test/bitwrench_test_util_color.js ./test/bitwrench_test_uuid.js ./test/bitwrench_test_stable.js ./test/bitwrench_test_v2.js ./test/bitwrench_test_invariants.js ./test/bitwrench_test_meta.js ./test/bitwrench_test_doc_examples.js ./test/bitwrench_test_embedded_c.js -r jsdom-global/register --exit && npm run test:bundles",
+		"test": "c8 --reporter=text --reporter=json-summary mocha ./test/bitwrench_ci.js ./test/bitwrench_test_coverage.js ./test/bitwrench_test_pubsub.js ./test/bitwrench_test_theme.js ./test/bitwrench_test_nodemap.js ./test/bitwrench_test_components.js ./test/bitwrench_test_coverage_gaps.js ./test/bitwrench_test_code_edit.js ./test/bitwrench_test_html_page.js ./test/bitwrench_test_util_css.js ./test/bitwrench_test_handle.js ./test/bitwrench_test_debug.js ./test/bitwrench_test_router.js ./test/bitwrench_test_new_apis.js ./test/bitwrench_test_mcp_transport.js ./test/bitwrench_test_mcp_server.js ./test/bitwrench_test_mcp_tools.js ./test/bitwrench_test_mcp_knowledge.js ./test/bitwrench_test_mcp_live.js ./test/bitwrench_test_mcp_wire.js ./test/bitwrench_test_bwserve.js ./test/bitwrench_test_attach.js ./test/bitwrench_test_serve.js ./test/bitwrench_test_cli.js ./test/bitwrench_test_bccl_contract.js ./test/bitwrench_test_semantic_html.js ./test/bitwrench_test_contract.js ./test/bitwrench_test_contract_live.js ./test/bitwrench_test_html_golden.js ./test/bitwrench_test_util_color.js ./test/bitwrench_test_uuid.js ./test/bitwrench_test_stable.js ./test/bitwrench_test_v2.js ./test/bitwrench_test_invariants.js ./test/bitwrench_test_meta.js ./test/bitwrench_test_doc_examples.js ./test/bitwrench_test_embedded_c.js ./test/bitwrench_test_verify.js ./test/bitwrench_test_northstar_llm.js -r jsdom-global/register --exit && npm run test:bundles",
 		"posttest": "node tools/drift-lint.js && npm run verify-sri",
 		"test:bundles": "mocha ./test/bitwrench_test_bundles.js -r jsdom-global/register --exit",
 		"test:bwserve": "mocha ./test/bitwrench_test_bwserve.js -r jsdom-global/register",
@@ -194,9 +200,9 @@
 			"src/generate-css.js"
 		],
 		"check-coverage": true,
-		"branches": 80,
-		"lines": 80,
-		"functions": 80,
-		"statements": 80
+		"branches": 96,
+		"lines": 99,
+		"functions": 95,
+		"statements": 99
 	}
 }

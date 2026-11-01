@@ -442,13 +442,13 @@ function _applyTo(el, apply) {
     bw.unmountChildren(el);
     el.innerHTML = '';
     _flat(apply).forEach(function(item) {
-      if (item != null) el.appendChild(bw.create(item));
+      if (item != null) el.appendChild(bw.create(item, _nsOptsFor(el)));
     });
     bw.mountTree(el);
   } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
     bw.unmountChildren(el);
     el.innerHTML = '';
-    el.appendChild(bw.create(apply));
+    el.appendChild(bw.create(apply, _nsOptsFor(el)));
     bw.mountTree(el);
   } else {
     bw.unmountChildren(el);
@@ -524,6 +524,43 @@ var _UUID_RE = /\bbw_uuid_[a-z0-9_]+\b/;
  * @private
  */
 var _SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * Create-options that continue an existing element's namespace.
+ *
+ * bw.create() detects SVG context from the TACO itself (`{t:'svg'}`) and
+ * threads it to children, which covers a tree built in one call. It cannot
+ * know the namespace of a parent it is being inserted INTO, so every verb
+ * that adds children to an element already in the document has to supply it.
+ * Without this, bw.append/patch/replace/syncChildren built `<rect>` and
+ * friends with createElement() in the XHTML namespace: they appear in the DOM,
+ * match selectors, and render nothing at all.
+ *
+ * foreignObject is the one place SVG hands back to HTML, so its children
+ * deliberately do not inherit the SVG namespace.
+ *
+ * @param {Element} parentEl - Element the new children will be inserted into
+ * @param {Object} [options] - Existing create options to extend
+ * @returns {Object} Options carrying _svgCtx when the parent is in SVG
+ */
+// Run a lifecycle hook, marking any throw with the hook it came from so the
+// single catch in mountTree can report the right name. Guarded because a
+// thrown non-object (a string, say) has nowhere to put the mark.
+function _tagHook(fn, name, el, state) {
+  try {
+    fn(el, state);
+  } catch (e) {
+    if (e && typeof e === 'object') e._bwHook = name;
+    throw e;
+  }
+}
+
+function _nsOptsFor(parentEl, options) {
+  var base = options || {};
+  if (!parentEl || base._svgCtx || parentEl.namespaceURI !== _SVG_NS) return base;
+  if (parentEl.tagName && parentEl.tagName.toLowerCase() === 'foreignobject') return base;
+  return Object.assign({}, base, { _svgCtx: true });
+}
 
 /**
  * Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class`.
@@ -1322,7 +1359,11 @@ function _hydrateElement(el, opts) {
     el.classList.add('bw_is_component_' + opts.type);
   }
 
-  // Store state (clone so TACO isn't retained)
+  // Store state BY REFERENCE -- the comment here used to claim a clone, which
+  // it never was. The reference is deliberate: two elements mounted from one
+  // TACO share a state object, which is what makes the shared-state pattern in
+  // docs/state-management.md work. It also means a caller holding the TACO can
+  // still see and mutate the live state.
   if (opts.state) {
     el._bw_state = opts.state;
   }
@@ -1332,13 +1373,33 @@ function _hydrateElement(el, opts) {
     el._bw_render = opts.render;
   }
 
-  // Store mounted function on element (fired later by mountTree)
-  if (opts.mounted) {
-    el._bw_mounted_fn = opts.mounted;
-  } else if (opts.render && !opts.mounted) {
-    // Auto-mount: if render exists but no mounted, auto-call render at mount
+  // Store mounted function on element (fired later by mountTree).
+  //
+  // There is one slot, so supplying both `render` and `mounted` used to mean
+  // `mounted` claimed it and the initial render never ran -- the component
+  // mounted empty, with no warning. That caught the quickstart's own flagship
+  // example and five more in docs/state-management.md. When both are present
+  // the slot now runs render first, then mounted, so the hook observes the
+  // rendered DOM. Order matters: `mounted` commonly measures or wires up the
+  // content `render` produced.
+  //
+  // Both halves run through _bw_mounted_fn, so a throw from either arrives at
+  // one catch in mountTree. Tag which half it was: calling a render failure
+  // "o.mounted error" names the wrong hook, and bw.refresh() lets the same
+  // render throw under its own name -- so the same function would fail two
+  // different ways depending on whether this was the first mount or a later
+  // refresh.
+  if (opts.render && opts.mounted) {
     el._bw_mounted_fn = function(mountEl, state) {
-      opts.render(mountEl, state);
+      _tagHook(opts.render, 'render', mountEl, state);
+      opts.mounted(mountEl, state);
+    };
+  } else if (opts.mounted) {
+    el._bw_mounted_fn = opts.mounted;
+  } else if (opts.render) {
+    // Auto-mount: render alone is still invoked at mount
+    el._bw_mounted_fn = function(mountEl, state) {
+      _tagHook(opts.render, 'render', mountEl, state);
     };
   }
 
@@ -1384,7 +1445,7 @@ function _hydrateElement(el, opts) {
             if (value != null && typeof value === 'object' && value.t) {
               // TACO through slots runs mount pipeline
               target.innerHTML = '';
-              var child = bw.create(value);
+              var child = bw.create(value, _nsOptsFor(target));
               target.appendChild(child);
               if (el.isConnected) bw.mountTree(child);
             } else {
@@ -1508,8 +1569,15 @@ function _mountNode(el) {
     if (el._bw_mounted_fn) {
       try { el._bw_mounted_fn(el, el._bw_state || {}); }
       catch (e) {
-        _cw('o.mounted error: ' + e.message);
-        bw.pub('bw:diag', { code: 'mounted_hook_error', uuid: uuid, msg: e.message });
+        // Which half threw. Render and mounted share this slot since 2.1.12.
+        var hook = (e && e._bwHook === 'render') ? 'render' : 'mounted';
+        _cw('o.' + hook + ' error: ' + e.message);
+        bw.pub('bw:diag', {
+          code: hook === 'render' ? 'render_hook_error' : 'mounted_hook_error',
+          hook: hook,
+          uuid: uuid,
+          msg: e.message
+        });
       }
     }
 
@@ -1663,7 +1731,7 @@ bw.unmountChildren = function(el) {
  * @see bw.patch
  * @example
  * bw.clear('#list');                  // empties #list, hooks fire
- * bw.mount('#list', rows.map(row));   // refill it
+ * bw.mount('#list', rows.map(function(r) { return { t: 'li', c: r.name }; }));
  */
 bw.clear = function(ref) {
   var el = bw.el(ref);
@@ -2052,8 +2120,12 @@ bw._debug = function() {
   };
 };
 
+/* @bw-test-only start */
 /**
  * Hard reset all singleton state for test isolation.
+ *
+ * Stripped from every shipped bundle by the stripTestOnly plugin in
+ * rollup.config.js -- the suite imports from src/, so only tests need it.
  * @category Internal
  */
 bw._resetForTest = function() {
@@ -2098,6 +2170,7 @@ bw._resetForTest = function() {
     if (_hop.call(bw._clientRemotes, cr)) delete bw._clientRemotes[cr];
   }
 };
+/* @bw-test-only end */
 
 /**
  * Mount a TACO into a target element. Returns the root element (single root),
@@ -2114,7 +2187,19 @@ bw._resetForTest = function() {
  * @category DOM Generation
  */
 bw.mount = function(target, taco, options) {
-  var container = _is(target, 'string') ? bw.$(target)[0] : target;
+  // Every other verb that takes a target (patch, toggleClass, addClass, clear,
+  // update, message) resolves through bw.el and so accepts a bare element id.
+  // mount used a plain selector query, so bw.mount('status') failed with
+  // "target not found" while bw.patch('status') worked. One rule for the
+  // caller: any form bw.el takes, mount takes. Reported by jazzmac 2026-10-05.
+  //
+  // Live query FIRST, bw.el second -- deliberately, not for style. bw.el
+  // consults a node cache that can return a detached element (the
+  // detach-exempt path), and mounting into a node the document cannot see
+  // renders content nobody will ever find. Resolving bw.el first broke a
+  // documented example exactly that way. A selector therefore behaves as it
+  // always has, and bare ids and UUID tokens fall through to bw.el.
+  var container = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
   if (!container) {
     _cw('bw.mount: target not found');
     return null;
@@ -2131,14 +2216,14 @@ bw.mount = function(target, taco, options) {
   if (_isA(taco)) {
     for (var i = 0; i < taco.length; i++) {
       if (taco[i] != null) {
-        var child = bw.create(taco[i], options || {});
+        var child = bw.create(taco[i], _nsOptsFor(container, options));
         container.appendChild(child);
         created.push(child);
         if (!firstEl) firstEl = child;
       }
     }
   } else {
-    firstEl = bw.create(taco, options || {});
+    firstEl = bw.create(taco, _nsOptsFor(container, options));
     container.appendChild(firstEl);
     created.push(firstEl);
   }
@@ -2177,9 +2262,16 @@ bw.DOM = bw.mount;
  * @category DOM Generation
  */
 bw.append = function(target, content, opts) {
-  var container = _is(target, 'string') ? bw.$(target)[0] : target;
-  if (!container) return null;
-  var child = bw.create(content);
+  // Same resolution as bw.mount: live query first, bw.el second. See the note
+  // there. append was missed when mount was fixed, and it returned null with
+  // no warning at all, so bw.append('status', ...) did nothing and said
+  // nothing.
+  var container = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
+  if (!container) {
+    _cw('bw.append: target not found');
+    return null;
+  }
+  var child = bw.create(content, _nsOptsFor(container));
   if (opts && opts.before !== undefined) {
     var ref = opts.before;
     if (typeof ref === 'number') ref = container.children[ref] || null;
@@ -2210,7 +2302,7 @@ bw.replace = function(ref, taco) {
 
   if (taco == null) return null;
 
-  var neo = bw.create(taco);
+  var neo = bw.create(taco, _nsOptsFor(parent));
   if (parent) {
     if (next) parent.insertBefore(neo, next);
     else parent.appendChild(neo);
@@ -2355,14 +2447,14 @@ bw.patch = function(id, content, attr) {
     el.innerHTML = '';
     content = _flat(content);
     for (var i = 0; i < content.length; i++) {
-      if (content[i] != null) el.appendChild(bw.create(content[i]));
+      if (content[i] != null) el.appendChild(bw.create(content[i], _nsOptsFor(el)));
     }
     bw.mountTree(el);
   } else if (_is(content, 'object') && content !== null && (content.t || content.__bw_raw)) {
     // TACO or bw.raw() content: full pipeline
     bw.unmountChildren(el);
     el.innerHTML = '';
-    el.appendChild(bw.create(content));
+    el.appendChild(bw.create(content, _nsOptsFor(el)));
     bw.mountTree(el);
   } else if (_is(content, 'object') && content !== null) {
     // Plain object without .t → attribute patch
@@ -2471,7 +2563,7 @@ bw.syncChildren = function(parentEl, items, opts) {
     } else {
       // Create new
       var taco = createFn(items[j]);
-      var neo = bw.create(taco);
+      var neo = bw.create(taco, _nsOptsFor(parentEl));
       neo._bw_key = k;
       var insertBefore = prevNode ? prevNode.nextSibling : parentEl.firstChild;
       parentEl.insertBefore(neo, insertBefore);
@@ -2642,7 +2734,7 @@ bw.pub = function(topic, detail) {
  * var unsub = bw.sub('score:updated', function(detail) {
  *   console.log(detail.player, 'scored', detail.score);
  * });
- * // Later: unsub() to stop listening
+ * // Later: bw.unsub() to stop listening
  *
  * // Wildcard: listen to all 'agui:' topics
  * bw.sub('agui:*', function(detail, topic) {
@@ -3033,7 +3125,8 @@ bw._resolveTemplate = function(str, state, compile) {
  * @category Component
  * @example
  * bw.message('my_carousel', 'goToSlide', 2);
- * // Or from SSE handler:
+ * // Or from an SSE handler:
+ * var es = new EventSource('/bw/events/1');
  * es.onmessage = function(e) {
  *   var msg = JSON.parse(e.data);
  *   bw.message(msg.target, msg.action, msg.data);
@@ -5310,7 +5403,8 @@ bw.makeDataTable = function(config) {
  */
 bw.render = function(target, position, taco) {
   try {
-    var targetEl = _is(target, 'string') ? bw.$(target)[0] : target;
+    // Same resolution as bw.mount and bw.append -- one rule for every verb.
+    var targetEl = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
     if (!targetEl) return { el: null, ok: false, error: 'target not found' };
 
     var el;
@@ -5403,7 +5497,7 @@ bw.variantClass = components.variantClass;
  * // => { type: 'accordion', factory: 'makeAccordion' }
  *
  * // Check if a type exists:
- * if (bw.catalog('chart')) { ... }
+ * if (bw.catalog('chart')) { console.log('chart exists'); }
  *
  * // Get just the type names:
  * bw.catalog().map(function(c) { return c.type; });
@@ -5461,8 +5555,10 @@ function _parseKeys(fn) {
   return keys.length ? keys : null;
 }
 
+/* @bw-test-only start */
 /** Clear the warn-once memo for unknown options. Test helper. @category Internal */
 bw._propWarnReset = function() { _propWarned = {}; };
+/* @bw-test-only end */
 
 function _checkProps(name, fn, props) {
   if (!bw.warnUnknownProps || !props || !_is(props, 'object') || _isA(props)) return;

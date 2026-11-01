@@ -1,14 +1,14 @@
-/*! bitwrench v2.1.11 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench v2.1.12 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * Auto-generated version file from package.json
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
 const VERSION_INFO = {
-  version: '2.1.11',
+  version: '2.1.12',
   name: 'bitwrench',
   license: 'BSD-2-Clause',
-  buildDate: '2026-10-04'
+  buildDate: '2026-10-31'
 };
 
 /**
@@ -188,6 +188,27 @@ function colorParse(s, defAlpha) {
   return r;
 }
 
+/**
+ * Interpolate between an array of colours by position in a range.
+ *
+ * `x` is mapped across `colors` so that `in0` lands on the first colour and
+ * `in1` on the last, with clipping outside the range. Each colour goes
+ * through `colorParse`, so each may be in any form that function accepts --
+ * hex, `rgb()`, `hsl()`, a colour name or an array.
+ *
+ * @param {number} x - Value to place in the range
+ * @param {number} in0 - Start of the input range
+ * @param {number} in1 - End of the input range
+ * @param {Array} [colors=['#000','#fff']] - Colours to ramp between; a
+ *   single-element array is returned as-is
+ * @param {number} [stretch=1] - Exponent applied to the normalised position,
+ *   so values above 1 bias the ramp toward the first colour
+ * @returns {Array} `[r, g, b, a, 'rgb']`
+ * @category Color
+ * @see bw.colorParse
+ * @example
+ * bw.colorInterp(50, 0, 100, ['#000000', '#ffffff']) // => [128, 128, 128, 255, 'rgb']
+ */
 function colorInterp(x, in0, in1, colors, stretch) {
   var c = Array.isArray(colors) ? colors : ["#000", "#fff"];
   c = c.length === 0 ? ["#000", "#fff"] : c;
@@ -3082,12 +3103,12 @@ function bindFileOps(bw) {
  * @returns {string} Type name
  * @category Core
  * @example
- * typeOf("hello")         // => "string"
- * typeOf(42)              // => "number"
- * typeOf([1, 2, 3])       // => "array"
- * typeOf(new Date())      // => "Date"
- * typeOf({a: 1})          // => "Object"
- * typeOf([1,2], true)     // => "object"
+ * bw.typeOf("hello")         // => "string"
+ * bw.typeOf(42)              // => "number"
+ * bw.typeOf([1, 2, 3])       // => "array"
+ * bw.typeOf(new Date())      // => "Date"
+ * bw.typeOf({a: 1})          // => "Object"
+ * bw.typeOf([1,2], true)     // => "object"
  */
 function typeOf(x, baseTypeOnly) {
   if (x === null) return "null";
@@ -3156,8 +3177,8 @@ function typeOf(x, baseTypeOnly) {
  * @returns {number} Mapped value
  * @category Math
  * @example
- * mapScale(50, 0, 100, 0, 1)  // => 0.5
- * mapScale(75, 0, 100, 0, 255) // => 191.25
+ * bw.mapScale(50, 0, 100, 0, 1)  // => 0.5
+ * bw.mapScale(75, 0, 100, 0, 255) // => 191.25
  */
 function mapScale(x, in0, in1, out0, out1, options = {}) {
   const { clip: doClip = false, expScale = 1 } = options;
@@ -3192,8 +3213,8 @@ function mapScale(x, in0, in1, out0, out1, options = {}) {
  * @returns {number} Clamped value
  * @category Math
  * @example
- * clip(150, 0, 100)  // => 100
- * clip(-5, 0, 100)   // => 0
+ * bw.clip(150, 0, 100)  // => 100
+ * bw.clip(-5, 0, 100)   // => 0
  */
 function clip(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -3209,8 +3230,8 @@ function clip(value, min, max) {
  * @category Array Utilities
  * @example
  * var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } };
- * choice('red', colors, '0')   // => 1
- * choice('aqua', colors)       // => 'aquamarine'
+ * bw.choice('red', colors, '0')   // => 1
+ * bw.choice('aqua', colors)       // => 'aquamarine'
  */
 function choice(x, choices, def) {
   const z = (x in choices) ? choices[x] : def;
@@ -3224,7 +3245,7 @@ function choice(x, choices, def) {
  * @returns {Array} Array with unique elements
  * @category Array Utilities
  * @example
- * arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
+ * bw.arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
  */
 function arrayUniq(x) {
   if (typeOf(x) !== "array") return [];
@@ -3239,7 +3260,7 @@ function arrayUniq(x) {
  * @returns {Array} Unique elements found in both a and b
  * @category Array Utilities
  * @example
- * arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
+ * bw.arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
  */
 function arrayBinA(a, b) {
   if (typeOf(a) !== "array" || typeOf(b) !== "array") return [];
@@ -3254,7 +3275,7 @@ function arrayBinA(a, b) {
  * @returns {Array} Unique elements in b but not in a
  * @category Array Utilities
  * @example
- * arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
+ * bw.arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
  */
 function arrayBNotInA(a, b) {
   if (typeOf(a) !== "array" || typeOf(b) !== "array") return [];
@@ -3270,7 +3291,7 @@ function arrayBNotInA(a, b) {
  * @returns {string} Lorem ipsum text
  * @category Text Generation
  * @example
- * loremIpsum(50)
+ * bw.loremIpsum(50)
  * // => "Lorem ipsum dolor sit amet, consectetur adipiscin"
  */
 function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
@@ -3295,12 +3316,13 @@ function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
     startSpot = (startSpot + 1) % lorem.length;
     skippedChars++;
     // Prevent infinite loop in case entire lorem is spaces/punctuation
-    /* c8 ignore next -- lorem text always contains letters; this is a defensive guard */
+    /* c8 ignore start -- lorem text always contains letters; defensive guard */
     if (skippedChars >= lorem.length) {
       startSpot = 0;
       skippedChars = 0;
       break;
     }
+    /* c8 ignore stop */
   }
 
   let l = lorem.substring(startSpot) + lorem.substring(0, startSpot);
@@ -3342,8 +3364,8 @@ function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
  * @returns {Array} Multidimensional array
  * @category Array Utilities
  * @example
- * multiArray(0, [4, 5])            // 4x5 array of 0s
- * multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
+ * bw.multiArray(0, [4, 5])            // 4x5 array of 0s
+ * bw.multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
  */
 function multiArray(value, dims) {
   const v = () => typeOf(value) === "function" ? value() : value;
@@ -3373,7 +3395,7 @@ function multiArray(value, dims) {
  * @returns {number} Sort order (-1, 0, 1)
  * @category Array Utilities
  * @example
- * ['item10', 'item2', 'item1'].sort(naturalCompare)
+ * ['item10', 'item2', 'item1'].sort(bw.naturalCompare)
  * // => ['item1', 'item2', 'item10']
  */
 function naturalCompare(as, bs) {
@@ -3435,7 +3457,7 @@ function naturalCompare(as, bs) {
  * @returns {number} Interval ID (can be passed to clearInterval)
  * @category Timing
  * @example
- * setIntervalX(function(i) {
+ * bw.setIntervalX(function(i) {
  *   console.log('Iteration', i);
  * }, 1000, 5); // Runs 5 times, 1 second apart
  */
@@ -3595,16 +3617,20 @@ function initRouter(bw) {
    * Route handlers return TACO; the router mounts the result into `target`.
    * Hash mode needs no server config; history mode needs the server to serve
    * the app for unknown paths. Returns a router object with `navigate`,
-   * `stop` and the compiled route table.
+   * `current`, `destroy`, and the `mode` and `base` it was built with. (There
+   * is no `stop` -- the teardown method is `destroy`.)
    *
    * @param {Object} config - Router configuration
    * @param {Object} config.routes - Map of path pattern to handler, e.g.
-   *   `{ '/': fn, '/users/:id': fn, '*': fn }`. Handlers get (params, query)
-   *   and return a TACO.
+   *   `{ '/': fn, '/users/:id': fn, '*': fn }`. A handler receives ONE
+   *   argument: the params object, which also carries `_query` (parsed query
+   *   string) and, for a `*` route, `_rest`. It returns a TACO.
    * @param {string|Element} [config.target] - Where to mount each view
    * @param {string} [config.mode='hash'] - 'hash' or 'history'
    * @param {string} [config.base='/'] - Base path for history mode
-   * @param {Function} [config.before] - Guard: return false to block navigation
+   * @param {Function} [config.before] - Guard, called as (toPath, fromPath).
+   *   Return `false` to block (the URL is left alone, or restored on a back
+   *   button), or a path string to redirect.
    * @param {Function} [config.after] - Called after each successful navigation
    * @returns {Object} Router object
    * @category Routing
@@ -3638,6 +3664,9 @@ function initRouter(bw) {
 
     var currentPath = '/';
     var destroyed = false;
+    // Path whose queued hashchange navigate() has already rendered. Cleared as
+    // soon as it is consumed, so a genuine external hash change is never lost.
+    var suppressHash = null;
 
     function getPath() {
       if (mode === 'hash') {
@@ -3652,16 +3681,24 @@ function initRouter(bw) {
       return p + s;
     }
 
-    function handleRoute(toRaw, _opts) {
+    function handleRoute(toRaw, _opts, guardRan) {
       /* c8 ignore next -- all callers (navigate, onHashChange, onPopState) check destroyed first */
       if (destroyed) return;
       var fromPath = currentPath;
       var toPath = normalizePath(toRaw);
 
-      // before guard
-      if (config.before) {
+      // before guard. navigate() runs it itself, before writing the URL, and
+      // passes guardRan so it does not fire twice. The event-driven paths
+      // (hashchange, popstate) cannot run it first -- the browser has already
+      // changed the URL -- so they run it here and put the URL back if it
+      // blocks. Previously a blocked guard just returned, leaving the address
+      // bar on a route that never rendered.
+      if (!guardRan && config.before) {
         var result = config.before(toPath, fromPath);
-        if (result === false) return;
+        if (result === false) {
+          writeUrl(fromPath, true);
+          return;
+        }
         if (typeof result === 'string') {
           toPath = normalizePath(result);
           toRaw = result;
@@ -3692,37 +3729,73 @@ function initRouter(bw) {
       if (config.after) config.after(toPath, fromPath);
     }
 
-    function navigate(path, opts) {
-      if (destroyed) return;
-      opts = opts || {};
+    // Write the address bar without rendering. `replace` avoids adding a
+    // history entry, which is what a guard-blocked revert wants.
+    function writeUrl(path, replace) {
       if (mode === 'hash') {
-        if (opts.replace) {
-          var loc = window.location;
+        var loc = window.location;
+        if (replace) {
           loc.replace(loc.pathname + loc.search + '#' + path);
         } else {
           window.location.hash = path;
         }
-        // hashchange listener will fire handleRoute; but if same hash, trigger manually
-        /* c8 ignore next -- fallback for bare '#' hash; navigate always sets a path */
-        var currentHash = window.location.hash.replace(/^#/, '') || '/';
-        if (normalizePath(currentHash) === normalizePath(path)) {
-          handleRoute(path);
-        }
       } else {
         var url = (base === '/' ? '' : base) + path;
-        if (opts.replace) {
+        if (replace) {
           window.history.replaceState(null, '', url);
         } else {
           window.history.pushState(null, '', url);
         }
-        handleRoute(path);
       }
+    }
+
+    function navigate(path, opts) {
+      if (destroyed) return;
+      opts = opts || {};
+
+      // Run the guard before the URL changes, so a blocked navigation leaves
+      // the address bar alone instead of stranding it on a route that never
+      // rendered. A redirect is followed here too, so the URL that lands is
+      // the one actually shown.
+      if (config.before) {
+        var guard = config.before(normalizePath(path), currentPath);
+        if (guard === false) return;
+        if (typeof guard === 'string') path = guard;
+      }
+      if (mode === 'hash') {
+        // Setting location.hash updates it synchronously but fires hashchange
+        // asynchronously. The old code re-read the hash afterwards to decide
+        // whether to render by hand -- which always matched the path just
+        // assigned, so every navigation rendered twice: once here and once
+        // when the queued event arrived. Reported by jazzmac, 2026-10-05.
+        //
+        // Render here, synchronously, as navigate() always has: callers read
+        // the DOM straight after. Then mark the path so the hashchange this
+        // call is about to cause is recognised and ignored. Going async
+        // instead would fix the duplicate and break every caller that reads
+        // the DOM on the next line.
+        var hashBefore = window.location.hash.replace(/^#/, '') || '/';
+        var willFireEvent = normalizePath(hashBefore) !== normalizePath(path);
+        writeUrl(path, opts.replace);
+        // When the hash did not change no event is coming, so nothing to skip.
+        if (willFireEvent) suppressHash = normalizePath(path);
+      } else {
+        writeUrl(path, opts.replace);
+      }
+      handleRoute(path, opts, true);
     }
 
     function onHashChange() {
       /* c8 ignore next -- destroy() removes the hashchange listener; belt-and-suspenders guard */
       if (destroyed) return;
-      handleRoute(getPath());
+      var path = getPath();
+      // Our own navigate() already rendered this one synchronously.
+      if (suppressHash !== null && normalizePath(path) === suppressHash) {
+        suppressHash = null;
+        return;
+      }
+      suppressHash = null;
+      handleRoute(path);
     }
 
     function onPopState() {
@@ -3743,6 +3816,11 @@ function initRouter(bw) {
 
     var routerObj = {
       navigate: navigate,
+      // bw.link() needs these to build an href that matches the mode. It used
+      // to prefix '#' whenever any router was active, so every link in a
+      // history-mode app pointed at a fragment.
+      mode: mode,
+      base: base,
       current: function() {
         var raw = getPath();
         var m = matchRoute(routes, raw);
@@ -3810,9 +3888,14 @@ function initRouter(bw) {
       var keys = Object.keys(attrs);
       for (var i = 0; i < keys.length; i++) a[keys[i]] = attrs[keys[i]];
     }
-    if (_activeRouter) {
-      // determine href based on mode -- check hash by looking at current location
+    if (_activeRouter && _activeRouter.mode === 'hash') {
       a.href = '#' + path;
+    } else if (_activeRouter) {
+      // history mode: a real URL, so the link still works without JS and
+      // middle-click / open-in-new-tab land on the right page.
+      // bw.router always sets base (default '/'), so no fallback is needed.
+      var b = _activeRouter.base;
+      a.href = (b === '/' ? '' : b) + path;
     } else {
       a.href = path;
     }
@@ -3914,7 +3997,7 @@ function variantClass(v) {
  * @returns {Object} TACO object representing a card component
  * @category Component Builders
  * @example
- * const card = makeCard({
+ * const card = bw.makeCard({
  *   title: "Status",
  *   content: "All systems operational",
  *   variant: "success"
@@ -4048,13 +4131,13 @@ function makeCard(props = {}) {
  * @returns {Object} TACO object representing a button element
  * @category Component Builders
  * @example
- * const btn = makeButton({
+ * const btn = bw.makeButton({
  *   text: "Save",
  *   variant: "success",
  *   onclick: () => console.log("saved")
  * });
  * // String shorthand:
- * const ok = makeButton("OK");
+ * const ok = bw.makeButton("OK");
  */
 function makeButton(props = {}) {
   if (typeof props === 'string') props = { text: props };
@@ -4102,9 +4185,9 @@ function makeButton(props = {}) {
  * @returns {Object} TACO object representing a container div
  * @category Component Builders
  * @example
- * const container = makeContainer({
+ * const container = bw.makeContainer({
  *   fluid: true,
- *   children: [makeRow({ children: [...] })]
+ *   children: [bw.makeRow({ children: [bw.makeCol({ size: 12, content: 'Hi' })] })]
  * });
  */
 function makeContainer(props = {}) {
@@ -4127,9 +4210,9 @@ function makeContainer(props = {}) {
  * @returns {Object} TACO object representing a grid row
  * @category Component Builders
  * @example
- * const row = makeRow({
+ * const row = bw.makeRow({
  *   gap: 4,
- *   children: [makeCol({ size: 6, content: "Left" }), makeCol({ size: 6, content: "Right" })]
+ *   children: [bw.makeCol({ size: 6, content: "Left" }), bw.makeCol({ size: 6, content: "Right" })]
  * });
  */
 function makeRow(props = {}) {
@@ -4161,7 +4244,7 @@ function makeRow(props = {}) {
  * @returns {Object} TACO object representing a grid column
  * @category Component Builders
  * @example
- * const col = makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
+ * const col = bw.makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
  */
 function makeCol(props = {}) {
   const { size, offset, push, pull, content, children, className = '' } = props;
@@ -4209,7 +4292,7 @@ function makeCol(props = {}) {
  * @returns {Object} TACO object representing a nav element
  * @category Component Builders
  * @example
- * const nav = makeNav({
+ * const nav = bw.makeNav({
  *   pills: true,
  *   items: [
  *     { text: "Home", href: "/", active: true },
@@ -4260,7 +4343,7 @@ function makeNav(props = {}) {
  * @returns {Object} TACO object representing a navbar element
  * @category Component Builders
  * @example
- * const navbar = makeNavbar({
+ * const navbar = bw.makeNavbar({
  *   brand: "MyApp",
  *   dark: true,
  *   items: [
@@ -4331,7 +4414,7 @@ function makeNavbar(props = {}) {
  * @returns {Object} TACO object representing a tabbed interface
  * @category Component Builders
  * @example
- * const tabs = makeTabs({
+ * const tabs = bw.makeTabs({
  *   tabs: [
  *     { label: "Overview", content: "Tab 1 content", active: true },
  *     { label: "Details", content: "Tab 2 content" }
@@ -4464,13 +4547,13 @@ function makeTabs(props = {}) {
  * @returns {Object} TACO object representing an alert element
  * @category Component Builders
  * @example
- * const alert = makeAlert({
+ * const alert = bw.makeAlert({
  *   content: "Operation completed successfully!",
  *   variant: "success",
  *   dismissible: true
  * });
  * // String shorthand:
- * const msg = makeAlert("Something happened");
+ * const msg = bw.makeAlert("Something happened");
  */
 function makeAlert(props = {}) {
   if (typeof props === 'string') props = { content: props };
@@ -4524,10 +4607,10 @@ function makeAlert(props = {}) {
  * @returns {Object} TACO object representing a badge span
  * @category Component Builders
  * @example
- * const badge = makeBadge({ text: "New", variant: "danger", pill: true });
- * const small = makeBadge({ text: "3", variant: "info", size: "sm" });
+ * const badge = bw.makeBadge({ text: "New", variant: "danger", pill: true });
+ * const small = bw.makeBadge({ text: "3", variant: "info", size: "sm" });
  * // String shorthand:
- * const tag = makeBadge("New");
+ * const tag = bw.makeBadge("New");
  */
 function makeBadge(props = {}) {
   if (typeof props === 'string') props = { text: props };
@@ -4564,7 +4647,7 @@ function makeBadge(props = {}) {
  * @returns {Object} TACO object representing a progress bar
  * @category Component Builders
  * @example
- * const progress = makeProgress({
+ * const progress = bw.makeProgress({
  *   value: 75,
  *   variant: "success",
  *   striped: true,
@@ -4647,7 +4730,7 @@ function makeProgress(props = {}) {
  * @returns {Object} TACO object representing a list group
  * @category Component Builders
  * @example
- * const list = makeListGroup({
+ * const list = bw.makeListGroup({
  *   interactive: true,
  *   items: [
  *     { text: "Active item", active: true },
@@ -4720,7 +4803,7 @@ function makeListGroup(props = {}) {
  * @returns {Object} TACO object representing a breadcrumb nav
  * @category Component Builders
  * @example
- * const crumbs = makeBreadcrumb({
+ * const crumbs = bw.makeBreadcrumb({
  *   items: [
  *     { text: "Home", href: "/" },
  *     { text: "Products", href: "/products" },
@@ -4766,11 +4849,11 @@ function makeBreadcrumb(props = {}) {
  * @returns {Object} TACO object representing a form element
  * @category Component Builders
  * @example
- * const form = makeForm({
+ * const form = bw.makeForm({
  *   onsubmit: (e) => { e.preventDefault(); handleSubmit(); },
  *   children: [
- *     makeFormGroup({ label: "Name", input: makeInput({ placeholder: "Enter name" }) }),
- *     makeButton({ text: "Submit", type: "submit" })
+ *     bw.makeFormGroup({ label: "Name", input: bw.makeInput({ placeholder: "Enter name" }) }),
+ *     bw.makeButton({ text: "Submit", type: "submit" })
  *   ]
  * });
  */
@@ -4924,7 +5007,7 @@ function makeForm(props = {}) {
  * @returns {Object} TACO object representing a form group
  * @category Component Builders
  * @example
- * const group = makeFormGroup({
+ * const group = bw.makeFormGroup({
  *   label: "Email",
  *   id: "email",
  *   input: makeInput({ type: "email", id: "email", placeholder: "you@example.com" }),
@@ -4989,7 +5072,7 @@ function makeFormGroup(props = {}) {
  * @returns {Object} TACO object representing an input element
  * @category Component Builders
  * @example
- * const input = makeInput({
+ * const input = bw.makeInput({
  *   type: "email",
  *   placeholder: "you@example.com",
  *   required: true,
@@ -5045,7 +5128,7 @@ function makeInput(props = {}) {
  * @returns {Object} TACO object representing a textarea element
  * @category Component Builders
  * @example
- * const textarea = makeTextarea({
+ * const textarea = bw.makeTextarea({
  *   rows: 5,
  *   placeholder: "Enter your message...",
  *   required: true
@@ -5098,7 +5181,7 @@ function makeTextarea(props = {}) {
  * @returns {Object} TACO object representing a select element
  * @category Component Builders
  * @example
- * const select = makeSelect({
+ * const select = bw.makeSelect({
  *   value: "b",
  *   options: [
  *     { value: "a", text: "Option A" },
@@ -5153,7 +5236,7 @@ function makeSelect(props = {}) {
  * @returns {Object} TACO object representing a checkbox form group
  * @category Component Builders
  * @example
- * const checkbox = makeCheckbox({
+ * const checkbox = bw.makeCheckbox({
  *   label: "I agree to the terms",
  *   id: "agree",
  *   checked: false
@@ -5208,12 +5291,12 @@ function makeCheckbox(props = {}) {
  * @returns {Object} TACO object representing a stack layout
  * @category Component Builders
  * @example
- * const stack = makeStack({
+ * const stack = bw.makeStack({
  *   direction: "horizontal",
  *   gap: 2,
  *   children: [
- *     makeButton({ text: "Cancel", variant: "secondary" }),
- *     makeButton({ text: "Save", variant: "primary" })
+ *     bw.makeButton({ text: "Cancel", variant: "secondary" }),
+ *     bw.makeButton({ text: "Save", variant: "primary" })
  *   ]
  * });
  */
@@ -5244,7 +5327,7 @@ function makeStack(props = {}) {
  * @returns {Object} TACO object representing a spinner with screen-reader text
  * @category Component Builders
  * @example
- * const spinner = makeSpinner({ variant: "info", size: "sm" });
+ * const spinner = bw.makeSpinner({ variant: "info", size: "sm" });
  */
 function makeSpinner(props = {}) {
   const {
@@ -5290,13 +5373,13 @@ function makeSpinner(props = {}) {
  * @returns {Object} TACO object representing a hero section
  * @category Component Builders
  * @example
- * const hero = makeHero({
+ * const hero = bw.makeHero({
  *   title: "Welcome to Bitwrench",
  *   subtitle: "Build UIs with pure JavaScript",
  *   variant: "dark",
  *   actions: [
- *     makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
- *     makeButton({ text: "Learn More", variant: "outline_light", size: "lg" })
+ *     bw.makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
+ *     bw.makeButton({ text: "Learn More", variant: "outline_light", size: "lg" })
  *   ]
  * });
  */
@@ -5382,7 +5465,7 @@ function makeHero(props = {}) {
  * @returns {Object} TACO object representing a feature grid
  * @category Component Builders
  * @example
- * const features = makeFeatureGrid({
+ * const features = bw.makeFeatureGrid({
  *   columns: 3,
  *   features: [
  *     { icon: "⚡", title: "Fast", description: "Zero build step" },
@@ -5455,11 +5538,11 @@ function makeFeatureGrid(props = {}) {
  * @returns {Object} TACO object representing a CTA section
  * @category Component Builders
  * @example
- * const cta = makeCTA({
+ * const cta = bw.makeCTA({
  *   title: "Ready to get started?",
  *   description: "Join thousands of developers using Bitwrench.",
  *   actions: [
- *     makeButton({ text: "Sign Up Free", variant: "primary", size: "lg" })
+ *     bw.makeButton({ text: "Sign Up Free", variant: "primary", size: "lg" })
  *   ]
  * });
  */
@@ -5509,11 +5592,11 @@ function makeCTA(props = {}) {
  * @returns {Object} TACO object representing a content section
  * @category Component Builders
  * @example
- * const section = makeSection({
+ * const section = bw.makeSection({
  *   title: "Features",
  *   subtitle: "Everything you need to build great UIs",
  *   spacing: "lg",
- *   content: makeFeatureGrid({ features: [...] })
+ *   content: bw.makeFeatureGrid({ features: [{ title: 'Fast', description: 'No build step' }] })
  * });
  */
 function makeSection(props = {}) {
@@ -5583,11 +5666,11 @@ function makeSection(props = {}) {
  * @returns {Object} TACO object representing a code demo with tabbed Result/Code views
  * @category Component Builders
  * @example
- * const demo = makeCodeDemo({
+ * const demo = bw.makeCodeDemo({
  *   title: "Button Example",
  *   description: "A simple primary button",
- *   code: 'makeButton({ text: "Click me" })',
- *   result: makeButton({ text: "Click me" })
+ *   code: 'bw.makeButton({ text: "Click me" })',
+ *   result: bw.makeButton({ text: "Click me" })
  * });
  */
 function makeCodeDemo(props = {}) {
@@ -5695,7 +5778,7 @@ function makeCodeDemo(props = {}) {
  * @returns {Object} TACO object representing a pagination nav
  * @category Component Builders
  * @example
- * const pager = makePagination({
+ * const pager = bw.makePagination({
  *   pages: 10,
  *   currentPage: 3,
  *   onPageChange: (page) => loadPage(page)
@@ -5804,7 +5887,7 @@ function makePagination(props = {}) {
  * @returns {Object} TACO object representing a radio form group
  * @category Component Builders
  * @example
- * const radio = makeRadio({
+ * const radio = bw.makeRadio({
  *   label: "Option A",
  *   name: "choice",
  *   value: "a",
@@ -5860,11 +5943,11 @@ function makeRadio(props = {}) {
  * @returns {Object} TACO object representing a button group
  * @category Component Builders
  * @example
- * const group = makeButtonGroup({
+ * const group = bw.makeButtonGroup({
  *   children: [
- *     makeButton({ text: "Left", variant: "primary" }),
- *     makeButton({ text: "Middle", variant: "primary" }),
- *     makeButton({ text: "Right", variant: "primary" })
+ *     bw.makeButton({ text: "Left", variant: "primary" }),
+ *     bw.makeButton({ text: "Middle", variant: "primary" }),
+ *     bw.makeButton({ text: "Right", variant: "primary" })
  *   ]
  * });
  */
@@ -5903,7 +5986,7 @@ function makeButtonGroup(props = {}) {
  * @returns {Object} TACO object representing an accordion
  * @category Component Builders
  * @example
- * const accordion = makeAccordion({
+ * const accordion = bw.makeAccordion({
  *   items: [
  *     { title: "Section 1", content: "Content 1", open: true },
  *     { title: "Section 2", content: "Content 2" }
@@ -6068,10 +6151,10 @@ function makeAccordion(props = {}) {
  * @returns {Object} TACO object representing a modal
  * @category Component Builders
  * @example
- * const modal = makeModal({
+ * const modal = bw.makeModal({
  *   title: "Confirm",
  *   content: "Are you sure?",
- *   footer: makeButton({ text: "OK", variant: "primary" })
+ *   footer: bw.makeButton({ text: "OK", variant: "primary" })
  * });
  */
 function makeModal(props = {}) {
@@ -6209,7 +6292,7 @@ function makeModal(props = {}) {
  * @returns {Object} TACO object representing a toast
  * @category Component Builders
  * @example
- * const toast = makeToast({
+ * const toast = bw.makeToast({
  *   title: "Success",
  *   content: "File saved!",
  *   variant: "success"
@@ -6309,7 +6392,7 @@ function makeToast(props = {}) {
  * @returns {Object} TACO object representing a dropdown
  * @category Component Builders
  * @example
- * const dropdown = makeDropdown({
+ * const dropdown = bw.makeDropdown({
  *   trigger: "Actions",
  *   items: [
  *     { text: "Edit", onclick: () => edit() },
@@ -6411,7 +6494,7 @@ function makeDropdown(props = {}) {
  * @returns {Object} TACO object representing a toggle switch
  * @category Component Builders
  * @example
- * const toggle = makeSwitch({
+ * const toggle = bw.makeSwitch({
  *   label: "Dark mode",
  *   checked: false,
  *   onchange: (e) => toggleDark(e.target.checked)
@@ -6466,7 +6549,7 @@ function makeSwitch(props = {}) {
  * @returns {Object} TACO object representing a skeleton placeholder
  * @category Component Builders
  * @example
- * const skeleton = makeSkeleton({ variant: "text", count: 3, width: "100%" });
+ * const skeleton = bw.makeSkeleton({ variant: "text", count: 3, width: "100%" });
  */
 function makeSkeleton(props = {}) {
   const {
@@ -6549,8 +6632,8 @@ function makeSkeleton(props = {}) {
  * @returns {Object} TACO object representing an avatar
  * @category Component Builders
  * @example
- * const avatar = makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" });
- * const avatarInitials = makeAvatar({ initials: "JD", variant: "success" });
+ * const avatar = bw.makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" });
+ * const avatarInitials = bw.makeAvatar({ initials: "JD", variant: "success" });
  */
 function makeAvatar(props = {}) {
   const {
@@ -6602,7 +6685,7 @@ function makeAvatar(props = {}) {
  * @returns {Object} TACO object representing a carousel
  * @category Component Builders
  * @example
- * const carousel = makeCarousel({
+ * const carousel = bw.makeCarousel({
  *   items: [
  *     { content: { t: 'img', a: { src: 'photo.jpg' } }, caption: 'Photo 1' },
  *     { content: { t: 'div', c: 'Text slide' } }
@@ -6831,7 +6914,7 @@ function makeCarousel(props = {}) {
  * @returns {Object} TACO object representing a stat card
  * @category Component Builders
  * @example
- * const stat = makeStatCard({
+ * const stat = bw.makeStatCard({
  *   value: 2345,
  *   label: 'Active Users',
  *   change: 5.3,
@@ -6937,8 +7020,8 @@ function makeStatCard(props = {}) {
  * @returns {Object} TACO object representing a tooltip wrapper
  * @category Component Builders
  * @example
- * const tip = makeTooltip({
- *   content: makeButton({ text: 'Hover me' }),
+ * const tip = bw.makeTooltip({
+ *   content: bw.makeButton({ text: 'Hover me' }),
  *   text: 'This is a tooltip!',
  *   placement: 'top'
  * });
@@ -7001,8 +7084,8 @@ function makeTooltip(props = {}) {
  * @returns {Object} TACO object representing a popover wrapper
  * @category Component Builders
  * @example
- * const pop = makePopover({
- *   trigger: makeButton({ text: 'Click me' }),
+ * const pop = bw.makePopover({
+ *   trigger: bw.makeButton({ text: 'Click me' }),
  *   title: 'Popover Title',
  *   content: 'Some helpful information here.',
  *   placement: 'bottom'
@@ -7097,7 +7180,7 @@ function makePopover(props = {}) {
  * @returns {Object} TACO object representing a search input
  * @category Component Builders
  * @example
- * const search = makeSearchInput({
+ * const search = bw.makeSearchInput({
  *   placeholder: 'Search users...',
  *   onSearch: (val) => filterUsers(val)
  * });
@@ -7184,7 +7267,7 @@ function makeSearchInput(props = {}) {
  * @returns {Object} TACO object representing a range input
  * @category Component Builders
  * @example
- * const slider = makeRange({
+ * const slider = bw.makeRange({
  *   min: 0, max: 100, value: 50,
  *   label: 'Volume',
  *   showValue: true,
@@ -7282,7 +7365,7 @@ function makeRange(props = {}) {
  * @returns {Object} TACO object representing a media object
  * @category Component Builders
  * @example
- * const media = makeMediaObject({
+ * const media = bw.makeMediaObject({
  *   src: '/avatar.jpg',
  *   title: 'Jane Doe',
  *   content: 'Posted a comment 5 minutes ago.'
@@ -7344,7 +7427,7 @@ function makeMediaObject(props = {}) {
  * @returns {Object} TACO object representing a file upload zone
  * @category Component Builders
  * @example
- * const upload = makeFileUpload({
+ * const upload = bw.makeFileUpload({
  *   accept: 'image/*',
  *   multiple: true,
  *   onFiles: (files) => uploadFiles(files)
@@ -7441,7 +7524,7 @@ function makeFileUpload(props = {}) {
  * @returns {Object} TACO object representing a timeline
  * @category Component Builders
  * @example
- * const timeline = makeTimeline({
+ * const timeline = bw.makeTimeline({
  *   items: [
  *     { title: 'Project Started', date: 'Jan 2026', variant: 'primary' },
  *     { title: 'Beta Release', date: 'Mar 2026', content: 'v2.0 beta shipped' },
@@ -7509,7 +7592,7 @@ function makeTimeline(props = {}) {
  * @returns {Object} TACO object representing a stepper
  * @category Component Builders
  * @example
- * const stepper = makeStepper({
+ * const stepper = bw.makeStepper({
  *   currentStep: 1,
  *   steps: [
  *     { label: 'Account', description: 'Create account' },
@@ -7574,7 +7657,7 @@ function makeStepper(props = {}) {
  * @returns {Object} TACO object representing a chip input
  * @category Component Builders
  * @example
- * const tags = makeChipInput({
+ * const tags = bw.makeChipInput({
  *   chips: ['JavaScript', 'CSS'],
  *   placeholder: 'Add tag...',
  *   onAdd: (val) => addTag(val),
@@ -7787,9 +7870,9 @@ var BCCL = {
  * @returns {Object} TACO object
  * @throws {Error} If type is not found in the registry
  * @example
- * var card = make('card', { title: 'Hello', variant: 'primary' });
- * var btn = make('button', { text: 'Click', variant: 'success' });
- * var types = Object.keys(BCCL); // list all available types
+ * var card = bw.make('card', { title: 'Hello', variant: 'primary' });
+ * var btn = bw.make('button', { text: 'Click', variant: 'success' });
+ * var types = Object.keys(bw.BCCL); // list all available types
  */
 function make(type, props) {
   var def = BCCL[type];
@@ -8278,13 +8361,13 @@ function _applyTo(el, apply) {
     bw.unmountChildren(el);
     el.innerHTML = '';
     _flat(apply).forEach(function(item) {
-      if (item != null) el.appendChild(bw.create(item));
+      if (item != null) el.appendChild(bw.create(item, _nsOptsFor(el)));
     });
     bw.mountTree(el);
   } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
     bw.unmountChildren(el);
     el.innerHTML = '';
-    el.appendChild(bw.create(apply));
+    el.appendChild(bw.create(apply, _nsOptsFor(el)));
     bw.mountTree(el);
   } else {
     bw.unmountChildren(el);
@@ -8360,6 +8443,43 @@ var _UUID_RE = /\bbw_uuid_[a-z0-9_]+\b/;
  * @private
  */
 var _SVG_NS = 'http://www.w3.org/2000/svg';
+
+/**
+ * Create-options that continue an existing element's namespace.
+ *
+ * bw.create() detects SVG context from the TACO itself (`{t:'svg'}`) and
+ * threads it to children, which covers a tree built in one call. It cannot
+ * know the namespace of a parent it is being inserted INTO, so every verb
+ * that adds children to an element already in the document has to supply it.
+ * Without this, bw.append/patch/replace/syncChildren built `<rect>` and
+ * friends with createElement() in the XHTML namespace: they appear in the DOM,
+ * match selectors, and render nothing at all.
+ *
+ * foreignObject is the one place SVG hands back to HTML, so its children
+ * deliberately do not inherit the SVG namespace.
+ *
+ * @param {Element} parentEl - Element the new children will be inserted into
+ * @param {Object} [options] - Existing create options to extend
+ * @returns {Object} Options carrying _svgCtx when the parent is in SVG
+ */
+// Run a lifecycle hook, marking any throw with the hook it came from so the
+// single catch in mountTree can report the right name. Guarded because a
+// thrown non-object (a string, say) has nowhere to put the mark.
+function _tagHook(fn, name, el, state) {
+  try {
+    fn(el, state);
+  } catch (e) {
+    if (e && typeof e === 'object') e._bwHook = name;
+    throw e;
+  }
+}
+
+function _nsOptsFor(parentEl, options) {
+  var base = options || {};
+  if (!parentEl || base._svgCtx || parentEl.namespaceURI !== _SVG_NS) return base;
+  if (parentEl.tagName && parentEl.tagName.toLowerCase() === 'foreignobject') return base;
+  return Object.assign({}, base, { _svgCtx: true });
+}
 
 /**
  * Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class`.
@@ -9158,7 +9278,11 @@ function _hydrateElement(el, opts) {
     el.classList.add('bw_is_component_' + opts.type);
   }
 
-  // Store state (clone so TACO isn't retained)
+  // Store state BY REFERENCE -- the comment here used to claim a clone, which
+  // it never was. The reference is deliberate: two elements mounted from one
+  // TACO share a state object, which is what makes the shared-state pattern in
+  // docs/state-management.md work. It also means a caller holding the TACO can
+  // still see and mutate the live state.
   if (opts.state) {
     el._bw_state = opts.state;
   }
@@ -9168,13 +9292,33 @@ function _hydrateElement(el, opts) {
     el._bw_render = opts.render;
   }
 
-  // Store mounted function on element (fired later by mountTree)
-  if (opts.mounted) {
-    el._bw_mounted_fn = opts.mounted;
-  } else if (opts.render && !opts.mounted) {
-    // Auto-mount: if render exists but no mounted, auto-call render at mount
+  // Store mounted function on element (fired later by mountTree).
+  //
+  // There is one slot, so supplying both `render` and `mounted` used to mean
+  // `mounted` claimed it and the initial render never ran -- the component
+  // mounted empty, with no warning. That caught the quickstart's own flagship
+  // example and five more in docs/state-management.md. When both are present
+  // the slot now runs render first, then mounted, so the hook observes the
+  // rendered DOM. Order matters: `mounted` commonly measures or wires up the
+  // content `render` produced.
+  //
+  // Both halves run through _bw_mounted_fn, so a throw from either arrives at
+  // one catch in mountTree. Tag which half it was: calling a render failure
+  // "o.mounted error" names the wrong hook, and bw.refresh() lets the same
+  // render throw under its own name -- so the same function would fail two
+  // different ways depending on whether this was the first mount or a later
+  // refresh.
+  if (opts.render && opts.mounted) {
     el._bw_mounted_fn = function(mountEl, state) {
-      opts.render(mountEl, state);
+      _tagHook(opts.render, 'render', mountEl, state);
+      opts.mounted(mountEl, state);
+    };
+  } else if (opts.mounted) {
+    el._bw_mounted_fn = opts.mounted;
+  } else if (opts.render) {
+    // Auto-mount: render alone is still invoked at mount
+    el._bw_mounted_fn = function(mountEl, state) {
+      _tagHook(opts.render, 'render', mountEl, state);
     };
   }
 
@@ -9220,7 +9364,7 @@ function _hydrateElement(el, opts) {
             if (value != null && typeof value === 'object' && value.t) {
               // TACO through slots runs mount pipeline
               target.innerHTML = '';
-              var child = bw.create(value);
+              var child = bw.create(value, _nsOptsFor(target));
               target.appendChild(child);
               if (el.isConnected) bw.mountTree(child);
             } else {
@@ -9344,8 +9488,15 @@ function _mountNode(el) {
     if (el._bw_mounted_fn) {
       try { el._bw_mounted_fn(el, el._bw_state || {}); }
       catch (e) {
-        _cw('o.mounted error: ' + e.message);
-        bw.pub('bw:diag', { code: 'mounted_hook_error', uuid: uuid, msg: e.message });
+        // Which half threw. Render and mounted share this slot since 2.1.12.
+        var hook = (e && e._bwHook === 'render') ? 'render' : 'mounted';
+        _cw('o.' + hook + ' error: ' + e.message);
+        bw.pub('bw:diag', {
+          code: hook === 'render' ? 'render_hook_error' : 'mounted_hook_error',
+          hook: hook,
+          uuid: uuid,
+          msg: e.message
+        });
       }
     }
 
@@ -9499,7 +9650,7 @@ bw.unmountChildren = function(el) {
  * @see bw.patch
  * @example
  * bw.clear('#list');                  // empties #list, hooks fire
- * bw.mount('#list', rows.map(row));   // refill it
+ * bw.mount('#list', rows.map(function(r) { return { t: 'li', c: r.name }; }));
  */
 bw.clear = function(ref) {
   var el = bw.el(ref);
@@ -9888,52 +10039,57 @@ bw._debug = function() {
   };
 };
 
-/**
- * Hard reset all singleton state for test isolation.
- * @category Internal
- */
-bw._resetForTest = function() {
-  // Clear node registry
-  for (var k in bw._nodeMap) {
-    if (_hop.call(bw._nodeMap, k)) delete bw._nodeMap[k];
-  }
-  // Clear topics
-  for (var t in bw._topics) {
-    if (_hop.call(bw._topics, t)) delete bw._topics[t];
-  }
-  // Clear detached set
-  for (var d in bw._detached) {
-    if (_hop.call(bw._detached, d)) delete bw._detached[d];
-  }
-  // Clear mounted set
-  for (var m in bw._mounted) {
-    if (_hop.call(bw._mounted, m)) delete bw._mounted[m];
-  }
-  bw._subIdCounter = 0;
-  bw._idCounter = 0;
-  // Reset janitor
-  if (bw.janitor) {
-    if (typeof bw.janitor._reset === 'function') bw.janitor._reset();
-  }
-  // Reset actions — clear installed state, keep enabled (actions are ON by default)
-  if (bw.actions) {
-    if (typeof bw.actions._reset === 'function') bw.actions._reset();
-    // Re-enable (actions are ON by default), but don't install yet
-    // (install will happen lazily on next mountTree or enable call)
-    bw.actions.enable();
-  }
-  // Reset remote/wire
-  bw.remote = null;
-  for (var wl in bw._wireListeners) {
-    if (_hop.call(bw._wireListeners, wl)) {
-      try { bw._wireListeners[wl](); } catch (e) {}
-      delete bw._wireListeners[wl];
-    }
-  }
-  for (var cr in bw._clientRemotes) {
-    if (_hop.call(bw._clientRemotes, cr)) delete bw._clientRemotes[cr];
-  }
-};
+                         
+   
+                                                     
+  
+                                                                    
+                                                                          
+                     
+   
+                               
+                        
+                              
+                                                         
+   
+                 
+                             
+                                                       
+   
+                       
+                               
+                                                           
+   
+                      
+                              
+                                                         
+   
+                       
+                    
+                  
+                   
+                                                                     
+   
+                                                                                    
+                   
+                                                                     
+                                                                   
+                                                                    
+                        
+   
+                      
+                   
+                                     
+                                           
+                                                   
+                                   
+     
+   
+                                     
+                                                                       
+   
+  
+                       
 
 /**
  * Mount a TACO into a target element. Returns the root element (single root),
@@ -9950,7 +10106,19 @@ bw._resetForTest = function() {
  * @category DOM Generation
  */
 bw.mount = function(target, taco, options) {
-  var container = _is(target, 'string') ? bw.$(target)[0] : target;
+  // Every other verb that takes a target (patch, toggleClass, addClass, clear,
+  // update, message) resolves through bw.el and so accepts a bare element id.
+  // mount used a plain selector query, so bw.mount('status') failed with
+  // "target not found" while bw.patch('status') worked. One rule for the
+  // caller: any form bw.el takes, mount takes. Reported by jazzmac 2026-10-05.
+  //
+  // Live query FIRST, bw.el second -- deliberately, not for style. bw.el
+  // consults a node cache that can return a detached element (the
+  // detach-exempt path), and mounting into a node the document cannot see
+  // renders content nobody will ever find. Resolving bw.el first broke a
+  // documented example exactly that way. A selector therefore behaves as it
+  // always has, and bare ids and UUID tokens fall through to bw.el.
+  var container = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
   if (!container) {
     _cw('bw.mount: target not found');
     return null;
@@ -9967,14 +10135,14 @@ bw.mount = function(target, taco, options) {
   if (_isA(taco)) {
     for (var i = 0; i < taco.length; i++) {
       if (taco[i] != null) {
-        var child = bw.create(taco[i], options || {});
+        var child = bw.create(taco[i], _nsOptsFor(container, options));
         container.appendChild(child);
         created.push(child);
         if (!firstEl) firstEl = child;
       }
     }
   } else {
-    firstEl = bw.create(taco, options || {});
+    firstEl = bw.create(taco, _nsOptsFor(container, options));
     container.appendChild(firstEl);
     created.push(firstEl);
   }
@@ -10013,9 +10181,16 @@ bw.DOM = bw.mount;
  * @category DOM Generation
  */
 bw.append = function(target, content, opts) {
-  var container = _is(target, 'string') ? bw.$(target)[0] : target;
-  if (!container) return null;
-  var child = bw.create(content);
+  // Same resolution as bw.mount: live query first, bw.el second. See the note
+  // there. append was missed when mount was fixed, and it returned null with
+  // no warning at all, so bw.append('status', ...) did nothing and said
+  // nothing.
+  var container = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
+  if (!container) {
+    _cw('bw.append: target not found');
+    return null;
+  }
+  var child = bw.create(content, _nsOptsFor(container));
   if (opts && opts.before !== undefined) {
     var ref = opts.before;
     if (typeof ref === 'number') ref = container.children[ref] || null;
@@ -10046,7 +10221,7 @@ bw.replace = function(ref, taco) {
 
   if (taco == null) return null;
 
-  var neo = bw.create(taco);
+  var neo = bw.create(taco, _nsOptsFor(parent));
   if (parent) {
     if (next) parent.insertBefore(neo, next);
     else parent.appendChild(neo);
@@ -10191,14 +10366,14 @@ bw.patch = function(id, content, attr) {
     el.innerHTML = '';
     content = _flat(content);
     for (var i = 0; i < content.length; i++) {
-      if (content[i] != null) el.appendChild(bw.create(content[i]));
+      if (content[i] != null) el.appendChild(bw.create(content[i], _nsOptsFor(el)));
     }
     bw.mountTree(el);
   } else if (_is(content, 'object') && content !== null && (content.t || content.__bw_raw)) {
     // TACO or bw.raw() content: full pipeline
     bw.unmountChildren(el);
     el.innerHTML = '';
-    el.appendChild(bw.create(content));
+    el.appendChild(bw.create(content, _nsOptsFor(el)));
     bw.mountTree(el);
   } else if (_is(content, 'object') && content !== null) {
     // Plain object without .t → attribute patch
@@ -10307,7 +10482,7 @@ bw.syncChildren = function(parentEl, items, opts) {
     } else {
       // Create new
       var taco = createFn(items[j]);
-      var neo = bw.create(taco);
+      var neo = bw.create(taco, _nsOptsFor(parentEl));
       neo._bw_key = k;
       var insertBefore = prevNode ? prevNode.nextSibling : parentEl.firstChild;
       parentEl.insertBefore(neo, insertBefore);
@@ -10478,7 +10653,7 @@ bw.pub = function(topic, detail) {
  * var unsub = bw.sub('score:updated', function(detail) {
  *   console.log(detail.player, 'scored', detail.score);
  * });
- * // Later: unsub() to stop listening
+ * // Later: bw.unsub() to stop listening
  *
  * // Wildcard: listen to all 'agui:' topics
  * bw.sub('agui:*', function(detail, topic) {
@@ -10869,7 +11044,8 @@ bw._resolveTemplate = function(str, state, compile) {
  * @category Component
  * @example
  * bw.message('my_carousel', 'goToSlide', 2);
- * // Or from SSE handler:
+ * // Or from an SSE handler:
+ * var es = new EventSource('/bw/events/1');
  * es.onmessage = function(e) {
  *   var msg = JSON.parse(e.data);
  *   bw.message(msg.target, msg.action, msg.data);
@@ -13145,7 +13321,8 @@ bw.makeDataTable = function(config) {
  */
 bw.render = function(target, position, taco) {
   try {
-    var targetEl = _is(target, 'string') ? bw.$(target)[0] : target;
+    // Same resolution as bw.mount and bw.append -- one rule for every verb.
+    var targetEl = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
     if (!targetEl) return { el: null, ok: false, error: 'target not found' };
 
     var el;
@@ -13228,7 +13405,7 @@ bw.variantClass = variantClass;
  * // => { type: 'accordion', factory: 'makeAccordion' }
  *
  * // Check if a type exists:
- * if (bw.catalog('chart')) { ... }
+ * if (bw.catalog('chart')) { console.log('chart exists'); }
  *
  * // Get just the type names:
  * bw.catalog().map(function(c) { return c.type; });
@@ -13286,8 +13463,10 @@ function _parseKeys(fn) {
   return keys.length ? keys : null;
 }
 
-/** Clear the warn-once memo for unknown options. Test helper. @category Internal */
-bw._propWarnReset = function() { _propWarned = {}; };
+                         
+                                                                                    
+                                                     
+                       
 
 function _checkProps(name, fn, props) {
   if (!bw.warnUnknownProps || !props || !_is(props, 'object') || _isA(props)) return;

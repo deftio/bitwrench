@@ -54,7 +54,7 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 
 - `npm test` — Unit tests with coverage (Mocha + c8)
 - `npm run test:examples` — Playwright e2e tests for example pages
-- `npm run test:all` — Run all test suites
+- `npm run test:all-unit` — Every unit suite under one c8 run
 - `npm run lint` — ESLint over `src/` (is the code well-formed?)
 - `npm run lint:drift` — drift-lint over docs/examples/pages (do the docs still tell the truth?). Runs automatically after `npm test` and `npm run build`. See [docs/drift-lint.md](docs/drift-lint.md) — if you remove or rename a user-facing API, add a rule in the same commit.
 - `npm run test:gcc` — the C/C++ suite under **gcc on Linux**, in Docker. **Run this if you touch `embedded_c/` or the C/C++ examples.** macOS ships clang, CI runs gcc, and they are not interchangeable: clang does not implement `-Wformat-truncation`, so a header that nests a same-sized buffer passes locally and fails CI. v2.1.11 reached main that way. Skips itself when Docker is absent.
@@ -75,7 +75,7 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 | `npm run cleanbuild` | Clean build with index, API reference, and build manifest |
 | `npm run build:release` | Snapshot dist/ into releases/v2/ |
 | `npm run build:builds` | Generate dist/builds.json manifest |
-| `npm run build:index` | Generate index.html using bitwrench |
+| `npm run build:readme` | Generate readme.html from README.md |
 | `npm run build:api-reference` | Generate API reference page |
 
 ## Contributing (Pull Requests)
@@ -108,60 +108,24 @@ go through [SECURITY.md](SECURITY.md), not the public issue tracker.
 
 ## Release Process (Maintainers Only)
 
-This section is for the project maintainer. Contributors should follow the PR workflow above.
-
-### Starting a New Dev Cycle
-
-```bash
-npm run start-release -- "feature name"           # patch bump (default)
-npm run start-release -- minor "new subsystem"     # minor bump
-npm run start-release -- major "breaking change"   # major bump
-```
-
-This script (`tools/start-release.js`):
-1. Verifies you are on `main` with a clean working tree
-2. Pulls latest `main`
-3. Bumps version in `package.json` (via `npm version`)
-4. Generates `src/version.js`
-5. Creates `feature/<slugified-name>` branch
-6. Commits the version bump and pushes with `-u`
-
-### Releasing
-
-When development is complete, run `npm run release` (`tools/release.js`) on the feature branch. This script:
-
-1. **Pre-flight checks** — clean tree, version not yet on npm
-2. **Clean build** — `npm run clean && npm run build && npm run build:generated`
-3. **Lint** — `npm run lint`
-4. **Tests** — `npm test` and `npm run test:cli`
-5. **Version consistency** — verifies package.json, src/version.js, and dist banner all agree
-6. **Bundle size gate** — gzipped UMD and ESM must be under 46KB. Measured against the
-   `.gz` the build writes (level 9), which is what actually ships. Before
-   attempting any size optimization, read
-   [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) — several
-   obvious approaches (string interning, `passes: 3`, toplevel mangling) have
-   been measured and are useless or counterproductive.
-7. **Archive** — copies dist/ to releases/v2/
-8. **Git commit and push** — stages dist/, releases/v2/, and generated files, commits, pushes
-
-Then merge to `main`:
+The release process is documented in full in
+[RELEASE-PROCEDURE.md](RELEASE-PROCEDURE.md), which is the single source of
+truth. In outline:
 
 ```bash
-git checkout main
-git merge feature/<name>
-git push origin main
+npm run start-release -- patch "feature name"   # local feature branch + version bump
+# ... develop ...
+npm run release                                 # ten gates, then squash-merge to main
 ```
 
-**Everything after push is automatic.** The CI pipeline (`.github/workflows/publish.yml`):
+Everything after the push to `main` is automatic: CI tags the commit, creates
+the GitHub Release and publishes to npm with provenance. Never run
+`npm publish` by hand and never create a tag by hand.
 
-- Runs tests on push to `main` (`.github/workflows/ci.yml`)
-- On success, checks if the version is already on npm
-- If not yet published: creates a git tag, pushes it, creates a GitHub Release with dist files, and publishes to npm with provenance
+Two rules worth repeating here, because breaking either is unrecoverable for
+a published version:
 
-**Do NOT run `npm publish` manually or create tags by hand.** CI handles
-tagging, GitHub Releases, and npm publishing automatically when a new
-version is pushed to `main`.
-
-**Cardinal rule: dist/ artifacts must be exactly what the release build
-produced — byte for byte.** SRI hashes and source maps change on every
-build, so stale artifacts mean npm gets a different package than GitHub.
+- **Feature branches are never pushed.** Only `main` goes to the remote.
+- **`dist/` must be byte-for-byte what the release build produced.** SRI
+  hashes and a build date change on every build, so stale artifacts mean npm
+  gets a different package than GitHub.

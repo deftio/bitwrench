@@ -74,11 +74,16 @@ export interface TacoOptions {
   slots?: Record<string, string>;
   /** Component type identifier (used internally by BCCL) */
   type?: string;
-  /** User tag for bw.message() addressing */
-  userTag?: string;
-  /** Declarative event handlers for bw.actions */
-  events?: Record<string, (data: any, el: HTMLElement) => void>;
 }
+
+// Removed in 2.1.12: `userTag` and `events` were declared here but no renderer
+// path ever read them, so the types certified options that silently did
+// nothing. `userTag` was part of ComponentHandle, removed in 2.0.19;
+// bw.message() addresses elements via bw.el() and a class-token fallback.
+// `events` was a declarative-handler idea that was never wired -- use
+// `a: { onclick: fn }` or a `bw_act_*` class with bw.actions.
+// The `taco-options-drift` rule in tools/drift-lint.js now fails the build if
+// this interface and the renderer disagree again.
 
 /**
  * TACO object -- Tag, Attributes, Content, Options.
@@ -191,7 +196,7 @@ export interface CardConfig {
   footer?: string | Taco;
   image?: string;
   variant?: Variant;
-  shadow?: boolean | string;
+  shadow?: 'none' | 'sm' | 'md' | 'lg';
   clickable?: boolean;
   style?: Record<string, string | number>;
   class?: string;
@@ -313,8 +318,8 @@ export interface RouterConfig {
   mode?: 'hash' | 'history';
   base?: string;
   target?: string;
-  before?: (path: string) => boolean | void;
-  after?: (path: string) => void;
+  before?: (toPath: string, fromPath: string) => boolean | string | void;
+  after?: (toPath: string, fromPath: string) => void;
 }
 
 export interface RouterHandle {
@@ -397,7 +402,15 @@ export interface Bitwrench {
   /** Janitor: document-level cleanup for orphaned lifecycle elements */
   janitor(options?: { verbose?: boolean }): void;
   /** Reconcile children of parent with new TACO list */
-  syncChildren(parent: HTMLElement, items: Taco[], options?: { key?: string }): void;
+  syncChildren(
+    parent: HTMLElement,
+    items: unknown[],
+    options: {
+      key: (item: unknown) => string;
+      create: (item: unknown) => Taco;
+      update?: (el: HTMLElement, item: unknown) => void;
+    }
+  ): void;
   /** Declared dataflow: recompute fn(inputs...) on any input publish, publish result to outTopic. Returns disposer. */
   derive(inputs: string[], fn: (...values: any[]) => any, outTopic: string, opts?: { seed?: any[]; immediate?: boolean; el?: HTMLElement }): () => void;
 
@@ -650,8 +663,12 @@ export interface Bitwrench {
 declare const bw: Bitwrench;
 export default bw;
 
-// Named BCCL exports for ESM tree-shaking:
+// Named BCCL exports. A spelling convenience, not a smaller build: the ESM
+// artifact is one pre-bundled scope, so importing one factory costs what
+// importing all of them costs. See dev/bitwrench-2.1.6-size-opt-findings.md s6.
 //   import { makeCard, makeButton } from 'bitwrench';
+// makeTable, makeTableFromArray, makeDataTable and makeBarChart are reached as
+// bw.* only -- see the Bitwrench interface above. They are not named exports.
 export function makeCard(config?: CardConfig | string): Taco;
 export function makeButton(config?: ButtonConfig | string): Taco;
 export function makeContainer(config?: ComponentConfig): Taco;
@@ -699,10 +716,6 @@ export function makeSkeleton(config?: ComponentConfig): Taco;
 export function makeAvatar(config?: ComponentConfig): Taco;
 export function makeStatCard(config?: ComponentConfig): Taco;
 export function makeMediaObject(config?: ComponentConfig): Taco;
-export function makeTable(config?: TableConfig): Taco;
-export function makeTableFromArray(config?: TableConfig): Taco;
-export function makeDataTable(config?: TableConfig): Taco;
-export function makeBarChart(config?: ComponentConfig): Taco;
 export function make(type: string, props?: ComponentConfig): Taco;
 export function variantClass(variant: string): string;
 export const BCCL: Record<string, any>;

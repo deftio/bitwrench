@@ -442,6 +442,28 @@ el._bw_render;        // render function
 bw.inspect(el, 0);       // introspect element (state, handles, type, classes)
 ```
 
+### Checking TACO you generated
+
+If you generate TACO, `verify.assert(taco)` in a test is how you check your own
+output. It is opt-in and a separate module -- bitwrench renders without it and
+it never runs in production.
+
+<!-- doc-test: skip (shows the import/require form itself; verify is a separate module) -->
+```javascript
+const { verify } = require('bitwrench/verify');  // ESM: import verify from 'bitwrench/verify'
+
+verify({ t: 'p', c: 'hi' });        // => []  (clean)
+verify({ t: 'h1', cc: 'hi' });
+// => [ { severity: 'error', code: 'unknown-key', path: '', key: 'cc', hint: 'c' } ]
+
+verify.assert(taco);                       // true when clean, throws otherwise
+verify(frame, { mode: 'wire' });           // also rejects functions and string on* handlers
+```
+
+`verify()` returns an array of findings, never throws and never mutates the
+input. Reach for it when TACOs are generated, numerous, or leaving your hands.
+Full guide: [verify.md](verify.md).
+
 ### bwcli attach -- remote debugging REPL
 
 Connect a terminal REPL to any page for live inspection:
@@ -722,9 +744,17 @@ var card: Taco = bw.makeCard({ title: 'Hello', content: 'World' });
 // Style configs get autocomplete
 var styles = bw.makeStyles({ primary: '#336699' } as StyleConfig);
 
-// Named BCCL imports for tree-shaking
-import { makeCard, makeTable, makeButton } from 'bitwrench/bccl';
+// Named BCCL imports -- a spelling convenience, NOT a smaller bundle
+import { makeCard, makeButton } from 'bitwrench/bccl';
 ```
+
+Named imports do not shrink the bundle: the ESM artifact is a single
+pre-bundled file, so `import { makeButton }` and `import bw` measure the same
+size. Use whichever reads better.
+
+`makeTable`, `makeTableFromArray`, `makeDataTable` and `makeBarChart` live in
+the core, not in BCCL. They are reached as `bw.makeTable(...)` only --
+importing them by name from `bitwrench/bccl` or `bitwrench` gives `undefined`.
 
 Core types: `Taco`, `TacoContent`, `TacoAttributes`, `TacoOptions`, `StyleConfig`,
 `Palette`, `ColorShades`, `Styles`, `RouterConfig`. All component configs are

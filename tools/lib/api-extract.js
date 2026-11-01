@@ -37,6 +37,26 @@ const EXPORT_FN = /^\s*export\s+function\s+([\w$]+)\s*\(([^)]*)\)/;
 // bw exposes that name, so a component handle's `sort:` is not mistaken for one.
 const LITERAL_FN = /^\s*([\w$]+)\s*:\s*function\s*\(([^)]*)\)/;
 
+// comment-parser flattens a multi-line @example into a single description
+// string. That is fatal for JavaScript: a `//` comment then swallows every
+// statement after it, so `bw.once`'s example published as one line ending in
+// `// No need to unsubscribe ... }); // Cancel ...` -- syntactically invalid,
+// and silently so until docs/bitwrench_api.md was fed to the doc-example test.
+// Reading the raw comment lines keeps the newlines the author wrote.
+function exampleFromSource(block) {
+  let capturing = false;
+  const out = [];
+  for (const line of block.source || []) {
+    const raw = line.source;
+    if (raw.includes('@example')) { capturing = true; continue; }
+    if (!capturing) continue;
+    if (/^\s*\*\s*@/.test(raw)) break;   // next tag
+    if (/^\s*\*\//.test(raw)) break;     // end of block
+    out.push(raw.replace(/^\s*\*\s?/, ''));
+  }
+  return out.join('\n').trim() || null;
+}
+
 function tagsOf(block) {
   const params = block.tags
     .filter((t) => t.tag === 'param')
@@ -49,7 +69,7 @@ function tagsOf(block) {
   return {
     params,
     returns: returnsTag ? { type: returnsTag.type || '', desc: returnsTag.description || '' } : null,
-    example: exampleTag ? (exampleTag.description || '').trim() : null,
+    example: exampleTag ? (exampleFromSource(block) || (exampleTag.description || '').trim() || null) : null,
     category: categoryTag
       ? categoryTag.name + (categoryTag.description ? ' ' + categoryTag.description : '')
       : null

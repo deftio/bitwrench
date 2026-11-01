@@ -34,6 +34,30 @@ function loadJsonlFindings(jsonlPath) {
   return { findings: findings, fileDone: fileDone, errors: errors };
 }
 
+/**
+ * Collapse duplicate findings.
+ *
+ * Two sources produce genuine duplicates, so this is not defensive padding.
+ * chunkText overlaps the last 20 lines of each chunk into the next for
+ * boundary context, so a violation sitting in that overlap is shown to the
+ * model twice and reported twice. And a resumed run re-audits a file that
+ * stopped mid-chunk, re-reporting whatever its earlier chunks already found.
+ * Keyed on file + line + checkId: the same check firing on the same line is
+ * the same finding, whichever pass produced it.
+ */
+export function dedupeFindings(findings) {
+  var seen = Object.create(null);
+  var out = [];
+  for (var i = 0; i < findings.length; i++) {
+    var f = findings[i];
+    var key = f.file + '\u0000' + f.line + '\u0000' + f.checkId;
+    if (seen[key]) continue;
+    seen[key] = 1;
+    out.push(f);
+  }
+  return out;
+}
+
 function countBy(arr, keyFn) {
   var m = {};
   arr.forEach(function (x) {
@@ -75,7 +99,12 @@ export function writeReport(runDir) {
   var jsonlPath = join(runDir, 'findings.jsonl');
   var meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8')) : {};
   var parsed = loadJsonlFindings(jsonlPath);
-  var findings = parsed.findings;
+  var rawCount = parsed.findings.length;
+  var findings = dedupeFindings(parsed.findings);
+  var dupesDropped = rawCount - findings.length;
+  var incomplete = parsed.fileDone.filter(function (d) {
+    return d.incomplete === true;
+  });
 
   var bySev = countBy(findings, function (f) {
     return f.severity || 'medium';
@@ -129,7 +158,24 @@ export function writeReport(runDir) {
   md.push('| Findings | ' + findings.length + ' |');
   md.push('| High / Medium / Low | ' + (bySev.high || 0) + ' / ' + (bySev.medium || 0) + ' / ' + ((bySev.low || 0) + (bySev.info || 0)) + ' |');
   md.push('| Parse/provider errors | ' + parsed.errors.length + ' |');
+  md.push('| Duplicates collapsed | ' + dupesDropped + ' |');
+  md.push('| Incomplete files | ' + incomplete.length + ' |');
+  if (meta.stoppedOnBudget) {
+    md.push('| Stopped on budget | yes -- resume to finish |');
+  }
   md.push('');
+
+  if (incomplete.length) {
+    md.push('### Incomplete files');
+    md.push('');
+    md.push('A chunk failed after retries, so these were only partly audited.');
+    md.push('Their findings below are real but not exhaustive. `--resume` re-audits them.');
+    md.push('');
+    incomplete.forEach(function (d) {
+      md.push('- `' + escCell(d.file) + '` (' + (d.findingCount || 0) + ' partial finding(s))');
+    });
+    md.push('');
+  }
   md.push('### Top checkIds');
   md.push('');
   md.push(topChecks || '_None._');

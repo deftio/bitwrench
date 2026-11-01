@@ -147,6 +147,9 @@
             ]
           }),
 
+          { t: 'p', a: { class: 'intro-text' },
+            c: bw.raw('All of that assumes someone is looking. For the run where nobody is -- a test, a generated payload, a frame from a device, CI -- there is an opt-in checker for the TACO itself: <a href="#section-verify">verify</a>.') },
+
           site.makeCallout('tip', 'Compare with React DevTools', {
             t: 'table', a: { class: 'api-table' },
             c: [
@@ -851,6 +854,100 @@
 
 
     // =========================================================================
+    // Section 10: Checking TACO -- bitwrench-verify
+    // =========================================================================
+
+    var section10 = site.makeDemoSection(
+      'section-verify',
+      'Checking TACO: verify',
+      bw.raw('Everything above assumes someone is looking at the page. <code>verify</code> is for the run where nobody is: a test, a generated payload, a frame from a device, a TACO an LLM wrote, a pipe in CI.'),
+      { t: 'div', c: [
+        { t: 'p', a: { class: 'intro-text' },
+          c: bw.raw('bitwrench renders <strong>without</strong> verify. There is no build step and verify does not add one -- if you can see the page, you can already see the mistake. It ships as its own module, under 3 KB gzipped, outside the core bundle, and never runs in production.') },
+
+        { t: 'h3', c: 'Loading verify' },
+        { t: 'p', c: bw.raw('In a page, after bitwrench:') },
+        consoleBlock([
+          '&lt;script src="https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench-verify.min.js"&gt;&lt;/script&gt;',
+          '<span class="console-comment">// then: bwv.verify(taco)</span>'
+        ]),
+        { t: 'p', c: bw.raw('In Node, where the test suite lives:') },
+        consoleBlock([
+          "<span class=\"console-comment\">// ESM</span>",
+          "import verify from 'bitwrench/verify';",
+          '',
+          "<span class=\"console-comment\">// CommonJS -- destructure; the CJS export is { default, verify }</span>",
+          "const { verify } = require('bitwrench/verify');"
+        ]),
+
+        { t: 'h3', c: 'What it returns' },
+        { t: 'p', c: bw.raw('<code>verify(input, opts)</code> returns an <strong>array of findings</strong> -- empty when the tree is clean. It never throws and never mutates the input.') },
+        site.makeCodeBlock(
+          "verify({ t: 'p', c: 'hi' })\n" +
+          "// []\n" +
+          "\n" +
+          "verify({ t: 'h1', a: { clas: 'x' } })\n" +
+          "// [ { severity: 'warn', code: 'attr-typo', path: 'a.clas', key: 'clas', hint: 'class' } ]\n" +
+          "\n" +
+          "verify({ t: 'h1', cc: 'hi' })\n" +
+          "// [ { severity: 'error', code: 'unknown-key', path: '', key: 'cc', hint: 'c' } ]\n" +
+          "\n" +
+          "verify({ t: 'b', a: { onclick: function () {} } }, { mode: 'wire' })\n" +
+          "// [ { severity: 'error', code: 'function-in-wire', path: 'a.onclick', key: 'onclick' } ]",
+          'js'
+        ),
+        { t: 'p', c: bw.raw('A finding is <code>{ severity, code, path, key?, hint? }</code>. <code>severity</code> is <code>\'error\'</code> or <code>\'warn\'</code>; <code>path</code> points at the offending node (<code>c[2].a</code>, or the empty string for the root); <code>hint</code> is a correction when verify is confident. There are 22 codes -- 16 errors and 6 warnings; <code>handler-string</code> is counted in both, a warning in authored mode and an error in wire mode.') },
+
+        { t: 'h3', c: 'In a test' },
+        { t: 'p', c: bw.raw('<code>verify.assert()</code> is the same checker with the opposite contract: <code>true</code> when clean, a throw otherwise. A component factory that starts returning a malformed tree fails the test instead of rendering an empty div.') },
+        site.makeCodeBlock(
+          "verify.assert(makeStatsCard({ label: 'Users', value: 42 }));\n" +
+          "\n" +
+          "// strict also fails on warnings, not just errors\n" +
+          "verify.assert(taco, { strict: true });\n" +
+          "\n" +
+          "// suppress specific codes by name ('all' is deliberately not honoured)\n" +
+          "verify(taco, { ignore: ['raw-unchecked'] });",
+          'js'
+        ),
+
+        { t: 'h3', c: 'Options' },
+        { t: 'table', a: { class: 'api-table' }, c: [
+          { t: 'thead', c: { t: 'tr', c: [
+            { t: 'th', c: 'Option' },
+            { t: 'th', c: 'Effect' }
+          ]}},
+          { t: 'tbody', c: [
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "mode: 'authored'" } },
+              { t: 'td', c: 'The default. Functions are allowed in the slots the renderer reads them from.' }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "mode: 'wire'" } },
+              { t: 'td', c: bw.raw('Additionally rejects functions and string <code>on*</code> handlers -- neither survives JSON or <code>bw.apply()</code>, so a frame carrying one is not what its author thinks it is.') }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: "ignore: [codes]" } },
+              { t: 'td', c: bw.raw('Suppress findings by code. The returned array carries non-enumerable <code>suppressed</code> and <code>suppressedCodes</code>, so a deep-equal against <code>[]</code> still passes.') }
+            ]},
+            { t: 'tr', c: [
+              { t: 'td', c: { t: 'code', c: 'strict: true' } },
+              { t: 'td', c: bw.raw('On <code>verify.assert()</code> only: fail on warnings too.') }
+            ]}
+          ]}
+        ]},
+
+        site.makeCallout('tip', 'When to reach for it', {
+          t: 'div', c: [
+            { t: 'p', c: bw.raw('Use it when TACOs are <strong>generated, numerous, or leaving your hands</strong>. Skip it when the shapes are fixed and few and someone can see the page.') },
+            { t: 'p', c: bw.raw('It is not a type checker -- <code>bitwrench.d.ts</code> already ships, and types check the code you wrote, not the data that arrived at runtime. It is not a CSS or JS linter either. Full guide: <a href="../docs/verify.md">docs/verify.md</a>.') }
+          ]
+        })
+      ]}
+    );
+
+
+    // =========================================================================
     // Assemble and mount the full page
     // =========================================================================
     var pageHeader = {
@@ -866,7 +963,7 @@
 
     var contentWrapper = {
       t: 'div', a: { class: 'content-container wide' },
-      c: [section0, section9, section1, section2, section3, section4, section5, section6, section7, section8]
+      c: [section0, section9, section1, section2, section3, section4, section5, section6, section7, section8, section10]
     };
 
     bw.DOM('#app', [pageHeader, contentWrapper]);

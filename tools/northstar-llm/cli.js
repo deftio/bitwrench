@@ -8,6 +8,7 @@
  */
 
 import { cmdRun, cmdDryRun, cmdFinalize, cmdSelftest } from './lib/run.js';
+import { parseDuration } from './lib/config.js';
 
 var HELP = [
   'northstar-llm — audit-only reviewer for bitwrench north-star drift',
@@ -41,6 +42,14 @@ var HELP = [
   '                         --path "pages/**/*.html"',
   '  --concurrency <n>    Parallel file audits (default: 1 for large local models)',
   '  --out-dir <dir>      Output root (default: dbg/northstar-llm)',
+  '  --budget <dur>       Wall-clock budget: 6h, 90m, 3600s. On expiry the',
+  '                       current file finishes, the report is written, and',
+  '                       the run exits 0 with meta.stoppedOnBudget = true.',
+  '                       Resume it later with --resume (default: no budget)',
+  '  --max-retries <n>    Retries per LLM call on transport errors, 429 and',
+  '                       5xx; waits 2s / 8s / 30s. 4xx is never retried.',
+  '                       Unparseable output always gets exactly one re-ask',
+  '                       on top of this (default: 3)',
   '  --resume [runDir]    Continue a previous run; skip files already in',
   '                       that run\'s findings.jsonl. If runDir omitted,',
   '                       uses <out-dir>/latest',
@@ -68,10 +77,16 @@ var HELP = [
   '',
   'Outputs (gitignored):',
   '  dbg/northstar-llm/<timestamp>/',
-  '    meta.json         provider, model, git HEAD, timing',
+  '    meta.json         provider, model, git HEAD, timing, budget, retries',
   '    findings.jsonl    streamed as each file finishes (crash-safe)',
   '    report.md         mechanical markdown tables (regenerable)',
+  '    rejects/          full replies that would not parse after a re-ask',
   '  dbg/northstar-llm/latest -> most recent run dir',
+  '',
+  'On failure: transport errors / 429 / 5xx retry with backoff (2s/8s/30s);',
+  'other 4xx never retries; an unparseable reply gets exactly one re-ask, then',
+  'is saved to rejects/. A file that dies mid-way keeps the findings its',
+  'earlier chunks produced and is marked incomplete, so --resume redoes it.',
   '',
   'Ignore pragmas (any comment style):',
   '  northstar-llm:ignore-next-line: reason',
@@ -127,6 +142,16 @@ function parseArgs(argv) {
       }
     } else if (a === '--out-dir') {
       flags.outDir = requireValue(args, ++i, '--out-dir');
+    } else if (a === '--budget') {
+      flags.budget = requireValue(args, ++i, '--budget');
+      // Validate here, not deep in cmdRun: a typo'd budget is a usage error
+      // and deserves the help text, not a stack trace.
+      parseDuration(flags.budget);
+    } else if (a === '--max-retries') {
+      flags.maxRetries = Number(requireValue(args, ++i, '--max-retries'));
+      if (!Number.isFinite(flags.maxRetries) || flags.maxRetries < 0) {
+        throw new Error('--max-retries must be 0 or a positive number');
+      }
     } else if (a === '--config') {
       flags.config = requireValue(args, ++i, '--config');
     } else if (a === '--resume') {

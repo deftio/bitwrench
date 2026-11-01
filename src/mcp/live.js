@@ -156,14 +156,22 @@ export var liveHandlers = {
     var action = args.action || 'replace';
 
     try {
+      // Field names are the v:1 wire contract: ref/taco, and patch carries
+      // discriminated text/attrs. These used to be target/node/content/attr
+      // (the v2.0 shape), which bw.apply rejects outright -- it publishes
+      // `wire_rejected` and returns false -- so every live render was
+      // silently dropped on the client. See test/bitwrench_test_mcp_wire.js.
       if (action === 'replace' && args.taco) {
-        _app.broadcast({ type: 'replace', target: target, node: args.taco });
+        _app.broadcast({ type: 'replace', ref: target, taco: args.taco });
       } else if (action === 'append' && args.taco) {
-        _app.broadcast({ type: 'append', target: target, node: args.taco });
+        _app.broadcast({ type: 'append', ref: target, taco: args.taco });
       } else if (action === 'patch') {
-        _app.broadcast({ type: 'patch', target: target, content: args.content || '', attr: args.attr || null });
+        var patchMsg = { type: 'patch', ref: target };
+        if (args.attr) patchMsg.attrs = args.attr;
+        if (args.content !== undefined || !args.attr) patchMsg.text = args.content || '';
+        _app.broadcast(patchMsg);
       } else if (action === 'remove') {
-        _app.broadcast({ type: 'remove', target: target });
+        _app.broadcast({ type: 'remove', ref: target });
       } else {
         return { content: [{ type: 'text', text: 'Error: invalid action or missing taco' }], isError: true };
       }

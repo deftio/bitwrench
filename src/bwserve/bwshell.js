@@ -57,11 +57,36 @@ export function generateShell(opts) {
   ];
 
   if (opts.theme) {
-    script.push('  bw.loadStyles(' + JSON.stringify(
-      typeof opts.theme === 'string'
-        ? { primary: '#006666', secondary: '#333333' }
-        : opts.theme
-    ) + ');');
+    // A string theme used to be discarded and replaced with a hardcoded teal
+    // pair, so `theme: 'ocean'` and `bwcli serve --theme forest` both silently
+    // produced the default -- while the CLI help and the docs promised both a
+    // preset name and a "#pri,#sec" hex pair. Both forms now work:
+    //
+    //   'ocean'            -> resolved from bw.THEME_PRESETS in the browser
+    //   '#336699,#cc6633'  -> parsed into {primary, secondary} here
+    //   { primary: ... }   -> passed through unchanged
+    //
+    // An unrecognised preset name falls back to the default seed and says so,
+    // rather than looking like it worked.
+    var themeArg;
+    if (typeof opts.theme === 'string') {
+      var raw = opts.theme.trim();
+      if (raw.charAt(0) === '#') {
+        var parts = raw.split(',').map(function(x) { return x.trim(); });
+        themeArg = JSON.stringify({ primary: parts[0], secondary: parts[1] || parts[0] });
+      } else {
+        // Resolve in the browser, where bw.THEME_PRESETS lives.
+        themeArg = 'bw.THEME_PRESETS[' + JSON.stringify(raw) + ']';
+        script.push('  if (!bw.THEME_PRESETS[' + JSON.stringify(raw) + ']) {');
+        script.push('    console.warn("bwserve: unknown theme preset ' + raw +
+                    '; using the default. Available: " + Object.keys(bw.THEME_PRESETS).join(", "));');
+        script.push('  }');
+        themeArg = themeArg + ' || undefined';
+      }
+    } else {
+      themeArg = JSON.stringify(opts.theme);
+    }
+    script.push('  bw.loadStyles(' + themeArg + ');');
   }
 
   script.push('})();');

@@ -54,6 +54,8 @@
     "maxFileBytes": 200000,
     "maxChunkChars": 60000,
     "temperature": 0.2,
-    "timeoutMs": 600000
+    "timeoutMs": 600000,
+    "maxRetries": 3,
+    "budgetMs": null
   }
 }

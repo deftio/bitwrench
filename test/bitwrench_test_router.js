@@ -1038,3 +1038,350 @@ describe("Router: bw.link() onclick handler (lines 268-269)", function() {
     document.body.removeChild(linkEl);
   });
 });
+
+// =========================================================================
+// Each navigation renders exactly once (reported by jazzmac, 2026-10-05)
+//
+// In hash mode navigate() set location.hash -- which queues a hashchange --
+// and then re-read location.hash to decide whether to render by hand. The
+// re-read always matched the path just assigned, so every navigation rendered
+// twice: once immediately, once when the queued event arrived. An app that
+// builds state in a route handler built it twice, with the second build
+// seeing different inputs.
+//
+// The guard was meant for the opposite case: navigating to the route you are
+// already on fires no hashchange, so nothing would render without the manual
+// call. Both cases must render exactly once.
+// =========================================================================
+
+describe("Router: one render per navigation", function() {
+  var r;
+
+  function countingRouter(opts) {
+    var renders = [];
+    var config = {
+      mode: (opts && opts.mode) || 'hash',
+      routes: {
+        '/a': function() { renders.push('a'); },
+        '/b': function() { renders.push('b'); },
+        '/users/:id': function(params) { renders.push('user:' + params.id); }
+      }
+    };
+    if (opts && opts.base) config.base = opts.base;
+    r = bw.router(config);
+    renders.length = 0;              // ignore the initial route
+    return renders;
+  }
+
+  // The queued hashchange is asynchronous, so every assertion has to wait a
+  // turn. Doing this synchronously is what hid the bug from the suite.
+  function settle(fn) {
+    return new Promise(function(resolve) {
+      setTimeout(function() { fn(); resolve(); }, 20);
+    });
+  }
+
+  afterEach(function() {
+    if (r && r.destroy) r.destroy();
+    r = null;
+  });
+
+  it("hash mode: navigate() to a new route renders once", function() {
+    freshDOM('http://localhost/#/a');
+    var renders = countingRouter();
+    r.navigate('/b');
+    return settle(function() {
+      assert.deepStrictEqual(renders, ['b'], 'rendered ' + renders.length + ' times');
+    });
+  });
+
+  it("hash mode: navigate() to the CURRENT route still renders once", function() {
+    // No hashchange fires here, so the manual render is the only one. This is
+    // the case the original guard existed for -- it must not regress to zero.
+    freshDOM('http://localhost/#/a');
+    var renders = countingRouter();
+    r.navigate('/a');
+    return settle(function() {
+      assert.deepStrictEqual(renders, ['a'], 'rendered ' + renders.length + ' times');
+    });
+  });
+
+  it("hash mode: navigate({replace:true}) renders once", function() {
+    freshDOM('http://localhost/#/a');
+    var renders = countingRouter();
+    r.navigate('/b', { replace: true });
+    return settle(function() {
+      assert.deepStrictEqual(renders, ['b'], 'rendered ' + renders.length + ' times');
+    });
+  });
+
+  it("hash mode: two navigations render twice, in order", function() {
+    freshDOM('http://localhost/#/a');
+    var renders = countingRouter();
+    r.navigate('/b');
+    return settle(function() {
+      r.navigate('/a');
+    }).then(function() {
+      return settle(function() {
+        assert.deepStrictEqual(renders, ['b', 'a']);
+      });
+    });
+  });
+
+  it("hash mode: a route with params renders once", function() {
+    freshDOM('http://localhost/#/a');
+    var renders = countingRouter();
+    r.navigate('/users/42');
+    return settle(function() {
+      assert.deepStrictEqual(renders, ['user:42']);
+    });
+  });
+
+  it("hash mode: an external hash change renders once", function() {
+    // The back button, or the user editing the URL. navigate() is not
+    // involved, so only the hashchange listener should render.
+    freshDOM('http://localhost/#/a');
+    var renders = countingRouter();
+    window.location.hash = '/b';
+    return settle(function() {
+      assert.deepStrictEqual(renders, ['b'], 'rendered ' + renders.length + ' times');
+    });
+  });
+
+  it("hash mode: the initial route renders once", function() {
+    freshDOM('http://localhost/#/b');
+    var seen = [];
+    r = bw.router({
+      mode: 'hash',
+      routes: { '/b': function() { seen.push('b'); } }
+    });
+    return settle(function() {
+      assert.deepStrictEqual(seen, ['b'], 'rendered ' + seen.length + ' times');
+    });
+  });
+
+  it("hash mode: destroy() stops rendering", function() {
+    freshDOM('http://localhost/#/a');
+    var renders = countingRouter();
+    r.destroy();
+    window.location.hash = '/b';
+    var dead = r;
+    r = null;
+    return settle(function() {
+      assert.deepStrictEqual(renders, [], 'rendered after destroy()');
+      void dead;
+    });
+  });
+
+  it("history mode: navigate() renders once", function() {
+    freshDOM('http://localhost/a');
+    var renders = countingRouter({ mode: 'history' });
+    r.navigate('/b');
+    return settle(function() {
+      assert.deepStrictEqual(renders, ['b'], 'rendered ' + renders.length + ' times');
+    });
+  });
+
+  it("history mode: navigate() to the current route renders once", function() {
+    freshDOM('http://localhost/a');
+    var renders = countingRouter({ mode: 'history' });
+    r.navigate('/a');
+    return settle(function() {
+      assert.deepStrictEqual(renders, ['a'], 'rendered ' + renders.length + ' times');
+    });
+  });
+});
+
+// =========================================================================
+// Guard and URL stay in agreement
+//
+// navigate() used to write the URL and only then run the `before` guard, and
+// a blocked guard simply returned -- so the address bar sat on a route that
+// never rendered, and a reload would land somewhere the guard had refused.
+// The guard now runs before the URL changes; the event-driven paths
+// (hashchange, popstate), where the browser has already moved, put it back.
+// =========================================================================
+
+describe('before guard leaves the URL consistent', function() {
+  beforeEach(function() { freshDOM(); });
+
+  function hash() { return window.location.hash.replace(/^#/, ''); }
+
+  it('does not move the URL when the guard blocks', function() {
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/blocked': function() { return { t: 'div', c: 'Blocked' }; }
+      },
+      before: function(to) { if (to === '/blocked') return false; }
+    });
+    bw.navigate('/blocked');
+    assert.strictEqual(bw.$('#app')[0].textContent, 'Home', 'view stays put');
+    assert.notStrictEqual(hash(), '/blocked',
+      'the URL must not be left on a route that never rendered');
+  });
+
+  it('puts the redirect target in the URL, not the requested path', function() {
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/secret': function() { return { t: 'div', c: 'Secret' }; }
+      },
+      before: function(to) { if (to === '/secret') return '/'; }
+    });
+    bw.navigate('/secret');
+    assert.strictEqual(bw.$('#app')[0].textContent, 'Home');
+    assert.notStrictEqual(hash(), '/secret',
+      'the URL should show where we actually went');
+  });
+
+  it('runs the guard exactly once per navigate', function() {
+    var calls = [];
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/a': function() { return { t: 'div', c: 'A' }; }
+      },
+      before: function(to) { calls.push(to); }
+    });
+    calls.length = 0;
+    bw.navigate('/a');
+    assert.deepStrictEqual(calls, ['/a'],
+      'the guard must not fire twice now that navigate runs it');
+  });
+
+  it('still allows navigation when the guard returns undefined', function() {
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/ok': function() { return { t: 'div', c: 'OK' }; }
+      },
+      before: function() { return undefined; }
+    });
+    bw.navigate('/ok');
+    assert.strictEqual(bw.$('#app')[0].textContent, 'OK');
+  });
+});
+
+// =========================================================================
+// bw.link() builds an href that matches the mode
+// =========================================================================
+
+describe('bw.link href matches the router mode', function() {
+  beforeEach(function() { freshDOM(); });
+
+  it('uses a fragment in hash mode', function() {
+    bw.router({ target: '#app', mode: 'hash', routes: { '/': function() { return 'h'; } } });
+    assert.strictEqual(bw.link('/about', 'About').a.href, '#/about');
+  });
+
+  it('uses a real path in history mode', function() {
+    bw.router({ target: '#app', mode: 'history', routes: { '/': function() { return 'h'; } } });
+    assert.strictEqual(bw.link('/about', 'About').a.href, '/about',
+      'a history-mode link must not point at a fragment');
+  });
+
+  it('includes the base in history mode', function() {
+    bw.router({ target: '#app', mode: 'history', base: '/app', routes: { '/': function() { return 'h'; } } });
+    assert.strictEqual(bw.link('/about', 'About').a.href, '/app/about');
+  });
+
+  it('falls back to the bare path with no active router', function() {
+    bw._router.resetActiveRouter();
+    assert.strictEqual(bw.link('/about', 'About').a.href, '/about');
+  });
+
+  it('still navigates on click in either mode', function() {
+    bw.router({ target: '#app', mode: 'history', routes: {
+      '/': function() { return { t: 'div', c: 'Home' }; },
+      '/about': function() { return { t: 'div', c: 'About' }; }
+    }});
+    var taco = bw.link('/about', 'About');
+    taco.a.onclick({ preventDefault: function() {} });
+    assert.strictEqual(bw.$('#app')[0].textContent, 'About');
+  });
+});
+
+// =========================================================================
+// The guard on the event-driven paths
+//
+// navigate() runs the before guard itself, before touching the URL. The
+// browser-driven paths -- hashchange and popstate, i.e. the back button --
+// cannot: the URL has already moved. So the guard runs inside handleRoute for
+// those, and a block puts the URL back. That revert path is only reachable
+// through a real event, which is why these drive the listener rather than
+// calling navigate().
+// =========================================================================
+
+describe('before guard on hashchange and popstate', function() {
+  beforeEach(function() { freshDOM(); });
+
+  function hash() { return window.location.hash.replace(/^#/, ''); }
+
+  it('blocks a back-button navigation and restores the URL', function() {
+    var seen = [];
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/guarded': function() { return { t: 'div', c: 'Guarded' }; }
+      },
+      before: function(to, from) {
+        seen.push(to + '<-' + from);
+        if (to === '/guarded') return false;
+      }
+    });
+    assert.strictEqual(bw.$('#app')[0].textContent, 'Home');
+
+    // Move the hash the way a browser would, then fire the event the browser
+    // would fire. navigate() is deliberately not used here.
+    window.location.hash = '/guarded';
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+
+    assert.strictEqual(bw.$('#app')[0].textContent, 'Home',
+      'the blocked route must not render');
+    assert.notStrictEqual(hash(), '/guarded',
+      'the URL must be put back, not left on the blocked route');
+    assert.ok(seen.some(function(s) { return s.indexOf('/guarded') === 0; }),
+      'the guard should have seen the attempt');
+  });
+
+  it('redirects a back-button navigation when the guard returns a path', function() {
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/secret': function() { return { t: 'div', c: 'Secret' }; },
+        '/login': function() { return { t: 'div', c: 'Login' }; }
+      },
+      before: function(to) { if (to === '/secret') return '/login'; }
+    });
+
+    window.location.hash = '/secret';
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+
+    assert.strictEqual(bw.$('#app')[0].textContent, 'Login',
+      'the guard redirect should apply on the event path too');
+  });
+
+  it('allows an unguarded back-button navigation through', function() {
+    bw.router({
+      target: '#app',
+      routes: {
+        '/': function() { return { t: 'div', c: 'Home' }; },
+        '/about': function() { return { t: 'div', c: 'About' }; }
+      },
+      before: function() { /* allow everything */ }
+    });
+
+    window.location.hash = '/about';
+    window.dispatchEvent(new window.HashChangeEvent('hashchange'));
+
+    assert.strictEqual(bw.$('#app')[0].textContent, 'About');
+    assert.strictEqual(hash(), '/about', 'an allowed route keeps its URL');
+  });
+});

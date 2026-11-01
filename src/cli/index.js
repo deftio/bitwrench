@@ -5,6 +5,7 @@
  * Subcommands:
  *   bwcli <file> [options]       Convert a file to styled HTML
  *   bwcli serve [dir] [options]  Start bwserve dev server
+ *   bwcli verify [file]          Check a TACO payload
  */
 
 import { parseArgs } from 'node:util';
@@ -12,6 +13,7 @@ import { VERSION } from '../version.js';
 import { convertFile } from './convert.js';
 import { runServe } from './serve.js';
 import { runAttach } from './attach.js';
+import { runVerify } from './verify.js';
 
 const USAGE = `
 bwcli v${VERSION} — bitwrench command-line tool
@@ -20,6 +22,7 @@ Usage:
   bwcli <file> [options]       Convert a file to styled HTML
   bwcli serve [dir] [options]  Start bwserve development server
   bwcli attach [options]       Start attach server for remote debugging
+  bwcli verify [file]          Check a TACO payload (wire mode; stdin if no file)
   bwcli --version              Print version
   bwcli --help                 Print this help
 
@@ -36,7 +39,8 @@ Convert options:
   -v, --verbose          Verbose output
 
 Serve options:
-  -p, --port <number>    Port to listen on (default: 7902)
+  -p, --port <number>    Browser-facing web port (default: 8080)
+  -l, --listen <number>  Input port for protocol messages (default: 9000)
   -t, --theme <name>     Theme preset or hex colors
       --open             Open browser on start
   -v, --verbose          Verbose output
@@ -52,7 +56,7 @@ Examples:
   bwcli README.md -o out.html --standalone   Self-contained offline HTML
   bwcli README.md -o out.html --highlight    With syntax highlighting
   bwcli doc.md --theme "#336699,#cc6633"     Custom theme colors
-  bwcli serve                              Serve current directory on port 7902
+  bwcli serve                              Serve . on :8080, listen on :9000
   bwcli serve ./site --port 8080           Serve ./site on port 8080
   bwcli attach                             Start remote debugging REPL on port 7902
   bwcli attach --port 3000                 Attach on custom port
@@ -69,6 +73,9 @@ export function run(argv) {
     }
     if (argv.length > 0 && argv[0] === 'serve') {
         return runServe(argv.slice(1));
+    }
+    if (argv.length > 0 && argv[0] === 'verify') {
+        return runVerify(argv.slice(1));
     }
 
     let values, positionals;

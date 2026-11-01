@@ -1,134 +1,159 @@
 # Release Procedure
 
-Step-by-step checklist for contributing to and releasing bitwrench.
+The canonical release process for bitwrench. It is driven by two scripts --
+`tools/start-release.js` and `tools/release.js` -- and every step below is
+what those scripts actually do. If this document and the scripts disagree,
+the scripts are right and this file is a bug.
+
+Contributors do not need this file; see [CONTRIBUTING.md](CONTRIBUTING.md) for
+the pull-request workflow.
 
 ## Branch Model
 
-- `main` is the production branch. Only the repo maintainer (@deftio) merges to `main`.
-- All work happens on feature branches created from `main`.
-- Feature branches use the naming convention: `feature/<short-description>` or `fix/<short-description>`.
+- `main` is the only branch pushed to GitHub. It is always releasable.
+- Development happens on `feature/<name>` branches that stay **local**.
+  Feature branches are never pushed to the remote.
+- `main` receives exactly one commit per release, via squash merge.
+- Nothing is committed directly to `main`. A `pre-push` hook
+  (`tools/hooks/pre-push`) blocks pushes to `main` unless `BW_RELEASE_PUSH=1`,
+  which only `tools/release.js` sets.
 
-## Development Workflow
+## 1. Start a dev cycle
 
-### 1. Issue Investigation
+Always bump the version **first**, before any source change.
 
-- [ ] Open or identify a GitHub Issue describing the bug, feature, or improvement.
-- [ ] Confirm the issue is reproducible (for bugs) or well-defined (for features).
-- [ ] Assign the issue and add appropriate labels.
+```bash
+npm run start-release -- patch "fix the thing"       # 2.1.12 -> 2.1.13
+npm run start-release -- minor "new subsystem"       # 2.1.12 -> 2.2.0
+npm run start-release -- major "breaking change"     # 2.1.12 -> 3.0.0
+```
 
-### 2. Create Feature Branch
+The bump level is the **first** argument. Omit it and you get a patch bump;
+pass it wrongly and the mistake is silent, so check the version it prints.
+
+`tools/start-release.js` then:
+
+1. Verifies you are on `main` with a clean working tree
+2. Pulls the latest `main`
+3. Bumps the version (`npm version <level> --no-git-tag-version`)
+4. Regenerates `src/version.js`
+5. Creates and checks out `feature/<slugified-name>`
+6. Commits the bump (`package.json`, `package-lock.json`, `src/version.js`,
+   `library.properties`, `library.json`, `idf_component.yml`, `dist`, `dbg`)
+
+It does **not** push. The branch is local for its whole life.
+
+## 2. Develop
+
+Work on the feature branch. Before releasing, the local gates should be green:
+
+```bash
+npm run lint          # ESLint over src/
+npm test              # Mocha + c8; coverage gates 99/99/96/95 and drift-lint
+npm run test:gcc      # the C/C++ suite under gcc on Linux, in Docker
+npm run ci:local      # the full GitHub CI job locally, Node 22 and 24
+```
+
+Run `npm run ci:local` before releasing anything that touches `embedded_c/`
+or the C/C++ examples. macOS ships clang and CI runs gcc, and they are not
+interchangeable -- v2.1.11 reached `main` green locally and failed CI three
+times because clang does not implement `-Wformat-truncation`.
+
+## 3. Release
+
+On the feature branch:
+
+```bash
+npm run release              # the real thing
+npm run release -- --dry-run # every gate, no mutations, nothing pushed
+```
+
+`tools/release.js` runs ten steps and stops at the first failure:
+
+| # | Step | What it does |
+|---|------|--------------|
+| 1 | Pre-flight checks | Clean tree; this version not already on npm |
+| 2 | Clean build | `npm run clean && npm run build && npm run build:generated` |
+| 3 | Lint | `npm run lint` |
+| 4 | Tests | `npm test` (which includes `test:cli` since v2.1.4), then the C/C++ suite under gcc in Docker |
+| 5 | Version consistency | `package.json`, `src/version.js` and the dist banner must agree |
+| 6 | Bundle size gate | Gzipped UMD **and** ESM must each be under 46 KB, measured on the level-9 `.gz` the build writes |
+| 7 | Docker clean-room test | Skipped with a warning if Docker is absent |
+| 8 | Archive | `tools/build-release.js` snapshots `dist/` into `releases/v2/` |
+| 9 | Commit | `git add . && git commit` on the **feature branch**. No push |
+| 10 | Merge to main | Prompts, then `git merge --squash <branch> && git commit && git push origin main` |
+
+Step 10 is interactive and does the squash merge for you. The commit subject
+comes from `--squash-msg` if given, otherwise the matching CHANGELOG section,
+otherwise the branch name.
+
+Before attempting any size optimization for step 6, read
+[Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) -- string
+interning, `passes: 3` and toplevel mangling have all been measured and are
+useless or counterproductive.
+
+If you decline step 10, do it by hand -- squash is required, so that `main`
+keeps one commit per release:
 
 ```bash
 git checkout main
-git pull origin main
-git checkout -b feature/<short-description>
+git merge --squash feature/<name>
+git commit -m "v<version>: <description>"
+git push origin main
 ```
 
-### 3. Test-Driven Development
+Commits on `main` are authored solely by the maintainer: no `Co-Authored-By`
+trailer on the squash commit.
 
-- [ ] Write failing tests first that describe the expected behavior.
-- [ ] Run tests to confirm they fail: `npm test`
-- [ ] Implement the feature or fix.
-- [ ] Run tests to confirm they pass: `npm test`
+## 4. Everything after the push is automatic
 
-### 4. Code Quality Gates
+1. `.github/workflows/ci.yml` runs on the push to `main`, across Node 22 and 24.
+2. On success, `.github/workflows/publish.yml` fires on `workflow_run` and:
+   - checks whether the version is already on npm, and stops if it is
+   - creates and pushes the `vX.Y.Z` tag
+   - creates the GitHub Release with the dist files attached
+   - publishes to npm with provenance via OIDC
 
-All of the following must pass before opening a PR:
+There is no tag job in `ci.yml`. **Never** run `npm publish` by hand and
+**never** create a tag by hand -- CI owns both.
 
-- [ ] **Lint**: `npm run lint` passes with 0 errors and 0 warnings.
-- [ ] **Unit tests**: `npm test` — all tests passing, no skips.
-- [ ] **CLI tests**: `npm run test:cli` — all tests passing.
-- [ ] **Test coverage**: 100% of new code covered. Overall coverage must not decrease.
-- [ ] **Build**: `npm run build` succeeds without errors.
-- [ ] **Bundle size**: Verify gzipped UMD and ESM min stay under the 46KB budget.
-      The gate measures the `.gz` the build writes (level 9), not a
-      re-compression of the `.js`. If a size number looks wrong, check the
-      compression level before anything else — see
-      [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md), which
-      records the measurement rules and the optimizations already tried and
-      rejected.
+## 5. Post-release verification
 
-### 5. Open Pull Request
+- [ ] GitHub Release is present: https://github.com/deftio/bitwrench/releases
+- [ ] npm has the version: `npm view bitwrench version`
+- [ ] CDN serves it: https://cdn.jsdelivr.net/npm/bitwrench@latest/dist/bitwrench.umd.min.js
+- [ ] Docs site looks right: https://deftio.github.io/bitwrench/
 
-- [ ] Push feature branch: `git push -u origin feature/<short-description>`
-- [ ] Open PR targeting `main` on GitHub.
-- [ ] PR title is concise (under 70 chars). Description explains the "why".
-- [ ] Reference the related issue (e.g., "Closes #42").
-- [ ] CI must pass (lint, build, test on Node 20/22/24).
+## Manual recovery
 
-### 6. Code Review
+If the automated publish fails, re-run it: **Actions** > **Publish to npm** >
+**Run workflow** (the workflow accepts `workflow_dispatch`), or re-run the
+failed run from the Actions tab.
 
-- [ ] Maintainer reviews the PR.
-- [ ] Address any review feedback with new commits (do not force-push).
-- [ ] CI passes on the final state of the PR.
-
-### 7. Merge to Main
-
-Only the repo maintainer (@deftio) performs this step.
-
-- [ ] Squash-merge or merge the PR into `main`.
-- [ ] Delete the feature branch after merge.
-
-## Release Workflow
-
-### 8. Version Bump
-
-- [ ] Update `version` in `package.json` following [semver](https://semver.org/):
-  - **Patch** (2.0.x): Bug fixes, documentation, internal changes.
-  - **Minor** (2.x.0): New features, backward-compatible additions.
-  - **Major** (x.0.0): Breaking API changes.
-- [ ] Commit the version bump to `main`: `"bump version to X.Y.Z"`
-- [ ] Push to `main`.
-
-### 9. Automated Release Pipeline
-
-Once the version bump is pushed to `main`, the CI/CD pipeline runs automatically:
-
-```
-push to main
-  |
-  v
-ci.yml: lint + build + test (Node 20/22/24)
-  |
-  v (all pass)
-ci.yml: tag-version job creates git tag vX.Y.Z (if new)
-  |
-  v (tag push triggers)
-publish.yml: lint + build + test + create GitHub Release + npm publish (OIDC)
-```
-
-- **GitHub Release**: Created automatically with generated release notes and dist assets.
-- **npm Publish**: Published via OIDC trusted publishing (no token needed).
-
-### 10. Post-Release Verification
-
-- [ ] Verify the GitHub Release appears at https://github.com/deftio/bitwrench/releases
-- [ ] Verify npm has the new version: `npm view bitwrench version`
-- [ ] Verify CDN availability: https://cdn.jsdelivr.net/npm/bitwrench@latest/dist/bitwrench.umd.min.js
-- [ ] Spot-check the docs site: https://deftio.github.io/bitwrench/
-
-## Manual Recovery
-
-If the automated publish fails, use the manual trigger:
-
-1. Go to **Actions** > **Publish to npm (manual)** > **Run workflow**.
-2. Or re-run the failed publish workflow from the Actions tab.
-
-If a tag was created but the release/publish failed:
+If a tag was created but the release or publish failed:
 
 ```bash
-# Delete the orphaned tag
 git push origin --delete vX.Y.Z
 git tag -d vX.Y.Z
-
-# Fix the issue, push, and let CI re-tag
+# fix the issue, push again, and let CI re-tag
 ```
+
+A published version can never be replaced. If a bad build reaches npm, bump
+the patch version and release again.
 
 ## Rules
 
-- No direct commits to `main` except version bumps by the maintainer.
-- No `--force` pushes to `main`.
-- No `--no-verify` to skip hooks.
+- No commits directly to `main` -- all work lands by squash merge.
+- No pushing feature branches to the remote.
+- No `npm publish` by hand, and no hand-made tags.
+- No `--force` pushes to `main`, and no `--no-verify` to skip hooks.
 - No skipped tests (`it.skip`, `describe.skip`, `xit`).
-- All lint warnings must be resolved, not suppressed.
+- Lint warnings get resolved, not suppressed.
 - Secrets and credentials are never committed.
+- **`dist/` must be byte-for-byte what the release build produced.**
+  `src/version.js` embeds a build date that propagates into every artifact and
+  cascades into `sri.json` and `builds.json`, so any stray rebuild dirties
+  roughly 44 files. Stale artifacts mean npm gets a different package than
+  GitHub, and that cannot be undone for a published version.
+- There is **one** path to `main`: this pipeline. Non-shipping cleanups ride
+  along in the next patch release rather than taking a shortcut.

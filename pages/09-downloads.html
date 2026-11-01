@@ -366,7 +366,7 @@
 
                   // ---- BCCL standalone ----
                   { t: 'h3', c: 'BCCL Standalone' },
-                  { t: 'p', a: { style: 'font-size:0.875rem;color:#444' }, c: 'Just the component factories (makeButton, makeTable, makeModal, etc.) without the core engine. For apps that load bitwrench-lean separately.' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:#444' }, c: 'Just the component factories (makeButton, makeCard, makeModal, etc.) without the core engine. For apps that load bitwrench-lean separately. Note: makeTable, makeTableFromArray, makeDataTable and makeBarChart live in the core, not here.' },
                   { t: 'div', a: { id: 'bccl-table' }, c: 'Loading...' },
 
                   // ---- Client/Server tools ----
@@ -699,7 +699,7 @@
             t: 'div', a: { style: 'font-size:0.875rem;line-height:1.6' },
             c: [
               { t: 'p', c: [{ t: 'strong', c: 'UMD' }, ' -- Universal. Works in browsers (', { t: 'code', c: '<script>' }, '), Node.js (require), and AMD loaders. Adds ', { t: 'code', c: 'bw' }, ' to global scope. Use this if unsure.'] },
-              { t: 'p', c: [{ t: 'strong', c: 'ESM' }, ' -- ES Modules. Use with ', { t: 'code', c: 'import' }, ' in modern browsers or bundlers (Vite, Rollup, webpack). Supports tree-shaking.'] },
+              { t: 'p', c: [{ t: 'strong', c: 'ESM' }, ' -- ES Modules. Use with ', { t: 'code', c: 'import' }, ' in modern browsers or bundlers (Vite, Rollup, webpack). Named imports work, but the file is pre-bundled, so they do not reduce size.'] },
               { t: 'p', c: [{ t: 'strong', c: 'CJS' }, ' -- CommonJS. Use with ', { t: 'code', c: 'require()' }, ' in Node.js scripts and older bundlers.'] },
               { t: 'p', c: [{ t: 'strong', c: 'ES5' }, ' -- Transpiled to ES5 syntax. For legacy browsers (IE10+) and older webviews (Android 4.x, older Electron).'] },
               { t: 'p', c: [{ t: 'strong', c: '.gz' }, ' -- Pre-gzipped. Same JS, smaller on disk. Server must send ', { t: 'code', c: 'Content-Encoding: gzip' }, ' header. See the Embedded section below.'] },
@@ -873,6 +873,7 @@
           else if (f.component === 'debug' || fname.indexOf('debug') >= 0) { pkg = 'addon'; pkgClass = 'pkg-addon'; }
           else if (f.component === 'lean' || fname.indexOf('-lean') >= 0) { pkg = 'lean'; pkgClass = 'pkg-lean'; }
           else if (f.component === 'bccl' || fname.indexOf('-bccl') >= 0) { pkg = 'addon'; pkgClass = 'pkg-addon'; }
+          else if (f.component === 'verify' || fname.indexOf('-verify') >= 0) { pkg = 'addon'; pkgClass = 'pkg-addon'; }
           else if (f.component === 'bwserve' || fname.indexOf('bwserve') >= 0) { pkg = 'server'; pkgClass = 'pkg-server'; }
           else if (f.format === 'CSS') { pkg = 'css'; pkgClass = 'pkg-css'; }
           else { pkg = 'core'; pkgClass = 'pkg-core'; }

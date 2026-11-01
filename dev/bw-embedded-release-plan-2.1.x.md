@@ -1,11 +1,17 @@
-# Embedded release plan (2.1.x => 2.1.12)
+# Embedded release plan (2.1.x => 2.1.14)
 
-**Status: 2.1.11 laid the groundwork. 2.1.12 is the embedded release.**
+**Status: 2.1.12 shipped `bitwrench-verify`, NOT the embedded library shape.**
+The release sequence, settled 2026-10-11: **2.1.12 verify, 2.1.13 CSS/lean
+cleanup, 2.1.14 embedded.** 2.1.11 laid the groundwork; the C/C++ library shape
+for Arduino / PlatformIO / ESP-IDF is **2.1.14**, so group C below is the 2.1.14
+queue. Kept as the decision list for that release.
 
-> **2.1.12 also carries `bitwrench-verify`** (approved 2026-10-04, see
-> `dev/bw-verify-design.md`). Two workstreams in one patch release -- that
-> doc's section 15 lays out the three scope options. Decide the split before
-> work starts. The embedded side's gating item is the registry submission,
+> **Resolved 2026-10-11.** This asked whether verify and embedded should share
+> 2.1.12. They do not. 2.1.12 shipped verify alone, 2.1.13 is the CSS/lean
+> split, and the embedded library shape is **2.1.14**. Nothing left to decide
+> here; the scope options in `dev/bw-verify-design.md` section 15 are history.
+>
+> The embedded side's gating item is unchanged: the registry submission,
 > because the C++ article cannot be written until "install from Library
 > Manager" is true.
 
@@ -168,7 +174,7 @@ This is the actual work. Each item is a thing a C++ reader hits.
 | 5 | **Two ESP-IDF component registrations**: root `CMakeLists.txt` and `embedded_c/CMakeLists.txt` | repo root | Document which path wins when, or collapse to one. |
 | 6 | **"Embedded" means three different promises**: `embedded_python/bwserve.py` (514 lines, imported by real examples), `embedded_rust/src/lib.rs` (414 lines, suspected vestigial -- carried a fabricated repo URL until 2.1.0), `embedded_c/` (988 lines, now tested) | `embedded_*/` | Decide supported vs example vs retired, per language, and say so in each README. |
 | 7 | **Five `examples/embedded*` directories with no stated relationship** (`embedded/`, `embedded-basic/`, `embedded-imu/`, `embedded-pico-w/`, `embedded-rpi/`) -- the reader cannot tell where to start | `examples/` | One `examples/README.md` index: what each is, which to start with, which are advanced references, which retire. |
-| 8 | **Structural CSS does not style bare elements** (`h1`, `p`, `button`, `input`, `select`, `table`), so every device-composed node must carry `bw_bccl_*` classes | `src/bitwrench-styles.js` | Decide: style semantic elements, or document the class requirement as deliberate. This is the first thing a C++ reader feels. |
+| 8 | ~~**Structural CSS does not style bare elements**~~ **DECIDED, not a defect.** Element selectors are global and would collide with third-party libraries and host pages, and the author could not opt out. Recorded in `docs/bitwrench-northstar-principles.md` section 3. The accepted cost: a non-JS host must emit `bw_bccl_*`. Improve discoverability, not selectors | `docs/bitwrench-northstar-principles.md` | closed -- do not reopen |
 | 9 | **No `BW_CALL` / `bwserve::call()`** even though `bw.apply` supports `type:'call'` -- so a device cannot invoke a registered remote without hand-writing the frame | `bwserve.h` | Add it; needed for device-driven theming (section 6). |
 | 10 | **Version lockstep**: `tools/start-release.js:140-142` bumps all three C manifests with `package.json`, so a JS-only patch publishes a new C library version with zero C changes | `tools/start-release.js` | Decouple the C version, or publish only when C changes. |
 | 12 | **`bw.connect`'s post-back URL is dead code for the URL we document.** `url.replace('/events/', '/apply/')` cannot match `/bw/events` (no trailing slash), so the POST lands on the SSE path itself. The POSIX demo depends on that, so it was left alone in 2.1.11 | `src/bitwrench.js` (`bw.connect`) | Pick one post-back path. This is the root cause of the "which URL does a click go to" confusion. |

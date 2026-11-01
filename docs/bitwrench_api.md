@@ -4,11 +4,11 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.11 |
-| Generated | 2026-10-04 |
+| Version | 2.1.12 |
+| Generated | 2026-10-31 |
 | Total APIs | 169 |
 | Categories | 23 |
-| bitwrench.js | 5506 lines |
+| bitwrench.js | 5602 lines |
 | bitwrench-bccl.js | 3968 lines |
 
 ## Table of Contents
@@ -163,7 +163,7 @@ full entry: parameters, return value and an example.
 | [`bw.colorHslToRgb(h, s, l, a, rnd)`](#bwcolorhsltorgbhslarnd) | Color | HSL to RGB, in the v1 array format |
 | [`bw.colorRgbToHsl(r, g, b, a, rnd)`](#bwcolorrgbtohslrgbarnd) | Color | RGB to HSL, in the v1 array format |
 | [`bw.colorParse(s, defAlpha)`](#bwcolorparsesdefalpha) | Color | Parse any CSS colour string into the v1 array format |
-| [`bw.colorInterp(x, in0, in1, colors, stretch, colorParseFn)`](#bwcolorinterpxin0in1colorsstretchcolorparsefn) | Color | Interpolate between an array of colors based on a value in a range |
+| [`bw.colorInterp(x, in0, in1, colors, stretch)`](#bwcolorinterpxin0in1colorsstretch) | Color | Interpolate between an array of colours by position in a range |
 | [`bw.hexToHsl(hex)`](#bwhextohslhex) | Color Utilities | Convert hex color to HSL array [h, s, l] |
 | [`bw.hslToHex(hsl)`](#bwhsltohexhsl) | Color Utilities | Convert HSL array to hex color string |
 | [`bw.adjustLightness(hex, amount)`](#bwadjustlightnesshexamount) | Color Utilities | Adjust lightness of a hex color by a percentage amount |
@@ -234,7 +234,11 @@ Detect if running in Node.js environment. Useful for writing isomorphic code tha
 
 **Example:**
 ```javascript
-if (bw.isNodeJS()) { console.log('Running in Node.js'); } else { console.log('Running in browser'); }
+if (bw.isNodeJS()) {
+  console.log('Running in Node.js');
+} else {
+  console.log('Running in browser');
+}
 ```
 
 ---
@@ -260,7 +264,40 @@ Enhanced type detection that distinguishes arrays, dates, regexps, and more. Goe
 
 **Example:**
 ```javascript
-// Primitives (lowercase): bw.typeOf("hello")         // => "string" bw.typeOf(42)              // => "number" bw.typeOf(true)            // => "boolean" bw.typeOf(undefined)       // => "undefined" bw.typeOf(null)            // => "null" bw.typeOf(Symbol('x'))     // => "symbol" bw.typeOf(42n)             // => "bigint" bw.typeOf(() => {})        // => "function" // Arrays (lowercase): bw.typeOf([1, 2, 3])       // => "array" // Built-in classes (PascalCase): bw.typeOf(new Date())      // => "Date" bw.typeOf(/abc/)           // => "RegExp" bw.typeOf(new Error())     // => "Error" bw.typeOf(new Map())       // => "Map" bw.typeOf(new Set())       // => "Set" bw.typeOf(new WeakMap())   // => "WeakMap" bw.typeOf(new WeakSet())   // => "WeakSet" bw.typeOf(Promise.resolve()) // => "Promise" // Typed arrays (PascalCase): bw.typeOf(new Uint8Array())   // => "Uint8Array" bw.typeOf(new Float64Array()) // => "Float64Array" bw.typeOf(new ArrayBuffer(8)) // => "ArrayBuffer" // Plain objects and custom classes: bw.typeOf({a: 1})          // => "Object" bw.typeOf(new MyClass())   // => "MyClass" (constructor.name) // baseTypeOnly mode: bw.typeOf([1,2], true)     // => "object"
+// Primitives (lowercase):
+bw.typeOf("hello")         // => "string"
+bw.typeOf(42)              // => "number"
+bw.typeOf(true)            // => "boolean"
+bw.typeOf(undefined)       // => "undefined"
+bw.typeOf(null)            // => "null"
+bw.typeOf(Symbol('x'))     // => "symbol"
+bw.typeOf(42n)             // => "bigint"
+bw.typeOf(() => {})        // => "function"
+
+// Arrays (lowercase):
+bw.typeOf([1, 2, 3])       // => "array"
+
+// Built-in classes (PascalCase):
+bw.typeOf(new Date())      // => "Date"
+bw.typeOf(/abc/)           // => "RegExp"
+bw.typeOf(new Error())     // => "Error"
+bw.typeOf(new Map())       // => "Map"
+bw.typeOf(new Set())       // => "Set"
+bw.typeOf(new WeakMap())   // => "WeakMap"
+bw.typeOf(new WeakSet())   // => "WeakSet"
+bw.typeOf(Promise.resolve()) // => "Promise"
+
+// Typed arrays (PascalCase):
+bw.typeOf(new Uint8Array())   // => "Uint8Array"
+bw.typeOf(new Float64Array()) // => "Float64Array"
+bw.typeOf(new ArrayBuffer(8)) // => "ArrayBuffer"
+
+// Plain objects and custom classes:
+bw.typeOf({a: 1})          // => "Object"
+bw.typeOf(new MyClass())   // => "MyClass" (constructor.name)
+
+// baseTypeOnly mode:
+bw.typeOf([1,2], true)     // => "object"
 ```
 
 ---
@@ -306,7 +343,11 @@ Create a ready-to-use data table with title and responsive wrapper. Convenience 
 
 **Example:**
 ```javascript
-const table = bw.makeDataTable({ title: "Users", data: [{ name: "Alice", role: "Admin" }], responsive: true });
+const table = bw.makeDataTable({
+  title: "Users",
+  data: [{ name: "Alice", role: "Admin" }],
+  responsive: true
+});
 ```
 
 ---
@@ -333,7 +374,9 @@ Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create().
 
 **Example:**
 ```javascript
-bw.raw('Hello &mdash; World') // Used in TACO content: { t: 'p', c: bw.raw('Price: <strong>$9.99</strong>') }
+bw.raw('Hello &mdash; World')
+// Used in TACO content:
+{ t: 'p', c: bw.raw('Price: <strong>$9.99</strong>') }
 ```
 
 ---
@@ -355,7 +398,22 @@ Convert a TACO object (or array of TACOs) to an HTML string. This is the core re
 
 **Example:**
 ```javascript
-bw.html({ t: 'h1', c: 'Hello' }) // => '<h1>Hello</h1>' bw.html({ t: 'div', a: { class: 'card' }, c: [ { t: 'p', c: 'Content here' } ]}) // => '<div class="card"><p>Content here</p></div>' // Handlers just work — nothing to wire up afterwards bw.html({ t: 'button', a: { onclick: function() { alert('hi'); } }, c: 'Go' }) // => '<button onclick="bw.funcGetById(\'bw_fn_0\')(event)">Go</button>' // CSP-safe variant: no inline handler, you bind the class yourself var fns = {}; bw.html({ t: 'button', a: { onclick: function() {} }, c: 'Go' }, { fns: fns }) // => '<button class="bw_fn_0">Go</button>'   fns = { bw_fn_0: {fn, event:'click'} }
+bw.html({ t: 'h1', c: 'Hello' })
+// => '<h1>Hello</h1>'
+
+bw.html({ t: 'div', a: { class: 'card' }, c: [
+  { t: 'p', c: 'Content here' }
+]})
+// => '<div class="card"><p>Content here</p></div>'
+
+// Handlers just work — nothing to wire up afterwards
+bw.html({ t: 'button', a: { onclick: function() { alert('hi'); } }, c: 'Go' })
+// => '<button onclick="bw.funcGetById(\'bw_fn_0\')(event)">Go</button>'
+
+// CSP-safe variant: no inline handler, you bind the class yourself
+var fns = {};
+bw.html({ t: 'button', a: { onclick: function() {} }, c: 'Go' }, { fns: fns })
+// => '<button class="bw_fn_0">Go</button>'   fns = { bw_fn_0: {fn, event:'click'} }
 ```
 
 ---
@@ -383,7 +441,11 @@ Generate a complete, self-contained HTML document from TACO content. Produces a 
 
 **Example:**
 ```javascript
-bw.htmlPage({ title: 'My App', body: { t: 'h1', c: 'Hello World' }, runtime: 'shim' })
+bw.htmlPage({
+  title: 'My App',
+  body: { t: 'h1', c: 'Hello World' },
+  runtime: 'shim'
+})
 ```
 
 ---
@@ -466,7 +528,8 @@ Empty a container: run unmount hooks on its children, then remove them. This is 
 
 **Example:**
 ```javascript
-bw.clear('#list');                  // empties #list, hooks fire bw.mount('#list', rows.map(row));   // refill it
+bw.clear('#list');                  // empties #list, hooks fire
+bw.mount('#list', rows.map(function(r) { return { t: 'li', c: r.name }; }));
 ```
 
 ---
@@ -623,7 +686,9 @@ Render a TACO into the DOM at a specific position relative to a target. Thin con
 
 **Example:**
 ```javascript
-var r = bw.render('#log', 'append', { t: 'li', c: 'Saving...' }); if (r.ok) bw.patch(r.el, 'Saved');   // r.el is the new element else console.warn(r.error);
+var r = bw.render('#log', 'append', { t: 'li', c: 'Saving...' });
+if (r.ok) bw.patch(r.el, 'Saved');   // r.el is the new element
+else console.warn(r.error);
 ```
 
 ---
@@ -645,7 +710,12 @@ Look up a single DOM element by ID, CSS selector, UUID, or element ref. Optional
 
 **Example:**
 ```javascript
-bw.el('#title')                         // lookup bw.el('#title', 'Hello')                // set text content bw.el('#app', { t: 'h1', c: 'Hi' })    // mount TACO bw.el('.card', function(el) {           // apply function el.style.opacity = '0.5'; })
+bw.el('#title')                         // lookup
+bw.el('#title', 'Hello')                // set text content
+bw.el('#app', { t: 'h1', c: 'Hi' })    // mount TACO
+bw.el('.card', function(el) {           // apply function
+  el.style.opacity = '0.5';
+})
 ```
 
 ---
@@ -665,7 +735,8 @@ Add one or more classes to every matched element. Changing a class is the cheape
 
 **Example:**
 ```javascript
-bw.addClass('save-btn', 'is_busy'); bw.addClass('.row', ['zebra', 'tight']);
+bw.addClass('save-btn', 'is_busy');
+bw.addClass('.row', ['zebra', 'tight']);
 ```
 
 ---
@@ -706,7 +777,9 @@ Toggle one or more classes on every matched element, or force them on/off. With 
 
 **Example:**
 ```javascript
-bw.toggleClass('#panel', 'open');                         // flip bw.toggleClass('#onscreen rect', 'down', false);          // force off, every match bw.toggleClass(el, 'wrong', result !== 'ok');             // drive it from state
+bw.toggleClass('#panel', 'open');                         // flip
+bw.toggleClass('#onscreen rect', 'down', false);          // force off, every match
+bw.toggleClass(el, 'wrong', result !== 'ok');             // drive it from state
 ```
 
 ---
@@ -746,7 +819,11 @@ DOM selection helper that always returns an array (browser only). Wraps `querySe
 
 **Example:**
 ```javascript
-bw.$('.card')                           // => [div.card, div.card, ...] bw.$('.status', 'Online')               // set text on all .status elements bw.$('.card', function(el) {            // apply function to each el.style.opacity = '0.5'; })
+bw.$('.card')                           // => [div.card, div.card, ...]
+bw.$('.status', 'Online')               // set text on all .status elements
+bw.$('.card', function(el) {            // apply function to each
+  el.style.opacity = '0.5';
+})
 ```
 
 ---
@@ -767,7 +844,8 @@ Generate a unique identifier string for DOM elements or application use. Uses `c
 
 **Example:**
 ```javascript
-bw.uuid()          // => "bw_m3x9k_1_7f2h4j6a8" bw.uuid('card')    // => "bw_card_a1b2c3d4e5f6"
+bw.uuid()          // => "bw_m3x9k_1_7f2h4j6a8"
+bw.uuid('card')    // => "bw_card_a1b2c3d4e5f6"
 ```
 
 ---
@@ -787,7 +865,10 @@ Assign a UUID to a TACO object by appending a `bw_uuid_*` token to `taco.a.class
 
 **Example:**
 ```javascript
-var card = bw.makeStatCard({ value: '0', label: 'Scans' }); var uuid = bw.assignUUID(card);        // 'bw_uuid_a1b2c3d4e5' var same = bw.assignUUID(card);        // same UUID (idempotent) var diff = bw.assignUUID(card, true);  // new UUID (forced)
+var card = bw.makeStatCard({ value: '0', label: 'Scans' });
+var uuid = bw.assignUUID(card);        // 'bw_uuid_a1b2c3d4e5'
+var same = bw.assignUUID(card);        // same UUID (idempotent)
+var diff = bw.assignUUID(card, true);  // new UUID (forced)
 ```
 
 ---
@@ -806,7 +887,9 @@ Read the UUID from a TACO object or DOM element. Pure getter, no side effects.
 
 **Example:**
 ```javascript
-bw.getUUID(card)       // 'bw_uuid_a1b2c3d4e5' (from TACO) bw.getUUID(domEl)      // 'bw_uuid_a1b2c3d4e5' (from DOM element) bw.getUUID({t:'div'})  // null (no UUID)
+bw.getUUID(card)       // 'bw_uuid_a1b2c3d4e5' (from TACO)
+bw.getUUID(domEl)      // 'bw_uuid_a1b2c3d4e5' (from DOM element)
+bw.getUUID({t:'div'})  // null (no UUID)
 ```
 
 ---
@@ -825,7 +908,8 @@ Escape HTML special characters to prevent XSS. Converts &, <, >, ", ', and / to 
 
 **Example:**
 ```javascript
-bw.escapeHTML('<b>Hello</b> & "world"') // => '&lt;b&gt;Hello&lt;&#x2F;b&gt; &amp; &quot;world&quot;'
+bw.escapeHTML('<b>Hello</b> & "world"')
+// => '&lt;b&gt;Hello&lt;&#x2F;b&gt; &amp; &quot;world&quot;'
 ```
 
 ---
@@ -863,7 +947,9 @@ Targeted DOM update by element ID — change one element's content or attribute 
 
 **Example:**
 ```javascript
-bw.patch('score-display', '42');          // update text content bw.patch('status', 'active', 'class');    // update an attribute bw.patch('info', { t: 'em', c: 'new' }); // replace children with TACO
+bw.patch('score-display', '42');          // update text content
+bw.patch('status', 'active', 'class');    // update an attribute
+bw.patch('info', { t: 'em', c: 'new' }); // replace children with TACO
 ```
 
 ---
@@ -882,7 +968,11 @@ Batch version of `bw.patch()` — update multiple elements in one call. Useful f
 
 **Example:**
 ```javascript
-bw.patchAll({ 'cpu-display': '78%', 'mem-display': '4.2 GB', 'disk-display': '120 GB free' });
+bw.patchAll({
+  'cpu-display': '78%',
+  'mem-display': '4.2 GB',
+  'disk-display': '120 GB free'
+});
 ```
 
 ---
@@ -903,7 +993,8 @@ Emit a custom DOM event on an element. Events are prefixed with `bw:` to avoid c
 
 **Example:**
 ```javascript
-bw.emit('#my-widget', 'statechange', { count: 42 }); // Dispatches CustomEvent 'bw:statechange' on the element
+bw.emit('#my-widget', 'statechange', { count: 42 });
+// Dispatches CustomEvent 'bw:statechange' on the element
 ```
 
 ---
@@ -924,7 +1015,9 @@ Listen for a custom bitwrench event on a DOM element. Handler receives `(detail,
 
 **Example:**
 ```javascript
-bw.on(document.body, 'statechange', function(detail) { console.log('State changed:', detail); });
+bw.on(document.body, 'statechange', function(detail) {
+  console.log('State changed:', detail);
+});
 ```
 
 ---
@@ -946,7 +1039,8 @@ Publish to a topic, calling all subscribers in registration order. Application-s
 
 **Example:**
 ```javascript
-bw.pub('score:updated', { player: 'X', score: 10 }); // Wildcard subscribers matching 'score:*' will also fire
+bw.pub('score:updated', { player: 'X', score: 10 });
+// Wildcard subscribers matching 'score:*' will also fire
 ```
 
 ---
@@ -967,7 +1061,15 @@ Subscribe to a topic. Returns an unsub() function. Supports wildcard patterns: a
 
 **Example:**
 ```javascript
-var unsub = bw.sub('score:updated', function(detail) { console.log(detail.player, 'scored', detail.score); }); // Later: unsub() to stop listening // Wildcard: listen to all 'agui:' topics bw.sub('agui:*', function(detail, topic) { console.log('Got', topic, detail); });
+var unsub = bw.sub('score:updated', function(detail) {
+  console.log(detail.player, 'scored', detail.score);
+});
+// Later: bw.unsub() to stop listening
+
+// Wildcard: listen to all 'agui:' topics
+bw.sub('agui:*', function(detail, topic) {
+  console.log('Got', topic, detail);
+});
 ```
 
 ---
@@ -1003,7 +1105,14 @@ Subscribe to a topic for a single event only. The subscription is automatically 
 
 **Example:**
 ```javascript
-bw.once('data:loaded', function(detail) { console.log('Received:', detail); // No need to unsubscribe -- already done automatically }); // Cancel before it fires: var cancel = bw.once('timeout', handler); cancel(); // handler will never be called
+bw.once('data:loaded', function(detail) {
+  console.log('Received:', detail);
+  // No need to unsubscribe -- already done automatically
+});
+
+// Cancel before it fires:
+var cancel = bw.once('timeout', handler);
+cancel(); // handler will never be called
 ```
 
 ---
@@ -1043,7 +1152,10 @@ Generate CSS from JavaScript objects. Converts an object of `{ selector: { prop:
 
 **Example:**
 ```javascript
-bw.css({ '.card': { padding: '1rem', fontSize: '14px', borderRadius: '8px' } }) // => '.card {\n  padding: 1rem;\n  font-size: 14px;\n  border-radius: 8px;\n}'
+bw.css({
+  '.card': { padding: '1rem', fontSize: '14px', borderRadius: '8px' }
+})
+// => '.card {\n  padding: 1rem;\n  font-size: 14px;\n  border-radius: 8px;\n}'
 ```
 
 ---
@@ -1066,7 +1178,9 @@ Inject CSS into the document head (browser only). Creates or reuses a `<style>` 
 
 **Example:**
 ```javascript
-bw.injectCSS('.my-class { color: red; }'); bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' }); bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles', minify: true });
+bw.injectCSS('.my-class { color: red; }');
+bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles' });
+bw.injectCSS({ '.card': { padding: '1rem' } }, { id: 'card-styles', minify: true });
 ```
 
 ---
@@ -1085,7 +1199,8 @@ Merge multiple style objects into one (left-to-right). Like `Object.assign()` fo
 
 **Example:**
 ```javascript
-var style = bw.s({ display: 'flex' }, { gap: '1rem' }, { color: 'red' }); // => { display: 'flex', gap: '1rem', color: 'red' }
+var style = bw.s({ display: 'flex' }, { gap: '1rem' }, { color: 'red' });
+// => { display: 'flex', gap: '1rem', color: 'red' }
 ```
 
 ---
@@ -1105,7 +1220,12 @@ Generate responsive CSS with media query breakpoints. Produces a CSS string with
 
 **Example:**
 ```javascript
-var css = bw.responsive('.grid', { base: { gridTemplateColumns: '1fr' }, md:   { gridTemplateColumns: '1fr 1fr' }, lg:   { gridTemplateColumns: '1fr 1fr 1fr' } }); bw.injectCSS(css);
+var css = bw.responsive('.grid', {
+  base: { gridTemplateColumns: '1fr' },
+  md:   { gridTemplateColumns: '1fr 1fr' },
+  lg:   { gridTemplateColumns: '1fr 1fr 1fr' }
+});
+bw.injectCSS(css);
 ```
 
 ---
@@ -1129,7 +1249,9 @@ Generate a complete styles object from seed colors and layout config. Pure funct
 
 **Example:**
 ```javascript
-var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' }); console.log(styles.palette.primary.base); // '#4f46e5' // styles.css contains all themed CSS — nothing injected
+var styles = bw.makeStyles({ primary: '#4f46e5', secondary: '#d97706' });
+console.log(styles.palette.primary.base); // '#4f46e5'
+// styles.css contains all themed CSS — nothing injected
 ```
 
 ---
@@ -1149,7 +1271,9 @@ Inject styles into the DOM with optional scoping. Takes a styles object from `ma
 
 **Example:**
 ```javascript
-var styles = bw.makeStyles({ primary: '#4f46e5' }); bw.applyStyles(styles);                     // global bw.applyStyles(styles, '#my-dashboard');     // scoped
+var styles = bw.makeStyles({ primary: '#4f46e5' });
+bw.applyStyles(styles);                     // global
+bw.applyStyles(styles, '#my-dashboard');     // scoped
 ```
 
 ---
@@ -1169,7 +1293,9 @@ Generate and apply styles in one call. Convenience wrapper. Equivalent to: `bw.a
 
 **Example:**
 ```javascript
-bw.loadStyles();                                          // defaults, global bw.loadStyles({ primary: '#4f46e5' });                    // custom, global bw.loadStyles({ primary: '#4f46e5' }, '#my-dashboard');   // custom, scoped
+bw.loadStyles();                                          // defaults, global
+bw.loadStyles({ primary: '#4f46e5' });                    // custom, global
+bw.loadStyles({ primary: '#4f46e5' }, '#my-dashboard');   // custom, scoped
 ```
 
 ---
@@ -1197,7 +1323,8 @@ Prefix every selector in a rules object with a scope selector. Useful for wrappi
 
 **Example:**
 ```javascript
-var altRules = bw.scopeRulesUnder(myRules, '.bw_theme_alt'); bw.injectCSS(bw.css(altRules));
+var altRules = bw.scopeRulesUnder(myRules, '.bw_theme_alt');
+bw.injectCSS(bw.css(altRules));
 ```
 
 ---
@@ -1256,7 +1383,9 @@ Remove injected styles for a given scope. Finds the `<style>` element by id and 
 
 **Example:**
 ```javascript
-bw.clearStyles();                    // remove global styles bw.clearStyles('#my-dashboard');     // remove scoped styles bw.clearStyles('reset');             // remove the CSS reset
+bw.clearStyles();                    // remove global styles
+bw.clearStyles('#my-dashboard');     // remove scoped styles
+bw.clearStyles('reset');             // remove the CSS reset
 ```
 
 ---
@@ -1302,7 +1431,21 @@ Create a sortable TACO table from an array of row objects. Returns a bare `<tabl
 
 **Example:**
 ```javascript
-bw.makeTable({ data: [ { name: 'Alice', age: 30 }, { name: 'Bob', age: 25 } ], columns: [ { key: 'name', label: 'Name' }, { key: 'age', label: 'Age' } ], selectable: true, onRowClick: function(row, i) { console.log('clicked', row.name); }, pageSize: 10, currentPage: 1, onPageChange: function(page) { console.log('page', page); } });
+bw.makeTable({
+  data: [
+    { name: 'Alice', age: 30 },
+    { name: 'Bob', age: 25 }
+  ],
+  columns: [
+    { key: 'name', label: 'Name' },
+    { key: 'age', label: 'Age' }
+  ],
+  selectable: true,
+  onRowClick: function(row, i) { console.log('clicked', row.name); },
+  pageSize: 10,
+  currentPage: 1,
+  onPageChange: function(page) { console.log('page', page); }
+});
 ```
 
 ---
@@ -1331,7 +1474,15 @@ Create a table from a 2D array. Converts a 2D array into the object-array format
 
 **Example:**
 ```javascript
-bw.makeTableFromArray({ data: [ ['Name', 'Role', 'Status'], ['Alice', 'Engineer', 'Active'], ['Bob', 'Designer', 'Away'] ], striped: true, hover: true });
+bw.makeTableFromArray({
+  data: [
+    ['Name', 'Role', 'Status'],
+    ['Alice', 'Engineer', 'Active'],
+    ['Bob', 'Designer', 'Away']
+  ],
+  striped: true,
+  hover: true
+});
 ```
 
 ---
@@ -1360,7 +1511,16 @@ Create a vertical bar chart from data. Renders a pure-CSS bar chart using flexbo
 
 **Example:**
 ```javascript
-bw.makeBarChart({ data: [ { label: 'Jan', value: 12400 }, { label: 'Feb', value: 15800 }, { label: 'Mar', value: 9200 } ], title: 'Monthly Revenue', color: '#0077b6', formatValue: (v) => '$' + (v / 1000).toFixed(1) + 'k' });
+bw.makeBarChart({
+  data: [
+    { label: 'Jan', value: 12400 },
+    { label: 'Feb', value: 15800 },
+    { label: 'Mar', value: 9200 }
+  ],
+  title: 'Monthly Revenue',
+  color: '#0077b6',
+  formatValue: (v) => '$' + (v / 1000).toFixed(1) + 'k'
+});
 ```
 
 ---
@@ -1412,7 +1572,12 @@ Create a card component with optional header, body, footer, and image support Su
 
 **Example:**
 ```javascript
-const card = makeCard({ title: "Status", content: "All systems operational", variant: "success" }); bw.DOM("#app", card);
+const card = bw.makeCard({
+  title: "Status",
+  content: "All systems operational",
+  variant: "success"
+});
+bw.DOM("#app", card);
 ```
 
 ---
@@ -1439,7 +1604,13 @@ Create a button component
 
 **Example:**
 ```javascript
-const btn = makeButton({ text: "Save", variant: "success", onclick: () => console.log("saved") }); // String shorthand: const ok = makeButton("OK");
+const btn = bw.makeButton({
+  text: "Save",
+  variant: "success",
+  onclick: () => console.log("saved")
+});
+// String shorthand:
+const ok = bw.makeButton("OK");
 ```
 
 ---
@@ -1461,7 +1632,10 @@ Create a container component for centering and constraining content width
 
 **Example:**
 ```javascript
-const container = makeContainer({ fluid: true, children: [makeRow({ children: [...] })] });
+const container = bw.makeContainer({
+  fluid: true,
+  children: [bw.makeRow({ children: [bw.makeCol({ size: 12, content: 'Hi' })] })]
+});
 ```
 
 ---
@@ -1483,7 +1657,10 @@ Create a flexbox row for the grid system
 
 **Example:**
 ```javascript
-const row = makeRow({ gap: 4, children: [makeCol({ size: 6, content: "Left" }), makeCol({ size: 6, content: "Right" })] });
+const row = bw.makeRow({
+  gap: 4,
+  children: [bw.makeCol({ size: 6, content: "Left" }), bw.makeCol({ size: 6, content: "Right" })]
+});
 ```
 
 ---
@@ -1509,7 +1686,7 @@ Create a grid column with responsive sizing Supports both fixed and responsive c
 
 **Example:**
 ```javascript
-const col = makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
+const col = bw.makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
 ```
 
 ---
@@ -1536,7 +1713,13 @@ Create a navigation component with tabs or pills styling
 
 **Example:**
 ```javascript
-const nav = makeNav({ pills: true, items: [ { text: "Home", href: "/", active: true }, { text: "About", href: "/about" } ] });
+const nav = bw.makeNav({
+  pills: true,
+  items: [
+    { text: "Home", href: "/", active: true },
+    { text: "About", href: "/about" }
+  ]
+});
 ```
 
 ---
@@ -1563,7 +1746,14 @@ Create a navbar component with brand and navigation links
 
 **Example:**
 ```javascript
-const navbar = makeNavbar({ brand: "MyApp", dark: true, items: [ { text: "Home", href: "/", active: true }, { text: "Docs", href: "/docs" } ] });
+const navbar = bw.makeNavbar({
+  brand: "MyApp",
+  dark: true,
+  items: [
+    { text: "Home", href: "/", active: true },
+    { text: "Docs", href: "/docs" }
+  ]
+});
 ```
 
 ---
@@ -1588,7 +1778,13 @@ Create a tabbed interface with accessible tab navigation Each tab is rendered as
 
 **Example:**
 ```javascript
-const tabs = makeTabs({ tabs: [ { label: "Overview", content: "Tab 1 content", active: true }, { label: "Details", content: "Tab 2 content" } ] }); bw.DOM("#app", tabs);
+const tabs = bw.makeTabs({
+  tabs: [
+    { label: "Overview", content: "Tab 1 content", active: true },
+    { label: "Details", content: "Tab 2 content" }
+  ]
+});
+bw.DOM("#app", tabs);
 ```
 
 ---
@@ -1611,7 +1807,13 @@ Create an alert/notification component
 
 **Example:**
 ```javascript
-const alert = makeAlert({ content: "Operation completed successfully!", variant: "success", dismissible: true }); // String shorthand: const msg = makeAlert("Something happened");
+const alert = bw.makeAlert({
+  content: "Operation completed successfully!",
+  variant: "success",
+  dismissible: true
+});
+// String shorthand:
+const msg = bw.makeAlert("Something happened");
 ```
 
 ---
@@ -1635,7 +1837,10 @@ Create an inline badge/label component
 
 **Example:**
 ```javascript
-const badge = makeBadge({ text: "New", variant: "danger", pill: true }); const small = makeBadge({ text: "3", variant: "info", size: "sm" }); // String shorthand: const tag = makeBadge("New");
+const badge = bw.makeBadge({ text: "New", variant: "danger", pill: true });
+const small = bw.makeBadge({ text: "3", variant: "info", size: "sm" });
+// String shorthand:
+const tag = bw.makeBadge("New");
 ```
 
 ---
@@ -1661,7 +1866,12 @@ Create a progress bar component with ARIA accessibility
 
 **Example:**
 ```javascript
-const progress = makeProgress({ value: 75, variant: "success", striped: true, animated: true });
+const progress = bw.makeProgress({
+  value: 75,
+  variant: "success",
+  striped: true,
+  animated: true
+});
 ```
 
 ---
@@ -1688,7 +1898,14 @@ Create a list group component for displaying lists of items Items can be simple 
 
 **Example:**
 ```javascript
-const list = makeListGroup({ interactive: true, items: [ { text: "Active item", active: true }, { text: "Regular item" }, { text: "Disabled item", disabled: true } ] });
+const list = bw.makeListGroup({
+  interactive: true,
+  items: [
+    { text: "Active item", active: true },
+    { text: "Regular item" },
+    { text: "Disabled item", disabled: true }
+  ]
+});
 ```
 
 ---
@@ -1711,7 +1928,13 @@ Create a breadcrumb navigation component The last item with active:true is rende
 
 **Example:**
 ```javascript
-const crumbs = makeBreadcrumb({ items: [ { text: "Home", href: "/" }, { text: "Products", href: "/products" }, { text: "Widget", active: true } ] });
+const crumbs = bw.makeBreadcrumb({
+  items: [
+    { text: "Home", href: "/" },
+    { text: "Products", href: "/products" },
+    { text: "Widget", active: true }
+  ]
+});
 ```
 
 ---
@@ -1733,7 +1956,13 @@ Create a form wrapper with default submit prevention
 
 **Example:**
 ```javascript
-const form = makeForm({ onsubmit: (e) => { e.preventDefault(); handleSubmit(); }, children: [ makeFormGroup({ label: "Name", input: makeInput({ placeholder: "Enter name" }) }), makeButton({ text: "Submit", type: "submit" }) ] });
+const form = bw.makeForm({
+  onsubmit: (e) => { e.preventDefault(); handleSubmit(); },
+  children: [
+    bw.makeFormGroup({ label: "Name", input: bw.makeInput({ placeholder: "Enter name" }) }),
+    bw.makeButton({ text: "Submit", type: "submit" })
+  ]
+});
 ```
 
 ---
@@ -1759,7 +1988,12 @@ Create a form group with label, input, optional help text and validation feedbac
 
 **Example:**
 ```javascript
-const group = makeFormGroup({ label: "Email", id: "email", input: makeInput({ type: "email", id: "email", placeholder: "you@example.com" }), validation: "invalid", feedback: "Please enter a valid email address." });
+const group = bw.makeFormGroup({
+  label: "Email",
+  id: "email",
+  validation: "invalid",
+  feedback: "Please enter a valid email address."
+});
 ```
 
 ---
@@ -1788,7 +2022,11 @@ Create an input element with form control styling Additional event handlers (oni
 
 **Example:**
 ```javascript
-const input = makeInput({ type: "email", placeholder: "you@example.com", required: true, oninput: (e) => validate(e.target.value) });
+const input = bw.makeInput({
+  type: "email",
+  required: true,
+  oninput: (e) => validate(e.target.value)
+});
 ```
 
 ---
@@ -1816,7 +2054,11 @@ Create a textarea element with form control styling
 
 **Example:**
 ```javascript
-const textarea = makeTextarea({ rows: 5, placeholder: "Enter your message...", required: true });
+const textarea = bw.makeTextarea({
+  rows: 5,
+  placeholder: "Enter your message...",
+  required: true
+});
 ```
 
 ---
@@ -1844,7 +2086,14 @@ Create a select dropdown with options
 
 **Example:**
 ```javascript
-const select = makeSelect({ value: "b", options: [ { value: "a", text: "Option A" }, { value: "b", text: "Option B" }, { value: "c", text: "Option C" } ] });
+const select = bw.makeSelect({
+  value: "b",
+  options: [
+    { value: "a", text: "Option A" },
+    { value: "b", text: "Option B" },
+    { value: "c", text: "Option C" }
+  ]
+});
 ```
 
 ---
@@ -1869,7 +2118,11 @@ Create a checkbox input with label
 
 **Example:**
 ```javascript
-const checkbox = makeCheckbox({ label: "I agree to the terms", id: "agree", checked: false });
+const checkbox = bw.makeCheckbox({
+  label: "I agree to the terms",
+  id: "agree",
+  checked: false
+});
 ```
 
 ---
@@ -1892,7 +2145,14 @@ Create a flexbox stack layout (vertical or horizontal)
 
 **Example:**
 ```javascript
-const stack = makeStack({ direction: "horizontal", gap: 2, children: [ makeButton({ text: "Cancel", variant: "secondary" }), makeButton({ text: "Save", variant: "primary" }) ] });
+const stack = bw.makeStack({
+  direction: "horizontal",
+  gap: 2,
+  children: [
+    bw.makeButton({ text: "Cancel", variant: "secondary" }),
+    bw.makeButton({ text: "Save", variant: "primary" })
+  ]
+});
 ```
 
 ---
@@ -1914,7 +2174,7 @@ Create a loading spinner indicator
 
 **Example:**
 ```javascript
-const spinner = makeSpinner({ variant: "info", size: "sm" });
+const spinner = bw.makeSpinner({ variant: "info", size: "sm" });
 ```
 
 ---
@@ -1943,7 +2203,15 @@ Create a hero section for landing pages and headers Supports gradient background
 
 **Example:**
 ```javascript
-const hero = makeHero({ title: "Welcome to Bitwrench", subtitle: "Build UIs with pure JavaScript", variant: "dark", actions: [ makeButton({ text: "Get Started", variant: "primary", size: "lg" }), makeButton({ text: "Learn More", variant: "outline_light", size: "lg" }) ] });
+const hero = bw.makeHero({
+  title: "Welcome to Bitwrench",
+  subtitle: "Build UIs with pure JavaScript",
+  variant: "dark",
+  actions: [
+    bw.makeButton({ text: "Get Started", variant: "primary", size: "lg" }),
+    bw.makeButton({ text: "Learn More", variant: "outline_light", size: "lg" })
+  ]
+});
 ```
 
 ---
@@ -1970,7 +2238,14 @@ Create a responsive feature grid for showcasing capabilities Renders features in
 
 **Example:**
 ```javascript
-const features = makeFeatureGrid({ columns: 3, features: [ { icon: "⚡", title: "Fast", description: "Zero build step" }, { icon: "📦", title: "Small", description: "Under 45KB gzipped" }, { icon: "🔧", title: "Flexible", description: "Pure JS objects" } ] });
+const features = bw.makeFeatureGrid({
+  columns: 3,
+  features: [
+    { icon: "⚡", title: "Fast", description: "Zero build step" },
+    { icon: "📦", title: "Small", description: "Under 45KB gzipped" },
+    { icon: "🔧", title: "Flexible", description: "Pure JS objects" }
+  ]
+});
 ```
 
 ---
@@ -1995,7 +2270,13 @@ Create a call-to-action section with title, description, and action buttons
 
 **Example:**
 ```javascript
-const cta = makeCTA({ title: "Ready to get started?", description: "Join thousands of developers using Bitwrench.", actions: [ makeButton({ text: "Sign Up Free", variant: "primary", size: "lg" }) ] });
+const cta = bw.makeCTA({
+  title: "Ready to get started?",
+  description: "Join thousands of developers using Bitwrench.",
+  actions: [
+    bw.makeButton({ text: "Sign Up Free", variant: "primary", size: "lg" })
+  ]
+});
 ```
 
 ---
@@ -2020,7 +2301,12 @@ Create a page section with optional centered header and background
 
 **Example:**
 ```javascript
-const section = makeSection({ title: "Features", subtitle: "Everything you need to build great UIs", spacing: "lg", content: makeFeatureGrid({ features: [...] }) });
+const section = bw.makeSection({
+  title: "Features",
+  subtitle: "Everything you need to build great UIs",
+  spacing: "lg",
+  content: bw.makeFeatureGrid({ features: [{ title: 'Fast', description: 'No build step' }] })
+});
 ```
 
 ---
@@ -2044,7 +2330,12 @@ Create a code demo component for documentation pages Displays a live result alon
 
 **Example:**
 ```javascript
-const demo = makeCodeDemo({ title: "Button Example", description: "A simple primary button", code: 'makeButton({ text: "Click me" })', result: makeButton({ text: "Click me" }) });
+const demo = bw.makeCodeDemo({
+  title: "Button Example",
+  description: "A simple primary button",
+  code: 'bw.makeButton({ text: "Click me" })',
+  result: bw.makeButton({ text: "Click me" })
+});
 ```
 
 ---
@@ -2068,7 +2359,11 @@ Create a pagination navigation component
 
 **Example:**
 ```javascript
-const pager = makePagination({ pages: 10, currentPage: 3, onPageChange: (page) => loadPage(page) });
+const pager = bw.makePagination({
+  pages: 10,
+  currentPage: 3,
+  onPageChange: (page) => loadPage(page)
+});
 ```
 
 ---
@@ -2094,7 +2389,12 @@ Create a radio button input with label
 
 **Example:**
 ```javascript
-const radio = makeRadio({ label: "Option A", name: "choice", value: "a", checked: true });
+const radio = bw.makeRadio({
+  label: "Option A",
+  name: "choice",
+  value: "a",
+  checked: true
+});
 ```
 
 ---
@@ -2117,7 +2417,13 @@ Create a button group wrapper
 
 **Example:**
 ```javascript
-const group = makeButtonGroup({ children: [ makeButton({ text: "Left", variant: "primary" }), makeButton({ text: "Middle", variant: "primary" }), makeButton({ text: "Right", variant: "primary" }) ] });
+const group = bw.makeButtonGroup({
+  children: [
+    bw.makeButton({ text: "Left", variant: "primary" }),
+    bw.makeButton({ text: "Middle", variant: "primary" }),
+    bw.makeButton({ text: "Right", variant: "primary" })
+  ]
+});
 ```
 
 ---
@@ -2142,7 +2448,12 @@ Create an accordion component with collapsible items
 
 **Example:**
 ```javascript
-const accordion = makeAccordion({ items: [ { title: "Section 1", content: "Content 1", open: true }, { title: "Section 2", content: "Content 2" } ] });
+const accordion = bw.makeAccordion({
+  items: [
+    { title: "Section 1", content: "Content 1", open: true },
+    { title: "Section 2", content: "Content 2" }
+  ]
+});
 ```
 
 ---
@@ -2168,7 +2479,11 @@ Create a modal dialog overlay
 
 **Example:**
 ```javascript
-const modal = makeModal({ title: "Confirm", content: "Are you sure?", footer: makeButton({ text: "OK", variant: "primary" }) });
+const modal = bw.makeModal({
+  title: "Confirm",
+  content: "Are you sure?",
+  footer: bw.makeButton({ text: "OK", variant: "primary" })
+});
 ```
 
 ---
@@ -2194,7 +2509,11 @@ Create a toast notification popup
 
 **Example:**
 ```javascript
-const toast = makeToast({ title: "Success", content: "File saved!", variant: "success" });
+const toast = bw.makeToast({
+  title: "Success",
+  content: "File saved!",
+  variant: "success"
+});
 ```
 
 ---
@@ -2223,7 +2542,14 @@ Create a dropdown menu triggered by a button
 
 **Example:**
 ```javascript
-const dropdown = makeDropdown({ trigger: "Actions", items: [ { text: "Edit", onclick: () => edit() }, { divider: true }, { text: "Delete", onclick: () => del() } ] });
+const dropdown = bw.makeDropdown({
+  trigger: "Actions",
+  items: [
+    { text: "Edit", onclick: () => edit() },
+    { divider: true },
+    { text: "Delete", onclick: () => del() }
+  ]
+});
 ```
 
 ---
@@ -2248,7 +2574,11 @@ Create a toggle switch (styled checkbox)
 
 **Example:**
 ```javascript
-const toggle = makeSwitch({ label: "Dark mode", checked: false, onchange: (e) => toggleDark(e.target.checked) });
+const toggle = bw.makeSwitch({
+  label: "Dark mode",
+  checked: false,
+  onchange: (e) => toggleDark(e.target.checked)
+});
 ```
 
 ---
@@ -2272,7 +2602,7 @@ Create a skeleton loading placeholder
 
 **Example:**
 ```javascript
-const skeleton = makeSkeleton({ variant: "text", count: 3, width: "100%" });
+const skeleton = bw.makeSkeleton({ variant: "text", count: 3, width: "100%" });
 ```
 
 ---
@@ -2297,7 +2627,8 @@ Create a user avatar with image or initials fallback
 
 **Example:**
 ```javascript
-const avatar = makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" }); const avatarInitials = makeAvatar({ initials: "JD", variant: "success" });
+const avatar = bw.makeAvatar({ src: "/photo.jpg", alt: "Jane Doe", size: "lg" });
+const avatarInitials = bw.makeAvatar({ initials: "JD", variant: "success" });
 ```
 
 ---
@@ -2326,7 +2657,14 @@ Create a carousel/slideshow component with slide transitions Supports image slid
 
 **Example:**
 ```javascript
-const carousel = makeCarousel({ items: [ { content: { t: 'img', a: { src: 'photo.jpg' } }, caption: 'Photo 1' }, { content: { t: 'div', c: 'Text slide' } } ], autoPlay: true, interval: 3000 });
+const carousel = bw.makeCarousel({
+  items: [
+    { content: { t: 'img', a: { src: 'photo.jpg' } }, caption: 'Photo 1' },
+    { content: { t: 'div', c: 'Text slide' } }
+  ],
+  autoPlay: true,
+  interval: 3000
+});
 ```
 
 ---
@@ -2355,7 +2693,13 @@ Create a stat card for dashboard metrics display Shows a large value with a labe
 
 **Example:**
 ```javascript
-const stat = makeStatCard({ value: 2345, label: 'Active Users', change: 5.3, format: 'number', variant: 'primary' });
+const stat = bw.makeStatCard({
+  value: 2345,
+  label: 'Active Users',
+  change: 5.3,
+  format: 'number',
+  variant: 'primary'
+});
 ```
 
 ---
@@ -2378,7 +2722,11 @@ Create a tooltip wrapper around trigger content Wraps the trigger element in a c
 
 **Example:**
 ```javascript
-const tip = makeTooltip({ content: makeButton({ text: 'Hover me' }), text: 'This is a tooltip!', placement: 'top' });
+const tip = bw.makeTooltip({
+  content: bw.makeButton({ text: 'Hover me' }),
+  text: 'This is a tooltip!',
+  placement: 'top'
+});
 ```
 
 ---
@@ -2402,7 +2750,12 @@ Create a popover wrapper around trigger content Like a tooltip but richer — su
 
 **Example:**
 ```javascript
-const pop = makePopover({ trigger: makeButton({ text: 'Click me' }), title: 'Popover Title', content: 'Some helpful information here.', placement: 'bottom' });
+const pop = bw.makePopover({
+  trigger: bw.makeButton({ text: 'Click me' }),
+  title: 'Popover Title',
+  content: 'Some helpful information here.',
+  placement: 'bottom'
+});
 ```
 
 ---
@@ -2428,7 +2781,10 @@ Create a search input with clear button Wraps a text input with a clear (×) but
 
 **Example:**
 ```javascript
-const search = makeSearchInput({ placeholder: 'Search users...', onSearch: (val) => filterUsers(val) });
+const search = bw.makeSearchInput({
+  placeholder: 'Search users...',
+  onSearch: (val) => filterUsers(val)
+});
 ```
 
 ---
@@ -2457,7 +2813,12 @@ Create a styled range slider input
 
 **Example:**
 ```javascript
-const slider = makeRange({ min: 0, max: 100, value: 50, label: 'Volume', showValue: true, oninput: (e) => setVolume(e.target.value) });
+const slider = bw.makeRange({
+  min: 0, max: 100, value: 50,
+  label: 'Volume',
+  showValue: true,
+  oninput: (e) => setVolume(e.target.value)
+});
 ```
 
 ---
@@ -2483,7 +2844,11 @@ Create a media object layout (image + text side-by-side) Classic media object pa
 
 **Example:**
 ```javascript
-const media = makeMediaObject({ src: '/avatar.jpg', title: 'Jane Doe', content: 'Posted a comment 5 minutes ago.' });
+const media = bw.makeMediaObject({
+  src: '/avatar.jpg',
+  title: 'Jane Doe',
+  content: 'Posted a comment 5 minutes ago.'
+});
 ```
 
 ---
@@ -2508,7 +2873,11 @@ Create a file upload zone with drag-and-drop support Styled drop zone with file 
 
 **Example:**
 ```javascript
-const upload = makeFileUpload({ accept: 'image/*', multiple: true, onFiles: (files) => uploadFiles(files) });
+const upload = bw.makeFileUpload({
+  accept: 'image/*',
+  multiple: true,
+  onFiles: (files) => uploadFiles(files)
+});
 ```
 
 ---
@@ -2533,7 +2902,13 @@ Create a vertical timeline for chronological event display Renders events as a v
 
 **Example:**
 ```javascript
-const timeline = makeTimeline({ items: [ { title: 'Project Started', date: 'Jan 2026', variant: 'primary' }, { title: 'Beta Release', date: 'Mar 2026', content: 'v2.0 beta shipped' }, { title: 'Stable Release', date: 'Jun 2026', variant: 'success' } ] });
+const timeline = bw.makeTimeline({
+  items: [
+    { title: 'Project Started', date: 'Jan 2026', variant: 'primary' },
+    { title: 'Beta Release', date: 'Mar 2026', content: 'v2.0 beta shipped' },
+    { title: 'Stable Release', date: 'Jun 2026', variant: 'success' }
+  ]
+});
 ```
 
 ---
@@ -2557,7 +2932,14 @@ Create a multi-step wizard/progress indicator Displays numbered steps with activ
 
 **Example:**
 ```javascript
-const stepper = makeStepper({ currentStep: 1, steps: [ { label: 'Account', description: 'Create account' }, { label: 'Profile', description: 'Set up profile' }, { label: 'Confirm', description: 'Review & submit' } ] });
+const stepper = bw.makeStepper({
+  currentStep: 1,
+  steps: [
+    { label: 'Account', description: 'Create account' },
+    { label: 'Profile', description: 'Set up profile' },
+    { label: 'Confirm', description: 'Review & submit' }
+  ]
+});
 ```
 
 ---
@@ -2581,7 +2963,12 @@ Create a chip/tag input for managing a list of items Displays existing chips wit
 
 **Example:**
 ```javascript
-const tags = makeChipInput({ chips: ['JavaScript', 'CSS'], placeholder: 'Add tag...', onAdd: (val) => addTag(val), onRemove: (val) => removeTag(val) });
+const tags = bw.makeChipInput({
+  chips: ['JavaScript', 'CSS'],
+  placeholder: 'Add tag...',
+  onAdd: (val) => addTag(val),
+  onRemove: (val) => removeTag(val)
+});
 ```
 
 ---
@@ -2601,7 +2988,9 @@ Factory function — create any BCCL component by type name.
 
 **Example:**
 ```javascript
-var card = make('card', { title: 'Hello', variant: 'primary' }); var btn = make('button', { text: 'Click', variant: 'success' }); var types = Object.keys(BCCL); // list all available types
+var card = bw.make('card', { title: 'Hello', variant: 'primary' });
+var btn = bw.make('button', { text: 'Click', variant: 'success' });
+var types = Object.keys(bw.BCCL); // list all available types
 ```
 
 ---
@@ -2610,25 +2999,32 @@ var card = make('card', { title: 'Hello', variant: 'primary' }); var btn = make(
 
 ### `bw.router(config)`
 
-Create a client-side router: URLs in, TACOs out. Route handlers return TACO; the router mounts the result into `target`. Hash mode needs no server config; history mode needs the server to serve the app for unknown paths. Returns a router object with `navigate`, `stop` and the compiled route table.
+Create a client-side router: URLs in, TACOs out. Route handlers return TACO; the router mounts the result into `target`. Hash mode needs no server config; history mode needs the server to serve the app for unknown paths. Returns a router object with `navigate`, `current`, `destroy`, and the `mode` and `base` it was built with. (There is no `stop` -- the teardown method is `destroy`.)
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
 | `config` | `Object` | - Router configuration |
-| `config.routes` | `Object` | - Map of path pattern to handler, e.g. `{ '/': fn, '/users/:id': fn, '*': fn }`. Handlers get (params, query) and return a TACO. |
+| `config.routes` | `Object` | - Map of path pattern to handler, e.g. `{ '/': fn, '/users/:id': fn, '*': fn }`. A handler receives ONE argument: the params object, which also carries `_query` (parsed query string) and, for a `*` route, `_rest`. It returns a TACO. |
 | `config.target` | `string|Element` | - Where to mount each view |
 | `config.mode` | `string` | - 'hash' or 'history' |
 | `config.base` | `string` | - Base path for history mode |
-| `config.before` | `Function` | - Guard: return false to block navigation |
+| `config.before` | `Function` | - Guard, called as (toPath, fromPath). Return `false` to block (the URL is left alone, or restored on a back button), or a path string to redirect. |
 | `config.after` | `Function` | - Called after each successful navigation |
 
 **Returns:** `Object` — object
 
 **Example:**
 ```javascript
-bw.router({ target: '#app', routes: { '/':          function() { return { t: 'h1', c: 'Home' }; }, '/users/:id': function(params) { return { t: 'h1', c: 'User ' + params.id }; }, '*':          function() { return { t: 'h1', c: 'Not found' }; } } });
+bw.router({
+  target: '#app',
+  routes: {
+    '/':          function() { return { t: 'h1', c: 'Home' }; },
+    '/users/:id': function(params) { return { t: 'h1', c: 'User ' + params.id }; },
+    '*':          function() { return { t: 'h1', c: 'Not found' }; }
+  }
+});
 ```
 
 ---
@@ -2646,7 +3042,8 @@ Navigate the active router to a path. Warns and does nothing when no router is r
 
 **Example:**
 ```javascript
-bw.navigate('/users/123'); bw.navigate('/login', { replace: true });
+bw.navigate('/users/123');
+bw.navigate('/login', { replace: true });
 ```
 
 ---
@@ -2735,31 +3132,31 @@ Parse any CSS colour string into the v1 array format. Accepts `#rgb`, `#rrggbb`,
 
 **Example:**
 ```javascript
-bw.colorParse('#006666')          // => [0, 102, 102, 255, 'rgb'] bw.colorParse('hsl(180 50% 50%)') // => [180, 50, 50, 255, 'hsl']
+bw.colorParse('#006666')          // => [0, 102, 102, 255, 'rgb']
+bw.colorParse('hsl(180 50% 50%)') // => [180, 50, 50, 255, 'hsl']
 ```
 
 ---
 
-### `bw.colorInterp(x, in0, in1, colors, stretch, colorParseFn)`
+### `bw.colorInterp(x, in0, in1, colors, stretch)`
 
-Interpolate between an array of colors based on a value in a range.
+Interpolate between an array of colours by position in a range. `x` is mapped across `colors` so that `in0` lands on the first colour and `in1` on the last, with clipping outside the range. Each colour goes through `colorParse`, so each may be in any form that function accepts -- hex, `rgb()`, `hsl()`, a colour name or an array.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `x` | `number` | - Value to interpolate |
-| `in0` | `number` | - Input range start |
-| `in1` | `number` | - Input range end |
-| `colors` | `Array` | - Array of CSS color strings to interpolate between |
-| `stretch` | `number` | - Exponential scaling factor (1 = linear) |
-| `colorParseFn` | `Function` | - Color parse function (injected to avoid circular dep) |
+| `x` | `number` | - Value to place in the range |
+| `in0` | `number` | - Start of the input range |
+| `in1` | `number` | - End of the input range |
+| `colors` | `Array` | - Colours to ramp between; a single-element array is returned as-is |
+| `stretch` | `number` | - Exponent applied to the normalised position, so values above 1 bias the ramp toward the first colour |
 
-**Returns:** `Array` — color as [r, g, b, a, "rgb"]
+**Returns:** `Array`
 
 **Example:**
 ```javascript
-colorInterp(50, 0, 100, ['#ff0000', '#00ff00'], undefined, bw.colorParse)
+bw.colorInterp(50, 0, 100, ['#000000', '#ffffff']) // => [128, 128, 128, 255, 'rgb']
 ```
 
 ---
@@ -2963,7 +3360,8 @@ Map/scale a value from one range to another (linear interpolation). Useful for c
 
 **Example:**
 ```javascript
-bw.mapScale(50, 0, 100, 0, 1)  // => 0.5 bw.mapScale(75, 0, 100, 0, 255) // => 191.25
+bw.mapScale(50, 0, 100, 0, 1)  // => 0.5
+bw.mapScale(75, 0, 100, 0, 255) // => 191.25
 ```
 
 ---
@@ -2984,7 +3382,9 @@ Clamp a value between min and max bounds.
 
 **Example:**
 ```javascript
-bw.clip(150, 0, 100)  // => 100 bw.clip(-5, 0, 100)   // => 0 bw.clip(50, 0, 100)   // => 50
+bw.clip(150, 0, 100)  // => 100
+bw.clip(-5, 0, 100)   // => 0
+bw.clip(50, 0, 100)   // => 50
 ```
 
 ---
@@ -3007,7 +3407,9 @@ Use a dictionary as a switch statement, with support for function values.
 
 **Example:**
 ```javascript
-var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } }; choice('red', colors, '0')   // => 1 choice('aqua', colors)       // => 'aquamarine'
+var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } };
+bw.choice('red', colors, '0')   // => 1
+bw.choice('aqua', colors)       // => 'aquamarine'
 ```
 
 ---
@@ -3026,7 +3428,7 @@ Return unique elements of an array (preserves first occurrence order).
 
 **Example:**
 ```javascript
-arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
+bw.arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
 ```
 
 ---
@@ -3046,7 +3448,7 @@ Return the intersection of two arrays (elements present in both).
 
 **Example:**
 ```javascript
-arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
+bw.arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
 ```
 
 ---
@@ -3066,7 +3468,7 @@ Return elements of b that are not present in a (set difference).
 
 **Example:**
 ```javascript
-arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
+bw.arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
 ```
 
 ---
@@ -3086,7 +3488,8 @@ Create a multidimensional array filled with a value or function result.
 
 **Example:**
 ```javascript
-multiArray(0, [4, 5])            // 4x5 array of 0s multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
+bw.multiArray(0, [4, 5])            // 4x5 array of 0s
+bw.multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
 ```
 
 ---
@@ -3106,7 +3509,8 @@ Natural sort comparison function for use with `Array.sort()`. Sorts strings with
 
 **Example:**
 ```javascript
-['item10', 'item2', 'item1'].sort(naturalCompare) // => ['item1', 'item2', 'item10']
+['item10', 'item2', 'item1'].sort(bw.naturalCompare)
+// => ['item1', 'item2', 'item10']
 ```
 
 ---
@@ -3129,7 +3533,8 @@ Generate Lorem Ipsum placeholder text.
 
 **Example:**
 ```javascript
-loremIpsum(50) // => "Lorem ipsum dolor sit amet, consectetur adipiscin"
+bw.loremIpsum(50)
+// => "Lorem ipsum dolor sit amet, consectetur adipiscin"
 ```
 
 ---
@@ -3152,7 +3557,9 @@ Run `setInterval` with a maximum number of repetitions.
 
 **Example:**
 ```javascript
-setIntervalX(function(i) { console.log('Iteration', i); }, 1000, 5); // Runs 5 times, 1 second apart
+bw.setIntervalX(function(i) {
+  console.log('Iteration', i);
+}, 1000, 5); // Runs 5 times, 1 second apart
 ```
 
 ---
@@ -3367,7 +3774,17 @@ Hyperscript-style TACO constructor. A convenience helper that returns a canonica
 
 **Example:**
 ```javascript
-bw.h('div') // => { t: 'div' } bw.h('p', { class: 'bw_text_muted' }, 'Hello') // => { t: 'p', a: { class: 'bw_text_muted' }, c: 'Hello' } bw.h('ul', null, [ bw.h('li', null, 'one'), bw.h('li', null, 'two') ]) // => { t: 'ul', c: [{ t: 'li', c: 'one' }, { t: 'li', c: 'two' }] }
+bw.h('div')
+// => { t: 'div' }
+
+bw.h('p', { class: 'bw_text_muted' }, 'Hello')
+// => { t: 'p', a: { class: 'bw_text_muted' }, c: 'Hello' }
+
+bw.h('ul', null, [
+  bw.h('li', null, 'one'),
+  bw.h('li', null, 'two')
+])
+// => { t: 'ul', c: [{ t: 'li', c: 'one' }, { t: 'li', c: 'two' }] }
 ```
 
 ---
@@ -3459,7 +3876,13 @@ Dispatch a message to a component by UUID, CSS class, or selector. Finds the ele
 
 **Example:**
 ```javascript
-bw.message('my_carousel', 'goToSlide', 2); // Or from SSE handler: es.onmessage = function(e) { var msg = JSON.parse(e.data); bw.message(msg.target, msg.action, msg.data); };
+bw.message('my_carousel', 'goToSlide', 2);
+// Or from an SSE handler:
+var es = new EventSource('/bw/events/1');
+es.onmessage = function(e) {
+  var msg = JSON.parse(e.data);
+  bw.message(msg.target, msg.action, msg.data);
+};
 ```
 
 ---
@@ -3478,7 +3901,14 @@ Collect form data from all input, select, and textarea elements within a contain
 
 **Example:**
 ```javascript
-// Given a form with name="email" input and name="agree" checkbox: var data = bw.formData('#signup-form'); // => { email: 'user@example.com', agree: true } // Collect and publish in one step: bw.pub('form:submit', bw.formData('#my-form')); // Works with any container, not just <form>: bw.pub('settings:changed', bw.formData('.settings-panel'));
+// Given a form with name="email" input and name="agree" checkbox:
+var data = bw.formData('#signup-form');
+
+// Collect and publish in one step:
+bw.pub('form:submit', bw.formData('#my-form'));
+
+// Works with any container, not just <form>:
+bw.pub('settings:changed', bw.formData('.settings-panel'));
 ```
 
 ---
@@ -3498,7 +3928,16 @@ Inspect a DOM element and its subtree, returning a plain-object representation w
 
 **Example:**
 ```javascript
-// Get full tree from #app, 3 levels deep (default): var info = bw.inspect('#app'); // Shallow inspection (just the element, no children): var info = bw.inspect('#my-carousel', 0); console.log(info.handles); // ['next', 'prev', 'goToSlide'] console.log(info.type);    // 'carousel' // Deep inspection for debugging: console.log(JSON.stringify(bw.inspect('#app', 5), null, 2));
+// Get full tree from #app, 3 levels deep (default):
+var info = bw.inspect('#app');
+
+// Shallow inspection (just the element, no children):
+var info = bw.inspect('#my-carousel', 0);
+console.log(info.handles); // ['next', 'prev', 'goToSlide']
+console.log(info.type);    // 'carousel'
+
+// Deep inspection for debugging:
+console.log(JSON.stringify(bw.inspect('#app', 5), null, 2));
 ```
 
 ---
@@ -3517,7 +3956,21 @@ Query the BCCL component registry. Returns metadata about registered component t
 
 **Example:**
 ```javascript
-// List all available component types: bw.catalog(); // => [{ type: 'card', factory: 'makeCard' }, //     { type: 'button', factory: 'makeButton' }, ...] // Look up a specific type: bw.catalog('accordion'); // => { type: 'accordion', factory: 'makeAccordion' } // Check if a type exists: if (bw.catalog('chart')) { ... } // Get just the type names: bw.catalog().map(function(c) { return c.type; }); // => ['card', 'button', 'container', 'row', ...]
+// List all available component types:
+bw.catalog();
+// => [{ type: 'card', factory: 'makeCard' },
+//     { type: 'button', factory: 'makeButton' }, ...]
+
+// Look up a specific type:
+bw.catalog('accordion');
+// => { type: 'accordion', factory: 'makeAccordion' }
+
+// Check if a type exists:
+if (bw.catalog('chart')) { console.log('chart exists'); }
+
+// Get just the type names:
+bw.catalog().map(function(c) { return c.type; });
+// => ['card', 'button', 'container', 'row', ...]
 ```
 
 ---
@@ -3543,7 +3996,13 @@ Apply RFC 6902 JSON Patch operations to a plain object. Supported operations: ad
 
 **Example:**
 ```javascript
-var obj = { a: 1, b: { c: 2 } }; bw.jsonPatch(obj, [ { op: 'replace', path: '/a', value: 10 }, { op: 'add', path: '/b/d', value: 3 }, { op: 'remove', path: '/b/c' } ]); // obj => { a: 10, b: { d: 3 } }
+var obj = { a: 1, b: { c: 2 } };
+bw.jsonPatch(obj, [
+  { op: 'replace', path: '/a', value: 10 },
+  { op: 'add', path: '/b/d', value: 3 },
+  { op: 'remove', path: '/b/c' }
+]);
+// obj => { a: 10, b: { d: 3 } }
 ```
 
 ---
@@ -3556,7 +4015,8 @@ Delegated dispatcher for `bw_act_*` class tokens: `{ enable, disable }`. Server-
 
 **Example:**
 ```javascript
-bw.actions.enable(); bw.mount('#app', { t: 'button', a: { class: 'bw_act_save' }, c: 'Save' });
+bw.actions.enable();
+bw.mount('#app', { t: 'button', a: { class: 'bw_act_save' }, c: 'Save' });
 ```
 
 ---

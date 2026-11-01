@@ -48,7 +48,7 @@ These guides cover how to build UIs with bitwrench.
 | [bwcli attach](bw-attach.md) | Remote debugging REPL: terminal-based inspector for any bitwrench page |
 | [App Patterns](app-patterns.md) | Canonical project layouts: dashboard, SPA, bwserve, embedded, static site |
 | [LLM Guide](llm-bitwrench-guide.md) | Compact single-file reference for AI-assisted development |
-| [TypeScript Usage Guide](bitwrench_typescript_usage.md) | Import patterns, typed configs, TACO types, tree-shaking |
+| [TypeScript Usage Guide](bitwrench_typescript_usage.md) | Import patterns, typed configs, TACO types, `.d.ts` setup |
 | [bwmcp MCP Server](bitwrench-mcp.md) | MCP server for AI agents: tool catalog, live rendering, screenshots |
 | [drift-lint](drift-lint.md) | Maintainer tool: keeps docs/examples consistent with the shipped API |
 | [North Star Principles](bitwrench-northstar-principles.md) | The design rules the library is held to, and what to challenge |

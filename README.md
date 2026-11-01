@@ -3,7 +3,7 @@
 [<img class="quikdown-img" src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" alt="License" data-qd-alt="License" data-qd-src="https://img.shields.io/badge/License-BSD%202--Clause-blue.svg" data-qd="!">](https://opensource.org/licenses/BSD-2-Clause)
 [<img class="quikdown-img" src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" alt="NPM version" data-qd-alt="NPM version" data-qd-src="https://img.shields.io/npm/v/bitwrench.svg?style=flat-square" data-qd="!">](https://www.npmjs.com/package/bitwrench)
 [<img class="quikdown-img" src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" alt="CI" data-qd-alt="CI" data-qd-src="https://github.com/deftio/bitwrench/actions/workflows/ci.yml/badge.svg" data-qd="!">](https://github.com/deftio/bitwrench/actions/workflows/ci.yml)
-[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-98%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-98%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
+[<img class="quikdown-img" src="https://img.shields.io/badge/coverage-99.4%25-brightgreen.svg" alt="Coverage" data-qd-alt="Coverage" data-qd-src="https://img.shields.io/badge/coverage-99.4%25-brightgreen.svg" data-qd="!">](https://github.com/deftio/bitwrench)
 
 [<img class="quikdown-img" src="./images/bitwrench-logo-med.png" alt="bitwrench" data-qd-alt="bitwrench" data-qd-src="./images/bitwrench-logo-med.png" data-qd="!">](https://deftio.github.io/bitwrench/pages/)
 
@@ -53,6 +53,12 @@ Or include directly in a page:
 
 Vendoring a copy instead? Take a **minified** file -- see [Build Formats](#build-formats)
 for which one. The unminified builds are for debugging.
+
+The TACO checker ships as its own artifact (under 3 KB gzipped), outside the core
+bundle, because it is a development-time tool: `import verify from 'bitwrench/verify'`,
+`const { verify } = require('bitwrench/verify')`, or a script tag
+(`dist/bitwrench-verify.min.js`, loaded after bitwrench) for the global `bwv`.
+See [Verify](docs/verify.md).
 
 ## Getting Started
 
@@ -402,7 +408,8 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 | ESM, lean | bitwrench-lean.esm.min.js | As above, without the built-in components |
 | CJS | bitwrench.min.cjs | Node.js require() |
 | ES5 | bitwrench.es5.min.js | Legacy browsers (IE11) |
-| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~114 KB gz) |
+| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~118 KB gz) |
+| Verify | bitwrench-verify.min.js (+ `.cjs`, `.esm.js`, `.esm.min.js`, `.d.ts`) | The opt-in TACO checker (under 3 KB gz). Separate on purpose -- a development-time tool, outside the core budget. [Guide](docs/verify.md) |
 
 The lean builds still include `makeTable`, `makeDataTable`, `makeTableFromArray` and
 `makeBarChart` -- and the router, pub/sub, `bw.syncChildren`, `bw.patch` and the
@@ -431,6 +438,7 @@ Every release is gated at 46KB gzipped for the UMD and ESM builds, measured agai
 - [State Management](docs/state-management.md) -- component model, explicit updates, cross-component communication
 - [Component Library](docs/component-library.md) -- all `make*()` functions with signatures and examples
 - [Theming](docs/theming.md) -- palette-driven theme generation, presets, design tokens
+- [Verify](docs/verify.md) -- `bitwrench-verify`: an opt-in checker for TACO that is generated, numerous, or leaving your hands
 - [CLI](docs/cli.md) -- the `bwcli` command for file conversion and pipe server
 - [Dev Server & Attach](docs/bw-attach.md) -- REPL, DOM inspection, and screenshots from the terminal
 - [bwserve](docs/bwserve.md) -- server-driven UI protocol (SSE, actions, embedded devices)

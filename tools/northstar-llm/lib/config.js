@@ -75,11 +75,33 @@ export function resolveProvider(cfg, providerId, modelOverride) {
   return out;
 }
 
+/**
+ * Parse a wall-clock budget: "6h", "90m", "3600s", "250ms", or a bare number
+ * of milliseconds. Returns null for empty input, throws on nonsense so a
+ * typo'd overnight budget fails at startup rather than at 3am.
+ */
+export function parseDuration(v) {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number') {
+    if (!Number.isFinite(v) || v <= 0) throw new Error('budget must be a positive duration');
+    return v;
+  }
+  var m = String(v).trim().match(/^(\d+(?:\.\d+)?)\s*(ms|s|m|h)?$/i);
+  if (!m) throw new Error('Cannot parse duration "' + v + '" (try 6h, 90m, 3600s)');
+  var n = Number(m[1]);
+  if (!Number.isFinite(n) || n <= 0) throw new Error('budget must be a positive duration');
+  var unit = (m[2] || 'ms').toLowerCase();
+  var mult = { ms: 1, s: 1000, m: 60000, h: 3600000 }[unit];
+  return Math.round(n * mult);
+}
+
 export function applyCliOverrides(cfg, flags) {
   var out = deepMerge(cfg, {});
   if (flags.provider) out.providers.default = flags.provider;
   if (flags.concurrency != null) out.run.concurrency = flags.concurrency;
   if (flags.outDir) out.run.outDir = flags.outDir;
+  if (flags.maxRetries != null) out.run.maxRetries = flags.maxRetries;
+  if (flags.budget != null) out.run.budgetMs = parseDuration(flags.budget);
   if (flags.path) {
     out.scan = Object.assign({}, out.scan, { include: [flags.path], _pathOverride: true });
   }

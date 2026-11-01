@@ -24,12 +24,12 @@
  * @returns {string} Type name
  * @category Core
  * @example
- * typeOf("hello")         // => "string"
- * typeOf(42)              // => "number"
- * typeOf([1, 2, 3])       // => "array"
- * typeOf(new Date())      // => "Date"
- * typeOf({a: 1})          // => "Object"
- * typeOf([1,2], true)     // => "object"
+ * bw.typeOf("hello")         // => "string"
+ * bw.typeOf(42)              // => "number"
+ * bw.typeOf([1, 2, 3])       // => "array"
+ * bw.typeOf(new Date())      // => "Date"
+ * bw.typeOf({a: 1})          // => "Object"
+ * bw.typeOf([1,2], true)     // => "object"
  */
 export function typeOf(x, baseTypeOnly) {
   if (x === null) return "null";
@@ -98,8 +98,8 @@ export function typeOf(x, baseTypeOnly) {
  * @returns {number} Mapped value
  * @category Math
  * @example
- * mapScale(50, 0, 100, 0, 1)  // => 0.5
- * mapScale(75, 0, 100, 0, 255) // => 191.25
+ * bw.mapScale(50, 0, 100, 0, 1)  // => 0.5
+ * bw.mapScale(75, 0, 100, 0, 255) // => 191.25
  */
 export function mapScale(x, in0, in1, out0, out1, options = {}) {
   const { clip: doClip = false, expScale = 1 } = options;
@@ -134,8 +134,8 @@ export function mapScale(x, in0, in1, out0, out1, options = {}) {
  * @returns {number} Clamped value
  * @category Math
  * @example
- * clip(150, 0, 100)  // => 100
- * clip(-5, 0, 100)   // => 0
+ * bw.clip(150, 0, 100)  // => 100
+ * bw.clip(-5, 0, 100)   // => 0
  */
 export function clip(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -151,8 +151,8 @@ export function clip(value, min, max) {
  * @category Array Utilities
  * @example
  * var colors = { red: 1, blue: 2, aqua: function(z) { return z + 'marine'; } };
- * choice('red', colors, '0')   // => 1
- * choice('aqua', colors)       // => 'aquamarine'
+ * bw.choice('red', colors, '0')   // => 1
+ * bw.choice('aqua', colors)       // => 'aquamarine'
  */
 export function choice(x, choices, def) {
   const z = (x in choices) ? choices[x] : def;
@@ -166,7 +166,7 @@ export function choice(x, choices, def) {
  * @returns {Array} Array with unique elements
  * @category Array Utilities
  * @example
- * arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
+ * bw.arrayUniq([1, 2, 2, 3, 1])  // => [1, 2, 3]
  */
 export function arrayUniq(x) {
   if (typeOf(x) !== "array") return [];
@@ -181,7 +181,7 @@ export function arrayUniq(x) {
  * @returns {Array} Unique elements found in both a and b
  * @category Array Utilities
  * @example
- * arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
+ * bw.arrayBinA([1, 2, 3], [2, 3, 4])  // => [2, 3]
  */
 export function arrayBinA(a, b) {
   if (typeOf(a) !== "array" || typeOf(b) !== "array") return [];
@@ -196,41 +196,11 @@ export function arrayBinA(a, b) {
  * @returns {Array} Unique elements in b but not in a
  * @category Array Utilities
  * @example
- * arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
+ * bw.arrayBNotInA([1, 2, 3], [2, 3, 4, 5])  // => [4, 5]
  */
 export function arrayBNotInA(a, b) {
   if (typeOf(a) !== "array" || typeOf(b) !== "array") return [];
   return arrayUniq(b.filter(n => a.indexOf(n) < 0));
-}
-
-/**
- * Interpolate between an array of colors based on a value in a range.
- *
- * @param {number} x - Value to interpolate
- * @param {number} in0 - Input range start
- * @param {number} in1 - Input range end
- * @param {Array} colors - Array of CSS color strings to interpolate between
- * @param {number} [stretch] - Exponential scaling factor (1 = linear)
- * @param {Function} colorParseFn - Color parse function (injected to avoid circular dep)
- * @returns {Array} Interpolated color as [r, g, b, a, "rgb"]
- * @category Color
- * @example
- * colorInterp(50, 0, 100, ['#ff0000', '#00ff00'], undefined, bw.colorParse)
- */
-export function colorInterp(x, in0, in1, colors, stretch, colorParseFn) {
-  let c = Array.isArray(colors) ? colors : ["#000", "#fff"];
-  c = c.length === 0 ? ["#000", "#fff"] : c;
-  if (c.length === 1) return c[0];
-
-  // Convert all colors to RGB format
-  c = c.map(col => colorParseFn(col));
-
-  const a = mapScale(x, in0, in1, 0, c.length - 1, { clip: true, expScale: stretch });
-  const i = clip(Math.floor(a), 0, c.length - 2);
-  const r = a - i;
-
-  const interp = (idx) => mapScale(r, 0, 1, c[i][idx], c[i + 1][idx], { clip: true });
-  return [interp(0), interp(1), interp(2), interp(3), "rgb"];
 }
 
 /**
@@ -242,7 +212,7 @@ export function colorInterp(x, in0, in1, colors, stretch, colorParseFn) {
  * @returns {string} Lorem ipsum text
  * @category Text Generation
  * @example
- * loremIpsum(50)
+ * bw.loremIpsum(50)
  * // => "Lorem ipsum dolor sit amet, consectetur adipiscin"
  */
 export function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
@@ -267,12 +237,13 @@ export function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
     startSpot = (startSpot + 1) % lorem.length;
     skippedChars++;
     // Prevent infinite loop in case entire lorem is spaces/punctuation
-    /* c8 ignore next -- lorem text always contains letters; this is a defensive guard */
+    /* c8 ignore start -- lorem text always contains letters; defensive guard */
     if (skippedChars >= lorem.length) {
       startSpot = 0;
       skippedChars = 0;
       break;
     }
+    /* c8 ignore stop */
   }
 
   let l = lorem.substring(startSpot) + lorem.substring(0, startSpot);
@@ -314,8 +285,8 @@ export function loremIpsum(numChars, startSpot, startWithCapitalLetter = true) {
  * @returns {Array} Multidimensional array
  * @category Array Utilities
  * @example
- * multiArray(0, [4, 5])            // 4x5 array of 0s
- * multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
+ * bw.multiArray(0, [4, 5])            // 4x5 array of 0s
+ * bw.multiArray(Math.random, [3, 4])  // 3x4 array of random numbers
  */
 export function multiArray(value, dims) {
   const v = () => typeOf(value) === "function" ? value() : value;
@@ -345,7 +316,7 @@ export function multiArray(value, dims) {
  * @returns {number} Sort order (-1, 0, 1)
  * @category Array Utilities
  * @example
- * ['item10', 'item2', 'item1'].sort(naturalCompare)
+ * ['item10', 'item2', 'item1'].sort(bw.naturalCompare)
  * // => ['item1', 'item2', 'item10']
  */
 export function naturalCompare(as, bs) {
@@ -407,7 +378,7 @@ export function naturalCompare(as, bs) {
  * @returns {number} Interval ID (can be passed to clearInterval)
  * @category Timing
  * @example
- * setIntervalX(function(i) {
+ * bw.setIntervalX(function(i) {
  *   console.log('Iteration', i);
  * }, 1000, 5); // Runs 5 times, 1 second apart
  */

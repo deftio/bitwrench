@@ -31,7 +31,7 @@ microcontrollers.
 3. **Hydrate** -- handles attach to `el.bw`, slots wire getters/setters, UUID assigned, state initialized
 4. **Mount** -- `bw.mount` / `bw.DOM` / `bw.append` / `bw.replace` insert and run `mountTree`; `o.mounted(el)` fires. Never `parent.appendChild(bw.create(taco))` for lifecycle components.
 5. **Interact** -- external code calls `el.bw.method()` -- the component updates its own DOM
-6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)`, tears down subscriptions, removes element
+6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)` and tears down subscriptions, leaving the node in place; `bw.remove(el)` does that **and** removes it
 
 Create already hydrates -- you do not call `bw.hydrate()` on the normal path
 (it is for wiring `o` onto DOM that bitwrench did not build).
@@ -248,7 +248,8 @@ DOM helper because you are on lean -- check `docs/core-api.md` first.
     handle: { reset: function(el) { /* el.bw.reset() */ } },
     slots: { title: '.title' },     // => el.bw.setTitle() / el.bw.getTitle()
     mounted: function(el) { },      // after DOM insertion (NOT for event handlers)
-    unmount: function(el) { }       // before DOM removal
+    unmount: function(el) { },      // before DOM removal
+    type: 'card'                    // component type tag (the 7th key)
   }
 }
 ```
@@ -277,7 +278,7 @@ series -- rather than re-mounting the drawing. Full guide: `docs/svg.md`.
 | bw.toggleClass(ref, names, force?) | elements changed | Flip/force classes on every match -- the cheapest update there is |
 | bw.addClass / bw.removeClass / bw.hasClass | elements / boolean | The rest of the class verbs |
 | bw.clear(ref) | element | Empty a container, firing unmount hooks |
-| bw.el(ref, apply) / bw.\$(sel, apply) | element / array | Find and apply in one call: text, TACO, or a function per element |
+| bw.el(ref, apply) / bw.$(sel, apply) | element / array | Find and apply in one call: text, TACO, or a function per element |
 | bw.create(taco) | detached element | Build before inserting (does not fire `o.mounted`) |
 | bw.html(taco) | HTML string | SSR, emails, Node.js, CLI |
 
@@ -398,6 +399,43 @@ as a flash array, so a board with no filesystem can answer
 published to any package registry -- see
 `dev/bw-embedded-release-plan-2.1.x.md`.
 
+## Checking generated TACO (bitwrench-verify)
+
+Opt-in checker, its own artifact -- NOT in core, never in production. bitwrench
+renders without it; there is no build step and verify does not add one. If you
+generate TACO, `verify.assert(taco)` in a test is how you check your own output.
+
+<!-- doc-test: skip (shows the import/require form itself; verify is a separate module) -->
+```javascript
+const { verify } = require('bitwrench/verify');  // ESM: import verify from 'bitwrench/verify'
+// browser: <script src="bitwrench-verify.min.js"></script> after bitwrench, then bwv.verify(...)
+
+verify({ t: 'p', c: 'hi' });                 // => []
+verify({ t: 'h1', cc: 'hi' });
+// => [ { severity: 'error', code: 'unknown-key', path: '', key: 'cc', hint: 'c' } ]
+verify({ t: 'h1', a: { clas: 'x' } });
+// => [ { severity: 'warn', code: 'attr-typo', path: 'a.clas', key: 'clas', hint: 'class' } ]
+verify({ t: 'b', a: { onclick: function () {} } }, { mode: 'wire' });
+// => [ { severity: 'error', code: 'function-in-wire', path: 'a.onclick', key: 'onclick' } ]
+
+verify.assert(taco);          // true when clean, throws otherwise -- for tests
+```
+
+`verify(input, opts)` returns an array of findings (`[]` when clean). It never
+throws and never mutates the input. A finding is `{severity, code, path, key?,
+hint?}`; `severity` is 'error' or 'warn', `path` is like `c[2].a` (empty string
+for the root). 22 codes: 16 errors, 6 warnings. Two doors, same checker: the library, or `bwcli verify <file>` / a pipe at stdin (wire mode by default; exit 0 clean, 1 error, 2 unparseable). `opts.mode` is 'authored'
+(default) or 'wire' -- wire also rejects functions and string `on*` handlers,
+because neither survives JSON or `bw.apply()`. `opts.ignore` takes an array of
+codes ('all' is not honoured); `verify.assert` also takes `opts.strict` to fail
+on warnings. Under 3 KB gzipped.
+
+Reach for it when TACOs are generated, numerous, or leaving your hands -- a
+test, a wire frame, an LLM-produced tree, a CI pipe. Skip it when the shapes are
+fixed and few and someone can see the page. It is not a type checker
+(`bitwrench.d.ts` ships separately) and not a CSS or JS linter. Full guide:
+`docs/verify.md`.
+
 ## Documentation Map
 
 Start here:
@@ -424,6 +462,7 @@ Building apps:
 
 Reference:
 - docs/bitwrench_api.md -- Full API with signatures
+- docs/verify.md -- bitwrench-verify: opt-in TACO checker, findings, authored vs wire mode
 - docs/framework-translation-table.md -- React/Vue/Svelte equivalents
 - docs/bitwrench-northstar-principles.md -- Core design philosophy
 

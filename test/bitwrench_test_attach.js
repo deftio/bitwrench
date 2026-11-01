@@ -908,18 +908,49 @@ describe("handleSlashCommand()", function() {
     assert.ok(errors.some(function(l) { return l.includes('Invalid TACO JSON'); }));
   });
 
-  it("/patch calls client.patch", function() {
-    var patchCalled = false;
-    var mockClient = {
-      patch: function(id, content) {
-        patchCalled = true;
-        assert.strictEqual(id, 'counter');
-        assert.strictEqual(content, 'hello world');
+  // This test used to assert that /patch passed a bare STRING to client.patch,
+  // which pinned the bug in place: client.patch(ref, fields) spreads an object,
+  // so a string contributed no fields, the frame carried no `text`, and
+  // bw.apply patched nothing -- while the REPL printed "Patched". Asserting
+  // the call happened was not enough; it now asserts the shape that applies.
+  it("/patch sends a discriminated {text} field", function() {
+    var seen = null;
+    var mockClient = { patch: function(id, fields) { seen = { id: id, fields: fields }; } };
+    handleSlashCommand('/patch counter hello world', mockClient, new Map(), {}, mockRl);
+    assert.ok(seen, 'client.patch should be called');
+    assert.strictEqual(seen.id, 'counter');
+    assert.deepStrictEqual(seen.fields, { text: 'hello world' },
+      'v:1 patch carries text, not a bare string');
+    assert.ok(logged.some(function(l) { return l.includes('Patched'); }));
+  });
+
+  it("/patch produces a frame bw.apply actually applies", function() {
+    // The real contract: what attach sends must land in the DOM. Build the
+    // frame through the real BwServeClient, then apply it.
+    var sent = [];
+    var realish = {
+      _closed: false,
+      _sent: sent,
+      patch: function(ref, fields) {
+        var msg = { type: 'patch', ref: ref };
+        if (fields && typeof fields === 'object') {
+          Object.keys(fields).forEach(function(k) { msg[k] = fields[k]; });
+        }
+        msg.v = 1;
+        sent.push(msg);
       }
     };
-    handleSlashCommand('/patch counter hello world', mockClient, new Map(), {}, mockRl);
-    assert.strictEqual(patchCalled, true);
-    assert.ok(logged.some(function(l) { return l.includes('Patched'); }));
+    handleSlashCommand('/patch counter 42', realish, new Map(), {}, mockRl);
+    assert.strictEqual(sent.length, 1);
+
+    var dom = new JSDOM('<!DOCTYPE html><body><span id="counter">0</span></body>');
+    global.window = dom.window;
+    global.document = dom.window.document;
+    if (bw._nodeMap) Object.keys(bw._nodeMap).forEach(function(k) { delete bw._nodeMap[k]; });
+
+    assert.strictEqual(bw.apply(sent[0]), true, 'the frame must be accepted');
+    assert.strictEqual(dom.window.document.getElementById('counter').textContent, '42',
+      'and must actually change the DOM');
   });
 
   it("/listen calls client.call with _bw_listen", function() {

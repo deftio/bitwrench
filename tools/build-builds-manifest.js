@@ -42,7 +42,15 @@ const mapFiles = new Set(readdirSync(distDir).filter(f => f.endsWith('.map')));
 const files = allFiles.map(file => {
   const filePath = join(distDir, file);
   const raw = statSync(filePath).size;
-  const gzipped = gzipSync(readFileSync(filePath)).length;
+  // The size that can fail a release is the one tools/release.js gates on:
+  // the shipped .gz artifact, written at level 9. Recompressing at zlib's
+  // default (level 6) gave a number ~140 bytes larger, so the downloads page
+  // and the changelog told different stories about the same file. Prefer the
+  // artifact; fall back to level 9, never the default.
+  const gzPath = filePath + '.gz';
+  const gzipped = existsSync(gzPath)
+    ? statSync(gzPath).size
+    : gzipSync(readFileSync(filePath), { level: 9 }).length;
 
   // Determine format
   let format = 'Unknown';
@@ -75,10 +83,14 @@ const files = allFiles.map(file => {
   else if (file.startsWith('bitwrench-debug')) component = 'debug';
   else if (file.startsWith('bitwrench-lean')) component = 'lean';
   else if (file.startsWith('bitwrench-bccl')) component = 'bccl';
+  else if (file.startsWith('bitwrench-verify')) component = 'verify';
   else if (file.startsWith('bwserve')) component = 'bwserve';
 
-  // bitwrench-debug.js has no format suffix -- it's a UMD IIFE
-  if (format === 'Unknown' && component === 'debug') format = 'UMD';
+  // bitwrench-debug.js and bitwrench-verify.js have no format suffix -- both
+  // are UMD. Without this they ship as format "Unknown", and without the
+  // component case above verify lands under `core` -- which is precisely the
+  // opposite of the release's claim that it is NOT in the core bundle.
+  if (format === 'Unknown' && (component === 'debug' || component === 'verify')) format = 'UMD';
 
   const entry = { file, format, ver, component, minified, raw, gzipped, sourceMap };
   if (sriHashes[file]) {

@@ -421,7 +421,10 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
       }
       var patchId = parts[1];
       var patchContent = parts.slice(2).join(' ');
-      activeClient.patch(patchId, patchContent);
+      // client.patch(ref, fields) spreads an OBJECT into the frame. Passing a
+      // bare string contributed no fields, so the frame carried no `text` and
+      // bw.apply patched nothing -- while this still printed "Patched".
+      activeClient.patch(patchId, { text: patchContent });
       console.log('Patched ' + patchId);
       rl.prompt();
       break;

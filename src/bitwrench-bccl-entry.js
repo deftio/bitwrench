@@ -60,8 +60,18 @@ export function registerBCCL(bw) {
   }
 }
 
-// Re-export all components for direct import
-export { BCCL, make, variantClass } from './bitwrench-bccl.js';
+// Re-export all components for direct import.
+//
+// This said "all components" above a line that re-exported three names, so
+// `import { makeCard } from 'bitwrench/bccl'` was undefined for every one of
+// the 48 factories -- including the form docs/llm-bitwrench-guide.md teaches.
+// The UMD path was unaffected, because registerBCCL() below copies them onto
+// the global `bw`. `export *` makes the documented ESM/CJS form work too.
+//
+// Note this is a nicer spelling, NOT a smaller build: the artifact is one
+// pre-bundled scope, so importing one factory costs what importing all of
+// them costs. See dev/bitwrench-2.1.6-size-opt-findings.md section 6.
+export * from './bitwrench-bccl.js';
 
 // UMD auto-registration: if `bw` exists as a global, register automatically
 if (typeof window !== 'undefined' && typeof window.bw !== 'undefined') {

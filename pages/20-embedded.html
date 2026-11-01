@@ -161,16 +161,13 @@
       '  |  {cmd:"set_color"} -->        |\n' +
       '  |  <-- {ok: true}               |';
 
-    var archSection = site.makeDemoSection({
-      title: 'How It Works',
-      body: [
+    var archSection = site.makeDemoSection('section-architecture', 'How It Works', '', [
         site.makeCallout({
           variant: 'info',
           content: 'The device never generates HTML. It sends tiny JSON messages (~200 bytes). The browser renders everything with bitwrench.'
         }),
         { t: 'div', a: { class: 'emb-arch' }, c: archDiagram }
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Section 3: Board Gallery
@@ -236,20 +233,16 @@
             columns: [
               { key: 'Spec', label: '' },
               { key: 'Value', label: '' }
-            ],
-            compact: true
+            ]
           })
         ]
       });
     });
 
-    var boardSection = site.makeDemoSection({
-      title: 'Supported Boards',
-      body: [
+    var boardSection = site.makeDemoSection('section-boards', 'Supported Boards', '', [
         { t: 'p', c: 'Any board with WiFi and a C or Python compiler works. These are tested:' },
         { t: 'div', a: { class: 'emb-board-grid' }, c: boardCards }
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Section 4: Flash Size Table
@@ -273,13 +266,10 @@
       hover: true
     });
 
-    var flashSection = site.makeDemoSection({
-      title: 'Flash Footprint',
-      body: [
+    var flashSection = site.makeDemoSection('section-flash', 'Flash Footprint', '', [
         { t: 'p', c: 'bitwrench is designed for constrained flash. Here are the actual sizes:' },
         flashTable
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Section 5: Example Gallery
@@ -368,12 +358,9 @@
       });
     });
 
-    var exampleSection = site.makeDemoSection({
-      title: 'Examples',
-      body: [
+    var exampleSection = site.makeDemoSection('section-examples', 'Examples', '', [
         { t: 'div', a: { class: 'emb-example-grid' }, c: exampleCards }
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Section 6: Getting Started (tabbed by language)
@@ -448,20 +435,15 @@
       ]});
     }
 
-    var gettingStartedSection = site.makeDemoSection({
-      title: 'Getting Started',
-      body: [
+    var gettingStartedSection = site.makeDemoSection('section-getting-started', 'Getting Started', '', [
         { t: 'p', c: 'The same protocol works from C, Python, and JavaScript. Choose your language:' },
         { t: 'div', a: { id: 'lang-tabs-container' } }
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Section 7: Protocol Explainer
     // =========================================================================
-    var protoSection = site.makeDemoSection({
-      title: 'One Protocol, Any Language',
-      body: [
+    var protoSection = site.makeDemoSection('section-protocol', 'One Protocol, Any Language', '', [
         { t: 'p', c: 'The same patch message, three languages, identical JSON on the wire:' },
         { t: 'div', a: { class: 'emb-proto-row' }, c: [
           { t: 'div', a: { class: 'emb-proto-col' }, c: [
@@ -477,8 +459,7 @@
             { t: 'pre', c: '{"v":1,\n "type":"patch",\n "ref":"val-temp",\n "text":"23.5 C"}' }
           ]}
         ]}
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Section 8: CDN vs Self-Contained
@@ -500,24 +481,19 @@
       hover: true
     });
 
-    var cdnSection = site.makeDemoSection({
-      title: 'CDN vs Self-Contained',
-      body: [
+    var cdnSection = site.makeDemoSection('section-cdn', 'CDN vs Self-Contained', '', [
         { t: 'p', c: 'bitwrench can be served from the device flash or loaded from a CDN:' },
         cdnTable,
         site.makeCallout({
           variant: 'default',
           content: 'Recommendation: use self-contained for production deployments and CDN during development. The gzipped library is only ~45 KB.'
         })
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Section 9: Links
     // =========================================================================
-    var linksSection = site.makeDemoSection({
-      title: 'Resources',
-      body: [
+    var linksSection = site.makeDemoSection('section-resources', 'Resources', '', [
         bw.makeListGroup({
           items: [
             { t: 'a', a: { href: '12-bwserve-protocol.html' }, c: 'bwserve Protocol Reference' },
@@ -528,8 +504,7 @@
             { t: 'a', a: { href: 'https://github.com/deftio/bitwrench' }, c: 'GitHub Repository' }
           ]
         })
-      ]
-    });
+    ]);
 
     // =========================================================================
     // Assemble and mount

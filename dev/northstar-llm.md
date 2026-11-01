@@ -1,7 +1,11 @@
 # northstar-llm — North Star corpus auditor (spec)
 
-> **Status:** Phase 1 MVP implemented (`tools/northstar-llm/`)  
-> **Date:** 2026-08-08  
+> **Status:** Phase 1 MVP + Phase 2 reliability implemented (`tools/northstar-llm/`)  
+> **Date:** 2026-08-08, revised 2026-10-12  
+> **Never yet run over the real corpus.** The only artifact in
+> `dbg/northstar-llm/` is the 2026-08-09 selftest: 3 fixture files. `dry-run`
+> reports **89 files** for the default scan, so acceptance criterion 1 below is
+> still unproven. Budget a couple of hours.  
 > **Audience:** Maintainers (internal). Not user-facing docs.  
 > **Relation to release:** Does **not** gate releases or CI. Manual tool for
 > pre-release audits (e.g. overnight on a local GPU/unified-memory machine).
@@ -29,7 +33,12 @@ propose patches. Humans read the report and decide what to fix.
 
 ## Non-goals
 
-- No automatic fixes, PRs, or agent loops
+- No automatic fixes, PRs, or agent loops. **A retry/re-ask ladder is not an
+  agent loop** (added 2026-10-12): it asks the same fixed question again until
+  one well-formed answer comes back. What stays out is the model choosing its
+  own next action -- re-planning the corpus, picking its own rubric, or editing
+  anything. `listScanFiles` is deterministic on purpose: it is what makes
+  `--resume` correct and two nights' reports comparable.
 - Not wired into `npm test`, `postbuild`, or `tools/release.js`
 - Not documented in `docs/`, README, or `llms.txt` until we choose to ship it
   as a supported maintainer tool (optional later)
@@ -135,12 +144,25 @@ CLI with **no arguments** prints help and exits 0 — it never starts `run`.
     "concurrency": 1,
     "maxFindingsPerFile": 12,
     "outDir": "dbg/northstar-llm",
-    "maxFileBytes": 200000
+    "maxFileBytes": 200000,
+    "maxChunkChars": 60000,
+    "temperature": 0.2,
+    "timeoutMs": 600000,
+    "maxRetries": 3,
+    "budgetMs": null
+  },
+  "rubric": {
+    "sourceDocs": ["docs/bitwrench-northstar-principles.md", "agents.md"],
+    "checksPath": "tools/northstar-llm/rules"
   }
 }
 ```
 
-CLI: `--provider`, `--model`, `--path`, `--concurrency`, `--out-dir`, `--resume`.
+The shipped `config.default.json` also excludes `**/dist/**` and two
+`examples/circuitpython/` paths.
+
+CLI: `--provider`, `--model`, `--path`, `--concurrency`, `--out-dir`,
+`--resume`, `--config`, `--budget`, `--max-retries`.
 
 ### Rubric checks
 
@@ -179,14 +201,27 @@ only for tool errors (unreachable provider, bad config, aborted run).
 ```
 dbg/northstar-llm/
   2026-08-08T22-15-03Z/
-    meta.json
+    meta.json          # provider, model, git HEAD, timing, budget, counters
     findings.jsonl     # appended as each file completes
     report.md          # mechanical, regenerable via finalize
+    rejects/           # replies that would not parse after the re-ask
   latest -> …
 ```
 
 Finding schema: `file`, `line`, `endLine`, `checkId`, `severity`, `evidence`,
-`problem`, `recommendation`, `cite`. Progress lines use `"type":"file_done"`.
+`problem`, `recommendation`, `cite`.
+
+Three record types share `findings.jsonl`:
+
+| `type` | Meaning |
+|--------|---------|
+| (absent, has `checkId`) | A finding |
+| `file_done` | A file finished. `incomplete: true` means a chunk failed after retries, so `--resume` will redo it |
+| `error` | A provider or parse failure. Carries `chunk`, `status`, `attempts`, `partialFindings`, and `reject` when a reply was saved |
+
+`meta.json` adds `budgetMs`, `elapsedMs`, `stoppedOnBudget`,
+`filesSkippedForBudget`, `filesIncomplete`, `callRetries`, `reasks`,
+`maxRetries`.
 
 ---
 
@@ -198,6 +233,33 @@ northstar-llm:ignore-start: intentional wrong demo
 …
 northstar-llm:ignore-end
 ```
+
+---
+
+## Context injection
+
+Every user message opens with a few lines of orientation:
+
+```
+job: northstar-llm audit (audit only -- findings, never patches)
+file: 34/89  pages/04-dashboard.html
+role: page
+chunk: 2/3  lineOffset 1200
+```
+
+**Deliberately no wall-clock, elapsed or remaining time in the prompt.** Two
+reasons, and both are load-bearing:
+
+1. A finding that appears only at 3am is a bug, not a feature. The verdict on a
+   file must be a function of the file and the rubric, nothing else.
+2. The system prompt is byte-identical across every call in a run and is the
+   only part a provider can prompt-cache. A changing clock anywhere in the
+   request defeats that, and also makes two runs of one file undiffable.
+
+Timing lives where it is actually read: `meta.json` (`startedAt`, `elapsedMs`,
+`budgetMs`, `stoppedOnBudget`, `filesSkippedForBudget`, `filesIncomplete`,
+`callRetries`, `reasks`) and the per-file console line. A test asserts the
+prompt contains no ISO timestamp and no timing words.
 
 ---
 
@@ -225,19 +287,63 @@ dbg/northstar-llm/
 
 ### Phase 0 — Spec — done
 ### Phase 1 — MVP — done (this tree)
-### Phase 2 — Hardening (partial in MVP: chunking, selftest fixtures, latest symlink)
+### Phase 2 — Hardening — done 2026-10-12
+
+Chunking, selftest fixtures and the `latest` symlink landed with the MVP. The
+reliability work landed 2026-10-12:
+
+- **Failure ladder.** Transport errors, 429 and 5xx retry with backoff
+  (2s / 8s / 30s, jittered, `--max-retries`, default 3). Other 4xx never
+  retries -- the same body fails the same way. Errors carry `.retryable` and
+  `.status` so no caller pattern-matches on message text.
+- **One corrective re-ask** when a reply will not parse, carrying the bad reply
+  back with "JSON array only". Exactly one: a model that ignores it twice will
+  not comply on the third ask. Recoveries are logged, `meta.reasks` counts them.
+- **Rejects are kept.** A reply still unparseable after the re-ask is written
+  whole to `<runDir>/rejects/<file>.<chunk>.txt` and the jsonl error points at
+  it. Previously only a 200-character slice survived.
+- **Partial work is kept.** A chunk failure used to `return`, discarding every
+  finding earlier chunks had produced and writing no `file_done`. It now
+  `break`s, writes what it has, and marks `file_done.incomplete = true`.
+- **Resume redoes incomplete files** and skips only complete ones.
+- **Report dedupes** on file + line + checkId. Two real sources of duplicates:
+  `chunkText` overlaps 20 lines between chunks by design, and a resumed file
+  re-reports what its earlier chunks already found.
+- **Budget stop.** `--budget 6h` finishes the file in flight, writes the
+  report, and exits 0 with `meta.stoppedOnBudget`; `--resume` continues.
+- **Context block** at the top of every user message: job, file N/total,
+  chunk i/n, role. No clock -- see "Context injection" below.
+- **Tests.** `test/bitwrench_test_northstar_llm.js`, 42 cases, no network
+  (the single HTTP call is injected via `runOpts.chat`). Wired into `npm test`.
+  Coverage config is `src/**` only, so this does not move the gate.
+
+Two defects were found by writing those tests, both fixed:
+
+1. `(order[sev] || 9)` ranked `high` at 0, and `0 || 9` is 9 -- so the
+   `maxFindingsPerFile` cap kept the **low** findings and threw away the
+   **high** ones, the exact opposite of what the system prompt promises the
+   model. Only bites on files over the cap, which is how it survived. Now
+   `severityOrder` in `parse.js`, used by both cap sites.
+2. The chunk-discard bug above.
 ### Phase 3 — Optional public/maintainer docs later
 
 ---
 
 ## Acceptance criteria (MVP)
 
-1. Overnight run over default corpus completes; `findings.jsonl` grows during
-   the run; crash + `--resume` continues without redoing finished files.
-2. `report.md` is fully regenerable from jsonl + meta with no LLM call.
-3. Report opens with summary stats and clean severity tables.
-4. Tool never writes to `docs/`, `pages/`, `examples/`, or `src/`.
-5. Not referenced from release/CI scripts.
+1. **NOT YET MET.** Overnight run over the default corpus (89 files) completes;
+   `findings.jsonl` grows during the run; crash + `--resume` continues without
+   redoing finished files. Only the 3-file selftest has ever run. The resume
+   path and the failure ladder are now covered by unit tests with an injected
+   provider, but a real multi-hour run against a local model is still the only
+   thing that proves this one.
+2. `report.md` is fully regenerable from jsonl + meta with no LLM call -- met
+   (`finalize`).
+3. Report opens with summary stats and clean severity tables -- met.
+4. Tool never writes to `docs/`, `pages/`, `examples/`, or `src/` -- met.
+5. Not referenced from release/CI scripts -- met. `npm test` runs the unit
+   tests for its pure functions, which make no network call; the audit itself
+   is never invoked by a test, a build or a release.
 
 ---
 
@@ -256,3 +362,8 @@ dbg/northstar-llm/
 | Artifacts | Timestamped dir under gitignored `dbg/northstar-llm/` |
 | Docs visibility | `dev/` + tools README only |
 | Release gating | None — tool may ship unused |
+| Retry on failure | Backoff on transport / 429 / 5xx; never on other 4xx (2026-10-12) |
+| Unparseable reply | Exactly one corrective re-ask, then keep the raw reply (2026-10-12) |
+| Re-planning | No — the scan plan stays deterministic (2026-10-12) |
+| Clock in the prompt | No — job identity to the model, timing to `meta.json` (2026-10-12) |
+| Budget expiry | Finish current file, write report, exit 0, resumable (2026-10-12) |

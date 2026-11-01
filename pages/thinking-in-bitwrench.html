@@ -144,11 +144,43 @@
   <script type="module">
     import quikdown from '../src/vendor/quikdown.js';
 
+    /**
+     * The markdown lives in docs/ but renders at /pages/, so its relative
+     * links resolved against the wrong directory and every one of them 404'd.
+     * Two repairs, both on the rendered HTML:
+     *
+     * 1. quikdown treats underscores inside a link target as emphasis, so
+     *    `bitwrench_typescript_usage.md` comes back as
+     *    `bitwrench<em ...>typescript</em>usage.md`. Turning each tag back
+     *    into the underscore it consumed restores the filename.
+     * 2. A bare `*.md` target is relative to docs/, not pages/.
+     */
+    function repairDocLinks(html) {
+      // Step 1: un-mangle the filename. quikdown emits
+      //   href="bitwrench<em class="quikdown-em">typescript</em>usage.md"
+      // -- note the nested quotes, which also defeat any naive href regex.
+      // Each tag replaced the underscore that opened or closed the emphasis,
+      // so putting the underscores back reconstructs the name. (The real fix
+      // belongs upstream: quikdown should not run inline emphasis over a link
+      // target.)
+      html = html.replace(
+        /<em class="quikdown-em">([^<]*)<\/em>(?=[\w./-]*\.md")/g,
+        '_$1_'
+      );
+      // Step 2: rebase. A bare *.md target is relative to docs/, not pages/.
+      return html.replace(/href="([^"]*)"/g, function (whole, href) {
+        if (/\.md(#.*)?$/.test(href) && !/^([a-z]+:|\/|\.\.\/)/i.test(href)) {
+          return 'href="../docs/' + href + '"';
+        }
+        return whole;
+      });
+    }
+
     // Fetch and render the markdown content
     var resp = await fetch('../docs/thinking-in-bitwrench.md');
     if (resp.ok) {
       var md = await resp.text();
-      var html = quikdown(md);
+      var html = repairDocLinks(quikdown(md));
       bw.DOM('#doc-content', { t: 'div', c: bw.raw(html) });
 
       // Replace <pre><code> blocks with bw.codeEditor for syntax highlighting

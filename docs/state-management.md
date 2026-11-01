@@ -315,10 +315,21 @@ bw.DOM('#app', counter);
 
 ### How it works
 
-1. `bw.create()` (called internally by `bw.DOM()`) sees `o.state` and copies it to `el._bw_state`
-2. If `o.render` is defined, it is stored as `el._bw_render` and called immediately: `o.render(el, el._bw_state)`
-3. When state changes, you call `bw.refresh(el)` which re-invokes `el._bw_render(el, el._bw_state)` and emits a `bw:refresh` event
-4. The render function produces new content via `bw.DOM(el, ...)`, replacing the old children
+1. `bw.create()` (called internally by `bw.DOM()`) sees `o.state` and assigns it
+   to `el._bw_state` **by reference**. It is the same object, not a clone --
+   which is what makes the shared-state pattern further down this page work,
+   and what lets a caller holding the TACO still see the live state.
+2. If `o.render` is defined it is stored as `el._bw_render`, and the **first
+   render runs on the mount pass**, not inside `create`. `mountTree` fires it,
+   before `o.mounted` when both are present. `bw.create()` on its own returns a
+   detached node that has not rendered yet -- so
+   `parent.appendChild(bw.create(taco))` skips the initial render as well as
+   `o.mounted`. Use `bw.mount()` / `bw.DOM()` / `bw.append()` / `bw.replace()`.
+3. When state changes, you call `bw.refresh(el)`, which re-invokes
+   `el._bw_render(el, el._bw_state)` and emits a `bw:refresh` event. It does
+   **not** re-fire `o.mounted` -- that is once per element identity.
+4. The render function produces new content via `bw.DOM(el, ...)`, replacing the
+   old children
 
 ### Accessing state
 
@@ -842,6 +853,7 @@ bw.router({
 | Components need to talk to each other | `bw.pub()`/`bw.sub()` |
 | URL-driven views (SPA) | `bw.router()` -- see [Routing](routing.md) |
 | Debugging component state | `el._bw_state` in the console, or `bw.inspect(selector, 0)` |
+| Checking a TACO a factory or a server produced | `verify(taco)` / `verify.assert(taco)` -- opt-in, separate module, see [verify.md](verify.md) |
 
 ---
 

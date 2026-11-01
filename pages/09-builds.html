@@ -143,7 +143,7 @@
       'bitwrench.esm.js':      'ES module for modern bundlers',
       'bitwrench.esm.min.js':  'ES module, minified',
       'bitwrench.cjs.js':      'CommonJS build for Node.js require()',
-      'bitwrench.cjs.min.js':  'CommonJS build, minified',
+      'bitwrench.min.cjs':  'CommonJS build, minified',
       'bitwrench.es5.js':      'ES5 build for legacy browsers (IE11+)',
       'bitwrench.es5.min.js':  'ES5 build, minified',
       'bitwrench.css':         'Default styles (Bootstrap-inspired)',
@@ -343,9 +343,9 @@
                   { t: 'h3', c: 'Cross-Language Support' },
                   { t: 'p', c: 'The bwserve protocol works from any language. C/C++ headers, Python (MicroPython/CircuitPython), and Rust bindings are included.' },
                   { t: 'div', a: { style: 'display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:0.75rem' }, c: [
-                    { t: 'a', a: { href: '../embedded_c/', class: 'bw_bccl_btn bw_secondary' }, c: 'C/C++ Headers' },
-                    { t: 'a', a: { href: '../embedded_python/', class: 'bw_bccl_btn bw_secondary' }, c: 'Python / MicroPython' },
-                    { t: 'a', a: { href: '../embedded_rust/', class: 'bw_bccl_btn bw_secondary' }, c: 'Rust' },
+                    { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/tree/main/embedded_c', class: 'bw_bccl_btn bw_secondary' }, c: 'C/C++ Headers' },
+                    { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/tree/main/embedded_python', class: 'bw_bccl_btn bw_secondary' }, c: 'Python / MicroPython' },
+                    { t: 'a', a: { href: 'https://github.com/deftio/bitwrench/tree/main/embedded_rust', class: 'bw_bccl_btn bw_secondary' }, c: 'Rust' },
                     { t: 'a', a: { href: '../examples/embedded/', class: 'bw_bccl_btn bw_secondary' }, c: 'ESP32 Examples' }
                   ]}
                 ]}
@@ -454,7 +454,7 @@
       var picks = [
         { scenario: 'Browser (script tag)',  file: 'bitwrench.umd.min.js',      format: 'UMD',  usage: '<script src="dist/bitwrench.umd.min.js"><\/script>' },
         { scenario: 'ES module bundler (Vite, webpack)',  file: 'bitwrench.esm.min.js',  format: 'ESM',  usage: "import bw from 'bitwrench';" },
-        { scenario: 'Node.js (require)',     file: 'bitwrench.cjs.min.js',      format: 'CJS',  usage: "const bw = require('bitwrench');" },
+        { scenario: 'Node.js (require)',     file: 'bitwrench.min.cjs',      format: 'CJS',  usage: "const bw = require('bitwrench');" },
         { scenario: 'Legacy browsers (IE11+)', file: 'bitwrench.es5.min.js',    format: 'ES5',  usage: '<script src="dist/bitwrench.es5.min.js"><\/script>' },
         { scenario: 'ESP32 / embedded (SPIFFS)', file: 'bitwrench.umd.min.js.gz', format: 'UMD gzipped', usage: 'cp dist/bitwrench.umd.min.js.gz data/' },
         { scenario: 'Server-driven UI',     file: 'bwserve.esm.js',             format: 'ESM',  usage: "import { create } from 'bitwrench/bwserve';" },
@@ -617,7 +617,7 @@
             ', and more. Use with the lean build for a smaller total footprint, or it\u2019s already included in the full core build.'
           ],
           bcclJS,
-          "// Use with lean build (tree-shake what you don't need)\nimport bw from 'bitwrench/lean';\nimport 'bitwrench/bccl';\n\n// Or use script tag\n// <script src=\"dist/bitwrench-bccl.umd.min.js\"><\/script>"
+          "// Use with the lean build when you do not need BCCL\nimport bw from 'bitwrench/lean';\nimport 'bitwrench/bccl';\n\n// Or use script tag\n// <script src=\"dist/bitwrench-bccl.umd.min.js\"><\/script>"
         );
         addonContent = addonContent.concat(bccl.content);
         addonTables.push(bccl);
@@ -647,7 +647,7 @@
             { t: 'code', c: 'bwd.state()' }, ', and ',
             { t: 'code', c: 'bwd.screenshot()' },
             ' into any page. Auto-loads bitwrench from CDN if not present. See ',
-            { t: 'a', a: { href: '11-debugging.html#section-9' }, c: 'Debug Toolkit docs' },
+            { t: 'a', a: { href: '11-debugging.html#section-bwd' }, c: 'Debug Toolkit docs' },
             '.'
           ],
           debugJS,

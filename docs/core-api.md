@@ -92,3 +92,4 @@ passes them through. See [Bring your own design](theming.md#bring-your-own-desig
 | `bw.inspect(ref, depth)` | Component tree as text |
 | `bw.warnUnknownProps` | `true` by default: a `make*()` factory warns once when handed an option it does not read. Set `false` to silence |
 | `bwcli attach` | Drive a live page from a terminal: REPL, inspect, screenshot ([bw-attach.md](bw-attach.md)) |
+| `verify(taco)` / `verify.assert(taco)` | Check a TACO's shape: an array of findings, or a throw. A separate module under 3 KB gzipped (`bitwrench/verify`), not in either build, never in production ([verify.md](verify.md)) |

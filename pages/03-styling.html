@@ -128,16 +128,15 @@
       c: [
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Responsive Styles' },
         { t: 'p', c: bw.raw('<code>bw.responsive()</code> generates mobile-first <code>@media (min-width)</code> CSS from a single object. These breakpoints match the grid system (<code>.bw_col_sm_*</code>, etc.) and <code>theme.breakpoints</code>.') },
-        bw.makeTableFromArray({
+        { t: 'div', a: { style: 'margin-bottom: 1rem;' }, c: bw.makeTableFromArray({
           data: [['Key', 'Min-Width', 'Target'],
             ['base', '(none)', 'All devices (no media query)'],
             ['sm', '576px', 'Small devices (landscape phones)'],
             ['md', '768px', 'Medium devices (tablets)'],
             ['lg', '992px', 'Large devices (desktops)'],
             ['xl', '1200px', 'Extra large devices (wide desktops)']
-          ],
-          style: 'margin-bottom: 1rem;'
-        }),
+          ]
+        })},
         { t: 'div', a: { id: 'tryit-responsive' } }
       ]
     };

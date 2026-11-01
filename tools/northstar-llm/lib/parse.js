@@ -57,6 +57,23 @@ function normalizeFinding(raw, defaults) {
   return f;
 }
 
+var SEVERITY_RANK = { high: 0, medium: 1, low: 2, info: 3 };
+
+/**
+ * Sort comparator, most severe first.
+ *
+ * Written out rather than `rank[sev] || 9` because high ranks 0, and `0 || 9`
+ * is 9 -- so the old form sorted high findings LAST and the maxFindings cap
+ * then kept the low ones and threw the high ones away, which is the exact
+ * opposite of what the system prompt promises the model ("Prefer highest
+ * severity"). Only bites on files over the cap, which is why it survived.
+ */
+export function severityOrder(a, b) {
+  var ra = SEVERITY_RANK[a.severity];
+  var rb = SEVERITY_RANK[b.severity];
+  return (ra == null ? 9 : ra) - (rb == null ? 9 : rb);
+}
+
 /**
  * Parse model content into finding objects. Returns { findings, error }.
  */
@@ -105,10 +122,7 @@ export function parseFindings(content, opts) {
   }
 
   if (opts.maxFindings != null && findings.length > opts.maxFindings) {
-    var order = { high: 0, medium: 1, low: 2, info: 3 };
-    findings.sort(function (a, b) {
-      return (order[a.severity] || 9) - (order[b.severity] || 9);
-    });
+    findings.sort(severityOrder);
     findings = findings.slice(0, opts.maxFindings);
   }
 

@@ -5,7 +5,12 @@
  *     behind it compiles in a user's editor and fails in their browser
  *     (2.1.9: TabsConfig declared `text` for labels, css() declared options
  *     no code read, BwServeClient.screenshot was declared and missing).
- *  2. The suite does not grow tests that cannot fail. `assert.ok(true)` after
+ *  2. No dead exports. A non-entry module that exports a name nobody imports
+ *     is unreachable code that still has to be read, reviewed and kept in
+ *     step (2.1.12: bitwrench-utils.js exported a third copy of colorInterp
+ *     that no bundle contained -- found by chasing a coverage hole, not by
+ *     any check).
+ *  3. The suite does not grow tests that cannot fail. `assert.ok(true)` after
  *     a call is coverage, not a check -- the table bugs in review 2026-09-22
  *     sat under one. The count may only go down.
  */
@@ -76,6 +81,33 @@ describe('Meta: type declarations match the runtime', function() {
   });
 });
 
+describe('Meta: every declared named export resolves', function() {
+  // src/bitwrench.d.ts declared makeTable, makeTableFromArray, makeDataTable
+  // and makeBarChart as named exports, but they live on `bw` in
+  // bitwrench.js rather than in bitwrench-bccl.js, which is what the entry
+  // re-exports with `export *`. So `import { makeTable } from 'bitwrench'`
+  // type-checked and came back undefined -- the exact failure mode the
+  // type-declaration tests above exist to prevent, one level out.
+  it('every `export function` in the .d.ts is importable from the ESM entry', async function() {
+    var entry = await import('../src/bitwrench-esm-entry.js');
+    var declared = (read('src/bitwrench.d.ts').match(/^export function (\w+)/gm) || [])
+      .map(function(s) { return s.slice(16); });
+    assert.ok(declared.length > 40, 'parsed ' + declared.length + ' declared exports');
+    var missing = declared.filter(function(n) { return typeof entry[n] === 'undefined'; });
+    assert.deepStrictEqual(missing, [],
+      'declared as named exports but undefined on import -- either export them ' +
+      'from src/bitwrench-esm-entry.js or stop declaring them');
+  });
+
+  it('every declared named export is also reachable on bw', async function() {
+    var entry = await import('../src/bitwrench-esm-entry.js');
+    var declared = (read('src/bitwrench.d.ts').match(/^export function (\w+)/gm) || [])
+      .map(function(s) { return s.slice(16); });
+    var missing = declared.filter(function(n) { return typeof entry.default[n] !== 'function'; });
+    assert.deepStrictEqual(missing, [], 'named export exists but bw.<name> does not');
+  });
+});
+
 describe('Meta: every public API is in the generated reference', function() {
   // Data tables and values whose documentation lives elsewhere, plus removed
   // stubs. Anything else missing is a gap: write the JSDoc at the assignment.
@@ -127,6 +159,138 @@ describe('Meta: every public API is in the generated reference', function() {
     var stale = Object.keys(NOT_IN_REFERENCE)
       .filter(function(k) { return !PLUGIN[k] && !(k in bw); });
     assert.deepStrictEqual(stale, [], 'remove from NOT_IN_REFERENCE: ' + stale.join(', '));
+  });
+});
+
+// ===========================================================================
+// Dead exports
+// ===========================================================================
+
+// Files whose exports ARE the public surface: anything rollup bundles,
+// package.json hands out, or an entry re-exports wholesale with `export *`.
+// Their exports need no in-tree importer.
+function entryModules() {
+  var entries = new Set();
+  // Any src module the build names: a rollup `input`, or a module it swaps in
+  // by path (bitwrench-components-stub.js is aliased, never imported).
+  (read('rollup.config.js').match(/'(src\/[\w./-]+\.js)'/g) || []).forEach(function(m) {
+    entries.add(/'([^']+)'/.exec(m)[1]);
+  });
+  var pkg = JSON.parse(read('package.json'));
+  [pkg.exports, pkg.bin].forEach(function(field) {
+    (JSON.stringify(field || {}).match(/(?:\.\/)?src\/[\w./-]+\.js/g) || [])
+      .forEach(function(v) { entries.add(v.replace(/^\.\//, '')); });
+  });
+  // `export * from './x.js'` in an entry makes x's whole surface public too.
+  // Iterate so a chain of re-exports is followed.
+  for (var pass = 0; pass < 5; pass++) {
+    var before = entries.size;
+    Array.from(entries).forEach(function(f) {
+      var src = safeRead(f);
+      if (src === null) return;
+      var re = /export\s+\*\s+from\s+['"]([^'"]+)['"]/g, m;
+      while ((m = re.exec(src))) {
+        var target = resolve(root, dirname(f), m[1]);
+        entries.add(target.slice(root.length + 1));
+      }
+    });
+    if (entries.size === before) break;
+  }
+  return entries;
+}
+
+function safeRead(p) {
+  try { return read(p); } catch (e) { return null; }
+}
+
+function srcFiles(dir, out) {
+  out = out || [];
+  readdirSync(resolve(root, dir), { withFileTypes: true }).forEach(function(e) {
+    var rel = dir + '/' + e.name;
+    if (e.isDirectory()) {
+      if (e.name !== 'vendor') srcFiles(rel, out);
+    } else if (e.name.endsWith('.js')) {
+      out.push(rel);
+    }
+  });
+  return out;
+}
+
+// Map every `from '<path>'` in a consumer to the module it resolves to, so a
+// name is only credited to the module it was actually imported FROM. Matching
+// on the bare name is not enough: three modules exported a `colorInterp` and
+// only one of them was ever imported.
+function importGraph(consumers, sourceOf) {
+  var named = {};       // module -> Set of names imported from it
+  var whole = new Set(); // modules consumed wholesale (namespace/default/dynamic)
+
+  function target(from, spec) {
+    if (spec[0] !== '.') return null; // bare package specifier
+    return resolve(root, dirname(from), spec).slice(root.length + 1);
+  }
+
+  consumers.forEach(function(f) {
+    var src = sourceOf(f), m;
+
+    var namedRe = /(?:import|export)\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g;
+    while ((m = namedRe.exec(src))) {
+      var t = target(f, m[2]);
+      if (!t) continue;
+      if (!named[t]) named[t] = new Set();
+      m[1].split(',').forEach(function(spec) {
+        var name = spec.trim().split(/\s+as\s+/)[0].trim();
+        if (name) named[t].add(name);
+      });
+    }
+
+    // `import * as ns`, `import def`, `export * from`, and dynamic import()
+    // all reach names without naming them, so treat the module as consumed.
+    [/import\s+\*\s+as\s+\w+\s+from\s*['"]([^'"]+)['"]/g,
+     /import\s+\w+(?:\s*,\s*\{[^}]*\})?\s+from\s*['"]([^'"]+)['"]/g,
+     /export\s+\*\s+(?:as\s+\w+\s+)?from\s*['"]([^'"]+)['"]/g,
+     /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g].forEach(function(re) {
+      var mm;
+      while ((mm = re.exec(src))) {
+        var t2 = target(f, mm[1]);
+        if (t2) whole.add(t2);
+      }
+    });
+  });
+
+  return { named: named, whole: whole };
+}
+
+describe('Meta: no dead exports in src/', function() {
+  it('every non-entry export has an importer', function() {
+    var entries = entryModules();
+    assert.ok(entries.size > 5, 'parsed ' + entries.size + ' entry modules');
+    var files = srcFiles('src');
+    assert.ok(files.length > 10, 'found ' + files.length + ' source files');
+
+    // Tests, build tools and the bin shims are legitimate consumers: an
+    // export exists for them too. Scan them for importers, but only look
+    // for dead exports in src/.
+    var consumers = files.concat(srcFiles('test'), srcFiles('tools'), srcFiles('bin'));
+    var sources = {};
+    consumers.forEach(function(f) { sources[f] = read(f); });
+    var sourceOf = function(f) { return sources[f]; };
+
+    var graph = importGraph(consumers, sourceOf);
+    assert.ok(Object.keys(graph.named).length > 5,
+      'resolved ' + Object.keys(graph.named).length + ' imported modules');
+
+    var dead = [];
+    files.forEach(function(f) {
+      if (entries.has(f) || graph.whole.has(f)) return;
+      var from = graph.named[f] || new Set();
+      var re = /^export\s+(?:async\s+)?(?:function\*?|class|const|let|var)\s+([A-Za-z_$][\w$]*)/gm, m;
+      while ((m = re.exec(sources[f]))) {
+        if (!from.has(m[1])) dead.push(f + ': ' + m[1]);
+      }
+    });
+
+    assert.deepStrictEqual(dead, [],
+      'unreachable export(s) -- delete them, or make the file an entry point');
   });
 });
 

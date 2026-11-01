@@ -833,6 +833,63 @@ describe("bwserve round-trip: register/call/exec", function() {
 // ===================================================================================
 
 describe("generateShell()", function() {
+
+describe('generateShell theme forms', function() {
+  // A string theme was discarded and replaced with a hardcoded teal pair, so
+  // `theme: 'ocean'` and `bwcli serve --theme forest` silently produced the
+  // default while the CLI help and docs promised both a preset name and a
+  // "#pri,#sec" hex pair.
+  function loadStylesCalls(html) {
+    return (html.match(/bw\.loadStyles\([^;]*\);/g) || []);
+  }
+
+  it('resolves a preset name against bw.THEME_PRESETS', function() {
+    var calls = loadStylesCalls(generateShell({ theme: 'ocean' }));
+    assert.ok(calls.some(function(c) { return c.indexOf('bw.THEME_PRESETS["ocean"]') !== -1; }),
+      'the preset name must reach the browser, got: ' + calls.join(' | '));
+    assert.ok(!calls.some(function(c) { return c.indexOf('#006666') !== -1; }),
+      'it must not fall back to the hardcoded teal pair');
+  });
+
+  it('parses a "#pri,#sec" hex pair', function() {
+    var calls = loadStylesCalls(generateShell({ theme: '#336699,#cc6633' }));
+    assert.ok(calls.some(function(c) {
+      return c.indexOf('"primary":"#336699"') !== -1 && c.indexOf('"secondary":"#cc6633"') !== -1;
+    }), 'got: ' + calls.join(' | '));
+  });
+
+  it('accepts a single hex value', function() {
+    var calls = loadStylesCalls(generateShell({ theme: '#336699' }));
+    assert.ok(calls.some(function(c) { return c.indexOf('"primary":"#336699"') !== -1; }));
+  });
+
+  it('passes a config object through unchanged', function() {
+    var calls = loadStylesCalls(generateShell({ theme: { primary: '#123456' } }));
+    assert.ok(calls.some(function(c) { return c.indexOf('"primary":"#123456"') !== -1; }));
+  });
+
+  it('warns on an unknown preset instead of looking like it worked', function() {
+    var html = generateShell({ theme: 'no-such-preset' });
+    assert.ok(/unknown theme preset no-such-preset/.test(html),
+      'an unrecognised name should say so in the console');
+  });
+
+  it('emits only the structural call when no theme is given', function() {
+    var calls = loadStylesCalls(generateShell({}));
+    assert.deepStrictEqual(calls, ['bw.loadStyles();'],
+      'no theme means structural CSS only');
+  });
+
+  it('every documented preset name resolves at runtime', function() {
+    var names = Object.keys(bw.THEME_PRESETS);
+    assert.ok(names.length >= 12, 'expected the full preset set, got ' + names.length);
+    names.forEach(function(n) {
+      var html = generateShell({ theme: n });
+      assert.ok(html.indexOf('bw.THEME_PRESETS["' + n + '"]') !== -1, n + ' should resolve');
+      assert.ok(bw.THEME_PRESETS[n].primary, n + ' preset should carry a primary seed');
+    });
+  });
+});
   it("should return a string", function() {
     var html = generateShell({ clientId: 'test-1' });
     assert.strictEqual(typeof html, 'string');

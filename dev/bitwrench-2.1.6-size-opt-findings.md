@@ -238,6 +238,107 @@ This is tracked as open work, not a defect to be silently patched.
 
 ---
 
+## 7. v2.1.12 follow-up: two wins, and a repeat of the level-6 mistake
+
+### The level-6 trap caught another reader
+
+Section 1 exists to prevent exactly one error, and the next person to touch
+this made it anyway: quoting `zlib.gzipSync(...)` with no `level`, reporting
+ESM **165 bytes over** budget. The real figure, from the shipped `.gz`, was
+**29 over**, and UMD was 140 *under* rather than 4. Same correct measurement,
+wrong compression level, opposite conclusion.
+
+If you are about to quote a size, read `dist/<file>.gz` or pass `{level: 9}`.
+
+### Test-only helpers no longer ship (-174 UMD / -165 ESM gzipped)
+
+`bw._resetForTest` (~0.7KB minified) and `bw._propWarnReset` were in every
+bundle. The suite imports from `src/`, so nothing at runtime needs either.
+
+`rollup.config.js` gained a `stripTestOnly()` transform that blanks regions
+marked `/* @bw-test-only start */ ... /* @bw-test-only end */`. It blanks
+rather than deletes, newlines included, so following lines keep their position
+and the sourcemaps stay correct.
+
+Three helpers that *look* test-only are not, and must stay:
+`__monkey_patch_is_nodejs__` (read by `_isBrowser`), `_FUNC_REGISTRY_SHIM`
+(read by `htmlPage`) and `_compiledExprs` (the binding compiler's cache).
+
+| bundle | before | after | delta |
+| --- | --- | --- | --- |
+| `bitwrench.umd.min.js` | 46964 | 46790 | -174 |
+| `bitwrench.esm.min.js` | 47133 | 46927 | -206 |
+
+Those are the figures at the time of that change. They moved again later in the
+release (the bccl `export *` fix and the render/mounted hook tagging), so do not
+treat them as current -- read `dist/<file>.gz` instead. `dist/builds.json` now
+records the same number the gate reads, so the manifest, the downloads page and
+the gate agree; before this release the manifest recompressed at zlib's default
+level 6 and reported roughly 140 bytes more than the artifact that ships.
+
+### Tree-shaking is dead for a structural reason, re-confirmed
+
+Section 6 blamed the missing `sideEffects` field. That is not the whole story.
+Re-measured with rollup against `dist/bitwrench.esm.js`:
+
+```
+import { makeButton } only     479861 bytes
+import default bw              479853 bytes
+```
+
+Importing one component costs **8 bytes more** than importing the library. The
+ESM artifact is a **single pre-bundled file** -- `rollup.config.js` sets no
+`output.preserveModules` -- so a bundler cannot drop modules that share one
+scope. Adding `"sideEffects": false` alone would not change this; shipping
+unbundled ESM would.
+
+Four factories (`makeTable`, `makeTableFromArray`, `makeDataTable`,
+`makeBarChart`) were briefly added to the named-export list in 2.1.12 to match
+stale `export function` lines in `src/bitwrench.d.ts`. The declarations were
+removed instead: they are `bw.*` only, as the `Bitwrench` interface says. The
+remaining 49 named exports still cost ~346 gzipped bytes for nothing, but
+removing them is a breaking change to `import { makeCard }` syntax and belongs
+to a major, not a patch.
+
+### Where the bundle actually sits now (sourcemap-attributed)
+
+| source | minified | share |
+| --- | --- | --- |
+| `src/bitwrench-styles.js` | 63.9K | 37.7% |
+| `src/bitwrench.js` | 52.8K | 31.1% |
+| `src/bitwrench-bccl.js` | 39.2K | 23.1% |
+| `src/bitwrench-color-utils.js` | 4.9K | 2.9% |
+| `src/bitwrench-router.js` | 3.5K | 2.1% |
+| `src/bitwrench-utils.js` | 3.3K | 2.0% |
+| `src/bitwrench-file-ops.js` | 2.0K | 1.2% |
+
+`structuralRules` alone is **35.7K minified, 21% of the whole bundle**, and it
+is already sectioned into 46 named categories -- of which 39 (37.5K raw, 78%)
+are component-specific and 7 (10.5K, 22%) are base, typography, grid, stacks,
+offsets, responsive and barChart.
+
+What that measurement does *not* mean: the grid and spacing utilities are
+already loop-generated (`_gridCols`), so the 10.4K of enumerable rules in the
+*output* CSS costs almost nothing in the bundle. Generated CSS is not bundle
+bytes. Do not go hunting there.
+
+Removal estimates, for reference only (not proposals):
+
+```
+without BCCL factories                36.0K   saves 10.0K
+without the CSS design system         33.5K   saves 12.5K
+without both (TACO engine + utils)    23.3K   saves 22.7K
+```
+
+### Still untried
+
+Collapsing longhand declarations to shorthand inside `structuralRules` (1140
+declarations; `font-size` x83, `display` x77, `padding` x50). Section 3's
+lesson applies directly -- fewer raw bytes, more unique strings, and gzip may
+well lose. Measure gzipped before believing it.
+
+---
+
 ## Reproducing these measurements
 
 ```bash

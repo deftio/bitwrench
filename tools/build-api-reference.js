@@ -72,7 +72,11 @@ function parseAPIs(source, defaultCategory) {
 
     const exampleTag = block.tags.find(t => t.tag === 'example');
     const example = exampleTag
-      ? exampleTag.description.trim() || extractExampleFromSource(block.source)
+      // Source extraction FIRST: comment-parser flattens a multi-line
+      // @example into one line, and a `//` comment then swallows every
+      // statement after it -- which published syntactically invalid
+      // examples (bw.once, bw.makeContainer and others).
+      ? extractExampleFromSource(block.source) || exampleTag.description.trim()
       : null;
 
     const categoryTag = block.tags.find(t => t.tag === 'category');
@@ -146,7 +150,11 @@ function parseComponents(source, defaultCategory) {
 
     const exampleTag = block.tags.find(t => t.tag === 'example');
     const example = exampleTag
-      ? exampleTag.description.trim() || extractExampleFromSource(block.source)
+      // Source extraction FIRST: comment-parser flattens a multi-line
+      // @example into one line, and a `//` comment then swallows every
+      // statement after it -- which published syntactically invalid
+      // examples (bw.once, bw.makeContainer and others).
+      ? extractExampleFromSource(block.source) || exampleTag.description.trim()
       : null;
 
     const categoryTag = block.tags.find(t => t.tag === 'category');
@@ -302,11 +310,21 @@ function makeAPIEntry(api) {
     });
   }
 
+  // No data-* anywhere in bitwrench: identity travels on class tokens.
+  // The old per-entry name attribute was redundant too -- the name is already
+  // the entry's own text, which is what the search filter matches on.
   return {
     t: 'div',
-    a: { class: 'api-entry', 'data-api-name': api.name.toLowerCase() },
+    a: { class: 'api-entry ' + catToken(api.category) },
     c: children
   };
+}
+
+// A stable class token per category, so the filter can count visible entries
+// per category with one document-scoped bw.$() instead of a scoped
+// querySelectorAll on each section.
+function catToken(name) {
+  return 'bw_api_cat_' + String(name || 'other').toLowerCase().replace(/[^a-z0-9]+/g, '_');
 }
 
 // Search bar
@@ -364,8 +382,7 @@ const toc = {
         { t: 'div', c: cat.entries.map(e => ({
           t: 'a', a: {
             href: '#' + e.name.replace(/[\.\$]/g, '-'),
-            class: 'api-toc-link',
-            'data-api-name': e.name.toLowerCase()
+            class: 'api-toc-link'
           }, c: e.name
         }))}
       ]
@@ -377,7 +394,7 @@ const toc = {
 const content = {
   t: 'div', a: { id: 'api-entries' },
   c: orderedCategories.map(cat => ({
-    t: 'div', a: { class: 'api-category', 'data-category': cat.name },
+    t: 'div', a: { class: 'api-category ' + catToken(cat.name) },
     c: [
       { t: 'h2', a: { id: 'cat-' + cat.name.toLowerCase().replace(/[^a-z]/g, '-') }, c: cat.name },
       { t: 'div', c: cat.entries.map(makeAPIEntry) }
@@ -444,17 +461,17 @@ const pageCssObj = `{
       '.api-search-wrap': { 'margin': '1.5rem 0' },
       '.api-search-input': {
         'width': '100%', 'padding': '0.6rem 1rem', 'font-size': '0.95rem',
-        'border': '2px solid #d0d0d0', 'border-radius': '8px', 'outline': 'none',
+        'border': '2px solid ' + p.light.border, 'border-radius': '8px', 'outline': 'none',
         'font-family': 'inherit', 'transition': 'border-color 0.15s'
       },
-      '.api-search-input:focus': { 'border-color': '#006666' },
+      '.api-search-input:focus': { 'border-color': p.primary.base },
       '.api-toc': { 'display': 'grid', 'grid-template-columns': 'repeat(3, 1fr)', 'gap': '0.75rem 2rem', 'margin': '1rem 0 2rem' },
-      '.api-toc-group h4': { 'margin': '0 0 0.25rem', 'font-size': '0.75rem', 'text-transform': 'uppercase', 'letter-spacing': '0.06em', 'color': '#888' },
-      '.api-toc-link': { 'display': 'block', 'padding': '0.15rem 0', 'color': '#006666', 'text-decoration': 'none', 'font-size': '0.85rem', 'font-family': "'SF Mono', 'Fira Code', monospace" },
+      '.api-toc-group h4': { 'margin': '0 0 0.25rem', 'font-size': '0.75rem', 'text-transform': 'uppercase', 'letter-spacing': '0.06em', 'color': p.secondary.base },
+      '.api-toc-link': { 'display': 'block', 'padding': '0.15rem 0', 'color': p.primary.base, 'text-decoration': 'none', 'font-size': '0.85rem', 'font-family': "'SF Mono', 'Fira Code', monospace" },
       '.api-toc-link:hover': { 'text-decoration': 'underline' },
       '.api-toc-link.hidden': { 'display': 'none' },
       '.api-entry': {
-        'background': '#fff', 'border': '1px solid #e4e4e4', 'border-radius': '8px',
+        'background': p.surface, 'border': '1px solid ' + p.light.border, 'border-radius': '8px',
         'padding': '1.25rem 1.5rem', 'margin-bottom': '1rem',
         'transition': 'box-shadow 0.15s', 'overflow': 'hidden'
       },
@@ -462,51 +479,51 @@ const pageCssObj = `{
       '.api-entry.hidden': { 'display': 'none' },
       '.api-sig': {
         'font-family': "'SF Mono', 'Fira Code', monospace", 'font-size': '1rem',
-        'font-weight': '600', 'color': '#006666', 'margin': '0 0 0.5rem',
+        'font-weight': '600', 'color': p.primary.base, 'margin': '0 0 0.5rem',
         'display': 'flex', 'align-items': 'baseline', 'gap': '0.5rem'
       },
-      '.api-anchor': { 'color': '#ccc', 'text-decoration': 'none', 'font-size': '0.85rem' },
-      '.api-anchor:hover': { 'color': '#006666' },
-      '.api-desc': { 'margin': '0 0 0.4rem', 'line-height': '1.6', 'color': '#333' },
+      '.api-anchor': { 'color': p.light.active, 'text-decoration': 'none', 'font-size': '0.85rem' },
+      '.api-anchor:hover': { 'color': p.primary.base },
+      '.api-desc': { 'margin': '0 0 0.4rem', 'line-height': '1.6', 'color': p.dark.base },
       '.api-usedfor': {
-        'background': '#e8f5f3', 'border-left': '3px solid #006666',
+        'background': p.primary.light, 'border-left': '3px solid ' + p.primary.base,
         'padding': '0.5rem 0.75rem', 'margin': '0.5rem 0', 'font-size': '0.9rem',
-        'color': '#444', 'border-radius': '0 4px 4px 0', 'line-height': '1.5'
+        'color': p.dark.base, 'border-radius': '0 4px 4px 0', 'line-height': '1.5'
       },
       '.api-params': { 'margin': '0.75rem 0' },
       '.api-param-row': { 'display': 'flex', 'align-items': 'baseline', 'gap': '0.5rem', 'padding': '0.2rem 0', 'flex-wrap': 'wrap' },
-      '.api-param-name': { 'font-weight': '600', 'font-size': '0.85rem', 'color': '#333', 'background': '#f3f3f3', 'padding': '0.1em 0.4em', 'border-radius': '3px' },
+      '.api-param-name': { 'font-weight': '600', 'font-size': '0.85rem', 'color': p.dark.base, 'background': p.surfaceAlt, 'padding': '0.1em 0.4em', 'border-radius': '3px' },
       '.api-param-type': {
-        'font-size': '0.8rem', 'color': '#006666', 'background': '#e8f5f3',
+        'font-size': '0.8rem', 'color': p.primary.base, 'background': p.primary.light,
         'padding': '0.1em 0.4em', 'border-radius': '3px', 'font-family': "'SF Mono', monospace"
       },
-      '.api-param-desc': { 'font-size': '0.875rem', 'color': '#555', 'overflow-wrap': 'anywhere', 'min-width': '0' },
-      '.api-returns': { 'font-size': '0.875rem', 'color': '#555', 'margin': '0.5rem 0' },
+      '.api-param-desc': { 'font-size': '0.875rem', 'color': p.secondary.base, 'overflow-wrap': 'anywhere', 'min-width': '0' },
+      '.api-returns': { 'font-size': '0.875rem', 'color': p.secondary.base, 'margin': '0.5rem 0' },
       '.api-returns-type': {
-        'background': '#e8f5f3', 'color': '#006666', 'padding': '0.1em 0.4em',
+        'background': p.primary.light, 'color': p.primary.base, 'padding': '0.1em 0.4em',
         'border-radius': '3px', 'font-weight': '600', 'font-size': '0.8rem'
       },
       '.api-example': { 'margin': '0.75rem 0 0' },
       '.api-example pre': {
-        'background': '#1e293b', 'color': '#e2e8f0', 'padding': '1rem 1.25rem',
+        'background': p.dark.base, 'color': p.light.base, 'padding': '1rem 1.25rem',
         'border-radius': '6px', 'overflow-x': 'auto', 'margin': '0',
         'font-family': "'SF Mono', Monaco, 'Cascadia Code', Consolas, monospace",
         'font-size': '0.8125rem', 'line-height': '1.6'
       },
-      '.api-see': { 'font-size': '0.85rem', 'color': '#888', 'margin-top': '0.5rem' },
-      '.api-see a': { 'color': '#006666' },
+      '.api-see': { 'font-size': '0.85rem', 'color': p.secondary.base, 'margin-top': '0.5rem' },
+      '.api-see a': { 'color': p.primary.base },
       '.api-category': { 'margin-top': '2.5rem' },
-      '.api-category > h2': { 'border-bottom': '2px solid #006666', 'padding-bottom': '0.5rem', 'color': '#333' },
+      '.api-category > h2': { 'border-bottom': '2px solid ' + p.primary.base, 'padding-bottom': '0.5rem', 'color': p.dark.base },
       '.api-category.hidden': { 'display': 'none' },
       '.api-toc-category-link': {
         'display': 'flex', 'align-items': 'center', 'gap': '0.4rem',
         'font-size': '0.8rem', 'font-weight': '700', 'text-transform': 'uppercase',
-        'letter-spacing': '0.06em', 'color': '#006666', 'text-decoration': 'none',
+        'letter-spacing': '0.06em', 'color': p.primary.base, 'text-decoration': 'none',
         'margin': '0 0 0.25rem', 'padding': '0.15rem 0'
       },
       '.api-toc-category-link:hover': { 'text-decoration': 'underline' },
       '.api-toc-count': {
-        'background': '#e8f5f3', 'color': '#006666', 'font-size': '0.7rem',
+        'background': p.primary.light, 'color': p.primary.base, 'font-size': '0.7rem',
         'padding': '0.05em 0.45em', 'border-radius': '8px', 'font-weight': '600'
       },
       '.api-quicknav': {
@@ -514,21 +531,21 @@ const pageCssObj = `{
         'gap': '0.75rem', 'margin': '1.25rem 0 0.5rem'
       },
       '.api-quicknav-card': {
-        'display': 'block', 'background': '#f8fffe', 'border': '1px solid #d0e8e4',
+        'display': 'block', 'background': p.primary.light, 'border': '1px solid ' + p.primary.border,
         'border-radius': '8px', 'padding': '0.75rem 1rem',
         'text-decoration': 'none', 'transition': 'border-color 0.15s, box-shadow 0.15s'
       },
       '.api-quicknav-card:hover': {
-        'border-color': '#006666', 'box-shadow': '0 2px 8px rgba(0,102,102,0.10)'
+        'border-color': p.primary.base, 'box-shadow': '0 2px 8px rgba(0,0,0,0.10)'
       },
       '.api-quicknav-name': {
-        'font-weight': '700', 'color': '#006666', 'font-size': '0.9rem', 'margin-bottom': '0.15rem'
+        'font-weight': '700', 'color': p.primary.base, 'font-size': '0.9rem', 'margin-bottom': '0.15rem'
       },
       '.api-quicknav-count': {
-        'font-size': '0.75rem', 'color': '#888', 'margin-bottom': '0.25rem'
+        'font-size': '0.75rem', 'color': p.secondary.base, 'margin-bottom': '0.25rem'
       },
       '.api-quicknav-desc': {
-        'font-size': '0.8rem', 'color': '#555', 'line-height': '1.4'
+        'font-size': '0.8rem', 'color': p.secondary.base, 'line-height': '1.4'
       },
       '@media (max-width: 768px)': {
         '.api-toc': { 'grid-template-columns': 'repeat(2, 1fr)' },
@@ -544,43 +561,38 @@ const pageCssObj = `{
 
 // ─── Client-side search script ───────────────────────────────────────────────
 
+const categoryTokens = orderedCategories.map(c => catToken(c.name));
+
 const searchScript = `
 (function() {
-  var input = document.getElementById('api-search');
-  if (!input) return;
-  input.addEventListener('input', function() {
+  var API_CATEGORY_TOKENS = ${JSON.stringify(categoryTokens)};
+  var inputs = bw.$('#api-search');
+  if (!inputs.length) return;
+  inputs[0].addEventListener('input', function() {
     var q = this.value.toLowerCase().trim();
-    // Filter TOC links
-    var tocLinks = document.querySelectorAll('.api-toc-link');
-    for (var i = 0; i < tocLinks.length; i++) {
-      var name = tocLinks[i].getAttribute('data-api-name') || '';
-      if (!q || name.indexOf(q) !== -1) {
-        tocLinks[i].classList.remove('hidden');
-      } else {
-        tocLinks[i].classList.add('hidden');
-      }
-    }
-    // Filter API entry cards
-    var entries = document.querySelectorAll('.api-entry');
-    for (var j = 0; j < entries.length; j++) {
-      var apiName = entries[j].getAttribute('data-api-name') || '';
-      var text = entries[j].textContent.toLowerCase();
-      if (!q || apiName.indexOf(q) !== -1 || text.indexOf(q) !== -1) {
-        entries[j].classList.remove('hidden');
-      } else {
-        entries[j].classList.add('hidden');
-      }
-    }
-    // Hide empty category sections
-    var cats = document.querySelectorAll('.api-category');
-    for (var k = 0; k < cats.length; k++) {
-      var visibleEntries = cats[k].querySelectorAll('.api-entry:not(.hidden)');
-      if (!q || visibleEntries.length > 0) {
-        cats[k].classList.remove('hidden');
-      } else {
-        cats[k].classList.add('hidden');
-      }
-    }
+
+    // The API name is the link's own text and appears in the entry's text, so
+    // matching on textContent needs no attribute at all. This previously read
+    // a per-entry attribute off 261 of them with a raw document query.
+    bw.$('.api-toc-link').forEach(function(link) {
+      bw.toggleClass(link, 'hidden',
+        !(!q || link.textContent.toLowerCase().indexOf(q) !== -1));
+    });
+
+    bw.$('.api-entry').forEach(function(entry) {
+      bw.toggleClass(entry, 'hidden',
+        !(!q || entry.textContent.toLowerCase().indexOf(q) !== -1));
+    });
+
+    // Hide a category whose every entry is filtered out. The category token is
+    // on both the section and its entries, so one document-scoped query per
+    // category replaces a nested querySelectorAll.
+    API_CATEGORY_TOKENS.forEach(function(token) {
+      var anyVisible = bw.$('.' + token + '.api-entry:not(.hidden)').length > 0;
+      bw.$('.api-category.' + token).forEach(function(cat) {
+        bw.toggleClass(cat, 'hidden', !(!q || anyVisible));
+      });
+    });
   });
 })();
 `;
@@ -603,7 +615,7 @@ const html = `<!DOCTYPE html>
   <div id="app"></div>
 
   <script>
-    initBitwrenchPage('08-api-reference.html');
+    var p = initBitwrenchPage('08-api-reference.html').palette;
 
     bw.injectCSS(bw.css(${pageCssObj}));
 

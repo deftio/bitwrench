@@ -113,11 +113,13 @@ The other frameworks in this table were designed for same-runtime use -- the com
 
 ### The `o` split
 
-The fourth key, `o:`, contains JavaScript-specific concerns: lifecycle hooks (`mounted`, `unmount`), component state (`state`, `render`), and handle methods (`handle`, `slots`). These are functions that can only live in JS.
+The fourth key, `o:`, contains JavaScript-specific concerns. The renderer reads exactly seven `o` keys: `state`, `mounted`, `unmount`, `render`, `handle`, `slots`, `type` -- lifecycle hooks, component state and its re-render function, handle methods and slot selectors, and a component type tag for discovery. The hooks and methods are functions that can only live in JS.
 
 For WASM, this split is a natural fit: the **specification** (what to render) crosses the boundary as data, while the **behavior** (DOM event handling, lifecycle management) stays in JS where DOM access is native.
 
-For cases where the WASM module needs to invoke client-side behavior, bwserve provides `call` -- invoke a named built-in function (e.g., `scrollTo`, `focus`, `download`). Code-bearing verbs (`register`, `exec`) were removed in v2.1; client-side logic should be pre-installed via the JS glue or BCCL component handles.
+For cases where the WASM module needs to invoke client-side behavior, bwserve provides `call` -- invoke a function the page registered with `bw.registerRemote(name, fn)`. Nothing is built into bitwrench core: in plain bitwrench, a `call` naming an unregistered function returns `false` silently. The familiar helpers (`scrollTo`, `focus`, `download`, `clipboard`, `redirect`, `log`) are registered by bwserve's bwclient shim, which is why they look built in when you drive a page through bwserve.
+
+Code-bearing verbs `exec` and `register` were removed in v2.1 -- `bw.apply` rejects them outright. `query` is no longer a verb either, but that is a narrower claim than it sounds: bwserve's shim registers `_bw_query`, which evaluates the supplied source with `new Function`, and `client.query()` calls it. A bwserve-attached page is therefore a full remote-code surface. Treat the port as privileged; do not expose it to an untrusted network.
 
 ---
 
@@ -127,18 +129,27 @@ bwserve is bitwrench's server-driven UI protocol. It was originally designed for
 
 ### The protocol
 
-All messages are stamped with `v: 1`. The v2.1 protocol has the following verb set (code-bearing verbs `exec`, `register`, and `query` were removed):
+All messages are stamped with `v: 1` (the `hello` handshake is the one exception). `bw.apply()` implements twelve verbs, plus a `hello` ack that is a no-op. Code-bearing verbs `exec` and `register` were removed in v2.1 and are now explicitly rejected.
 
 | Type | What it does | Example |
 |------|-------------|---------|
 | `mount` | Mount TACO at selector | `{v:1, type:'mount', ref:'#app', taco:{t:'div', c:'Hello'}}` |
-| `patch` | Update text or attributes (discriminated fields) | `{v:1, type:'patch', ref:'counter', text:'42'}` |
+| `patch` | Update text and/or attributes (discriminated fields) | `{v:1, type:'patch', ref:'counter', text:'42'}` |
 | `append` | Add child element | `{v:1, type:'append', ref:'#list', taco:{t:'li', c:'New'}}` |
+| `replace` | Swap an element for a new TACO | `{v:1, type:'replace', ref:'#row3', taco:{t:'tr', c:[...]}}` |
 | `remove` | Delete element | `{v:1, type:'remove', ref:'#old'}` |
+| `refresh` | Re-run a component's `o.render` | `{v:1, type:'refresh', ref:'#list'}` |
+| `update` | Merge data into component state | `{v:1, type:'update', ref:'#card', data:{count:3}}` |
+| `message` | Component dispatch (or a device notification) | `{v:1, type:'message', ref:'#card', action:'setTitle', data:'New'}` |
 | `batch` | Multiple operations | `{v:1, type:'batch', ops:[...]}` |
-| `call` | Invoke a named built-in function | `{v:1, type:'call', name:'scrollTo', args:['#chat']}` |
-| `message` | Component dispatch | `{v:1, type:'message', ref:'#card', action:'setTitle', data:'New'}` |
+| `call` | Invoke a function registered with `bw.registerRemote` | `{v:1, type:'call', name:'scrollTo', args:['#chat']}` |
 | `listen` | Subscribe to a pub/sub topic | `{v:1, type:'listen', topic:'bw:lifecycle'}` |
+| `unlisten` | Drop a topic subscription | `{v:1, type:'unlisten', topic:'bw:lifecycle'}` |
+
+A `message` without an `action` but with `text`/`level` is treated as a device
+notification and published on `bw:message` rather than dispatched to a component.
+The `scrollTo` in the `call` row is not a protocol built-in -- it resolves only
+because bwserve's bwclient shim registered it (see section 2).
 
 ### The full loop
 
@@ -178,14 +189,14 @@ All four deployments use the same protocol messages. The WASM module's code does
 
 ### Pattern A: In-Page WASM with Direct Calls
 
-The simplest pattern. The WASM module exposes functions that return TACO JSON strings. JavaScript calls them and renders the result.
+The simplest pattern. The WASM module exposes two functions: one returns a TACO as JSON, the other returns a JSON array of protocol messages. JavaScript calls them and renders the result.
 
 ```
 index.html
   loads bitwrench.umd.js
   loads app.wasm (via wasm-bindgen, emscripten, etc.)
   calls wasm.render() -> returns TACO JSON -> bw.DOM('#app', JSON.parse(result))
-  on user event -> calls wasm.handle_event(event_data) -> returns patch JSON
+  on user event -> wasm.handle_event(event_data) -> returns [msg, ...] -> bw.apply each
 ```
 
 JavaScript glue (minimal):
@@ -249,8 +260,9 @@ worker.onmessage = function(e) {
   messages.forEach(function(msg) { bw.apply(msg); });
 };
 
-// Forward user events to Worker by element ID
-document.addEventListener('click', function(e) {
+// Forward user events to Worker by element ID.
+// bw.el() resolves the mount point -- no document.* in bitwrench code.
+bw.el('#app').addEventListener('click', function(e) {
   if (e.target.id) {
     worker.postMessage({ target: e.target.id, type: 'click' });
   }
@@ -273,9 +285,10 @@ onmessage = function(e) {
   send(JSON.parse(result));
 };
 
-// Initial render
+// Initial render. wasm_render() returns a bare TACO, so wrap it in a
+// mount message -- the main thread applies protocol messages, not TACOs.
 wasm_init().then(function() {
-  send(JSON.parse(wasm_render()));
+  send([{ v: 1, type: 'mount', ref: '#app', taco: JSON.parse(wasm_render()) }]);
 });
 ```
 
@@ -300,7 +313,7 @@ This pattern has the broadest capabilities. The WASM module:
 - Runs as a real server process (can access filesystem, databases, hardware)
 - Gets auto-reconnect for free (SSE spec)
 - Supports multiple browser clients simultaneously
-- Can capture screenshots via `client.screenshot()`
+- Can capture screenshots via `client.screenshot()` -- opt-in, and off by default: the server needs `allowScreenshot: true` (bwcli: `--allow-screenshot`), otherwise the call rejects
 - Works behind a reverse proxy, in Docker, on a Raspberry Pi
 
 The same Rust/C++ code that runs as an in-page WASM module can compile to a native server binary with a different transport layer. The application logic is identical.
@@ -334,10 +347,12 @@ fn render_dashboard(state: &AppState) -> String {
 }
 
 fn stat_card(label: &str, value: &str, variant: &str) -> serde_json::Value {
+    // Class names match what bw.makeStatCard() emits: bw_stat_card,
+    // bw_stat_value, bw_stat_label (not bw_bccl_stat_card_*).
     json!({
-        "t": "div", "a": {"class": format!("bw_bccl_stat_card bw_{}", variant)}, "c": [
-            {"t": "div", "a": {"class": "bw_bccl_stat_card_value"}, "c": value},
-            {"t": "div", "a": {"class": "bw_bccl_stat_card_label"}, "c": label}
+        "t": "div", "a": {"class": format!("bw_stat_card bw_{}", variant)}, "c": [
+            {"t": "div", "a": {"class": "bw_stat_value"}, "c": value},
+            {"t": "div", "a": {"class": "bw_stat_label"}, "c": label}
         ]
     })
 }
@@ -395,27 +410,34 @@ With this helper:
 ```rust
 use taco::*;
 
+// Returns a bare TACO -- the glue in Pattern A renders it with
+// bw.DOM('#app', JSON.parse(render())). Wrap it with msg_mount() only
+// when the consumer applies protocol messages (Pattern B/C).
 fn render(state: &AppState) -> String {
-    msg_mount("#app", div(
+    div(
         json!({"class": "container"}),
         vec![
             text("h1", &state.title),
-            text("p", &format!("Count: {}", state.count)),
+            // id "count" is what msg_patch("count", ...) resolves against
+            el("p", json!({"id": "count"}),
+               vec![json!(format!("Count: {}", state.count))]),
             button("+1", "inc-btn"),
             button("Reset", "reset-btn"),
         ]
-    )).to_string()
+    ).to_string()
 }
 
+// Always returns a JSON *array* of protocol messages, so the glue can
+// unconditionally do JSON.parse(...).forEach(bw.apply).
 fn handle_event(state: &mut AppState, target_id: &str) -> String {
     match target_id {
         "inc-btn" => {
             state.count += 1;
-            msg_patch("count", &state.count.to_string()).to_string()
+            json!([msg_patch("count", &state.count.to_string())]).to_string()
         }
         "reset-btn" => {
             state.count = 0;
-            msg_patch("count", "0").to_string()
+            json!([msg_patch("count", "0")]).to_string()
         }
         _ => "[]".to_string()
     }
@@ -496,51 +518,73 @@ Bitwrench's r-prefix format uses single quotes:
 char msg[] = "r{'v':1,'type':'patch','ref':'temp','text':'23.5 C'}";
 ```
 
-`bw.parseJSONFlex()` on the browser side converts single quotes to double quotes before parsing. The `r` prefix signals the format.
+`bw.parseJSONFlex()` on the browser side normalizes this to strict JSON and parses it. The `r` prefix is required -- without it the string goes straight to `JSON.parse()`.
+
+The parser is a state machine that walks the string character by character, not a regex replace, so it knows whether it is inside a string. That buys three things:
+
+- Single-quoted strings become double-quoted; embedded `"` is escaped for you.
+- Trailing commas before `}` or `]` are dropped.
+- Double-quoted strings pass through verbatim, so you can mix both quote styles.
+
+What it does not do: unquoted object keys are never accepted, and an apostrophe inside a single-quoted value must be backslash-escaped (`r{'name':'Barry\'s room'}`). On the C side, `BW_PATCH_SAFE()` in `embedded_c/bwserve.h` runs `bw_escape_string()` for you.
 
 ### C helper macros
+
+You do not write these. Two header-only files ship with bitwrench and already
+define them: `embedded_c/bitwrench.h` (~370 lines -- `BW_TACO`, `BW_TACO_CLS`,
+`BW_TACO_ID`, `BW_TACO_ATTR`, `BW_TACO_NUM`, the `BW_NEST*` composers, the
+`BW_ARRAY_*` list builders, `bw_escape_string()`) and `embedded_c/bwserve.h`
+(~642 lines -- `BW_MOUNT`, `BW_PATCH` and its `_NUM`/`_SAFE`/`_ATTR` variants,
+`BW_APPEND`, `BW_REMOVE`, `BW_REPLACE`, `BW_BATCH`, `BW_MESSAGE`, plus SSE and
+HTTP framing). Re-defining `BW_MOUNT` or `BW_PATCH` yourself collides with the
+headers, and a hand-rolled `TACO_*` macro will silently omit the `r` prefix and
+the `BW_SKIP_R()` handling that nesting needs.
 
 ```c
 #include <stdio.h>
 #include <string.h>
+#include "bitwrench.h"   // BW_TACO*, BW_NEST*, BW_ARRAY_*, bw_escape_string
+#include "bwserve.h"     // BW_MOUNT, BW_PATCH*, BW_APPEND, BW_BATCH, ...
 
-// Simple TACO builder macros for fixed-size buffers (v2.1 wire protocol)
-#define BW_PATCH(buf, ref, text) \
-    snprintf(buf, sizeof(buf), \
-        "r{'v':1,'type':'patch','ref':'%s','text':'%s'}", \
-        ref, text)
-
-#define BW_MOUNT(buf, ref, taco) \
-    snprintf(buf, sizeof(buf), \
-        "r{'v':1,'type':'mount','ref':'%s','taco':%s}", \
-        ref, taco)
-
-// TACO builders
-#define TACO_TEXT(buf, tag, text) \
-    snprintf(buf, sizeof(buf), "{'t':'%s','c':'%s'}", tag, text)
-
-#define TACO_DIV(buf, cls, children) \
-    snprintf(buf, sizeof(buf), \
-        "{'t':'div','a':{'class':'%s'},'c':[%s]}", cls, children)
-
-// Usage
 void update_display(float temp, int humidity) {
     char temp_str[16], humid_str[16];
-    char card1[128], card2[128], row[512], msg[1024];
+    char temp_card[BW_TACO_BUF_SIZE], humid_card[BW_TACO_BUF_SIZE];
+    char items[640], row[768], msg[1024];   // each level needs more room
 
     snprintf(temp_str, sizeof(temp_str), "%.1f C", temp);
     snprintf(humid_str, sizeof(humid_str), "%d%%", humidity);
 
-    TACO_TEXT(card1, "p", temp_str);
-    TACO_TEXT(card2, "p", humid_str);
+    BW_TACO_ID(temp_card, "p", "temp", temp_str);
+    BW_TACO_ID(humid_card, "p", "humidity", humid_str);
 
-    snprintf(row, sizeof(row), "%s,%s", card1, card2);
-    TACO_DIV(msg, "readings", row);
+    BW_ARRAY_START(items);
+    BW_ARRAY_ITEM(items, temp_card);
+    BW_ARRAY_ITEM(items, humid_card);
+    BW_ARRAY_END(items);
 
-    // Send via whatever transport (HTTP response, WebSocket, serial)
+    BW_NEST_CLS(row, "div", "bw_row", items);
+    BW_MOUNT(msg, "#readings", row);
+
+    // Send via whatever transport (SSE frame, HTTP response, serial)
+    send_to_browser(msg);
+}
+
+// Later, when only the value changed: one targeted patch, no re-mount.
+void update_temp(float temp) {
+    char msg[BW_BUF_SIZE];
+    BW_PATCH_NUM(msg, "temp", temp);
     send_to_browser(msg);
 }
 ```
+
+That `update_display()` emits:
+
+```
+r{'v':1,'type':'mount','ref':'#readings','taco':{'t':'div','a':{'class':'bw_row'},'c':[{'t':'p','a':{'id':'temp'},'c':'23.5 C'},{'t':'p','a':{'id':'humidity'},'c':'41%'}]}}
+```
+
+which `bw.parseJSONFlex()` normalizes and `bw.apply()` mounts. The snippet
+compiles clean under `gcc -Wall -Wextra -Werror`.
 
 ### Emscripten WASM
 
@@ -571,6 +615,11 @@ EMSCRIPTEN_KEEPALIVE
 const char* handle_event(const char* target_id) {
     static char buf[256];
 
+    // Terminate first. A `static` buffer starts zeroed, but after the first
+    // call it holds the previous message -- so an unhandled target_id would
+    // otherwise hand the glue a stale message to re-apply.
+    buf[0] = '\0';
+
     if (strcmp(target_id, "toggle-btn") == 0) {
         toggle_led();
         BW_PATCH(buf, "led-status", led_state() ? "ON" : "OFF");
@@ -580,7 +629,14 @@ const char* handle_event(const char* target_id) {
 }
 ```
 
-The JS glue calls `render()` and `handle_event()`, gets back JSON strings, and passes them to `bw.apply()`. The C code does not interact with the DOM.
+The JS glue calls `render()` and `handle_event()`, gets back r-prefixed JSON strings, and passes them to `bw.apply()`. An empty string means "nothing to do", so the glue checks before parsing:
+
+```javascript
+var out = handle_event(id);
+if (out) bw.apply(bw.parseJSONFlex(out));
+```
+
+The C code does not interact with the DOM.
 
 ---
 
@@ -632,6 +688,8 @@ Generate refined TACO spec          |
 ```
 
 bwserve implements `client.screenshot()` for this purpose -- it sends a `call` message that triggers `html2canvas` on the client, which captures the DOM to a canvas, converts to PNG, and POSTs the image data back to the server. The server resolves a Promise with the image buffer.
+
+The capability is opt-in. Start the server with `allowScreenshot: true` (or bwcli with `--allow-screenshot`); without it `client.screenshot()` rejects immediately rather than reaching the browser.
 
 ### Agent architecture
 
@@ -811,7 +869,7 @@ Canvas-based approaches bypass the browser's built-in UI capabilities. Generatin
 - Browser-native UI (real HTML/CSS) from any language that produces JSON
 - Batched boundary crossing -- one message per render, not one per DOM op
 - Structured protocol (bwserve, v:1 stamped) for remote UI control including screenshots
-- ~45KB client library with 30+ components, CSS generation, theming
+- ~45KB client library with 51 components (`bw.catalog()`), CSS generation, theming
 - No build step on the JS side
 - Same application code can target in-page WASM, Worker, or native server
 - Browser capabilities preserved: accessibility, text selection, CSS layout, forms
@@ -821,7 +879,7 @@ Canvas-based approaches bypass the browser's built-in UI capabilities. Generatin
 ### What you don't get
 
 - **No automatic change detection.** You must know what changed and say so. (This is usually trivial in WASM where you just ran the mutation.)
-- **No type-safe TACO builder in Rust/C** -- you're building JSON. A helper crate/header can add convenience, but there's no compile-time guarantee that your TACO is valid. (bitwrench is lenient -- invalid fields are silently ignored.)
+- **No type-safe TACO builder in Rust** -- you're building JSON. The C side is better served: `embedded_c/bitwrench.h` and `embedded_c/bwserve.h` ship today with `BW_TACO*`/`BW_NEST*`/`BW_MOUNT`/`BW_PATCH*` macros, so the wire shape is at least centralized. A Rust helper crate is hypothetical (sketched in section 5), and in neither language is there a compile-time guarantee that your TACO is valid. Unknown keys fail quietly or loudly depending on where they are: a stray key on a plain TACO (`{t, a, c, o}`) is ignored in silence, while a `make*()` BCCL factory warns once per unknown prop with the accepted list (`bw.warnUnknownProps = false` silences it).
 - **No client-side routing from WASM.** The browser-side `bw.router()` exists for JS, but a WASM server would manage navigation via bwserve's `mount` messages.
 - **No two-way data binding.** User events come back as structured messages (element ID, event type, value). You update your state and send a patch. This is the expected pattern for a boundary architecture.
 - **No animation primitives from WASM.** CSS animations and transitions work (they're in the browser), but you'd define them via `bw.css()` on the JS side or in a stylesheet, not from WASM.

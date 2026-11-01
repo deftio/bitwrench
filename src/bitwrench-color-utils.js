@@ -175,6 +175,27 @@ export function colorParse(s, defAlpha) {
   return r;
 }
 
+/**
+ * Interpolate between an array of colours by position in a range.
+ *
+ * `x` is mapped across `colors` so that `in0` lands on the first colour and
+ * `in1` on the last, with clipping outside the range. Each colour goes
+ * through `colorParse`, so each may be in any form that function accepts --
+ * hex, `rgb()`, `hsl()`, a colour name or an array.
+ *
+ * @param {number} x - Value to place in the range
+ * @param {number} in0 - Start of the input range
+ * @param {number} in1 - End of the input range
+ * @param {Array} [colors=['#000','#fff']] - Colours to ramp between; a
+ *   single-element array is returned as-is
+ * @param {number} [stretch=1] - Exponent applied to the normalised position,
+ *   so values above 1 bias the ramp toward the first colour
+ * @returns {Array} `[r, g, b, a, 'rgb']`
+ * @category Color
+ * @see bw.colorParse
+ * @example
+ * bw.colorInterp(50, 0, 100, ['#000000', '#ffffff']) // => [128, 128, 128, 255, 'rgb']
+ */
 export function colorInterp(x, in0, in1, colors, stretch) {
   var c = Array.isArray(colors) ? colors : ["#000", "#fff"];
   c = c.length === 0 ? ["#000", "#fff"] : c;

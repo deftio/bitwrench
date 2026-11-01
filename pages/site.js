@@ -844,9 +844,11 @@
       c: [
         { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#' + id }, c: title } },
         { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
-          { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: description },
+          // Skip the paragraph entirely when there is no description, rather
+          // than emitting an empty <p>.
+          description ? { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: description } : null,
           content
-        ]}
+        ].filter(Boolean)}
       ]
     };
   };

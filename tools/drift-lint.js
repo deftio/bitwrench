@@ -24,6 +24,21 @@ var __dirname = dirname(fileURLToPath(import.meta.url));
 var ROOT = resolve(__dirname, '..');
 var PKG_VERSION = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')).version;
 
+// The newest RELEASED version, from the newest dated CHANGELOG heading.
+// A dev cycle bumps package.json before anything is published, so docs cannot
+// pin to PKG_VERSION yet -- the bundle does not exist on the CDN. Pinning the
+// last released version is correct until this one ships. Checking only
+// PKG_VERSION made `npm run build` fail on every fresh branch.
+var RELEASED_VERSION = (function() {
+  try {
+    var m = /^## v(\d+\.\d+\.\d+) \(\d{4}-\d{2}-\d{2}\)/m
+      .exec(readFileSync(resolve(ROOT, 'CHANGELOG.md'), 'utf8'));
+    return m ? m[1] : PKG_VERSION;
+  } catch (e) {
+    return PKG_VERSION;
+  }
+})();
+
 // ── CLI flags ───────────────────────────────────────────────────────
 var VERBOSE = process.argv.indexOf('--verbose') !== -1;
 var HELP = process.argv.indexOf('--help') !== -1 || process.argv.indexOf('-h') !== -1;
@@ -267,8 +282,12 @@ var RULES = [
     // silently, and the embedded examples sat on 2.0.17 for months, telling
     // people to download a bundle from two minor versions back.
     id: 'stale-cdn-pin',
-    pattern: new RegExp('bitwrench@(?!' + PKG_VERSION.replace(/\./g, '\\.') + '\\b)\\d+\\.\\d+\\.\\d+', 'g'),
-    message: 'pinned bitwrench version is not ' + PKG_VERSION + ' (use @2 or @2.1 for a channel, or pin the current release)',
+    pattern: new RegExp('bitwrench@(?!(?:' +
+      [PKG_VERSION, RELEASED_VERSION].map(function(v) { return v.replace(/\./g, '\\.'); }).join('|') +
+      ')\\b)\\d+\\.\\d+\\.\\d+', 'g'),
+    message: 'pinned bitwrench version is neither the current release (' +
+      RELEASED_VERSION + ') nor this one (' + PKG_VERSION +
+      ') -- use @2 or @2.1 for a channel, or pin one of those',
     contextExclude: [/upgrade|migrat|older|previous|was pinned|history/i]
   },
   {
@@ -420,6 +439,7 @@ if (LIST_RULES) {
   console.log('\n  Whole-project checks:');
   console.log('    undocumented-api          [api]       a public bw.* with no JSDoc at its assignment');
   console.log('    stale-size                [api]       a KB claim in prose with no matching artifact in dist/builds.json');
+  console.log('    taco-options-drift        [api]       a TacoOptions key in bitwrench.d.ts that no renderer path reads');
   console.log('\n  API rules:');
   console.log('    stale-api                 [api]       bw.XXX() in docs must match a real public API name');
   console.log('                                          (' + PUBLIC_API.size + ' API names extracted from src/)');
@@ -746,6 +766,58 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
       rule: 'undocumented-api',
       message: 'bw.' + name + ' is public but has no JSDoc at its assignment, so it is missing from docs/bitwrench_api.md',
       text: 'add a /** ... @param ... @returns ... @category ... */ block, or allowlist it with a reason'
+    });
+  });
+})();
+
+// 3. taco-options-drift -- a TacoOptions key the renderer never reads.
+//
+// src/bitwrench.d.ts declared `userTag` and `events` for releases while no
+// renderer path consulted either, so TypeScript certified two options that
+// silently did nothing: write `o: { events: { save: fn } }`, get no error and
+// no handler. `userTag` outlived ComponentHandle (removed in 2.0.19) and
+// `events` was never wired. Found by review, not by any check -- hence this
+// one. The renderer is the source of truth; the types are checked against it.
+(function checkTacoOptionsDrift() {
+  var rule = { id: 'taco-options-drift', fileFilter: null, fileExclude: null };
+  if (!ruleApplies(rule, 'src')) return;
+
+  var dtsPath = resolve(ROOT, 'src', 'bitwrench.d.ts');
+  var srcPath = resolve(ROOT, 'src', 'bitwrench.js');
+  if (!existsSync(dtsPath) || !existsSync(srcPath)) return;
+
+  var dts = readFileSync(dtsPath, 'utf8');
+  var block = /export interface TacoOptions\s*\{([\s\S]*?)\n\}/.exec(dts);
+  if (!block) return;
+
+  // Keys declared on the interface, ignoring comment lines.
+  var declared = [];
+  block[1].split('\n').forEach(function(line) {
+    var m = /^\s*([A-Za-z_$][\w$]*)\??\s*:/.exec(line);
+    if (m && !/^\s*\*/.test(line)) declared.push(m[1]);
+  });
+  if (!declared.length) return;
+
+  // Keys the renderer actually consults, as `opts.<key>` or `o.<key>`.
+  var src = readFileSync(srcPath, 'utf8');
+  var read = {};
+  var re = /\b(?:opts|o)\.([A-Za-z_$][\w$]*)/g;
+  var m2;
+  while ((m2 = re.exec(src))) read[m2[1]] = true;
+
+  var dtsLines = dts.split('\n');
+  declared.filter(function(k) { return !read[k]; }).forEach(function(k) {
+    var line = 0;
+    for (var i = 0; i < dtsLines.length; i++) {
+      if (new RegExp('^\\s*' + k + '\\??\\s*:').test(dtsLines[i])) { line = i + 1; break; }
+    }
+    allHits.push({
+      file: 'src/bitwrench.d.ts',
+      line: line,
+      rule: 'taco-options-drift',
+      message: 'TacoOptions declares o.' + k + ' but no renderer path reads opts.' + k +
+        ' -- the types would certify an option that does nothing',
+      text: 'wire it in _createNode/_hydrateElement, or remove it from the interface'
     });
   });
 })();

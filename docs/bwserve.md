@@ -11,6 +11,7 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 - Auto-generates the client page (loads bitwrench, opens SSE, wires actions)
 - Same protocol works for Node.js servers and ESP32/Arduino embedded devices
 - 13 protocol message types (hello, mount, patch, append, replace, remove, refresh, update, message, batch, call, listen, unlisten)
+  -- ten have a schema below; `replace`, `refresh` and `update` are broadcast-only
 
 ## Architecture
 
@@ -89,7 +90,13 @@ Save as `server.js`, run `node server.js`, open `http://localhost:7902`.
 
 ## Protocol Messages
 
-bwserve uses 13 message types. All messages are stamped with `v: 1` (wire protocol version) and use `ref` for target references and `taco` for TACO payloads.
+bwserve uses 13 message types. All messages are stamped with `v: 1` (wire protocol version) and use `ref` for target references and `taco` for TACO payloads. `bw.apply()` rejects a non-`batch` message whose `v` is not `1`, and rejects any message carrying the pre-v1 field names `target` or `node`.
+
+Ten of the thirteen are grouped below. The other three -- `replace`, `refresh`
+and `update` -- have no `BwServeClient` method and no schema section: they are
+applied by `bw.apply()` but only ever reach the browser through
+`app.broadcast()` or inside a `batch`, so they are documented with
+[`bw.apply()`](#bwapplymsg) instead.
 
 ### DOM Operations (5 types)
 
@@ -101,7 +108,7 @@ These modify the browser's DOM tree:
 | `patch` | Update text/attributes | `client.patch(ref, fields)` | `bw.patch(ref, fields)` |
 | `append` | Add child element | `client.append(ref, taco)` | `bw.append(ref, taco)` |
 | `remove` | Remove element | `client.remove(ref)` | `bw.remove(ref)` |
-| `batch` | Multiple operations | `client.batch(ops)` | Execute each op in sequence |
+| `batch` | Multiple operations | `client.batch(ops)` | Execute each op in sequence, independently |
 
 ### Communication Operations (5 types)
 
@@ -110,8 +117,15 @@ These modify the browser's DOM tree:
 | `call` | Invoke built-in function | `client.call(name, ...args)` | Call built-in function (scrollTo, focus, download, etc.) |
 | `message` | Component dispatch | `client.message(ref, action, data)` | `bw.message(ref, action, data)` |
 | `listen` | Subscribe to topic | `client.listen(topic, handler)` | Forward matching events to server |
-| `unlisten` | Unsubscribe from topic | (automatic on disconnect) | Stop forwarding events |
+| `unlisten` | Unsubscribe from topic | `app.broadcast({v:1, type:'unlisten', topic})` | Stop forwarding events |
 | `hello` | Handshake | (automatic on connect) | Establish connection |
+
+> **`unlisten` is not automatic.** Disconnecting does not send one:
+> `client.close()` ends the SSE stream and the server drops the client record,
+> but the browser's `bw._wireListeners[topic]` subscription stays live and the
+> page keeps trying to forward topic events. Send an explicit `unlisten` while
+> the connection is still up; short of that, only a page reload clears it.
+> There is no `BwServeClient.unlisten()` method -- use `app.broadcast()`.
 
 > **Note:** `exec` and `register` were removed in v2.1 for security reasons (arbitrary server-defined code should never cross the wire). `client.query()` evaluates caller-supplied expressions and returns the result (see [Query](#query)). Use `bw_act_*` class patterns for user actions, and `client.call()` for built-in client-side operations like scrollTo, focus, download, clipboard, and redirect.
 
@@ -135,10 +149,11 @@ All messages include `v: 1` (wire protocol version).
 // remove — delete from DOM
 { "v": 1, "type": "remove", "ref": "#old-item" }
 
-// batch — multi-update
+// batch -- multi-update. Every op carries its own "v": 1: bw.apply()
+// version-checks each op it unpacks, and drops an unstamped one silently.
 { "v": 1, "type": "batch", "ops": [
-    { "type": "patch", "ref": "a", "text": "1" },
-    { "type": "patch", "ref": "b", "text": "2" }
+    { "v": 1, "type": "patch", "ref": "a", "text": "1" },
+    { "v": 1, "type": "patch", "ref": "b", "text": "2" }
 ]}
 
 // --- Communication Operations ---
@@ -218,7 +233,7 @@ Create a bwserve application.
 | `port` | number | 7902 | Listen port |
 | `title` | string | `'bwserve'` | HTML `<title>` |
 | `static` | string | null | Static file directory |
-| `theme` | string/object | null | Theme preset name or config |
+| `theme` | object | null | Seed-color config passed to `bw.loadStyles()` on the generated page. A string is accepted but its value is ignored -- the shell loads one fixed teal pair for any preset name, so pass the object |
 | `injectBitwrench` | boolean | true | Auto-inject bitwrench UMD + CSS |
 | `allowScreenshot` | boolean | false | Enable `client.screenshot()` capability |
 | `keepAliveInterval` | number | 15000 | SSE keep-alive interval in ms |
@@ -261,11 +276,12 @@ app.broadcast({ type: 'patch', ref: 'status', text: 'System OK' });
 // Target a specific client by setting clientId:
 app.broadcast({ type: 'patch', ref: 'msg', text: 'Hello', clientId: 'c1' });
 
-// Broadcast a batch update:
+// Broadcast a batch update. broadcast() stamps v:1 on the envelope it sends,
+// but not on the ops inside it -- write those yourself or they are dropped.
 app.broadcast({
   type: 'batch', ops: [
-    { type: 'patch', ref: 'users', text: '342' },
-    { type: 'patch', ref: 'orders', text: '28' }
+    { v: 1, type: 'patch', ref: 'users', text: '342' },
+    { v: 1, type: 'patch', ref: 'orders', text: '28' }
   ]
 });
 ```
@@ -280,7 +296,14 @@ app.broadcast({
 | `client.patch(ref, fields)` | `patch` | Update element with discriminated fields (e.g. `{text:'...'}`, `{attrs:{...}}`) |
 | `client.append(ref, taco)` | `append` | Add TACO as child of ref |
 | `client.remove(ref)` | `remove` | Remove element from DOM |
-| `client.batch(ops)` | `batch` | Send multiple operations atomically |
+| `client.batch(ops)` | `batch` | Send an array of operations in one SSE frame (not atomic -- see below) |
+
+`batch` is a framing optimization, not a transaction. `client.batch(ops)` takes
+**one array**, and the browser walks it in order with a `try`/`catch` around
+each op; a failure is counted in the return value and nothing is rolled back.
+A batch whose second op names a missing element still leaves the first op
+applied. Each op also needs its own `v: 1`, since `_send()` stamps only the
+envelope.
 
 #### Communication
 
@@ -306,8 +329,8 @@ Evaluate a JavaScript expression on the client and return the result. Uses the `
 
 ```javascript
 var title = await client.query('document.title');
-var count = await client.query('document.querySelectorAll(".item").length');
-var data  = await client.query('({ name: document.getElementById("name").value })');
+var count = await client.query('bw.$(".item").length');
+var data  = await client.query('({ name: bw.el("name").value })');
 ```
 
 | Option | Type | Default | Description |
@@ -628,7 +651,7 @@ This is still a huge win over standard JSON in C, where every quote needs `\"`.
 
 ```bash
 # Start the pipe server (dual port)
-bwcli serve --port 8080 --input-port 9000
+bwcli serve --port 8080 --listen 9000
 
 # Open browser automatically
 bwcli serve --open
@@ -807,9 +830,9 @@ app.page('/', function(client) {
     var users = Math.floor(Math.random() * 500);
     var orders = Math.floor(Math.random() * 50);
     client.batch([
-      { type: 'patch', ref: 'users', text: String(users) },
-      { type: 'patch', ref: 'orders', text: String(orders) },
-      { type: 'patch', ref: 'revenue', text: '$' + Math.floor(Math.random() * 10000) }
+      { v: 1, type: 'patch', ref: 'users', text: String(users) },
+      { v: 1, type: 'patch', ref: 'orders', text: String(orders) },
+      { v: 1, type: 'patch', ref: 'revenue', text: '$' + Math.floor(Math.random() * 10000) }
     ]);
   }, 1000);
 });
@@ -880,16 +903,12 @@ bwcli attach
 # var s=document.createElement('script');s.src='http://localhost:7902/bw/attach.js';document.head.appendChild(s);
 ```
 
-Once connected, you get a REPL:
+Once connected, you get a REPL. Every input is a slash command -- bare
+JavaScript was removed in v2.1, and anything not starting with `/` just prints
+a hint:
 
 ```
-bw> document.title
-"My Page"
-
-bw> bw.$('.bw_bccl_card').length
-3
-
-bw> /tree #app 2
+bw> /inspect #app 2
 div#app
   div.main-panel
     h1#title
@@ -906,7 +925,7 @@ Saved: page.png (1440x900, 245832 bytes)
 
 1. `bwcli attach` starts a bwserve instance (default port 7902)
 2. The page loads `/bw/attach.js` which injects bitwrench (if not already loaded) and connects via SSE
-3. You type JS expressions or slash commands in the terminal
+3. You type slash commands in the terminal
 4. The server sends protocol messages; the client evaluates and POSTs results back
 5. Event listeners (via `/listen`) stream DOM events back to the terminal in real time
 
@@ -914,7 +933,7 @@ Saved: page.png (1440x900, 245832 bytes)
 
 | Command | Description |
 |---------|-------------|
-| `/tree [sel] [depth]` | DOM tree summary (default: body, depth 3) |
+| `/inspect [sel] [depth]` | DOM tree summary (default: body, depth 3). `/tree` is a kept alias |
 | `/screenshot [sel] [file]` | Capture element to PNG (requires `--allow-screenshot`) |
 | `/mount <sel> <comp> [json]` | Mount a BCCL component |
 | `/render <sel> <taco-json>` | Render TACO at selector |

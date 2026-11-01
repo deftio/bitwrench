@@ -1,5 +1,7 @@
 # Client-Side Routing
 
+<!-- doc-test: sequential -->
+
 ## What Is Client-Side Routing?
 
 In a traditional website, every page is a separate HTML file on the server. When you click a link, the browser sends a request, the server sends back a new page, and the entire screen refreshes. Every navigation is a full page load.
@@ -128,6 +130,7 @@ Pattern: *                   URL: /anything           => MATCH
 
 Within the same priority level, routes are checked in the order you registered them. **Register specific routes before general ones:**
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```javascript
 routes: {
   '/users/new':  newUserPage,     // checked first (exact)
@@ -140,6 +143,7 @@ routes: {
 
 Query strings are parsed but do not affect which route matches:
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 // URL: /users/123?tab=posts&page=2
 '/users/:id': function(params) {
@@ -169,6 +173,7 @@ Query strings are parsed but do not affect which route matches:
 
 URLs look like `http://example.com/#/users/123`.
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 bw.router({
   mode: 'hash',   // default, can be omitted
@@ -187,6 +192,7 @@ bw.router({
 
 URLs look like `http://example.com/users/123` -- clean, no `#`.
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 bw.router({
   mode: 'history',
@@ -210,6 +216,7 @@ With `base: '/app'`, a URL like `http://example.com/app/users/123` is matched as
 
 Handlers are plain functions. They receive a `params` object and return a TACO (or null).
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 '/users/:id': function(params) {
   return bw.makeCard({
@@ -222,6 +229,36 @@ Handlers are plain functions. They receive a `params` object and return a TACO (
 If a handler returns `null` or `undefined`, the target element is not updated. This is useful for routes that only need side effects (analytics, logging).
 
 If no `target` is configured, handlers still run and pub/sub events still fire -- useful for pub/sub-only routing where you manage rendering yourself.
+
+### The shape most views end up with
+
+A view usually needs to react to something while it is on screen -- a pub/sub
+topic, a device push, a timer. Subscribe inside `o.mounted` and pass the
+element as the third argument: the subscription is then torn down when the
+route changes and the view unmounts. You do not unsubscribe by hand.
+
+```javascript
+function nowPlaying() {
+  return {
+    t: 'div', a: { id: 'now_playing' },
+    o: {
+      mounted: function(el) {
+        // The third argument ties the subscription to this element's lifetime.
+        bw.sub('note:on', function(note) {
+          bw.patch('now_playing', 'Playing ' + note.name);
+        }, el);
+      }
+    },
+    c: 'Waiting...'
+  };
+}
+
+bw.router({ routes: { '/play': nowPlaying } });
+```
+
+Leaving off that third argument is the common mistake: the handler survives the
+route change, and after a few navigations the same topic has several stale
+subscribers writing to elements that are no longer on the page.
 
 ### Stateful route handlers
 
@@ -286,6 +323,7 @@ Use `bw.link()` instead of raw `<a>` tags for navigation within the SPA. Externa
 
 Called before each navigation. Use it for authentication checks, redirects, or blocking.
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 bw.router({
   target: '#app',
@@ -312,6 +350,7 @@ bw.router({
 
 Called after each navigation completes. Use it for analytics, logging, scroll reset.
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 after: function(to, from) {
   window.scrollTo(0, 0);
@@ -371,6 +410,7 @@ The router only controls the content area. Nav and footer are mounted separately
 <div id="footer-root"></div>
 ```
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```javascript
 // Mount persistent UI
 bw.DOM('#nav-root', makeNavBar());
@@ -423,6 +463,7 @@ function makeNav() {
 
 ### Auth guard with login redirect
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```javascript
 var isLoggedIn = false;
 
@@ -444,6 +485,7 @@ bw.router({
 
 Combine the router with a store pattern for multi-view apps. The store holds data; views subscribe to the slices they need:
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```javascript
 var store = { users: [], stats: {} };
 
@@ -487,6 +529,7 @@ See [State Management: Shared State Across Views](state-management.md#shared-sta
 
 The client router complements bwserve's server-side `app.page()`. Use bwserve for top-level page delivery and the client router for sub-navigation within a page:
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```javascript
 // Server handles top-level pages
 app.page('/dashboard', function(client) {
@@ -511,6 +554,7 @@ bw.router({
 
 Call `r.destroy()` to remove event listeners and stop the router:
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```javascript
 var r = bw.router({ ... });
 

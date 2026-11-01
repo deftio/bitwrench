@@ -105,7 +105,7 @@ export class BwServeClient {
     /**
      * Send a bw.message() dispatch to a tagged component on the client.
      *
-     * @param {string} ref - Component userTag or UUID
+     * @param {string} ref - Element id, UUID class, or class token (bw.el())
      * @param {string} action - Method name to call
      * @param {*} data - Data to pass to the method
      */
@@ -143,7 +143,7 @@ export class BwServeClient {
     /**
      * Register a handler for client actions (button clicks, form submits, etc.).
      *
-     * @param {string} action - Action name (from o.events declarative handler)
+     * @param {string} action - Action name (from the element's bw_act_* class)
      * @param {Function} handler - Called with (data, client)
      * @returns {BwServeClient} this (for chaining)
      */

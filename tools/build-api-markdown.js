@@ -54,7 +54,11 @@ function parseAPIs(source, defaultCategory) {
 
     const exampleTag = block.tags.find(t => t.tag === 'example');
     const example = exampleTag
-      ? exampleTag.description.trim() || extractExampleFromSource(block.source)
+      // Source extraction FIRST: comment-parser flattens a multi-line
+      // @example into one line, and a `//` comment then swallows every
+      // statement after it -- which published syntactically invalid
+      // examples (bw.once, bw.makeContainer and others).
+      ? extractExampleFromSource(block.source) || exampleTag.description.trim()
       : null;
 
     const categoryTag = block.tags.find(t => t.tag === 'category');
@@ -116,7 +120,11 @@ function parseComponents(source, defaultCategory) {
 
     const exampleTag = block.tags.find(t => t.tag === 'example');
     const example = exampleTag
-      ? exampleTag.description.trim() || extractExampleFromSource(block.source)
+      // Source extraction FIRST: comment-parser flattens a multi-line
+      // @example into one line, and a `//` comment then swallows every
+      // statement after it -- which published syntactically invalid
+      // examples (bw.once, bw.makeContainer and others).
+      ? extractExampleFromSource(block.source) || exampleTag.description.trim()
       : null;
 
     const categoryTag = block.tags.find(t => t.tag === 'category');

@@ -21,6 +21,7 @@ import { execFileSync } from 'child_process';
 import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
+import { gzipSync } from 'zlib';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -52,6 +53,32 @@ async function loadESM(relPath) {
  *           htmlResult: string|null, typeOfArray: string|null,
  *           escapeResult: string|null }
  */
+// Load a verify bundle in a real CJS process and report the shape the docs
+// teach. Modelled on probeCJS: the repo is "type": "module", so a .js UMD file
+// cannot simply be require()d from this ESM test file.
+function probeVerifyCJS(relPath) {
+  const absPath = resolve(ROOT, relPath);
+  const tmpDir = mkdtempSync(join(tmpdir(), 'bw-verify-test-'));
+  const bundleCopy = join(tmpDir, 'bundle.cjs');
+  writeFileSync(bundleCopy, readFileSync(absPath, 'utf8'));
+  const probe = join(tmpDir, 'probe.cjs');
+  writeFileSync(probe, `
+    const mod = require(${JSON.stringify(bundleCopy)});
+    const { verify } = mod;
+    let assertThrew = false;
+    try { verify.assert({ t: 'h1', cc: 'x' }); } catch (e) { assertThrew = true; }
+    console.log(JSON.stringify({
+      typeofModule: typeof mod,
+      destructuredIsFunction: typeof verify === 'function',
+      hasAssert: typeof verify.assert === 'function',
+      cleanFindings: verify({ t: 'p', c: 'hi' }),
+      assertThrew: assertThrew
+    }));
+  `);
+  const out = execFileSync(process.execPath, [probe], { encoding: 'utf8' });
+  return JSON.parse(out);
+}
+
 function probeCJS(relPath) {
   const absPath = resolve(ROOT, relPath);
   const tmpDir = mkdtempSync(join(tmpdir(), 'bw-bundle-test-'));
@@ -118,6 +145,10 @@ const CORE_FUNCTIONS = [
   'multiArray', 'setIntervalX',
 ];
 
+// The four names the entry always re-exported. The factories are checked
+// separately and dynamically: this list being the WHOLE expectation is how
+// `import { makeCard } from 'bitwrench/bccl'` stayed undefined for every
+// factory while this test passed.
 const BCCL_EXPORTS = [
   'BCCL', 'make', 'registerBCCL', 'variantClass',
 ];
@@ -164,6 +195,17 @@ const LEAN_BUNDLES = {
   umdMin:  'dist/bitwrench-lean.umd.min.js',
   es5:     'dist/bitwrench-lean.es5.js',
   es5Min:  'dist/bitwrench-lean.es5.min.js',
+};
+
+// bitwrench-verify ships as its own artifact (never bundled into core -- it is
+// a development-time tool). These assert the shipped files are loadable and
+// behave, which is the only thing that proves the ./verify export works.
+const VERIFY_BUNDLES = {
+  esm:     'dist/bitwrench-verify.esm.js',
+  esmMin:  'dist/bitwrench-verify.esm.min.js',
+  cjs:     'dist/bitwrench-verify.cjs',
+  umd:     'dist/bitwrench-verify.js',
+  umdMin:  'dist/bitwrench-verify.min.js',
 };
 
 const BCCL_BUNDLES = {
@@ -466,6 +508,30 @@ describe('Dist Bundle Smoke Tests', function () {
       it('BCCL is an object and make is a function', function () {
         assert.strictEqual(typeof mod.BCCL, 'object');
         assert.strictEqual(typeof mod.make, 'function');
+      });
+
+      it('exports every factory in the BCCL registry as a named export', function () {
+        // The documented form is `import { makeCard } from 'bitwrench/bccl'`.
+        // The entry re-exported three names while its own comment said "all
+        // components", so every one of these was undefined -- and the UMD path
+        // hid it, because registerBCCL() copies them onto the global bw.
+        const registry = Object.keys(mod.BCCL);
+        assert.ok(registry.length > 40, 'registry has ' + registry.length + ' entries');
+        const missing = registry
+          .map(function (k) { return mod.BCCL[k] && mod.BCCL[k].name; })
+          .filter(function (n) { return n && /^make/.test(n) && typeof mod[n] !== 'function'; });
+        assert.deepStrictEqual(missing, [],
+          'in the BCCL registry but not a named export of bitwrench/bccl');
+      });
+
+      it('does not claim the four core-resident factories', function () {
+        // makeTable, makeTableFromArray, makeDataTable and makeBarChart live
+        // in bitwrench.js, not bitwrench-bccl.js. Docs that import them from
+        // bitwrench/bccl are wrong, and this is why.
+        ['makeTable', 'makeTableFromArray', 'makeDataTable', 'makeBarChart'].forEach(function (n) {
+          assert.strictEqual(typeof mod[n], 'undefined',
+            n + ' is core-resident; reach it as bw.' + n + '()');
+        });
       });
     });
 
@@ -1003,6 +1069,103 @@ describe('Dist Bundle Smoke Tests', function () {
       it('ESM and CJS have same export names', function () {
         assert.deepStrictEqual(esmKeys, cjsKeys);
       });
+    });
+  });
+
+  describe('bitwrench-verify bundles', function () {
+
+    describe('ESM (bitwrench-verify.esm.js)', function () {
+      let mod;
+      before(async function () {
+        mod = await loadESM(VERIFY_BUNDLES.esm);
+      });
+
+      it('exposes verify as both default and named export', function () {
+        assert.strictEqual(typeof mod.default, 'function');
+        assert.strictEqual(typeof mod.verify, 'function');
+        assert.strictEqual(mod.default, mod.verify);
+      });
+
+      it('verify.assert is attached', function () {
+        assert.strictEqual(typeof mod.default.assert, 'function');
+      });
+
+      it('passes a clean TACO and reports a typo', function () {
+        assert.deepStrictEqual(mod.default({ t: 'p', c: 'hi' }), []);
+        const f = mod.default({ t: 'h1', a: { clas: 'x' } });
+        assert.strictEqual(f.length, 1);
+        assert.strictEqual(f[0].code, 'attr-typo');
+        assert.strictEqual(f[0].hint, 'class');
+      });
+
+      it('wire mode rejects a function handler', function () {
+        const f = mod.default({ t: 'b', a: { onclick: function () {} } }, { mode: 'wire' });
+        assert.strictEqual(f[0].code, 'function-in-wire');
+      });
+    });
+
+    describe('ESM min (bitwrench-verify.esm.min.js)', function () {
+      let mod;
+      before(async function () {
+        mod = await loadESM(VERIFY_BUNDLES.esmMin);
+      });
+
+      it('survives minification', function () {
+        assert.strictEqual(typeof mod.default, 'function');
+        assert.strictEqual(typeof mod.default.assert, 'function');
+        assert.deepStrictEqual(mod.default({ t: 'p', c: 'hi' }), []);
+        assert.strictEqual(mod.default({ t: 'h1', cc: 'x' })[0].code, 'unknown-key');
+      });
+    });
+
+    for (const [label, path] of [
+      ['CJS', VERIFY_BUNDLES.cjs],
+      ['UMD', VERIFY_BUNDLES.umd],
+      ['UMD min', VERIFY_BUNDLES.umdMin],
+    ]) {
+      describe(`${label} (${path})`, function () {
+        it('exports verify and verify.assert', function () {
+          const info = probeCJS(path);
+          assert.ok(info.keys.includes('verify'), `${label} should export verify`);
+          assert.ok(info.keys.includes('default'), `${label} should export default`);
+        });
+
+        it('the documented require shape works and behaves', function () {
+          // Rollup's CJS output is { default, verify } -- NOT directly
+          // callable -- so docs/verify.md teaches the destructured form.
+          // This asserts the exact form the docs teach, in a real CJS process.
+          const out = probeVerifyCJS(path);
+          assert.strictEqual(out.typeofModule, 'object',
+            'require() returns a namespace object, not the function');
+          assert.strictEqual(out.destructuredIsFunction, true);
+          assert.strictEqual(out.hasAssert, true);
+          assert.deepStrictEqual(out.cleanFindings, []);
+          assert.strictEqual(out.assertThrew, true);
+        });
+      });
+    }
+
+    // docs/verify.md, README.md, CHANGELOG.md, llms.txt, docs/core-api.md,
+    // docs/thinking-in-bitwrench.md and pages/11-debugging.html all promise
+    // "under 7 KB raw, under 3 KB gzipped". Those claims went stale once in
+    // 2.1.12 (the module grew past the "2.2 KB" they had said) with nothing
+    // to catch it. This is that check: grow verify past the claim and the
+    // suite fails, which is the prompt to update the prose on purpose.
+    // Gzip at level 9 -- the level the shipped .gz artifacts use. zlib's
+    // default is 6 and reads larger; see dev/bitwrench-2.1.6-size-opt-findings.md.
+    it('stays inside the size the docs promise', function () {
+      const raw = readFileSync(resolve(ROOT, 'dist/bitwrench-verify.min.js'));
+      const gz = gzipSync(raw, { level: 9 });
+      assert.ok(raw.length < 7 * 1024,
+        'verify raw is ' + raw.length + ' bytes; the docs say under 7 KB');
+      assert.ok(gz.length < 3 * 1024,
+        'verify gzipped is ' + gz.length + ' bytes; the docs say under 3 KB');
+    });
+
+    it('is NOT bundled into core -- it is a dev-time tool', function () {
+      const core = readFileSync(resolve(ROOT, 'dist/bitwrench.umd.min.js'), 'utf8');
+      assert.strictEqual(core.indexOf('not-an-element'), -1,
+        'a verify-only finding code appears in core: verify leaked into the bundle');
     });
   });
 });

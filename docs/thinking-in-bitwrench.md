@@ -358,6 +358,7 @@ bw.mount('#app', { t: 'table', c: [
 
 ### Conditionals -- three ways
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```js
 // Ternary (inline)
 { t: 'div', c: loggedIn ? 'Welcome back' : 'Please sign in' }
@@ -382,6 +383,7 @@ bw.mount('#app', { t: 'table', c: [
 
 Functions compose into full page layouts:
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```js
 function makeHeader(title) {
     return { t: 'header', c: { t: 'h1', c: title } };
@@ -496,6 +498,7 @@ Change `brand` once and re-run `bw.injectCSS(bw.css(...))` -- every rule that re
 
 Continuing our card: let's style the contact card with `bw.css()`.
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```js
 bw.injectCSS(bw.css({
     '.card': {
@@ -980,6 +983,7 @@ and to lose focus, carets and animations.
 
 Cheapest first:
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```js
 // 1. A visual state. No node is created or destroyed, so focus, scroll
 //    position and CSS transitions all survive.
@@ -1087,6 +1091,7 @@ bw.derivePalette({ primary: '#336699', secondary: '#cc6633' }); // full palette
 
 ### Utility functions
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```js
 bw.typeOf([1, 2, 3]);               // 'array' (enhanced typeof)
 bw.uuid('widget');                   // 'bw_uuid_widget_a3f2c1' (unique ID)
@@ -1159,6 +1164,7 @@ Server (any language)           Browser
 
 A minimal server in Node.js:
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```js
 import bwserve from 'bitwrench/bwserve';
 
@@ -1179,6 +1185,7 @@ The browser receives one HTML shell page with bitwrench loaded. Everything after
 
 ### Incremental updates
 
+<!-- doc-test: skip (names a page or handler the surrounding prose supplies) -->
 ```js
 client.patch('#status', { text: 'Processing...' });
 client.append('#log', { t: 'div', c: 'Event at ' + new Date().toISOString() });
@@ -1193,6 +1200,7 @@ client.batch([
 
 In Sections 6-7, every event handler was a local JavaScript function (`onclick: function() { ... }`). In server-driven mode, there is a second path: the click is forwarded to the server instead. Add a `bw_act_*` CSS class to any element, and when the user clicks it, the browser POSTs the action name to the server. No `onclick` handler is needed on the client:
 
+<!-- doc-test: skip (illustrative fragment, not a standalone statement) -->
 ```js
 // Client-side {taco} (no onclick handler needed)
 { t: 'button', a: { class: 'bw_act_greet' }, c: 'Say hello' }
@@ -1391,6 +1399,8 @@ A `{taco}` is a plain JavaScript object with a known shape: `t` is a string, `a`
 
 This means you can validate `{taco}` objects before they reach the DOM. A server can check that wire-format TACOs conform to an allowed subset before sending them to the client. A test suite can assert that a component factory returns well-formed output. An LLM generating UI can have its output validated against the schema before it is rendered. A content management system can enforce that editors produce valid `{taco}` structures.
 
-Bitwrench does not ship a schema or enforce one at runtime -- the library is permissive by design, and validation has a cost. But the fact that the entire UI description is a plain object with a documented shape means validation is always available as an option. This is a property that template strings, JSX, and HTML do not have without a parser.
+The renderer itself does not enforce a schema -- the library is permissive by design, and validation has a cost. What bitwrench ships is a checker you can choose to call: `bitwrench-verify`, a separate module under 3 KB gzipped (`bitwrench/verify`) that is not part of core and never runs in production. `verify(taco)` returns an array of findings and `verify.assert(taco)` throws, so a malformed tree can fail a test instead of rendering an empty div. Nothing requires it: bitwrench renders without it, there is still no build step, and if you can see the page you can already see the mistake. It earns its place where nobody is looking -- a test, a generated payload, a frame from a device, an LLM-produced TACO, a CI pipe. Full guide: [verify.md](verify.md).
+
+That a checker is possible at all is the point here. The entire UI description is a plain object with a documented shape, so validation is always available as an option. This is a property that template strings, JSX, and HTML do not have without a parser.
 
 *Bitwrench is maintained by [deftio](https://github.com/deftio). BSD-2-Clause license.*

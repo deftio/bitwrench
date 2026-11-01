@@ -2169,3 +2169,541 @@ describe('bw.jsonPatch()', function() {
   });
 });
 
+
+// =========================================================================
+// One target rule everywhere (reported by jazzmac, 2026-10-05)
+//
+// bw.el, bw.patch, bw.toggleClass and bw.clear all accept a bare element id
+// ('status'). bw.mount resolved its target with bw.$(target)[0] -- a plain CSS
+// selector query -- so the same string failed with "target not found". An
+// author who learned the bare-id form from one verb had to remember that one
+// other verb wanted '#status'.
+// =========================================================================
+
+describe('target resolution is the same for every verb', function() {
+  // Every verb that takes a target string. append and render were missed in
+  // the first pass at this: append returned null with no warning at all, which
+  // is worse than mount's "target not found".
+  var VERBS = ['el', 'patch', 'toggleClass', 'clear', 'mount', 'append', 'render'];
+
+  function fresh() {
+    document.body.innerHTML = '<div id="status">old</div><div class="card">c</div>';
+  }
+
+  function callWith(verb, target) {
+    if (verb === 'el') return bw.el(target);
+    if (verb === 'patch') return bw.patch(target, 'new');
+    if (verb === 'toggleClass') return bw.toggleClass(target, 'on');
+    if (verb === 'clear') return bw.clear(target);
+    if (verb === 'append') return bw.append(target, { t: 'span', c: 'x' });
+    if (verb === 'render') return bw.render(target, 'beforeend', { t: 'span', c: 'x' });
+    return bw.mount(target, { t: 'span', c: 'x' });
+  }
+
+  it('every verb accepts a bare element id', function() {
+    VERBS.forEach(function(verb) {
+      fresh();
+      var warned = [];
+      var orig = console.warn;
+      console.warn = function(m) { warned.push(String(m)); };
+      var out;
+      try { out = callWith(verb, 'status'); } finally { console.warn = orig; }
+      assert.ok(out !== null && out !== undefined && !(Array.isArray(out) && !out.length),
+        'bw.' + verb + "('status') did not resolve the element");
+      assert.deepStrictEqual(warned.filter(function(w) { return /not found/.test(w); }), [],
+        'bw.' + verb + "('status') warned about a target that exists");
+    });
+  });
+
+  it('every verb accepts an id selector', function() {
+    VERBS.forEach(function(verb) {
+      fresh();
+      var out = callWith(verb, '#status');
+      assert.ok(out !== null && out !== undefined && !(Array.isArray(out) && !out.length),
+        'bw.' + verb + "('#status') did not resolve the element");
+    });
+  });
+
+  it('every verb accepts a class selector', function() {
+    VERBS.forEach(function(verb) {
+      fresh();
+      var out = callWith(verb, '.card');
+      assert.ok(out !== null && out !== undefined && !(Array.isArray(out) && !out.length),
+        'bw.' + verb + "('.card') did not resolve the element");
+    });
+  });
+
+  it('every verb accepts a live element', function() {
+    VERBS.forEach(function(verb) {
+      fresh();
+      var el = document.getElementById('status');
+      var out = callWith(verb, el);
+      assert.ok(out !== null && out !== undefined && !(Array.isArray(out) && !out.length),
+        'bw.' + verb + '(element) did not resolve');
+    });
+  });
+
+  it('bw.mount still warns and returns null for a target that does not exist', function() {
+    fresh();
+    var warned = [];
+    var orig = console.warn;
+    console.warn = function(m) { warned.push(String(m)); };
+    var out;
+    try { out = bw.mount('no_such_thing', { t: 'p', c: 'x' }); } finally { console.warn = orig; }
+    assert.strictEqual(out, null, 'should return null');
+    assert.ok(warned.some(function(w) { return /target not found/.test(w); }),
+      'should still warn');
+  });
+
+  it('bw.mount with a bare id actually mounts, and unmounts what was there', function() {
+    fresh();
+    var inner = bw.mount('status', { t: 'span', a: { id: 'inner' }, c: 'first' });
+    assert.ok(inner, 'mount returned the container');
+    assert.strictEqual(bw.el('inner').textContent, 'first');
+    bw.mount('status', { t: 'b', c: 'second' });
+    assert.strictEqual(bw.el('status').textContent, 'second', 'remount replaces children');
+    assert.strictEqual(bw.$('#status span').length, 0, 'old child is gone');
+  });
+
+  it('bw.DOM gets the same rule (it is the same function)', function() {
+    fresh();
+    assert.strictEqual(bw.DOM, bw.mount, 'bw.DOM should be bw.mount');
+    assert.ok(bw.DOM('status', { t: 'i', c: 'viaDOM' }));
+    assert.strictEqual(bw.el('status').textContent, 'viaDOM');
+  });
+
+  it('bw.mount resolves a UUID class, like bw.el does', function() {
+    document.body.innerHTML = '<div id="host"></div>';
+    var el = bw.mount('#host', {
+      t: 'div', o: { state: {} }, c: 'x'
+    });
+    var uuid = bw.getUUID(el.firstChild) || bw.getUUID(el);
+    if (!uuid) return this.skip();
+    assert.ok(bw.mount(uuid, { t: 'em', c: 'byUuid' }),
+      'mount should resolve a bw_uuid_* token');
+  });
+});
+
+// =========================================================================
+// o.render + o.mounted together
+//
+// There is one _bw_mounted_fn slot. Supplying both used to mean `mounted`
+// claimed it and the initial render never ran, so the component mounted
+// empty with no warning -- it caught the quickstart's own flagship example
+// and five more in docs/state-management.md. Both must now run, render
+// first, because `mounted` commonly measures or wires up what render built.
+// =========================================================================
+
+describe('o.render and o.mounted together', function() {
+  beforeEach(freshDOM);
+
+  it('runs render when mounted is also supplied', function() {
+    var calls = [];
+    bw.mount('#app', {
+      t: 'ul',
+      o: {
+        state: { items: ['a', 'b', 'c'] },
+        render: function(el, s) {
+          calls.push('render');
+          bw.patch(el, s.items.map(function(i) { return { t: 'li', c: i }; }));
+        },
+        mounted: function() { calls.push('mounted'); }
+      }
+    });
+    assert.deepStrictEqual(calls, ['render', 'mounted'],
+      'both hooks run, render first');
+    assert.strictEqual(document.querySelectorAll('#app li').length, 3,
+      'the component must not mount empty');
+  });
+
+  it('lets mounted observe the DOM that render produced', function() {
+    var seen = -1;
+    bw.mount('#app', {
+      t: 'ul',
+      o: {
+        state: { items: ['a', 'b'] },
+        render: function(el, s) {
+          bw.patch(el, s.items.map(function(i) { return { t: 'li', c: i }; }));
+        },
+        mounted: function(el) { seen = el.querySelectorAll('li').length; }
+      }
+    });
+    assert.strictEqual(seen, 2, 'render must run before mounted, not after');
+  });
+
+  it('still runs render when it is the only hook', function() {
+    var n = 0;
+    bw.mount('#app', {
+      t: 'div',
+      o: { state: { v: 1 }, render: function(el, s) { n++; bw.patch(el, 'v=' + s.v); } }
+    });
+    assert.strictEqual(n, 1);
+    assert.strictEqual(bw.$('#app div')[0].textContent, 'v=1');
+  });
+
+  it('still runs mounted when it is the only hook', function() {
+    var n = 0;
+    bw.mount('#app', { t: 'div', c: 'x', o: { mounted: function() { n++; } } });
+    assert.strictEqual(n, 1);
+  });
+
+  it('passes the same element and state to both hooks', function() {
+    var got = {};
+    bw.mount('#app', {
+      t: 'div',
+      o: {
+        state: { k: 'v' },
+        render: function(el, s) { got.renderEl = el; got.renderState = s; },
+        mounted: function(el, s) { got.mountedEl = el; got.mountedState = s; }
+      }
+    });
+    assert.strictEqual(got.renderEl, got.mountedEl, 'same element');
+    assert.strictEqual(got.renderState, got.mountedState, 'same state object');
+    assert.strictEqual(got.renderState.k, 'v');
+  });
+
+  it('names render as the thrower, not mounted', function() {
+    // Both halves share one _bw_mounted_fn slot, so one catch in mountTree
+    // sees either throw. It used to call every failure "o.mounted error" --
+    // including a render failure, which this release is what put in that slot.
+    // bw.refresh() lets the same render throw under its own name, so the same
+    // function failed two different ways depending on mount vs refresh.
+    var mountedRan = false;
+    var warns = [];
+    var diags = [];
+    var origWarn = console.warn;
+    console.warn = function() { warns.push(Array.prototype.join.call(arguments, ' ')); };
+    var unsub = bw.sub('bw:diag', function(d) { diags.push(d); });
+    try {
+      assert.doesNotThrow(function() {
+        bw.mount('#app', {
+          t: 'div',
+          o: {
+            render: function() { throw new Error('render boom'); },
+            mounted: function() { mountedRan = true; }
+          }
+        });
+      }, 'a throwing hook must not escape mountTree');
+    } finally {
+      console.warn = origWarn;
+      bw.unsub('bw:diag', unsub);
+    }
+
+    assert.ok(warns.some(function(w) { return /o\.render error: render boom/.test(w); }),
+      'the warning must name render, got: ' + warns.join(' | '));
+    assert.ok(!warns.some(function(w) { return /o\.mounted error/.test(w); }),
+      'it must not blame mounted');
+    var d = diags.filter(function(x) { return /hook_error/.test(x.code); });
+    assert.strictEqual(d.length, 1);
+    assert.strictEqual(d[0].code, 'render_hook_error');
+    assert.strictEqual(d[0].hook, 'render');
+
+    // mountTree catches at the slot boundary, so mounted is skipped when
+    // render throws. Asserted so a change in that contract is visible.
+    assert.strictEqual(mountedRan, false,
+      'render throwing short-circuits the composed slot');
+  });
+
+  it('still names mounted when mounted is the thrower', function() {
+    var warns = [];
+    var diags = [];
+    var origWarn = console.warn;
+    console.warn = function() { warns.push(Array.prototype.join.call(arguments, ' ')); };
+    var unsub = bw.sub('bw:diag', function(d) { diags.push(d); });
+    try {
+      bw.mount('#app', {
+        t: 'div',
+        o: {
+          render: function(el) { bw.patch(el, 'ok'); },
+          mounted: function() { throw new Error('mounted boom'); }
+        }
+      });
+    } finally {
+      console.warn = origWarn;
+      bw.unsub('bw:diag', unsub);
+    }
+    assert.ok(warns.some(function(w) { return /o\.mounted error: mounted boom/.test(w); }),
+      'got: ' + warns.join(' | '));
+    assert.strictEqual(diags.filter(function(x) { return /hook_error/.test(x.code); })[0].code,
+      'mounted_hook_error');
+    assert.strictEqual(bw.$('#app div')[0].textContent, 'ok',
+      'render ran first and its work survives a later mounted throw');
+  });
+
+  it('names render when render is the only hook', function() {
+    var warns = [];
+    var origWarn = console.warn;
+    console.warn = function() { warns.push(Array.prototype.join.call(arguments, ' ')); };
+    try {
+      bw.mount('#app', { t: 'div', o: { render: function() { throw new Error('solo'); } } });
+    } finally {
+      console.warn = origWarn;
+    }
+    assert.ok(warns.some(function(w) { return /o\.render error: solo/.test(w); }),
+      'got: ' + warns.join(' | '));
+  });
+
+  it('does not re-render when state is mutated -- updates stay explicit', function() {
+    // The guard against this fix drifting into reactivity. Composing render
+    // and mounted must not introduce dependency tracking: mutating state is
+    // inert until something explicitly asks for a render.
+    var renders = 0;
+    var el = bw.mount('#app', {
+      t: 'div',
+      o: {
+        state: { n: 0 },
+        render: function(e, s) { renders++; bw.patch(e, 'n=' + s.n); },
+        mounted: function() {}
+      }
+    });
+    assert.strictEqual(renders, 1, 'one render at mount');
+
+    el._bw_state.n = 99;
+    assert.strictEqual(renders, 1, 'mutating state must not trigger a render');
+    assert.strictEqual(el.textContent, 'n=0', 'the DOM still shows the old value');
+
+    bw.refresh(el);
+    assert.strictEqual(renders, 2, 'only an explicit refresh renders again');
+    assert.strictEqual(el.textContent, 'n=99');
+  });
+
+  it('fires the pair once per element identity', function() {
+    var n = 0;
+    var el = bw.mount('#app', {
+      t: 'div',
+      o: { state: {}, render: function() { n++; }, mounted: function() { n += 10; } }
+    });
+    bw.mountTree(el);
+    assert.strictEqual(n, 11, 'a second mountTree pass must not re-fire either hook');
+  });
+});
+
+// =========================================================================
+// The update path: component methods, not re-renders
+//
+// These tests exist to pin down WHY bitwrench prefers el.bw.method() over
+// o.render + bw.refresh(), because the difference is measurable rather than
+// stylistic and the docs kept drifting toward the React framing ("change
+// state and trigger re-render").
+//
+// bw.refresh() clears the element and runs o.render again, so every child is
+// destroyed and rebuilt -- taking with it anything the DOM held that the
+// state does not model. A handle method touches only what changed. If either
+// half of this ever stops being true, the guidance in
+// docs/framework-translation-table.md needs rewriting.
+// =========================================================================
+
+describe('update path: methods vs re-render', function() {
+  beforeEach(freshDOM);
+
+  // A counter next to an input the "user" is halfway through filling in.
+  function blunt() {
+    return {
+      t: 'div',
+      o: {
+        state: { count: 0 },
+        render: function(el, s) {
+          bw.DOM(el, [
+            { t: 'span', a: { id: 'n' }, c: String(s.count) },
+            { t: 'input', a: { id: 'typed' } }
+          ]);
+        }
+      }
+    };
+  }
+
+  function surgical() {
+    return {
+      t: 'div',
+      c: [
+        { t: 'span', a: { id: 'n' }, c: '0' },
+        { t: 'input', a: { id: 'typed' } }
+      ],
+      o: {
+        state: { count: 0 },
+        slots: { n: '#n' },
+        handle: {
+          inc: function(el) {
+            el._bw_state.count++;
+            el.bw.setN(String(el._bw_state.count));
+          }
+        }
+      }
+    };
+  }
+
+  it('bw.refresh discards DOM state the component state does not model', function() {
+    var el = bw.mount('#app', blunt());
+    var input = bw.$('#typed')[0];
+    input.value = 'half-typed';
+    input.focus();
+    assert.strictEqual(document.activeElement, input, 'precondition: focused');
+
+    el._bw_state.count = 1;
+    bw.refresh(el);
+
+    assert.strictEqual(bw.$('#n')[0].textContent, '1', 'the counter did update');
+    assert.strictEqual(bw.$('#typed')[0].value, '',
+      'refresh rebuilds children, so the half-typed value is gone');
+    assert.notStrictEqual(document.activeElement, bw.$('#typed')[0],
+      'and focus goes with it');
+  });
+
+  it('a handle method updates only what changed', function() {
+    var el = bw.mount('#app', surgical());
+    var input = bw.$('#typed')[0];
+    input.value = 'half-typed';
+    input.focus();
+
+    el.bw.inc();
+
+    assert.strictEqual(bw.$('#n')[0].textContent, '1', 'the counter updated');
+    assert.strictEqual(bw.$('#typed')[0].value, 'half-typed',
+      'the untouched input keeps its value');
+    assert.strictEqual(document.activeElement, bw.$('#typed')[0],
+      'and keeps focus');
+  });
+
+  it('the same node survives a handle call but not a refresh', function() {
+    var el = bw.mount('#app', surgical());
+    var before = bw.$('#typed')[0];
+    el.bw.inc();
+    assert.strictEqual(bw.$('#typed')[0], before,
+      'a handle call must not replace sibling nodes');
+
+    var el2 = bw.mount('#app', blunt());
+    var before2 = bw.$('#typed')[0];
+    bw.refresh(el2);
+    assert.notStrictEqual(bw.$('#typed')[0], before2,
+      'refresh replaces the subtree -- that is what makes it blunt');
+  });
+
+  it('bw.update dispatches to the handle rather than re-rendering', function() {
+    var seen = null;
+    var el = bw.mount('#app', {
+      t: 'div',
+      c: { t: 'span', a: { id: 'n' }, c: '0' },
+      o: {
+        state: { count: 0 },
+        handle: { update: function(e, data) { seen = data; bw.patch('n', String(data.count)); } }
+      }
+    });
+    var input = bw.create({ t: 'input' });
+    el.appendChild(input);
+    input.value = 'kept';
+
+    bw.update(el, { count: 7 });
+
+    assert.deepStrictEqual(seen, { count: 7 }, 'bw.update calls el.bw.update');
+    assert.strictEqual(bw.$('#n')[0].textContent, '7');
+    assert.strictEqual(input.value, 'kept', 'nothing else was rebuilt');
+  });
+
+  it('o.slots generates the accessor pair the surgical path relies on', function() {
+    var el = bw.mount('#app', {
+      t: 'div',
+      c: { t: 'span', a: { class: 'title' }, c: 'before' },
+      o: { slots: { title: '.title' } }
+    });
+    assert.strictEqual(typeof el.bw.setTitle, 'function', 'setter generated');
+    assert.strictEqual(typeof el.bw.getTitle, 'function', 'getter generated');
+    el.bw.setTitle('after');
+    assert.strictEqual(el.bw.getTitle(), 'after');
+    assert.strictEqual(bw.$('#app .title')[0].textContent, 'after');
+  });
+});
+
+// =========================================================================
+// SVG namespace through the insert verbs
+//
+// bw.create() detects SVG context from the TACO (`{t:'svg'}`) and threads it
+// to children, which covers a tree built in one call. It cannot know the
+// namespace of a parent it is inserted INTO, so every verb that adds children
+// to an element already in the document had to be taught. Until it was,
+// bw.append/patch/replace/syncChildren/mount built <rect> and friends with
+// createElement() in the XHTML namespace: they appear in the DOM, match
+// selectors, and render nothing -- which is why docs/svg.md recommending
+// bw.syncChildren for SVG series could not have worked.
+// =========================================================================
+
+describe('SVG namespace survives the insert verbs', function() {
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var layer;
+
+  beforeEach(function() {
+    freshDOM();
+    bw.mount('#app', {
+      t: 'svg', a: { width: '100', height: '100' },
+      c: { t: 'g', a: { id: 'layer' } }
+    });
+    layer = bw.$('#layer')[0];
+    assert.strictEqual(layer.namespaceURI, SVG_NS, 'precondition: the parent is SVG');
+  });
+
+  function nsOf(sel) {
+    var el = bw.$(sel)[0];
+    assert.ok(el, sel + ' should exist');
+    return el.namespaceURI;
+  }
+
+  it('bw.append puts the child in the SVG namespace', function() {
+    bw.append(layer, { t: 'rect', a: { id: 'r1', width: '10', height: '10' } });
+    assert.strictEqual(nsOf('#r1'), SVG_NS);
+  });
+
+  it('bw.patch with a TACO stays in the SVG namespace', function() {
+    bw.patch(layer, { t: 'circle', a: { id: 'c1', r: '5' } });
+    assert.strictEqual(nsOf('#c1'), SVG_NS);
+  });
+
+  it('bw.patch with an array stays in the SVG namespace', function() {
+    bw.patch(layer, [
+      { t: 'line', a: { id: 'l1' } },
+      { t: 'line', a: { id: 'l2' } }
+    ]);
+    assert.strictEqual(nsOf('#l1'), SVG_NS);
+    assert.strictEqual(nsOf('#l2'), SVG_NS);
+  });
+
+  it('bw.syncChildren creates SVG children -- the case docs/svg.md recommends', function() {
+    bw.syncChildren(layer, [1, 2, 3], {
+      key: function(i) { return String(i); },
+      create: function(i) { return { t: 'rect', a: { id: 's' + i, width: '5', height: '5' } }; }
+    });
+    assert.strictEqual(nsOf('#s1'), SVG_NS);
+    assert.strictEqual(nsOf('#s3'), SVG_NS);
+  });
+
+  it('bw.replace keeps the namespace of the node it replaces', function() {
+    bw.append(layer, { t: 'line', a: { id: 'old' } });
+    bw.replace(bw.$('#old')[0], { t: 'ellipse', a: { id: 'e1' } });
+    assert.strictEqual(nsOf('#e1'), SVG_NS);
+  });
+
+  it('bw.mount into an existing <svg> stays in the SVG namespace', function() {
+    bw.mount(layer, { t: 'path', a: { id: 'p1', d: 'M0 0' } });
+    assert.strictEqual(nsOf('#p1'), SVG_NS);
+  });
+
+  it('bw.el/bw.$ apply with a TACO stays in the SVG namespace', function() {
+    bw.el(layer, { t: 'rect', a: { id: 'a1', width: '4', height: '4' } });
+    assert.strictEqual(nsOf('#a1'), SVG_NS);
+  });
+
+  it('foreignObject children revert to HTML, as SVG requires', function() {
+    bw.append(layer, {
+      t: 'foreignObject', a: { id: 'fo', width: '50', height: '50' },
+      c: { t: 'div', a: { id: 'inner' }, c: 'hi' }
+    });
+    assert.strictEqual(nsOf('#fo'), SVG_NS, 'foreignObject itself is SVG');
+    assert.notStrictEqual(nsOf('#inner'), SVG_NS,
+      'its children are HTML again -- that is the point of foreignObject');
+  });
+
+  it('an HTML parent is unaffected', function() {
+    var host = bw.$('#app')[0];
+    bw.append(host, { t: 'div', a: { id: 'plain' } });
+    assert.notStrictEqual(nsOf('#plain'), SVG_NS,
+      'the namespace must come from the parent, not be applied everywhere');
+  });
+});

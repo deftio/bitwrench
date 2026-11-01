@@ -33,7 +33,7 @@ you are doing it wrong. Read the patterns below.
 3. **Hydrate** -- handles attach to `el.bw`, slots wire getters/setters, UUID assigned, state initialized
 4. **Mount** -- `bw.mount` / `bw.DOM` / `bw.append` / `bw.replace` insert and run `mountTree`; `o.mounted(el)` fires. Never `parent.appendChild(bw.create(taco))` for lifecycle components.
 5. **Interact** -- external code calls `el.bw.method()` -- the component updates its own DOM
-6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)`, tears down subscriptions, removes element
+6. **Unmount** -- `bw.unmount(el)` fires `o.unmount(el)` and tears down subscriptions, leaving the node in place; `bw.remove(el)` does that **and** removes it
 
 ## Required reading
 
@@ -128,6 +128,7 @@ bitwrench ships 51 ready-made components (47 in the BCCL module, plus
 makeTable, makeTableFromArray, makeDataTable and makeBarChart in core).
 ALWAYS check the component library before building custom UI:
 
+<!-- doc-test: skip (WRONG/RIGHT contrast; the hand-built half is deliberately not a shape to copy) -->
 ```javascript
 // WRONG -- hand-building a table
 { t: 'table', c: [
@@ -320,6 +321,7 @@ src/bitwrench-code-edit.js    Code editor component
 src/bitwrench-router.js       Client-side routing
 src/bitwrench-file-ops.js     File I/O (browser + Node)
 src/bitwrench-debug.js        Debug utilities
+src/bitwrench-verify.js       TACO checker (opt-in; its own dist artifact, not in core)
 src/bwserve/                  Server-driven UI (SSE)
 src/cli/                      CLI tool (bwcli)
 dist/                         Built output (UMD, ESM, CJS, ES5). For a script tag:
@@ -335,7 +337,7 @@ docs/                         Documentation
 
 ```bash
 npm run build          # Rollup -> dist/ (UMD, ESM, CJS, ES5)
-npm run test           # Mocha + c8 coverage (80% min)
+npm run test           # Mocha + c8 (gates: 99% statements/lines, 96% branches, 95% functions)
 npm run lint           # ESLint on src/
 npm run lint:drift     # Doc/API consistency checker
 npm run test:e2e       # Browser tests (Playwright)
@@ -383,7 +385,8 @@ reason. `npm run ci:local` runs the whole CI job the same way before you push.
 |----------|-------------|
 | bw.refresh(el) | Re-invoke o.render |
 | bw.update(ref, data) | Dispatch to el.bw.update(data) |
-| bw.unmount(el) | Tear down lifecycle, remove element |
+| bw.unmount(el) | Tear down lifecycle; node stays in the DOM |
+| bw.remove(ref) | Tear down lifecycle **and** remove the node |
 | bw.patch(ref, content) | Update one element's content (text/TACO/array/raw); runs unmount on what it replaces |
 | bw.pub(topic, data) | Publish to all subscribers |
 | bw.sub(topic, fn, el?) | Subscribe (auto-cleans on unmount if el given) |
@@ -394,6 +397,40 @@ bw.DOM(), the same function) and keep the returned element: components with
 handles -- table (sort, setData, update, getData), modal, carousel, tabs,
 accordion, progress, chipInput -- expose them on el.bw. Update through the
 handle instead of re-mounting.
+
+### Checking TACO you generated (bitwrench-verify)
+
+If you are an agent emitting TACO, this is how you check your own output:
+`verify.assert(taco)` in a test. It throws on a malformed tree and names the
+key and the path, so a wrong `cc`/`tag`/`attrs` fails the test instead of
+rendering an empty div.
+
+<!-- doc-test: skip (shows the import/require form itself; verify is a separate module) -->
+```javascript
+const { verify } = require('bitwrench/verify');   // ESM: import verify from 'bitwrench/verify'
+
+verify({ t: 'h1', cc: 'hi' });
+// [ { severity: 'error', code: 'unknown-key', path: '', key: 'cc', hint: 'c' } ]
+
+verify.assert(taco);                       // true when clean, throws otherwise
+verify(frame, { mode: 'wire' });           // also rejects functions and string on* handlers
+```
+
+`verify(input, opts)` returns an array of findings (`[]` when clean), never
+throws and never mutates the input. It is NOT required: bitwrench renders
+without it and it never runs in production. Reach for it when TACOs are
+generated, numerous, or leaving your hands. Full guide: `docs/verify.md`.
+
+There are two doors to the same checker. A JavaScript caller imports the
+library; anything else pipes the CLI, which defaults to wire mode:
+
+```
+bwcli verify frame.json
+some-generator | bwcli verify
+```
+
+Exit codes: 0 nothing fatal, 1 an error (or a warning under `--strict`), 2
+unparseable input. Full guide: [docs/verify.md](docs/verify.md).
 
 ### Server and device-driven UI (bwserve)
 
@@ -455,4 +492,5 @@ Essential reading for code changes:
 - docs/core-api.md -- one-page core API card (also: what is in the lean build)
 - docs/svg.md -- SVG as TACO: charts, diagrams, interaction, in-place updates
 - docs/component-cheatsheet.md -- all 51 components, props, handles
+- docs/verify.md -- bitwrench-verify: checking generated TACO, findings, modes
 - docs/bitwrench-northstar-principles.md -- core design philosophy

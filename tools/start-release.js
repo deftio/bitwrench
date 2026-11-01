@@ -3,10 +3,14 @@
  * Start a new dev cycle: bump version, create feature branch, commit, push.
  *
  * Usage:
- *   npm run start-release -- "feature name"           # patch bump (default)
- *   npm run start-release -- patch "feature name"
- *   npm run start-release -- minor "new subsystem"
+ *   npm run start-release -- "feature name"           # patch bump (DEFAULT)
+ *   npm run start-release -- patch "bug fixes"        # same as above, explicit
+ *   npm run start-release -- minor "new subsystem"    # only for a 2.x.0 bump
  *   npm run start-release -- major "breaking change"
+ *
+ * The bump level is the FIRST argument when present. Passing a level you did
+ * not mean is silent -- `minor "verify tool"` took 2.1.11 to 2.2.0 when the
+ * cycle wanted 2.1.12. When in doubt omit it: patch is the default.
  *
  * Creates:  feature/feature-name  branch (LOCAL only)
  * Commits:  "start vX.Y.Z: feature name"
@@ -56,11 +60,13 @@ if (args.length === 0) {
 Usage: npm run start-release -- [patch|minor|major] "feature name"
 
 Examples:
-  npm run start-release -- "add dark mode"
-  npm run start-release -- minor "pub/sub system"
-  npm run start-release -- major "v3 rewrite"
+  npm run start-release -- "add dark mode"            patch (default)
+  npm run start-release -- patch "bug fixes"          patch, explicit
+  npm run start-release -- minor "pub/sub system"     x.Y.0
+  npm run start-release -- major "v3 rewrite"         X.0.0
 
-Bump level defaults to patch if omitted.
+Bump level defaults to patch if omitted. It is the FIRST argument when
+present, and passing one you did not mean is silent.
 `);
   process.exit(0);
 }

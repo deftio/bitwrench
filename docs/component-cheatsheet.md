@@ -90,6 +90,23 @@ that `href` is ignored and lists the accepted keys. If a prop seems to have no
 effect, check the console before checking the source. `bw.warnUnknownProps = false`
 silences it.
 
+When nobody is watching the console -- a test, a generated payload, a tree an
+LLM wrote -- the opt-in checker names the same class of mistake in the TACO
+itself:
+
+<!-- doc-test: skip (shows the import/require form itself; verify is a separate module) -->
+```javascript
+const { verify } = require('bitwrench/verify');  // ESM: import verify from 'bitwrench/verify'
+
+verify({ t: 'h1', a: { clas: 'x' } });
+// [ { severity: 'warn', code: 'attr-typo', path: 'a.clas', key: 'clas', hint: 'class' } ]
+
+verify.assert(taco);   // true when clean, throws otherwise -- use it in tests
+```
+
+It returns an array of findings (`[]` when clean), never throws and never
+mutates the input. See [verify.md](verify.md).
+
 ## How to Use Handles
 
 Components with handles expose imperative methods via `el.bw`. `bw.mount()` returns the mounted element (so does `bw.DOM()`, which is the same function) -- keep it:

@@ -3,6 +3,356 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.12 (2026-10-31)
+
+Verification tooling, and the type drift it found on day one.
+
+### Added
+
+- **`bwcli verify` -- the CLI door of the checker.** Verify was specified as one
+  checker with two doors (`dev/bw-verify-design.md` section 9): a JavaScript
+  sender imports the library, and anything else -- a C++ or Python generator, a
+  shell pipeline, a CI job -- pipes a payload at the CLI. Only the library door
+  existed. Now both do.
+
+  `bwcli verify <file>`, or stdin when no file is given. **Wire mode by
+  default**, because a file or a pipe is a payload that has already crossed
+  JSON, where the library defaults to authored because the caller is holding
+  JavaScript. Flags: `--authored`, `--strict`, `--ignore <codes>`, `--json`,
+  `-q`. It accepts one JSON document, newline-delimited frames (reported with
+  their index), or the `r`-prefixed relaxed form the embedded senders emit.
+
+  Exit codes, so CI can branch: **0** nothing fatal, **1** an error (or a
+  warning under `--strict`), **2** unreadable or unparseable input. This needed
+  a fix in `bin/bwcli.js`, which discarded `run()`'s return value -- every
+  subcommand exited 0 regardless, which would have made the checker useless in
+  a pipeline. It now propagates via `process.exitCode` rather than
+  `process.exit()`, so a finding cannot be truncated before it is flushed.
+
+  17 tests drive the real binary, including a parity test asserting the CLI and
+  the library report the same findings for the same payload -- the design's
+  central claim is that the CLI does not grow its own rules.
+
+  One thing the CLI surfaces that the library could not: `bw.parseJSONFlex`
+  relaxes quotes and trailing commas but **not keys**, so `r{'t':'p'}` parses
+  and `r{t:'p'}` does not. The bare JSON error did not explain that, so the CLI
+  does, and it also spots a relaxed payload that arrived without its `r`
+  prefix.
+
+- **`bitwrench-verify` ships as its own artifact.** Until now the checker
+  existed only as `src/bitwrench-verify.js` with no build target, so nothing
+  could load it. It is now built and exported as `bitwrench/verify`, with three
+  entry points: ESM (`import verify from 'bitwrench/verify'`), CJS
+  (`const { verify } = require('bitwrench/verify')` -- destructured, the CJS
+  output is `{ default, verify }` and is not itself callable), and a script tag
+  (`dist/bitwrench-verify.min.js`, loaded after bitwrench, global `bwv`). Also
+  on the CDN: `https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench-verify.min.js`.
+  Five bundles plus `bitwrench-verify.d.ts`; the minified UMD is under 7 KB raw and
+  under 3 KB gzipped. It is deliberately **not** bundled into core and sits outside
+  the 46 KB core budget -- a development-time tool that never runs in
+  production, and a bundle test asserts it never leaks into the core build.
+  `verify(input, opts)` returns an array of findings and never throws;
+  `verify.assert(input, opts)` throws, for tests. Guide: `docs/verify.md`.
+
+### Fixed
+
+- **Supplying both `o.render` and `o.mounted` silently rendered nothing.**
+  There is one `_bw_mounted_fn` slot, and `o.mounted` claimed it, so the
+  initial render never ran: the component mounted empty, with no warning and
+  no diagnostic. The quickstart's own flagship example was built this way, as
+  were five more in `docs/state-management.md` -- all of them documented as
+  "render() is called once at mount". When both are present the slot now runs
+  render first, then mounted, so the hook observes the DOM render produced
+  (`mounted` commonly measures or wires up that content). Nothing can have
+  depended on the old behaviour, because the old behaviour was a no-op.
+  Seven tests cover the pair, the two single-hook paths, argument identity,
+  the throwing case and once-per-identity; five of them fail if the fix is
+  reverted.
+- **Every MCP live render was dropped on the client.** `src/mcp/live.js`
+  broadcast the v2.0 wire shape -- `{type:'replace', target, node}`, and
+  `patch` with `content`/`attr` -- long after `bw.apply` moved to v:1, which
+  names those fields `ref`/`taco` and `text`/`attrs`. `bw.apply` rejects any
+  message carrying `target` or `node` outright: it publishes `wire_rejected`
+  and returns false. So `render_live`'s replace, append, patch and remove all
+  failed silently, and `docs/bitwrench-mcp.md` documented behaviour that could
+  not happen. The MCP suite had five test files and every one of them asserted
+  only that the handler had been called. Fixed, and
+  `test/bitwrench_test_mcp_wire.js` now asserts the boundary itself: each
+  frame the server can emit is fed through `bw.apply` and must both return
+  true and change the DOM, the same way the C/C++ suite feeds C output
+  through `bw.parseJSONFlex`.
+- **`bw.unmount()` was documented as removing the element.** It fires
+  `o.unmount` and tears down subscriptions but leaves the node in the DOM;
+  only `bw.remove()` removes it. Wrong in `agents.md` twice and `llms.txt`
+  once -- the three files agents read first -- so generated code leaked orphan
+  nodes. Corrected, and `bw.remove` added to the agents.md API table, where it
+  was missing entirely.
+
+- **`bw.router` rendered every view twice in hash mode (reported by jazzmac).**
+  `navigate()` set `location.hash` -- which queues a `hashchange` -- and then
+  re-read `location.hash` to decide whether to render by hand. The re-read
+  always matched the path just assigned, so each navigation rendered once
+  immediately and once when the queued event arrived. An app that builds state
+  in a route handler built it twice, the second time from different inputs.
+
+  The guard existed for the opposite case: navigating to the route you are
+  already on fires no `hashchange`, so without a manual call nothing renders.
+  Both cases now render exactly once, and `navigate()` stays **synchronous** --
+  the first attempt at this fix let the event do the rendering, which removed
+  the duplicate but broke twelve existing tests that read the DOM on the line
+  after `navigate()`. Instead the render happens immediately as before and the
+  `hashchange` it causes is recognised and skipped.
+- **`bw.mount` was the only target-taking verb that rejected a bare element id
+  (reported by jazzmac).** `bw.el`, `bw.patch`, `bw.toggleClass` and `bw.clear`
+  all accept `'status'`; `bw.mount('status')` warned "target not found" because
+  it resolved with a plain selector query. One rule for the caller now: any
+  form `bw.el` takes, `mount` (and `bw.DOM`) takes.
+
+  Resolution order is a live query first, `bw.el` second, deliberately: `bw.el`
+  consults a node cache that can return a **detached** element, and mounting
+  into a node the document cannot see renders content nobody can find. Putting
+  `bw.el` first broke a documented example in exactly that way, so selectors
+  behave as they always have and bare ids fall through.
+- **`TacoOptions` declared two options the renderer never read.**
+  `src/bitwrench.d.ts` listed `o.userTag` and `o.events` alongside the seven
+  keys that do work, so TypeScript certified both -- write
+  `o: { events: { save: fn } }` and you got no error, no warning and no
+  handler. `userTag` outlived ComponentHandle, removed in 2.0.19 (`bw.message()`
+  addresses elements through `bw.el()` and a class-token fallback, never a
+  tag); `events` was a declarative-handler idea that was never wired. Both
+  removed. The keys the renderer actually consults are `state`, `mounted`,
+  `unmount`, `render`, `handle`, `slots` and `type` -- seven, from `hasOpts`
+  and `hasLifecycle`.
+
+  Nothing can break: no working code could have depended on an option that did
+  nothing. Use `a: { onclick: fn }` or a `bw_act_*` class with `bw.actions`
+  instead of `o.events`.
+- Two stale JSDoc references in `src/bwserve/client.js` pointed at the same
+  removed concepts ("Component userTag or UUID", "from o.events declarative
+  handler").
+
+- **`src/bitwrench-utils.js` carried a third, unreachable copy of
+  `colorInterp`.** `bitwrench.js` imports `colorInterp` from
+  `bitwrench-color-utils.js` and deliberately omits it from its
+  `bitwrench-utils.js` import list, so that copy was in no bundle and no test
+  -- thirty lines of colour maths that could drift from the live one without
+  anything noticing. It was an older variant that took `colorParse` as a sixth
+  argument to dodge a circular import; the logic is otherwise identical.
+  Removed, along with a superfluous `export` on `SPACING_SCALE`, which is an
+  internal constant feeding `bw.SPACING_PRESETS` and was never imported
+  anywhere. Found by chasing a coverage hole, so there is now a check for it
+  (below).
+- **`docs/bitwrench_api.md` documented a `bw.colorInterp` that does not
+  exist.** The dead copy above was the *documented* one, so the generator read
+  its JSDoc and published the signature
+  `bw.colorInterp(x, in0, in1, colors, stretch, colorParseFn)` -- a sixth
+  argument the real function has never accepted. Anyone following the reference
+  passed a parse function that was silently ignored. The live implementation in
+  `bitwrench-color-utils.js` had no JSDoc at all; it now does, and the
+  reference shows the real five-parameter signature. `drift-lint` reported this
+  the moment the dead copy was deleted, which is the rule working as intended.
+- **`import { makeCard } from 'bitwrench/bccl'` was `undefined` for every
+  factory.** `src/bitwrench-bccl-entry.js` said "re-export all components"
+  above a line that re-exported three names (`BCCL`, `make`, `variantClass`),
+  so the named form -- the one `docs/llm-bitwrench-guide.md` teaches -- gave
+  `undefined` for all 48 `make*` functions on the ESM and CJS paths. The UMD
+  path never noticed, because `registerBCCL()` copies them onto the global
+  `bw`. Now `export *`. This is a nicer spelling, not a smaller build: the
+  artifact is one pre-bundled scope, so importing one factory costs what
+  importing all of them costs (see Bundle size, below).
+- **A throw from `o.render` on first mount was reported as an `o.mounted`
+  error.** Since render and mounted share the mount slot (above), both
+  arrived at the same catch, which named the wrong hook and published
+  `mounted_hook_error` for a render failure -- while `bw.refresh()` let the
+  same render throw under its own name, so one function failed two different
+  ways depending on whether it was the first mount or a later refresh. The
+  console line now says `o.render error`, and `bw:diag` carries
+  `code: 'render_hook_error'` plus a `hook` field (`'render'` or `'mounted'`)
+  on both codes, so a subscriber can branch without parsing the message.
+
+### Tests
+
+Overall coverage 97.97% -> 99.46% of statements and lines, 98.38% of branches,
+with 4050 tests passing. The gaps were missing cases, not missing padding:
+
+- **`bitwrench-debug.js` 0% -> 100%** of statements, lines and functions (41
+  tests, up from 19). Credit for the existing tests came back with the
+  `sourceURL` fix below; the new ones cover what was genuinely untested -- the
+  delegated handler `bwd.listen()` installs (its whole point, and it had never
+  been fired), the full `bwd.screenshot()` pipeline against a stubbed
+  html2canvas including the download-link fallback and the failure path, both
+  CDN loads settled by hand, and the `console.table` fallback.
+- **`bitwrench-util-color.js` branches 81% -> 97.5%.** This is a published
+  entry point (`bitwrench/util-color`) and its edge cases were untested: the
+  array forms of both converters and their alpha defaults, the hue wheel at
+  every 30 degrees (which is what exercises all four `hue2rgb` segments and
+  both sides of the lightness split), zero channels in `rgb()`/`hsl()` where
+  `|| 0` could swallow a real 0, and auto-install onto an existing `window.bw`.
+- **`bitwrench-verify.js` branches 93.5% -> 98.3%.** Two of the four
+  raw-content safety patterns had no fixture at all -- `srcdoc=` and
+  `<script>` were never matched, so either regex could have been wrong
+  silently. Also added: the exotic primitives the renderer stringifies
+  (boolean, number, bigint, symbol -- all measured against `bw.html` first),
+  `o: null` and `o: undefined`, an empty object, a key too far from any TACO
+  key to suggest a fix, and all three `verify.assert` message shapes.
+- **`bitwrench-utils.js` 96.1% -> 100%**, by deleting the unreachable
+  `colorInterp` and widening a `c8 ignore next` that covered only the first
+  line of a four-line guard.
+
+- **Every page and example app now loads in a real browser in CI**
+  (`tests/pages-smoke.spec.js`, Playwright). It auto-discovers `pages/*.html`
+  and every `examples/*/index.html` that loads bitwrench from `dist/`, fails on
+  any console error or page error, checks that every relative link between
+  pages resolves, and exercises the API reference search. It also dogfoods
+  verify: `bw.create` is wrapped so every TACO a page or example actually
+  renders is run through the checker, and an `error` finding fails the test
+  (plan item B11 -- if it finds nothing, the checks are too weak). Its first
+  run caught eight calls on `pages/20-embedded.html` that passed an object to
+  a helper taking four positional arguments; none of the four doc audits had
+  seen them, because nothing had ever loaded the pages.
+
+What remains uncovered in these files is unreachable: `typeof window` and
+`!el` guards, and private defaults no caller can omit.
+
+### Docs
+
+- **`docs/routing.md` now shows the shape most views end up with** (reported by
+  jazzmac): subscribe inside `o.mounted`, passing the element as `bw.sub`'s
+  third argument so the subscription is torn down when the route changes. The
+  doc previously showed only global `bw.sub('bw:route', ...)` handlers. The
+  example runs in CI, and the note names the common mistake -- omitting that
+  third argument leaves stale subscribers writing to elements that are gone.
+
+### Bundle size
+
+- **Test-only helpers no longer ship.** `bw._resetForTest` (~0.7KB minified)
+  and `bw._propWarnReset` were in every bundle; the suite imports from `src/`,
+  so nothing at runtime needed either. `rollup.config.js` gained a
+  `stripTestOnly()` transform that blanks `/* @bw-test-only start|end */`
+  regions -- blanks rather than deletes, newlines included, so following lines
+  keep their position and the sourcemaps stay correct. **-174 bytes gzipped on
+  UMD, -206 on ESM.** Three helpers that look test-only are read by production
+  code and stay: `__monkey_patch_is_nodejs__` (`_isBrowser`),
+  `_FUNC_REGISTRY_SHIM` (`htmlPage`) and `_compiledExprs` (the binding
+  compiler's cache).
+- **Four stale `export function` declarations removed from
+  `src/bitwrench.d.ts`.** `makeTable`, `makeTableFromArray`, `makeDataTable`
+  and `makeBarChart` live on `bw` rather than in `bitwrench-bccl.js`, so
+  `export *` never picked them up and `import { makeTable } from 'bitwrench'`
+  type-checked and returned `undefined`. They were briefly added as real named
+  exports; measurement said otherwise, so the declarations came out instead.
+  They remain on the `Bitwrench` interface, so `bw.makeTable(...)` is typed as
+  before. Nothing that worked stops working.
+
+  Why not export them: re-measured with rollup, `import { makeButton }` from
+  `dist/bitwrench.esm.js` produces **479,861 bytes** against **479,853** for
+  `import bw` -- one component costs 8 bytes *more* than the whole library. The
+  ESM artifact is a single pre-bundled file with no `output.preserveModules`,
+  so a bundler cannot drop modules sharing one scope. The named-export list
+  costs ~346 gzipped bytes for a feature that does not function. Removing the
+  other 49 is a breaking change to `import { makeCard }` and belongs in a
+  major. Recorded in `dev/bitwrench-2.1.6-size-opt-findings.md` section 7.
+- Both gated bundles stay under the 46KB ceiling, measured the way the gate
+  measures: the shipped level-9 `.gz`, not a level-6 re-compression. Exact byte
+  counts are deliberately not quoted here -- `src/version.js` embeds a build
+  date, so every rebuild moves them and a number in prose is stale within the
+  hour. `dist/builds.json` now reports the same figure the gate reads, so there
+  is one source for it instead of three.
+- **ESM headroom is thin: around 100 bytes.** That is fine for a release that
+  kept verify out of core, and it is not fine to forget before 2.1.13 adds
+  anything to `src/bitwrench.js`.
+
+### Tooling: catch it next time
+
+Found by review, not by any check -- so the check now exists.
+
+- **drift-lint rule `taco-options-drift`** compares the `TacoOptions` keys in
+  `src/bitwrench.d.ts` against the keys the renderer reads (`opts.x` / `o.x` in
+  `src/bitwrench.js`) and fails the build on a disagreement, naming the line.
+  The renderer is the source of truth; the types are checked against it, never
+  the reverse. Verified by re-introducing both keys and confirming the rule
+  reports them.
+- **`npm run ci:local`** runs GitHub's CI job locally -- `npm ci
+  --ignore-scripts`, lint, build, test -- on Linux with gcc across the Node 22
+  and 24 matrix, with the repo mounted read-only so a container-side build
+  cannot touch your tree. **`npm run test:gcc`** is the fast subset for the
+  C/C++ suite and is now a gate inside `tools/release.js`.
+
+  v2.1.11 was merged to main on a green local run and failed GitHub CI three
+  times over, because macOS ships clang and CI runs gcc: clang does not
+  implement `-Wformat-truncation`, so nesting a same-sized buffer passed
+  locally and was correctly rejected in CI. A local run that does not use the
+  CI toolchain is a guess, not a check.
+- **Four strictness tests** (`test/bitwrench_test_embedded_c.js`) encode what
+  only a strict Linux toolchain enforces: headers compile standalone with no
+  nested comments, a nesting destination must be larger than its source, every
+  documented buffer example builds under `-Wall -Wextra -Werror`, and no
+  side-effecting call sits in a `printf()` argument list (evaluation order is
+  unspecified in C). Under gcc all four run; on clang the truncation one skips,
+  so the asymmetry is visible rather than invisible.
+- **`stale-cdn-pin` no longer blocks a fresh branch.** It compared doc pins
+  against `package.json`, but `start-release` bumps that before anything is
+  published -- so it demanded a pin to a bundle that does not exist on the CDN
+  and failed `npm run build` at the start of every cycle. It now accepts the
+  current version or the newest released one, read from the newest dated
+  CHANGELOG heading.
+- `tools/release.js`: the final confirmation passed its prompt through the
+  shell, so an apostrophe in the question aborted the release after every gate
+  had passed. Prompts now travel by environment variable. It also detects a
+  branch that was already squash-merged (where the merge base falls back to the
+  previous release and every shared file conflicts), takes the branch tree with
+  `git read-tree` instead, and restores main on failure rather than leaving a
+  half-merge that `git merge --abort` cannot undo.
+- `tools/start-release.js`: `patch` is now shown as an explicit example in both
+  the docstring and the runtime help, with a note that the bump level is the
+  first argument and passing the wrong one is silent.
+- **`RELEASE-PROCEDURE.md` documented a process this repo does not use** and
+  has now been rewritten against `tools/release.js`. It told maintainers to
+  push the feature branch, hand-edit the version, commit the bump straight to
+  `main`, and expect a tag job in `ci.yml` -- which has none -- on a Node
+  20/22/24 matrix that is actually 22/24. It never named `start-release` or
+  `release`, so following it bypassed all ten release gates. The rewrite lists
+  the real ten steps, `--dry-run`, the squash requirement and the `pre-push`
+  guard; `CONTRIBUTING.md` now points at it instead of describing a second,
+  also-drifting copy. Two dead commands are gone from `CONTRIBUTING.md` as
+  well (`npm run test:all`, `npm run build:index` -- neither script exists).
+  Deliberately **not** added: an `engines` field. The Node 22.12 floor is a
+  development requirement, and `engines` would warn browser consumers who
+  never run the toolchain.
+- **Meta test `no dead exports in src/`** resolves every `import`/`export ... from`
+  in `src/`, `test/`, `tools/` and `bin/` to the module it points at, then
+  reports any non-entry export that nothing pulls in. It credits a name only to
+  the module it was imported **from**: the first version matched on the bare
+  name and missed the very defect that prompted it, because two other modules
+  also export a `colorInterp`. Entry points (rollup inputs, aliased modules,
+  `package.json` `exports`/`bin`, and anything re-exported with `export *`) are
+  exempt, so the rule needs no allowlist. Verified by re-introducing both dead
+  exports and confirming each is named.
+- **Coverage thresholds raised from 80% to a ratchet just under the current
+  numbers** (`package.json`, `c8` block: statements and lines 99, branches 96,
+  functions 95). They had sat at 80 while the suite ran at 99, so nineteen
+  points of regression would have passed silently.
+- **`bitwrench-debug.js` reported 0% coverage while being fully tested.** Its
+  suite reads the source and runs it through `dom.window.eval`, which V8 cannot
+  trace back to a file, so nineteen passing tests counted for nothing and the
+  file looked like dead weight in every report. Appending a `//# sourceURL=`
+  annotation to the eval'd text restores the attribution -- the same trick
+  works for any source a test evals rather than imports.
+- **`npm run review:northstar` (the audit-only LLM reviewer under
+  `tools/northstar-llm/`) can now survive an overnight run.** It is a
+  maintainer tool, never in CI or release, but a full pass is 89 files over a
+  couple of hours against a local model, and a silent failure cost the whole
+  night. It gained a failure ladder (transport errors, 429 and 5xx retry with
+  2s/8s/30s backoff; other 4xx do not), exactly one corrective re-ask when a
+  reply will not parse, a `rejects/` directory for replies that still will
+  not, partial-file results kept instead of discarded, `--resume` that redoes
+  only incomplete files, `--budget 6h` that finishes the file in flight and
+  writes the report, and report de-duplication on file + line + check. Every
+  user message now opens with a context block (job, file N/total, chunk i/n)
+  that deliberately carries no clock, so the same file yields the same prompt
+  and the cache stays warm. 42 tests in `test/bitwrench_test_northstar_llm.js`
+  cover the pure functions with an injected provider; none touch the network.
+
 ## v2.1.11 (2026-10-04)
 
 Option warnings, class verbs, an SVG guide and a C++ embedded app.

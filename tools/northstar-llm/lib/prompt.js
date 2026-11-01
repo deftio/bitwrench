@@ -41,18 +41,40 @@ export function buildSystemPrompt(checks, rubricExcerpts, maxFindings) {
   ].join('\n');
 }
 
+/**
+ * A few lines of orientation at the very top of every call: which job this is,
+ * which file of how many, which chunk.
+ *
+ * Deliberately no wall-clock, elapsed or remaining time. Two reasons. The
+ * model's verdict on a file must not depend on what time it is -- a finding
+ * that appears only at 3am is a bug, not a feature. And the system prompt is
+ * byte-identical across every call in a run, which is the only thing a
+ * provider can prompt-cache; a changing clock anywhere in the request defeats
+ * that. Timing lives in meta.json and the console, where it is actually read.
+ */
+export function buildContextBlock(opts) {
+  var lines = ['job: northstar-llm audit (audit only -- findings, never patches)'];
+  if (opts.fileIndex != null && opts.fileCount != null) {
+    lines.push('file: ' + (opts.fileIndex + 1) + '/' + opts.fileCount + '  ' + opts.relPath);
+  } else {
+    lines.push('file: ' + opts.relPath);
+  }
+  lines.push('role: ' + opts.role);
+  lines.push('chunk: ' + (opts.chunkIndex + 1) + '/' + opts.chunkCount + '  lineOffset ' + opts.lineOffset);
+  return lines.join('\n');
+}
+
 export function buildUserPrompt(opts) {
   var ignoreNote = opts.ignoredLineCount
     ? ('Ignore pragmas cover ' + opts.ignoredLineCount + ' line(s); do not flag those lines.')
     : 'No ignore pragmas detected.';
 
   return [
+    buildContextBlock(opts),
+    '',
     'Audit this single file against the rubric.',
     '',
-    'path: ' + opts.relPath,
-    'role: ' + opts.role,
-    'chunk: ' + (opts.chunkIndex + 1) + ' / ' + opts.chunkCount,
-    'lineOffset: ' + opts.lineOffset + ' (add this to any line numbers you report that are relative to the chunk; prefer absolute file line numbers)',
+    'lineOffset ' + opts.lineOffset + ': add it to any line number you report that is relative to the chunk; prefer absolute file line numbers.',
     ignoreNote,
     '',
     '----- BEGIN FILE -----',

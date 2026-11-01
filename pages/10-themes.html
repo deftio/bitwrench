@@ -451,9 +451,11 @@
               t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
                 {
                   t: 'p', a: { style: descStyle }, c: bw.raw(
-                    'Themes in bitwrench are <strong>CSS-scoped</strong>. Every call to <code>bw.makeStyles(config)</code> ' +
-                    'produces CSS rules scoped under a global class. Call <code>bw.applyStyles(result)</code> to inject them. ' +
-                    'Every <code>bw-*</code> component inside the scoped container automatically inherits the theme.'
+                    '<code>bw.makeStyles(config)</code> returns <strong>unscoped</strong> rules. ' +
+                    'Scoping happens on injection: <code>bw.applyStyles(result)</code> is global, and ' +
+                    '<code>bw.applyStyles(result, \'#panel\')</code> wraps every rule under that selector ' +
+                    '(and the alternate palette under <code>#panel.bw_theme_alt</code>). ' +
+                    'Every <code>bw-*</code> component inside the scoped container then inherits the theme.'
                   )
                 },
                 // Whole-page application
@@ -980,22 +982,30 @@
       }
 
       var previewStyle = 'background-color: ' + bgColor + '; color: ' + textColor + ';';
-      var altClass = state.isAlternate ? ' bw_theme_alt' : '';
       var modeLabel = state.isAlternate ? ' (Alternate)' : '';
 
       // Use bw.$ for fresh DOM lookup — bw.el cache can go stale
       // when #theme-preview is re-created by renderGenerator()
       var tpEls = bw.$('#theme-preview');
       if (tpEls.length) {
-        // Include scoped theme CSS inside the preview container
-        var scopedCSS = result ? result.css + (result.alternateCss || '') : '';
+        // bw.applyStyles(styles, scope) is what scopes a theme. This used to
+        // inject `result.css + result.alternateCss` raw into a <style> child:
+        // makeStyles() returns UNSCOPED rules and alternateCss is unprefixed
+        // and carries a global `body` rule, so the preview always showed the
+        // alternate palette and leaked a body rule to the whole document.
+        // Scoped, applyStyles wraps alternates under '#theme-preview.bw_theme_alt',
+        // drops the dead body rule, and writes to its own <style> id
+        // (bw_style_id_theme_preview) rather than clobbering bw_style_global.
+        if (result) bw.applyStyles(result, '#theme-preview');
         bw.DOM(tpEls[0], {
-          t: 'div', a: { class: 'preview-area ' + scope + altClass, style: previewStyle }, c: [
-            { t: 'style', c: bw.raw(scopedCSS) },
+          t: 'div', a: { class: 'preview-area ' + scope, style: previewStyle }, c: [
             { t: 'h3', a: { style: 'margin: 0 0 1rem 0;' }, c: 'Live Preview' + modeLabel },
             buildPreviewTaco()
           ]
         });
+        // Mode is a class on the scope root, which is what the scoped
+        // alternate selector above targets.
+        bw.setThemeMode(state.isAlternate ? 'alternate' : 'primary', '#theme-preview');
       }
     }
 
@@ -1395,9 +1405,16 @@
         };
       }
 
+      // Two themes on one page is exactly what applyStyles' scope argument is
+      // for. Injecting `themeA.css + themeB.css` into a <style> put two sets of
+      // UNSCOPED rules in source order, so themeB won globally and both panels
+      // rendered identical sunset components -- while the section's own copy
+      // claimed each was scoped by its container class.
+      bw.applyStyles(themeA, '.demo-ocean');
+      bw.applyStyles(themeB, '.demo-sunset');
+
       bw.DOM('#multi-theme-demo', {
         t: 'div', c: [
-          { t: 'style', c: bw.raw(themeA.css + themeB.css) },
           {
             t: 'div', a: { class: 'multi-theme-row' }, c: [
               {

@@ -41,7 +41,9 @@ no string interpolation (template literals), no domain-specific language
 **Why this matters:** JS objects are built into the language. Every JS
 runtime, every browser, every server, every LLM can produce them without
 any tooling. TypeScript can type-check them (bitwrench ships .d.ts).
-JSON Schema can validate them structurally. They serialize to JSON
+`verify()` validates them structurally (see [verify.md](verify.md)); because
+a TACO is plain data a JSON Schema could do the same, but bitwrench does not
+publish one -- `verify()` is the checker that ships. They serialize to JSON
 (minus functions in `o`). They can be generated, inspected, validated,
 and transmitted by any tool that understands JavaScript or JSON.
 
@@ -83,6 +85,27 @@ is just another output of JS functions. This means:
 - Dark mode is palette inversion, not a parallel set of CSS overrides
 - Theme switching = swap the palette object, regenerate. One function call.
 
+**Decided: bitwrench does not style bare HTML elements.** `h1`, `p`, `button`,
+`input`, `select` and `table` get no rules of their own; only `body` is touched.
+Styling comes from classes (`bw_bccl_card`, `bw_row`, `bw_col_md_4`) that you
+opt into.
+
+This is deliberate, not an omission. Element selectors are global and
+unscoped, so styling `button` would collide with any third-party library,
+widget or host page the author also loads -- and the author would have no way
+to opt out short of fighting specificity. A library that generates CSS at
+runtime and injects it into a page it does not own must not claim the bare
+element namespace.
+
+The cost is real and accepted: any non-JS host composing TACO (a C++ device, a
+Python script, a model) has to emit `bw_bccl_*` class names to get a styled
+result, and a hand-written `{ t: 'h1' }` renders unstyled. That tradeoff has
+come up repeatedly -- in `dev/embedded-tutorial-2.1.x.md`, in design review,
+and in the embedded inconsistency register -- so it is written here to stop it
+being relitigated. **If the ergonomics need improving, the answer is better
+class discoverability (`bw.catalog()` and the component cheatsheet; a verify
+class check is a candidate, not yet shipped), not element selectors.**
+
 ### 4. TACO definitions carry everything a component needs
 
 A TACO is not just layout. It includes:
@@ -103,6 +126,15 @@ own display.
 WRONG:  el.querySelector('.title').textContent = 'New';  // reach into the DOM
 RIGHT:  el.bw.setTitle('New');                            // call the component
 ```
+
+This rule binds *callers* -- code outside the component. Outside code goes
+through the component's API and never hunts around in its subtree. Inside the
+component, in its own `o.handle` methods and lifecycle hooks, touching its own
+DOM is the implementation: that is what "components own their rendering" means.
+BCCL does exactly this (`setValue` on a progress bar resolves
+`.bw_bccl_progress_bar` within its own element and writes to it), and the drift
+table at the end of this document says the same -- factories return data, DOM
+work belongs in hooks and handles.
 
 ### 5. TACO is consumed, not retained
 
@@ -193,9 +225,10 @@ This enables streamlit-style use cases (server-generated data
 visualization), LLM-driven UI (an agent inspects, mutates, screenshots,
 iterates), and remote debugging of production pages.
 
-For client-only apps, bitwrench-router (a separate module) provides
-hash/history routing, parameterized routes, guards, and programmatic
-navigation -- all returning TACOs, not managing DOM directly.
+For client-only apps, `bw.router()` provides hash/history routing,
+parameterized routes, guards, and programmatic navigation -- all returning
+TACOs, not managing DOM directly. It ships inside bitwrench core and in the
+lean build; there is no separate router file to load.
 
 ### 9. Tooling follows from the architecture
 
@@ -211,16 +244,17 @@ What bitwrench DOES have that other frameworks cannot easily replicate:
   extension, no local development environment
 - **Remote screenshot**: capture what the page looks like from server
   code, CI, or an LLM -- verify UI state without eyes
-- **LLM-native composition**: an LLM generates JSON, validates against
-  a schema, sends it via bwserve, the client renders it. No compiler
+- **LLM-native composition**: an LLM generates JSON, runs it through
+  `verify()`, sends it via bwserve, the client renders it. No compiler
   in the loop. No framework-specific AST to generate.
-- **Schema validation across boundaries**: CI validates TACOs without
-  running the app. A server validates its output. An LLM validates its
-  generation. Teams publish schemas alongside their bwserve endpoints.
+- **Structural validation across boundaries**: CI validates TACOs without
+  running the app (`verify()` as a library, or `bwcli verify` over a pipe).
+  A server validates its output. An LLM validates its generation. The
+  checker that ships is `verify()`; bitwrench publishes no schema file.
 
 Standard browser DevTools already cover most inspection and profiling
 ground because the DOM IS the component tree. The machine-driven
-capabilities above (remote inspect, LLM composition, schema validation)
+capabilities above (remote inspect, LLM composition, structural validation)
 are structurally trivial here and structurally hard to retrofit onto
 virtual-DOM architectures, where real component state lives in a
 framework-internal shadow tree.
@@ -300,8 +334,9 @@ thin adapter. It would be a framework.
 
 ### BCCL: reference component library, not destination
 
-bitwrench ships 30+ reference components (BCCL): cards, tables, tabs,
-modals, etc. These provide a batteries-included prototyping experience.
+bitwrench ships 51 reference components (BCCL -- `bw.catalog()` is the
+authority): cards, tables, tabs, modals, etc. These provide a
+batteries-included prototyping experience.
 
 BCCL is a reference implementation, not a destination. Large teams build
 their own component libraries on top of bitwrench core (TACO, lifecycle,
@@ -319,11 +354,21 @@ system.
 
 No ad-hoc values. Every component draws from the shared token scales:
 
-- **Spacing**: 4, 8, 12, 16, 24, 32, 48 (derived from base unit)
-- **Type ramp**: 12, 14, 16, 18, 20, 24, 30
-- **Color roles**: primary, secondary, surface, muted, error, warning, success, info
+- **Spacing**: named component pairs, not a numeric ramp. `SPACING_PRESETS`
+  (`compact`, `normal`, `spacious`) each key `btn`, `card`, `alert`, `cell`,
+  `input` to a rem pair -- `normal.btn` is `0.5rem 1rem`.
+- **Type ramp**: `xs` 11, `sm` 13, `base` 16, `lg` 19, `xl` 23, `2xl` 28,
+  `3xl` 33, `4xl` 40 (px), generated from `base` by a ratio
+  (`TYPE_RATIO_PRESETS`: tight 1.125, normal 1.2, relaxed 1.25, dramatic 1.333)
+- **Color roles**: primary, secondary, tertiary, success, danger, warning,
+  info, light, dark -- each a shade object (`base`, `hover`, `active`, `light`,
+  `darkText`, `border`, `focus`, `textOn`) -- plus background, surface and
+  surfaceAlt, which are plain color strings. The error role is named `danger`;
+  there is no `muted`.
 - **Elevation**: sm, md, lg, xl
-- **Motion**: 150ms ease-out (hover), 250ms ease (expand)
+- **Motion**: `fast`, `normal`, `slow` and one `easing` per preset.
+  `standard` is 100ms / 200ms / 300ms `ease-out`; `expressive` is
+  150 / 300 / 500 on a spring curve; `reduced` is 0ms `linear`.
 - **Radius**: none, sm, md, lg, pill
 
 ### Avoid direct DOM manipulation
@@ -366,7 +411,7 @@ answered.
 | "Explicit updates are more code than reactive bindings for complex forms" | Yes. Handle methods colocate the logic (easier to debug). For truly complex cases, build a form component that handles wiring internally. More code, less magic. |
 | "No ecosystem -- where are the 10,000 components?" | Wrap any existing library in a TACO factory. Self-contained JS objects make wrapping trivial. But wrapping still requires effort. |
 | "TACO syntax is ugly compared to JSX" | TACO optimizes for a different developer profile: backend devs, embedded devs, LLM-native devs who think in data structures. JSX optimizes for designers who think in markup. Different tools, different audiences. |
-| "No time-travel debugging, no profiler, no HMR" | Tooling maturity is a function of time, not architecture. Nothing in bitwrench prevents these tools -- the DOM IS the component tree. Meanwhile, machine-driven tooling (remote inspect, LLM composition, schema validation) is structurally trivial here and structurally hard to retrofit onto virtual-DOM frameworks. |
+| "No time-travel debugging, no profiler, no HMR" | Tooling maturity is a function of time, not architecture. Nothing in bitwrench prevents these tools -- the DOM IS the component tree. Meanwhile, machine-driven tooling (remote inspect, LLM composition, structural validation) is structurally trivial here and structurally hard to retrofit onto virtual-DOM frameworks. |
 | "How does this scale to 500+ components on a page?" | Handle methods and slot setters are O(1). Pub/sub dispatch is O(subscribers). Need a benchmark page to verify. Expect it's fine -- the bottleneck is browser layout/paint, not JS dispatch. |
 
 ### Questions with established answers

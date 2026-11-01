@@ -347,6 +347,7 @@ When multiple browsers connect, the most recently connected client becomes the a
 
 ## Related
 
+- [Verify](verify.md) -- an opt-in checker for TACO, for the run with no terminal attached (a test, a generated payload, CI). Two doors: `bitwrench/verify` as a library, or `bwcli verify <file>` / a pipe at stdin
 - [bwserve Documentation](bwserve.md) — Full bwserve protocol reference
 - [CLI Documentation](cli.md) — File conversion and `bwcli serve`
 - [Protocol Reference Page](../pages/12-bwserve-protocol.html) — Interactive protocol reference

@@ -20,7 +20,9 @@
     var p = styles.palette;
 
     var loadTimeMs = (window.__bw_load_end - window.__bw_load_start).toFixed(2);
-    var GZIP_WARN_KB = 40;
+    // The release gate in tools/release.js is 46KB gzipped; this page used 40,
+    // which it silently reported as passing while the bundle was already 45.8KB.
+    var GZIP_WARN_KB = 46;
 
     function fmtSize(bytes) {
       if (bytes < 1024) return bytes + ' B';
@@ -31,20 +33,20 @@
       var files = buildsData ? buildsData.files : [];
 
       // Separate into groups
-      var coreFiles = files.filter(function(f) { return f.name.indexOf('lean') === -1 && f.name.indexOf('code-edit') === -1 && !f.name.endsWith('.css'); });
-      var leanFiles = files.filter(function(f) { return f.name.indexOf('lean') !== -1; });
-      var addonFiles = files.filter(function(f) { return f.name.indexOf('code-edit') !== -1; });
-      var cssFiles = files.filter(function(f) { return f.name.endsWith('.css'); });
+      var coreFiles = files.filter(function(f) { return f.file.indexOf('lean') === -1 && f.file.indexOf('code-edit') === -1 && !f.file.endsWith('.css'); });
+      var leanFiles = files.filter(function(f) { return f.file.indexOf('lean') !== -1; });
+      var addonFiles = files.filter(function(f) { return f.file.indexOf('code-edit') !== -1; });
+      var cssFiles = files.filter(function(f) { return f.file.endsWith('.css'); });
 
       // Find the main UMD min gzip size for the warning
-      var umdMin = files.find(function(f) { return f.name === 'bitwrench.umd.min.js'; });
+      var umdMin = files.find(function(f) { return f.file === 'bitwrench.umd.min.js'; });
       var umdGzKB = umdMin ? (umdMin.gzipped / 1024).toFixed(1) : '?';
       var gzipOver = umdMin && (umdMin.gzipped / 1024) > GZIP_WARN_KB;
 
       function makeSizeRow(f) {
         return {
           t: 'tr', c: [
-            { t: 'td', c: { t: 'code', a: { style: 'font-size: 0.8125rem' }, c: f.name } },
+            { t: 'td', c: { t: 'code', a: { style: 'font-size: 0.8125rem' }, c: f.file } },
             { t: 'td', a: { style: 'text-align:right' }, c: fmtSize(f.raw) },
             { t: 'td', a: { style: 'text-align:right' }, c: f.gzipped ? fmtSize(f.gzipped) : '\u2014' }
           ]
@@ -79,7 +81,8 @@
         { file: 'src/bitwrench.js', desc: 'Core library' },
         { file: 'src/bitwrench-styles.js', desc: 'Default styles' },
         { file: 'src/bitwrench-color-utils.js', desc: 'Color utilities' },
-        { file: 'src/bitwrench-bccl.js', desc: 'BCCL components' }
+        { file: 'src/bitwrench-bccl.js', desc: 'BCCL components' },
+        { file: 'src/bitwrench-utils.js', desc: 'Shared utilities' }
       ];
 
       var page = {

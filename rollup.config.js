@@ -19,6 +19,24 @@ const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 
 // single default pass misses. passes: 3 measured identical to 2.
 const minify = () => terser({ format: { comments: /^!/ }, compress: { passes: 2 } });
 
+// Test-only helpers are useful to the suite and dead weight to everyone else.
+// `bw._resetForTest` alone is ~0.7KB minified in every shipped bundle, and the
+// tests import from src/ rather than dist/, so nothing needs it at runtime.
+//
+// The region is blanked rather than deleted, newlines included, so every line
+// and column that follows keeps its position and the sourcemaps stay honest.
+const stripTestOnly = () => ({
+  name: 'bw-strip-test-only',
+  transform(code) {
+    if (code.indexOf('@bw-test-only') === -1) return null;
+    const out = code.replace(
+      /\/\* @bw-test-only start \*\/[\s\S]*?\/\* @bw-test-only end \*\//g,
+      (m) => m.replace(/[^\n]/g, ' ')
+    );
+    return { code: out, map: null };
+  }
+});
+
 const banner = `/*! bitwrench v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const leanBanner = `/*! bitwrench-lean v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const bwserveBanner = `/*! bwserve v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
@@ -26,6 +44,7 @@ const bcclBanner = `/*! bitwrench-bccl v${pkg.version} | ${pkg.license} | ${pkg.
 const utilCssBanner = `/*! bitwrench-util-css v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const utilColorBanner = `/*! bitwrench-util-color v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 const debugBanner = `/*! bitwrench-debug v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
+const verifyBanner = `/*! bitwrench-verify v${pkg.version} | ${pkg.license} | ${pkg.homepage} */`;
 
 // Inline plugin: redirect component imports to empty stub (for lean build)
 function stubComponents() {
@@ -100,6 +119,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -129,6 +149,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -155,6 +176,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
         babel(babelConfig),
@@ -212,6 +234,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -240,6 +263,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
         babel(babelConfig),
@@ -296,6 +320,7 @@ const babelConfig = {
       ],
       plugins: [
         stubComponents(),
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -323,6 +348,7 @@ const babelConfig = {
       ],
       plugins: [
         stubComponents(),
+        stripTestOnly(),
         resolve(),
         commonjs(),
         babel(babelConfig),
@@ -381,6 +407,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -437,6 +464,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -465,6 +493,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
         babel(babelConfig),
@@ -522,6 +551,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -550,6 +580,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
         babel(babelConfig),
@@ -575,6 +606,7 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],
@@ -610,6 +642,56 @@ const babelConfig = {
         },
       ],
       plugins: [
+        stripTestOnly(),
+        resolve(),
+        commonjs(),
+      ],
+    },
+
+    // bitwrench-verify — the TACO checker. Deliberately its own artifact and
+    // NOT bundled into core: it is a development-time tool, and nobody should
+    // pay for a checker in a production page. That is also why it sits outside
+    // the 46KB core budget.
+    {
+      input: 'src/bitwrench-verify.js',
+      output: [
+        {
+          file: 'dist/bitwrench-verify.js',
+          format: 'umd',
+          name: 'bwv',
+          banner: verifyBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-verify.min.js',
+          format: 'umd',
+          name: 'bwv',
+          banner: verifyBanner,
+          plugins: [minify()],
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-verify.cjs',
+          format: 'cjs',
+          banner: verifyBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-verify.esm.js',
+          format: 'es',
+          banner: verifyBanner,
+          sourcemap: true,
+        },
+        {
+          file: 'dist/bitwrench-verify.esm.min.js',
+          format: 'es',
+          banner: verifyBanner,
+          plugins: [minify()],
+          sourcemap: true,
+        },
+      ],
+      plugins: [
+        stripTestOnly(),
         resolve(),
         commonjs(),
       ],

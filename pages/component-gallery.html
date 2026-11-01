@@ -181,8 +181,8 @@
             bw.makeSpinner({ variant: 'primary', size: 'sm' }),
             { t: 'span', c: 'Processing...' }
           ]},
-          bw.makeButton({ text: 'Loading', variant: 'primary', disabled: true,
-            content: [bw.makeSpinner({ variant: 'light', size: 'sm' }), { t: 'span', c: ' Saving...' }]
+          bw.makeButton({ variant: 'primary', disabled: true,
+            text: [bw.makeSpinner({ variant: 'light', size: 'sm' }), { t: 'span', c: ' Saving...' }]
           }),
           { t: 'div', a: { style: 'display:flex;gap:0.75rem;' }, c: [
             bw.makeSpinner({ variant: 'success' }),

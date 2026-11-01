@@ -26,13 +26,24 @@ const card = bw.makeCard({ title: 'Hello', content: 'World' });
 bw.DOM('#app', card);
 ```
 
-**Named imports (tree-shakeable):**
+**Named imports (a spelling convenience, not a smaller build):**
 
 ```typescript
 import { makeCard, makeButton, makeNav } from 'bitwrench';
 
 const card = makeCard({ title: 'Dashboard', content: 'Stats here' });
 ```
+
+Named imports work, but they do not shrink your bundle. The ESM artifact is a
+single pre-bundled file, so a bundler cannot drop the parts you did not
+import: measured, `import { makeButton } from 'bitwrench'` and
+`import bw from 'bitwrench'` come out the same size to within 8 bytes. Use
+whichever form reads better at the call site.
+
+Four factories -- `makeTable`, `makeTableFromArray`, `makeDataTable` and
+`makeBarChart` -- live in the core rather than in BCCL, so they are reached as
+`bw.makeTable(...)` only. They are typed on the `Bitwrench` interface, not
+available as named imports.
 
 **CommonJS (Node.js):**
 

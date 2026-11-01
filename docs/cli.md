@@ -254,6 +254,15 @@ Options:
 
 Both strict JSON and r-prefix relaxed JSON are accepted on the input port. See [bwserve](bwserve.md) for the full protocol reference.
 
+Checking the frames themselves is `bwcli verify`, which defaults to wire mode because a file or a pipe is a payload:
+
+```
+bwcli verify frame.json
+some-generator | bwcli verify
+```
+
+A JavaScript sender calls the library directly instead -- `verify(frame, { mode: 'wire' })` from `bitwrench/verify`. Same checker, two doors. See [verify.md](verify.md).
+
 ## The `bwcli attach` subcommand — Remote Debugging REPL
 
 `bwcli attach` provides a built-in terminal-based debugger for any bitwrench page. It starts a bwserve instance and waits for a browser to connect via a drop-in `<script>` tag. Once connected, you get an interactive REPL for inspecting the DOM, mounting components, taking screenshots, and listening to events.

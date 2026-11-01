@@ -392,10 +392,16 @@ console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 // gate did its job -- it caught the growth and forced this to be a decision
 // instead of a drift.
 //
-// It is also a number that is about to mean something different. 2.2 splits
-// core from BCCL, and the measured ~14KB of BCCL CSS that core ships and cannot
-// use comes out of exactly this artifact; per-SKU budgets land with that split.
-// Treat 46KB as the ceiling until then, not as headroom to spend.
+// The CSS split is 2.1.13, not 2.2, and it does NOT shrink this artifact.
+// Measured 2026-10-11: moving widget CSS out of core takes about 5.6KB gzipped
+// off the LEAN build (36.7KB -> ~31KB). The full file is both halves, so it
+// stays where it is -- the earlier "~14KB comes out of this artifact" note was
+// wrong on both the release number and the beneficiary. See
+// dev/bw-css-split-plan.md. Per-SKU budgets land with that split.
+//
+// Treat 46KB as the ceiling, not as headroom to spend. Headroom is thin:
+// around 100 bytes on ESM as of 2.1.12. Read dist/<file>.gz for the current
+// figure rather than trusting a number written in prose.
 const BUDGET = 46 * 1024; // 46KB
 if (gzipped > BUDGET) {
   fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 46KB budget!`);

@@ -35,7 +35,7 @@ export { derivePalette };
  * Base spacing scale (4px unit). Shared design token for consistent spacing
  * across all components. Use scale keys (0-7) in component definitions.
  */
-export var SPACING_SCALE = {
+var SPACING_SCALE = {
   0: '0',
   1: '0.25rem',   // 4px
   2: '0.5rem',    // 8px

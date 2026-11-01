@@ -1,5 +1,7 @@
 # Component Lifecycle Walkthrough
 
+<!-- doc-test: sequential -->
+
 A stats card, taken through every phase of a component's life — define, create,
 mount, update, unmount — using the v2.1 API. If you read one document after the
 README, read this one: it is the shortest complete tour of how bitwrench
@@ -94,6 +96,13 @@ skips `mountTree`, so `o.mounted` never runs. Components that wire behavior in
 `mounted` (code editor API, toast auto-dismiss, modal ESC, carousel keys, …)
 will look fine and silently fail. Use `bw.append(parent, taco)`,
 `bw.DOM(parent, taco)`, or `bw.replace(el, taco)` instead.
+
+**It skips the first `o.render` too.** Since 2.1.12 the initial render runs on
+the mount pass, in the same slot as `o.mounted` -- render first, then mounted
+when both are present. So a component appended this way is not merely
+un-wired, it is un-rendered: `bw.create()` returns a hydrated but detached node
+whose `o.render` has not been called. `bw.refresh(el)` runs render again
+afterwards and does not re-fire `mounted`.
 
 ---
 
