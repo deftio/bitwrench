@@ -240,7 +240,7 @@ el.bw.setContent({ t: 'strong', c: '42' });  // accepts TACO objects
 var text = el.bw.getTitle();                   // returns text content
 ```
 
-Slot setters accept strings or TACO objects. They update just the targeted element -- no full re-render, so input focus, scroll position, and animation state are preserved.
+Slot setters accept strings, numbers, TACO objects, arrays of content, and `bw.raw()` HTML. `null` and `undefined` clear the slot. They update just the targeted element -- no full re-render, so input focus, scroll position, and animation state are preserved.
 
 ### bw.mount() / bw.DOM() -- get the element back
 

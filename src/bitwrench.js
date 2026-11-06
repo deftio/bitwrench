@@ -1442,12 +1442,13 @@ function _hydrateElement(el, opts) {
             if (!target) return;
             // Always unmount existing children before replacing
             bw.unmountChildren(target);
-            if (value != null && typeof value === 'object' && value.t) {
-              // TACO through slots runs mount pipeline
+            if (_isA(value) || (value != null && typeof value === 'object' && (value.t || value.__bw_raw))) {
               target.innerHTML = '';
-              var child = bw.create(value, _nsOptsFor(target));
-              target.appendChild(child);
-              if (el.isConnected) bw.mountTree(child);
+              var items = _isA(value) ? _flat(value) : [value];
+              items.forEach(function(item) {
+                if (item != null) target.appendChild(bw.create(item, _nsOptsFor(target)));
+              });
+              if (el.isConnected) bw.mountTree(target);
             } else {
               target.textContent = (value != null) ? String(value) : '';
             }
