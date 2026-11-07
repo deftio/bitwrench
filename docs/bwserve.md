@@ -48,6 +48,7 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 
 ## Quick Start
 
+<!-- doc-test: skip (Node server: `import bwserve` and app.listen bind a port) -->
 ```javascript
 // server.js
 import bwserve from 'bitwrench/bwserve';
@@ -208,11 +209,11 @@ Content-Type: application/json
 **Wiring actions** — use `bw_act_*` CSS classes on elements:
 
 ```javascript
-// Server sends this TACO with bw_act_* class:
-{ t: 'button', a: { class: 'bw_bccl_btn bw_act_save' }, c: 'Save' }
+// Server sends this TACO with a bw_act_* class:
+client.mount('#app', { t: 'button', a: { class: 'bw_bccl_btn bw_act_save' }, c: 'Save' });
 
-// When clicked, client auto-POSTs:
-{ action: 'save', data: {} }
+// When clicked, the thin client POSTs back:
+//   { action: 'save', data: {} }
 
 // Server handles it:
 client.on('save', function(data) {
@@ -256,6 +257,7 @@ app.page('/dashboard', function(client) {
 
 Start and stop the server. Both return Promises.
 
+<!-- doc-test: skip (top-level await on a live server) -->
 ```javascript
 await app.listen(function() { console.log('Ready'); });
 await app.close();
@@ -327,6 +329,7 @@ Evaluate a JavaScript expression on the client and return the result. Uses the `
 
 ### `client.query(code, opts?)`
 
+<!-- doc-test: skip (top-level await on a live client; the shape is the point) -->
 ```javascript
 var title = await client.query('document.title');
 var count = await client.query('bw.$(".item").length');
@@ -363,6 +366,7 @@ Capture a screenshot of the client page or a specific element. Returns a Promise
 
 Screenshot is **disabled by default**. Enable via the server option:
 
+<!-- doc-test: skip (Node server: bwserve.create needs the bwserve module) -->
 ```javascript
 var app = bwserve.create({ port: 7902, allowScreenshot: true });
 ```
@@ -756,6 +760,7 @@ bwcli serve [dir] [options]
 
 ### Counter (mount + patch + actions)
 
+<!-- doc-test: skip (Node server: `import bwserve` and app.listen bind a port) -->
 ```javascript
 import bwserve from 'bitwrench/bwserve';
 

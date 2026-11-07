@@ -329,8 +329,16 @@ export function deriveShades(hex) {
 }
 
 /**
- * Derive the alternate (luminance-inverted) version of a single seed color.
- * Preserves hue, mirrors lightness, adjusts saturation for readability.
+ * Derive the alternate-palette version of a single seed color: same hue,
+ * lightness moved to the other side so it keeps its contrast against the
+ * alternate surface.
+ *
+ * A saturated mid-lightness accent (the common brand colour: indigo #6366f1,
+ * bootstrap blue, a warning amber) is NOT inverted. Inverting L 67 to L 23
+ * put a near-black accent on a dark surface (#115). Every design system's
+ * dark mode uses a lighter tint of the same hue instead, so that is what
+ * 50 < L <= 75 with S > 40 gets. Low saturation and extreme lightness keep
+ * the mirror rule.
  * @param {string} hex - Seed hex color
  * @returns {string} Alternate hex color
  */
@@ -339,7 +347,10 @@ export function deriveAlternateSeed(hex) {
   var h = hsl[0], s = hsl[1], l = hsl[2];
   var altL, altS;
 
-  if (l > 50) {
+  if (l > 50 && l <= 75 && s > 40) {
+    altL = 72;
+    altS = clip(s * 0.9, 0, 100);
+  } else if (l > 50) {
     altL = clip(100 - l - 10, 8, 40);
     altS = clip(s * 0.85, 0, 100);
   } else {
@@ -348,6 +359,19 @@ export function deriveAlternateSeed(hex) {
   }
 
   return hslToHex([h, altS, altL]);
+}
+
+/**
+ * WCAG 2.x contrast ratio between two colours, 1 (identical) to 21
+ * (black on white). AA body text needs 4.5, large text and UI 3.
+ * @param {string} a - Hex colour
+ * @param {string} b - Hex colour
+ * @returns {number} Contrast ratio, e.g. 4.83
+ */
+export function contrastRatio(a, b) {
+  var la = relativeLuminance(a), lb = relativeLuminance(b);
+  var hi = Math.max(la, lb), lo = Math.min(la, lb);
+  return (hi + 0.05) / (lo + 0.05);
 }
 
 /**
@@ -437,9 +461,11 @@ export function derivePalette(config) {
   var surfBase = config.surface || hslToHex([h, 25, 94]);
 
   var surfHsl = hexToHsl(surfBase);
-  var surfAlt = surfHsl[2] <= 50
+  // A given surfaceAlt wins; StyleConfig declared it for releases while this
+  // line ignored it (found by the bccl-config-drift rule, 2.1.13).
+  var surfAlt = config.surfaceAlt || (surfHsl[2] <= 50
     ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)])
-    : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]);
+    : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]));
 
   var palette = {
     primary:    deriveShades(pri),

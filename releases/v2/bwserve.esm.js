@@ -1,4 +1,4 @@
-/*! bwserve v2.1.12 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bwserve v2.1.13 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 import { fileURLToPath } from 'url';
 import { dirname, resolve, sep, extname, join } from 'path';
 import { createServer } from 'http';
@@ -9,7 +9,7 @@ import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.1.12';
+const VERSION = '2.1.13';
 
 /**
  * BwServeClient — per-client connection for bwserve.
@@ -204,9 +204,7 @@ class BwServeClient {
             requestId: pend.requestId, selector: selector || 'body', format: o.format || 'png',
             quality: o.quality, maxWidth: o.maxWidth, maxHeight: o.maxHeight, scale: o.scale
         });
-        return pend.promise.then(function(r) {
-            if (r.error) throw new Error(r.error);
-            var s = r.result;
+        return pend.promise.then(function(s) {
             return { data: Buffer.from(s.data.split(',')[1], 'base64'), width: s.width, height: s.height, format: s.format };
         });
     }
@@ -225,23 +223,28 @@ class BwServeClient {
                 delete self._pending[requestId];
                 rej(new Error('Request ' + requestId + ' timed out after ' + timeout + 'ms'));
             }, timeout);
-            self._pending[requestId] = { resolve: res, timer: timer };
+            self._pending[requestId] = { resolve: res, reject: rej, timer: timer };
         });
         return { requestId: requestId, promise: promise };
     }
 
     /**
-     * Resolve a pending request by its requestId.
+     * Settle a pending request by its requestId with the client's result,
+     * or reject it when the client reported an error. The server unwraps the
+     * POST envelope before calling this, so callers never see
+     * `{requestId, route, result, error}`.
      * @param {string} requestId
-     * @param {*} data - Response data from the client
+     * @param {*} result - The client's result (already unwrapped)
+     * @param {string|null} [error] - The client's error message, if any
      * @private
      */
-    _resolvePending(requestId, data) {
+    _resolvePending(requestId, result, error) {
         var entry = this._pending[requestId];
         if (entry) {
             clearTimeout(entry.timer);
             delete this._pending[requestId];
-            entry.resolve(data);
+            if (error) entry.reject(new Error(error));
+            else entry.resolve(result);
         }
     }
 
@@ -428,7 +431,10 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
   + '          document.head.appendChild(s);\n'
   + '        });\n'
   + '      }\n'
-  + '      var p = window.html2canvas ? Promise.resolve(window.html2canvas) : _ls(opts.captureUrl || "/bw/lib/vendor/html2canvas.min.js");\n'
+  + '      // Fetched from the attach/bwserve server, like every other /bw/ URL. A\n'
+  + '      // page-relative default 404s whenever the page is on another origin (#117).\n'
+  + '      var base = (typeof origin !== "undefined" ? origin : "");\n'
+  + '      var p = window.html2canvas ? Promise.resolve(window.html2canvas) : _ls(opts.captureUrl || base + "/bw/lib/vendor/html2canvas.min.js");\n'
   + '      p.then(function(h2c) { return h2c(el, { scale: opts.scale || 1, useCORS: true }); })\n'
   + '       .then(function(canvas) {\n'
   + '         var out = canvas;\n'
@@ -459,7 +465,7 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
   + '        if (!el || d > depth) return null;\n'
   + '        var info = { tag: el.tagName ? el.tagName.toLowerCase() : "#text" };\n'
   + '        if (el.id) info.id = el.id;\n'
-  + '        if (el.className && typeof el.className === "string") info.cls = el.className.split(" ").slice(0, 5).join(" ");\n'
+  + '        if (el.className && typeof el.className === "string") info["class"] = el.className.split(" ").slice(0, 5).join(" ");\n'
   + '        if (el.children && el.children.length > 0 && d < depth) {\n'
   + '          info.children = [];\n'
   + '          for (var i = 0; i < Math.min(el.children.length, 20); i++) {\n'
@@ -1213,9 +1219,12 @@ class BwServeApp {
             : (data.result ? data.result.data : data.data || data);
           record.client._dispatch(action, payload);
         } else {
-          // All other routes: resolve pending promise if mechanism exists
+          // All other routes: resolve the pending promise with the client's
+          // RESULT, not the whole POST envelope. Every caller used to unwrap
+          // `.result` itself, and the one that forgot (attach /tree) printed
+          // `?` for every page (#116). Unwrap once, here; reject on `error`.
           if (record.client._resolvePending) {
-            record.client._resolvePending(data.requestId, data);
+            record.client._resolvePending(data.requestId, data.result, data.error);
           }
         }
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

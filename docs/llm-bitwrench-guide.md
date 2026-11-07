@@ -1,7 +1,10 @@
 # Bitwrench LLM Guide
 
 > Compact tutorial for AI-assisted bitwrench development.
-> For the full teaching narrative, see `docs/thinking-in-bitwrench.md`.
+> Read `docs/thinking-in-bitwrench.md` first: it sets out how bitwrench works
+> and how that compares with React, vanilla JS and server templates. This file
+> is the reference that assumes that model. For a problem rather than a
+> function name, `docs/when-you-want.md` indexes the core API by task.
 
 ---
 

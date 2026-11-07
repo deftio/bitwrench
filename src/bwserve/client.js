@@ -192,9 +192,7 @@ export class BwServeClient {
             requestId: pend.requestId, selector: selector || 'body', format: o.format || 'png',
             quality: o.quality, maxWidth: o.maxWidth, maxHeight: o.maxHeight, scale: o.scale
         });
-        return pend.promise.then(function(r) {
-            if (r.error) throw new Error(r.error);
-            var s = r.result;
+        return pend.promise.then(function(s) {
             return { data: Buffer.from(s.data.split(',')[1], 'base64'), width: s.width, height: s.height, format: s.format };
         });
     }
@@ -213,23 +211,28 @@ export class BwServeClient {
                 delete self._pending[requestId];
                 rej(new Error('Request ' + requestId + ' timed out after ' + timeout + 'ms'));
             }, timeout);
-            self._pending[requestId] = { resolve: res, timer: timer };
+            self._pending[requestId] = { resolve: res, reject: rej, timer: timer };
         });
         return { requestId: requestId, promise: promise };
     }
 
     /**
-     * Resolve a pending request by its requestId.
+     * Settle a pending request by its requestId with the client's result,
+     * or reject it when the client reported an error. The server unwraps the
+     * POST envelope before calling this, so callers never see
+     * `{requestId, route, result, error}`.
      * @param {string} requestId
-     * @param {*} data - Response data from the client
+     * @param {*} result - The client's result (already unwrapped)
+     * @param {string|null} [error] - The client's error message, if any
      * @private
      */
-    _resolvePending(requestId, data) {
+    _resolvePending(requestId, result, error) {
         var entry = this._pending[requestId];
         if (entry) {
             clearTimeout(entry.timer);
             delete this._pending[requestId];
-            entry.resolve(data);
+            if (error) entry.reject(new Error(error));
+            else entry.resolve(result);
         }
     }
 

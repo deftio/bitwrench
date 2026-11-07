@@ -618,7 +618,7 @@
                 { value: '', text: 'Choose a topic...' }, { value: 'order', text: 'Order Inquiry' }, { value: 'wholesale', text: 'Wholesale' }, { value: 'visit', text: 'Tasting Room' }, { value: 'other', text: 'Other' }
               ]}) }),
               bw.makeFormGroup({ label: 'Message', id: 'cmsg', input: bw.makeTextarea({ id: 'cmsg', placeholder: 'Tell us what\'s on your mind...', rows: 5 }) }),
-              bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', className: 'bw_bccl_btn_lg' })
+              bw.makeButton({ text: 'Send Message', type: 'submit', variant: 'primary', class: 'bw_bccl_btn_lg' })
             ], onsubmit: function(e) {
               e.preventDefault();
               var cEl = bw.$('#' + contactFormId)[0];

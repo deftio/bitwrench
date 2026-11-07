@@ -58,10 +58,23 @@ const FILES = [
   'agents.md',
   'docs/quickstart.md',
   'docs/core-api.md',
+  'docs/when-you-want.md',
   'docs/taco-format.md',
   'docs/theming.md',
   'docs/state-management.md',
-  'llms.txt'
+  'llms.txt',
+  // Added 2.1.13: the two tutorials, the bwserve guide and the rest were the
+  // last onboarding docs whose examples had never run. Eight files, 69 blocks.
+  'docs/tutorial-website.md',
+  'docs/tutorial-bwserve.md',
+  'docs/tutorial-embedded.md',
+  'docs/bwserve.md',
+  'docs/cli.md',
+  'docs/bitwrench_typescript_usage.md',
+  'docs/bitwrench-for-wasm.md'
+  // Not listed: docs/bitwrench-taco-schema-discussion.md. It is a design
+  // discussion whose code is pseudo-code by intent (validateTree, titleSchema
+  // sketches), not something a reader copies.
 ];
 
 function blocks(file) {
@@ -115,7 +128,11 @@ var FIXTURES = [
   "var colorCard = homePage(), content = 'text', newData = data;",
   "var loggedIn = true, isOpen = true, accent = '#336699', diff = function() { return {}; };",
   "var app = { page: function() {}, listen: function() {}, broadcast: function() {} };",
-  "var client = { patch: function() {}, mount: function() {}, call: function() {}, batch: function() {} };",
+  // The bwserve client an app.page handler receives -- the real method names
+  // from src/bwserve/client.js, inert. A doc that calls a method not on this
+  // list is calling one the client does not have.
+  "var client = { mount: function() {}, patch: function() {}, append: function() {}, remove: function() {}, batch: function() {}, message: function() {}, call: function() {}, listen: function() {}, on: function() {}, query: function() {}, screenshot: function() {}, close: function() {} };",
+  "var layout = L, csvContent = 'a,b', records = data, msg1 = { v: 1, type: 'patch', ref: 'count', text: '1' }, msg2 = msg1;",
   "var makeNavBar = function() { return { t: 'nav', c: 'nav' }; };",
   "var createMcpServer = function() { return { start: function() {} }; };",
   "var navEl = bw.mount(document.body.appendChild(document.createElement('div')), { t: 'nav', a: { id: 'nav' }, o: { handle: { setActive: function() {} } } });",
@@ -186,6 +203,10 @@ function freshPage(code) {
 // or bw.DOM('#app', ...). Only string literals -- a variable target cannot be
 // resolved statically, and that is fine; this is a net, not a proof.
 function mountTargets(code) {
+  // A mount inside a `//` comment is an alternative the prose offers, not a
+  // call the block makes -- bwserve.md's bw:message example comments out the
+  // toast variant and would otherwise be told it "left #toasts empty".
+  code = code.replace(/^\s*\/\/.*$/gm, '');
   // A mount scheduled for later cannot have filled anything yet. app-patterns
   // polls sensors inside setInterval + fetch().then() and mounts in the
   // callback, so only mounts lexically before the first scheduler are checked.

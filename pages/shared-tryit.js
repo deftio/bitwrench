@@ -93,7 +93,7 @@
                   t: 'div',
                   a: { class: 'tryit-controls' },
                   c: [
-                    bw.makeButton({ text: 'Run', variant: 'primary', size: 'sm', className: 'tryit-run',
+                    bw.makeButton({ text: 'Run', variant: 'primary', size: 'sm', class: 'tryit-run',
                       onclick: function() { bw.el(id).bw.run(); } })
                   ]
                 },

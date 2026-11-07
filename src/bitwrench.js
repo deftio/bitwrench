@@ -12,11 +12,11 @@ import { getStructuralStyles, getResetStyles,
          generateThemedCSS,
          DEFAULT_PALETTE_CONFIG, SPACING_PRESETS, RADIUS_PRESETS, THEME_PRESETS,
          TYPE_RATIO_PRESETS, ELEVATION_PRESETS, MOTION_PRESETS, generateTypeScale,
-         resolveLayout, scopeRulesUnder } from './bitwrench-styles.js';
+         resolveLayout, scopeRulesUnder, colorScheme } from './bitwrench-styles.js';
 import { hexToHsl, hslToHex, adjustLightness, mixColor,
          relativeLuminance, textOnColor, deriveShades,
          derivePalette, harmonize, deriveAlternateSeed, deriveAlternateConfig,
-         isLightPalette } from './bitwrench-color-utils.js';
+         isLightPalette, contrastRatio } from './bitwrench-color-utils.js';
 import { colorParse as _colorParse, colorRgbToHsl as _colorRgbToHsl,
          colorHslToRgb as _colorHslToRgb, colorInterp as _colorInterp } from './bitwrench-color-utils.js';
 import { bindFileOps } from './bitwrench-file-ops.js';
@@ -436,6 +436,12 @@ bw.el = function(target, apply) {
  * @private
  */
 function _applyTo(el, apply) {
+  // Hooks fire when the tree is in the document. Content applied to a
+  // detached element (a slot set before the component is mounted) waits for
+  // the mount/append that connects it, which runs mountTree over the subtree.
+  // The 2.1.12 slot setter had this guard; the first sink dropped it, and a
+  // test in PR #122 (imshah-id) caught `mounted` firing early.
+  var mountNow = function() { if (el.isConnected) bw.mountTree(el); };
   if (_is(apply, 'function')) {
     apply(el);
   } else if (_isA(apply)) {
@@ -444,16 +450,42 @@ function _applyTo(el, apply) {
     _flat(apply).forEach(function(item) {
       if (item != null) el.appendChild(bw.create(item, _nsOptsFor(el)));
     });
-    bw.mountTree(el);
+    mountNow();
   } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
     bw.unmountChildren(el);
     el.innerHTML = '';
     el.appendChild(bw.create(apply, _nsOptsFor(el)));
-    bw.mountTree(el);
+    mountNow();
   } else {
     bw.unmountChildren(el);
-    el.textContent = String(apply);
+    el.textContent = (apply == null || typeof apply === 'boolean') ? '' : String(apply);
   }
+}
+
+/**
+ * Internal: resolve a verb's target. One rule for every verb (north star,
+ * consequence 14): a live element, an element id, a CSS selector, or a
+ * bw_uuid_* token. Live query FIRST, bw.el second -- bw.el consults a node
+ * cache that can return a detached element (the detach-exempt path), and
+ * acting on a node the document cannot see does work nobody will ever find.
+ * A selector therefore behaves as it always has; bare ids and UUID tokens
+ * fall through to bw.el.
+ *
+ * With a verb name, a miss warns `bw.<verb>: target not found` so that no
+ * verb fails silently (bw.append did, for a release). Without one it is a
+ * silent query, for verbs whose miss is a legitimate answer.
+ * @private
+ */
+function _resolveTarget(target, verb) {
+  var el = target || null;
+  if (_is(target, 'string')) {
+    // A string that is not a valid selector (',,') must not throw out of a
+    // verb; it is simply not found.
+    try { el = bw.$(target)[0]; } catch (e) { el = null; }
+    if (!el) el = bw.el(target);
+  }
+  if (!el && verb) _cw('bw.' + verb + ': target not found');
+  return el;
 }
 
 
@@ -814,8 +846,10 @@ bw.h = function(tag, attrs, content, options) {
  * // => '<button class="bw_fn_0">Go</button>'   fns = { bw_fn_0: {fn, event:'click'} }
  */
 bw.html = function(taco, options = {}) {
-  // Handle null/undefined
-  if (taco == null) return '';
+  // null, undefined and booleans render nothing. The template language is
+  // JavaScript, and `cond && taco` yields false when the condition is off;
+  // skipping it is what makes that idiom work (#123). Numbers still render.
+  if (taco == null || typeof taco === 'boolean') return '';
 
   // Handle arrays of TACOs
   if (_isA(taco)) {
@@ -1211,8 +1245,8 @@ bw.create = function(taco, options) {
  * @private
  */
 function _createNode(taco, options) {
-  // Handle null/undefined
-  if (taco == null) return document.createTextNode('');
+  // null, undefined and booleans render nothing -- same rule as bw.html (#123)
+  if (taco == null || typeof taco === 'boolean') return document.createTextNode('');
 
   // Handle bw.raw() marked content — inject as HTML
   if (taco && taco.__bw_raw) {
@@ -1313,7 +1347,8 @@ function _createNode(taco, options) {
         }
       }
     } else {
-      el.textContent = String(content);
+      // a scalar c: numbers render, booleans do not (#123)
+      el.textContent = typeof content === 'boolean' ? '' : String(content);
     }
   }
 
@@ -1440,18 +1475,10 @@ function _hydrateElement(el, opts) {
             }
             var target = el._bw_slot_cache[name];
             if (!target) return;
-            // Always unmount existing children before replacing
-            bw.unmountChildren(target);
-            if (_isA(value) || (value != null && typeof value === 'object' && (value.t || value.__bw_raw))) {
-              target.innerHTML = '';
-              var items = _isA(value) ? _flat(value) : [value];
-              items.forEach(function(item) {
-                if (item != null) target.appendChild(bw.create(item, _nsOptsFor(target)));
-              });
-              if (el.isConnected) bw.mountTree(target);
-            } else {
-              target.textContent = (value != null) ? String(value) : '';
-            }
+            // One content sink for every verb (north star 14): text, TACO,
+            // array, bw.raw(). The setter had its own narrower switch and
+            // rendered "[object Object]" for raw and arrays (#118).
+            _applyTo(target, value);
           };
           el.bw['get' + cap] = function() {
             if (!el._bw_slot_cache) el._bw_slot_cache = {};
@@ -1476,6 +1503,7 @@ function _hydrateElement(el, opts) {
  * @category DOM Generation
  */
 bw.hydrate = function(el, taco) {
+  if (_is(el, 'string')) el = _resolveTarget(el, 'hydrate');
   if (!el || !taco) return;
   var opts = taco.o || {};
   _hydrateElement(el, opts);
@@ -1491,6 +1519,7 @@ bw.hydrate = function(el, taco) {
  * @category DOM Generation
  */
 bw.mountTree = function(el) {
+  if (_is(el, 'string')) el = _resolveTarget(el, 'mountTree');
   if (!el || el.nodeType !== 1) return;
 
   // Lazy-install janitor observer on first mount
@@ -1604,6 +1633,7 @@ function _mountNode(el) {
  * @category DOM Generation
  */
 bw.unmount = function(el) {
+  if (_is(el, 'string')) el = _resolveTarget(el, 'unmount');
   if (!el || el.nodeType !== 1) return;
 
   // Collect all addressable nodes: self + descendants in document order
@@ -1709,6 +1739,7 @@ function _unmountNode(el) {
  * @category DOM Generation
  */
 bw.unmountChildren = function(el) {
+  if (_is(el, 'string')) el = _resolveTarget(el, 'unmountChildren');
   if (!el || el.nodeType !== 1) return;
 
   // Find all direct and nested lifecycle/addressable nodes inside children
@@ -1735,7 +1766,7 @@ bw.unmountChildren = function(el) {
  * bw.mount('#list', rows.map(function(r) { return { t: 'li', c: r.name }; }));
  */
 bw.clear = function(ref) {
-  var el = bw.el(ref);
+  var el = _resolveTarget(ref, 'clear');
   if (!el) return null;
   bw.unmountChildren(el);
   while (el.firstChild) el.removeChild(el.firstChild);
@@ -1846,7 +1877,7 @@ bw.hasClass = function(ref, name) {
  * @category DOM Generation
  */
 bw.remove = function(ref) {
-  var el = bw.el(ref);
+  var el = _resolveTarget(ref, 'remove');
   if (!el) return;
   bw.unmount(el);
   if (el.parentNode) el.parentNode.removeChild(el);
@@ -1861,6 +1892,7 @@ bw.remove = function(ref) {
  * @category DOM Generation
  */
 bw.detach = function(el) {
+  if (_is(el, 'string')) el = _resolveTarget(el, 'detach');
   if (!el) return;
   var uuid = bw.getUUID(el);
   if (uuid) {
@@ -2200,11 +2232,8 @@ bw.mount = function(target, taco, options) {
   // renders content nobody will ever find. Resolving bw.el first broke a
   // documented example exactly that way. A selector therefore behaves as it
   // always has, and bare ids and UUID tokens fall through to bw.el.
-  var container = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
-  if (!container) {
-    _cw('bw.mount: target not found');
-    return null;
-  }
+  var container = _resolveTarget(target, 'mount');
+  if (!container) return null;
 
   // Teardown existing children (compound calls atomic)
   bw.unmountChildren(container);
@@ -2267,11 +2296,8 @@ bw.append = function(target, content, opts) {
   // there. append was missed when mount was fixed, and it returned null with
   // no warning at all, so bw.append('status', ...) did nothing and said
   // nothing.
-  var container = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
-  if (!container) {
-    _cw('bw.append: target not found');
-    return null;
-  }
+  var container = _resolveTarget(target, 'append');
+  if (!container) return null;
   var child = bw.create(content, _nsOptsFor(container));
   if (opts && opts.before !== undefined) {
     var ref = opts.before;
@@ -2288,12 +2314,16 @@ bw.append = function(target, content, opts) {
  * Replace an existing element with new content. unmount(old) → create(taco) →
  * insert at position → mountTree. Returns new element. null taco = remove.
  *
- * @param {Element} ref - Element to replace
+ * @param {string|Element} ref - Element ID, CSS selector, bw_uuid_* class, or element to replace
  * @param {Object|null} taco - Replacement TACO, or null to just remove
  * @returns {Element|null} The new element, or null
  * @category DOM Generation
  */
 bw.replace = function(ref, taco) {
+  // Resolved like every other verb since 2.1.13. Before, a string here read
+  // `.parentNode` of a string, created the new element and never inserted
+  // it: a detached node, no warning (#112).
+  ref = _resolveTarget(ref, 'replace');
   if (!ref) return null;
   var parent = ref.parentNode;
   var next = ref.nextSibling;
@@ -2321,7 +2351,7 @@ bw.replace = function(ref, taco) {
  * @category DOM Generation
  */
 bw.refresh = function(ref) {
-  var el = bw.el(ref);
+  var el = _resolveTarget(ref, 'refresh');
   if (!el) return null;
 
   bw.unmountChildren(el);
@@ -2358,7 +2388,7 @@ bw.refresh = function(ref) {
  * @category State Management
  */
 bw.update = function(ref, data) {
-  var el = bw.el(ref);
+  var el = _resolveTarget(ref, 'update');
   if (!el) return null;
 
   if (el.bw && typeof el.bw.update === 'function') {
@@ -2390,7 +2420,7 @@ bw.update = function(ref, data) {
  * @category DOM Generation
  */
 bw.updateSlot = function(ref, name, value) {
-  var el = bw.el(ref);
+  var el = _resolveTarget(ref, 'updateSlot');
   if (!el || !el.bw) return false;
   var setter = 'set' + name.charAt(0).toUpperCase() + name.slice(1);
   if (typeof el.bw[setter] !== 'function') return false;
@@ -2425,47 +2455,23 @@ bw.updateSlot = function(ref, name, value) {
  * bw.patch('info', { t: 'em', c: 'new' }); // replace children with TACO
  */
 bw.patch = function(id, content, attr) {
-  var el = bw.el(id);
+  var el = _resolveTarget(id, 'patch');
   if (!el) return null;
 
   // v2.1 discriminated patch:
-  // - string/number → text content
-  // - plain object without .t → attributes
-  // - TACO (has .t) → unmountChildren + create + mountTree
-  // - array → unmountChildren + create each + mountTree
   // - legacy 3rd arg: explicit attribute set
-
+  // - plain object without .t → attributes
+  // - everything else (text, TACO, array, bw.raw, function) → the shared
+  //   content sink, the same one bw.el(ref, apply), bw.$ and slot setters use
   if (attr) {
-    // Legacy: explicit attribute patch
     el.setAttribute(attr, String(content));
-  } else if (_is(content, 'string') || _is(content, 'number')) {
-    // Text patch. Replacing child elements with text still runs their unmount.
-    if (el.firstElementChild) bw.unmountChildren(el);
-    el.textContent = String(content);
-  } else if (_isA(content)) {
-    // Array of children: full pipeline
-    bw.unmountChildren(el);
-    el.innerHTML = '';
-    content = _flat(content);
-    for (var i = 0; i < content.length; i++) {
-      if (content[i] != null) el.appendChild(bw.create(content[i], _nsOptsFor(el)));
-    }
-    bw.mountTree(el);
-  } else if (_is(content, 'object') && content !== null && (content.t || content.__bw_raw)) {
-    // TACO or bw.raw() content: full pipeline
-    bw.unmountChildren(el);
-    el.innerHTML = '';
-    el.appendChild(bw.create(content, _nsOptsFor(el)));
-    bw.mountTree(el);
-  } else if (_is(content, 'object') && content !== null) {
-    // Plain object without .t → attribute patch
+  } else if (_is(content, 'object') && content !== null && !_isA(content) && !content.t && !content.__bw_raw) {
     var attrKeys = _keys(content);
     for (var ak = 0; ak < attrKeys.length; ak++) {
       el.setAttribute(attrKeys[ak], String(content[attrKeys[ak]]));
     }
   } else {
-    if (el.firstElementChild) bw.unmountChildren(el);
-    el.textContent = String(content);
+    _applyTo(el, content);
   }
   return el;
 };
@@ -2507,6 +2513,7 @@ bw.patchAll = function(patches) {
  * @category DOM Generation
  */
 bw.syncChildren = function(parentEl, items, opts) {
+  if (_is(parentEl, 'string')) parentEl = _resolveTarget(parentEl, 'syncChildren');
   if (!parentEl || !items || !opts) return;
   var keyFn = opts.key;
   var createFn = opts.create;
@@ -2599,7 +2606,7 @@ bw.syncChildren = function(parentEl, items, opts) {
  * // Dispatches CustomEvent 'bw:statechange' on the element
  */
 bw.emit = function(target, eventName, detail) {
-  var el = bw.el(target);
+  var el = _resolveTarget(target, 'emit');
   if (el) {
     el.dispatchEvent(new CustomEvent('bw:' + eventName, {
       bubbles: true,
@@ -2619,7 +2626,7 @@ bw.emit = function(target, eventName, detail) {
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
  * @param {string} eventName - Event name (will be prefixed with 'bw:')
  * @param {Function} handler - Called with (detail, event)
- * @returns {Element|null} The element (for chaining), or null if not found
+ * @returns {Function} A function that removes the listener; a no-op when the target was not found
  * @category Events (DOM)
  * @see bw.emit
  * @example
@@ -2628,7 +2635,7 @@ bw.emit = function(target, eventName, detail) {
  * });
  */
 bw.on = function(target, eventName, handler) {
-  var el = bw.el(target);
+  var el = _resolveTarget(target, 'on');
   if (!el) return function() {};
   var wrapped = function(e) { handler(e.detail, e); };
   el.addEventListener('bw:' + eventName, wrapped);
@@ -3134,12 +3141,16 @@ bw._resolveTemplate = function(str, state, compile) {
  * };
  */
 bw.message = function(target, action, data) {
-  var el = bw.el(target);
+  var el = _resolveTarget(target);
   // Fallback: try class selector, but only for safe selector strings
   if (!el && _is(target, 'string') && target.indexOf('#') !== 0 && target.indexOf('.') !== 0) {
     try { el = bw.$('.' + target)[0]; } catch (e) { /* invalid selector */ }
   }
-  if (!el || !el.bw || typeof el.bw[action] !== 'function') {
+  if (!el) {
+    _cw('bw.message: target not found');
+    return false;
+  }
+  if (!el.bw || typeof el.bw[action] !== 'function') {
     _cw('bw.message: no handle method "' + action + '" on ' + target);
     return false;
   }
@@ -3836,8 +3847,7 @@ bw.apply = function(msg) {
  * console.log(JSON.stringify(bw.inspect('#app', 5), null, 2));
  */
 bw.inspect = function(target, depth) {
-  var el = bw.el(target);
-  if (!el && _is(target, 'string')) el = bw.$(target)[0];
+  var el = _resolveTarget(target);
   if (!el) return null;
   if (depth === undefined || depth === null) depth = 3;
 
@@ -3857,9 +3867,10 @@ bw.inspect = function(target, depth) {
     if (uuid) info.uuid = uuid;
     if (node._bw_type) info.type = node._bw_type;
 
-    // CSS classes (first 5 for readability)
+    // CSS classes (first 5 for readability). The field is `class`, the HTML
+    // name, same as TACO `a.class` -- not `classes`/`cls` (#116).
     if (node.className && typeof node.className === 'string') {
-      info.classes = node.className.split(' ').slice(0, 5).join(' ');
+      info['class'] = node.className.split(' ').slice(0, 5).join(' ');
     }
 
     // Bitwrench handle methods
@@ -4240,6 +4251,9 @@ function _scopeToStyleId(scope) {
  * @param {string} [config.tertiary] - Tertiary color hex (defaults to primary)
  * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
  * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
+ * @param {Object} [config.alternate] - Seeds for the alternate (dark/light) palette that
+ *   override the derived ones: any of primary, secondary, tertiary, success, danger,
+ *   warning, info, light, dark, background, surface. Keys you omit still derive.
  * @returns {Object} { css, alternateCss, rules, alternateRules, palette, alternatePalette, isLightPrimary }
  * @category CSS & Styling
  * @see bw.applyStyles
@@ -4255,11 +4269,7 @@ bw.makeStyles = function(config) {
 
   // Contrast check: warn if primary/secondary seeds are too close
   if (fullConfig.primary && fullConfig.secondary) {
-    var l1 = relativeLuminance(fullConfig.primary);
-    var l2 = relativeLuminance(fullConfig.secondary);
-    var bright = Math.max(l1, l2);
-    var dark = Math.min(l1, l2);
-    var ratio = (bright + 0.05) / (dark + 0.05);
+    var ratio = contrastRatio(fullConfig.primary, fullConfig.secondary);
     if (ratio < 1.5) {
       bw.pub('bw:diag', { code: 'contrast_aa', msg: 'primary/secondary seeds have near-identical luminance (ratio ' + ratio.toFixed(2) + ')' });
     }
@@ -4275,8 +4285,10 @@ bw.makeStyles = function(config) {
   var themedRules = generateThemedCSS('', palette, layout);
   var cssStr = bw.css(themedRules);
 
-  // Derive alternate palette (luminance-inverted)
-  var altConfig = deriveAlternateConfig(fullConfig);
+  // Derive the alternate palette from the same seeds, then let the caller's
+  // `alternate: { primary, background, ... }` seeds win over the derivation.
+  // A brand's dark-mode accent is a design decision, not a formula (#115).
+  var altConfig = Object.assign(deriveAlternateConfig(fullConfig), fullConfig.alternate || {});
   var altPalette = derivePalette(altConfig);
 
   // Generate alternate CSS rules WITHOUT .bw_theme_alt prefix (raw rules)
@@ -4288,7 +4300,8 @@ bw.makeStyles = function(config) {
   /* c8 ignore next 3 -- altPalette.surface always provided by derivePalette */
   altRawRules['body'] = {
     'color': altPalette.dark.base,
-    'background-color': altPalette.surface || altPalette.light.base
+    'background-color': altPalette.surface || altPalette.light.base,
+    'color-scheme': colorScheme(altPalette)
   };
 
   var altCssStr = bw.css(altRawRules);
@@ -4596,6 +4609,7 @@ bw.adjustLightness = adjustLightness;
 bw.mixColor = mixColor;
 bw.relativeLuminance = relativeLuminance;
 bw.textOnColor = textOnColor;
+bw.contrastRatio = contrastRatio;
 bw.deriveShades = deriveShades;
 bw.derivePalette = derivePalette;
 bw.harmonize = harmonize;
@@ -4809,7 +4823,8 @@ bw.copyToClipboard = function(text) {
  * @param {Object} config - Table configuration
  * @param {Array<Object>} config.data - Array of row objects to display
  * @param {Array<Object>} [config.columns] - Column definitions with key, label, render
- * @param {string} [config.className=''] - Additional CSS classes for table element
+ * @param {string} [config.id] - id attribute for the table element
+ * @param {string} [config.class] - Additional CSS classes for the table element (`className` is a deprecated alias)
  * @param {boolean} [config.sortable=true] - Enable click-to-sort headers
  * @param {Function} [config.onSort] - Sort callback (column, direction)
  * @param {boolean} [config.selectable=false] - Enable row selection on click
@@ -4839,9 +4854,10 @@ bw.copyToClipboard = function(text) {
  */
 bw.makeTable = function(config) {
   const {
+    id,
     data = [],
     columns,
-    className = '',
+    className: _c = '', class: className = _c,
     striped = false,
     hover = false,
     sortable = true,
@@ -5083,7 +5099,8 @@ bw.makeTable = function(config) {
 
   const table = {
     t: 'table',
-    a: { class: cls },
+    // id names the root: the table itself, or the paginated wrapper below
+    a: { id: pageSize ? undefined : id, class: cls },
     c: [thead, tbody],
     o: {
       type: 'table',
@@ -5126,7 +5143,7 @@ bw.makeTable = function(config) {
 
   return {
     t: 'div',
-    a: { class: 'bw_bccl_table_paginated' },
+    a: { id, class: 'bw_bccl_table_paginated' },
     c: [
       table,
       {
@@ -5153,7 +5170,8 @@ bw.makeTable = function(config) {
  * @param {boolean} [config.hover=false] - Hover highlight
  * @param {boolean} [config.sortable=true] - Enable sort
  * @param {Array<Object>} [config.columns] - Override auto-generated column defs
- * @param {string} [config.className=''] - Additional CSS classes
+ * @param {string} [config.id] - id attribute for the root element
+ * @param {string} [config.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @param {Function} [config.onSort] - Sort callback
  * @param {string} [config.sortColumn] - Currently sorted column key
  * @param {string} [config.sortDirection='asc'] - Sort direction
@@ -5172,10 +5190,10 @@ bw.makeTable = function(config) {
  * });
  */
 bw.makeTableFromArray = function(config) {
-  const { data = [], headerRow = true, columns, ...rest } = config;
+  const { data = [], headerRow = true, columns, className: _c, class: cls = _c, ...rest } = config;
 
   if (!_isA(data) || data.length === 0) {
-    return bw.makeTable({ data: [], columns: columns || [], ...rest });
+    return bw.makeTable({ data: [], columns: columns || [], class: cls, ...rest });
   }
 
   // Row-of-objects is the common mix-up (#92): say which factory wants that
@@ -5215,7 +5233,7 @@ bw.makeTableFromArray = function(config) {
     return { key: key, label: key };
   });
 
-  return bw.makeTable({ data: objData, columns: cols, ...rest });
+  return bw.makeTable({ data: objData, columns: cols, class: cls, ...rest });
 };
 
 /**
@@ -5234,7 +5252,8 @@ bw.makeTableFromArray = function(config) {
  * @param {Function} [config.formatValue] - Value label formatter: (value) => string
  * @param {boolean} [config.showValues=true] - Show value labels above bars
  * @param {boolean} [config.showLabels=true] - Show labels below bars
- * @param {string} [config.className=''] - Additional CSS classes
+ * @param {string} [config.id] - id attribute for the root element
+ * @param {string} [config.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object
  * @category Component Builders
  * @example
@@ -5251,6 +5270,7 @@ bw.makeTableFromArray = function(config) {
  */
 bw.makeBarChart = function(config) {
   const {
+    id,
     data = [],
     labelKey = 'label',
     valueKey = 'value',
@@ -5260,7 +5280,7 @@ bw.makeBarChart = function(config) {
     formatValue,
     showValues = true,
     showLabels = true,
-    className = ''
+    className: _c = '', class: className = _c
   } = config;
 
   if (!_isA(data) || data.length === 0) {
@@ -5305,7 +5325,7 @@ bw.makeBarChart = function(config) {
 
   return {
     t: 'div',
-    a: { class: ('bw_bar_chart_container ' + className).trim() },
+    a: { id, class: ('bw_bar_chart_container ' + className).trim() },
     c: chartChildren
   };
 };
@@ -5322,7 +5342,8 @@ bw.makeBarChart = function(config) {
  * @param {string} [config.title] - Table title heading
  * @param {Array<Object>} config.data - Array of row objects
  * @param {Array<Object>} [config.columns] - Column definitions
- * @param {string} [config.className=''] - Additional CSS classes for the table
+ * @param {string} [config.id] - id attribute for the wrapper element
+ * @param {string} [config.class] - Additional CSS classes for the wrapper element (`className` is a deprecated alias)
  * @param {boolean} [config.striped=true] - Add striped row styling
  * @param {boolean} [config.hover=true] - Add hover row highlighting
  * @param {boolean} [config.responsive=true] - Wrap table in responsive overflow div
@@ -5336,10 +5357,11 @@ bw.makeBarChart = function(config) {
  */
 bw.makeDataTable = function(config) {
   const {
+    id,
     title,
     data,
     columns,
-    className = '',
+    className: _c = '', class: className = _c,
     striped = true,
     hover = true,
     responsive = true,
@@ -5349,7 +5371,6 @@ bw.makeDataTable = function(config) {
   const table = bw.makeTable({
     data,
     columns,
-    className,
     striped,
     hover,
     ...tableConfig
@@ -5377,7 +5398,7 @@ bw.makeDataTable = function(config) {
   
   return {
     t: 'div',
-    a: { class: 'bw_bccl_dataTable table-container' },
+    a: { id, class: ('bw_bccl_dataTable table-container ' + className).trim() },
     c: content
   };
 };
@@ -5405,7 +5426,7 @@ bw.makeDataTable = function(config) {
 bw.render = function(target, position, taco) {
   try {
     // Same resolution as bw.mount and bw.append -- one rule for every verb.
-    var targetEl = _is(target, 'string') ? (bw.$(target)[0] || bw.el(target)) : target;
+    var targetEl = _resolveTarget(target);
     if (!targetEl) return { el: null, ok: false, error: 'target not found' };
 
     var el;
@@ -5563,13 +5584,19 @@ bw._propWarnReset = function() { _propWarned = {}; };
 
 function _checkProps(name, fn, props) {
   if (!bw.warnUnknownProps || !props || !_is(props, 'object') || _isA(props)) return;
+  // `className` is a deprecated alias of `class` (2.1.13). Factories still
+  // read it, so it is not "unknown"; it gets its own one-time notice.
+  if (props.className !== undefined && !_propWarned[name + 'className']) {
+    _propWarned[name + 'className'] = 1;
+    _cw('bw.' + name + ': "className" is deprecated, use "class"');
+  }
   if (!_hop.call(_propKeys, name)) _propKeys[name] = _parseKeys(fn);
   var known = _propKeys[name];
   if (!known) return;
   _keys(props).forEach(function(k) {
     if (known.indexOf(k) !== -1 || _propWarned[name + k]) return;
     _propWarned[name + k] = 1;
-    _cw('bw.' + name + ': unknown option "' + k + '" ignored. Accepted: ' + known.join(', '));
+    _cw('bw.' + name + ': unknown option "' + k + '" ignored. Accepted: ' + known.filter(function(a) { return a !== 'className'; }).join(', '));
   });
 }
 

@@ -1,4 +1,4 @@
-/*! bitwrench v2.1.12 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench v2.1.13 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -190,10 +190,10 @@
    */
 
   var VERSION_INFO = {
-    version: '2.1.12',
+    version: '2.1.13',
     name: 'bitwrench',
     license: 'BSD-2-Clause',
-    buildDate: '2026-10-31'
+    buildDate: '2026-11-07'
   };
 
   /**
@@ -562,8 +562,16 @@
   }
 
   /**
-   * Derive the alternate (luminance-inverted) version of a single seed color.
-   * Preserves hue, mirrors lightness, adjusts saturation for readability.
+   * Derive the alternate-palette version of a single seed color: same hue,
+   * lightness moved to the other side so it keeps its contrast against the
+   * alternate surface.
+   *
+   * A saturated mid-lightness accent (the common brand colour: indigo #6366f1,
+   * bootstrap blue, a warning amber) is NOT inverted. Inverting L 67 to L 23
+   * put a near-black accent on a dark surface (#115). Every design system's
+   * dark mode uses a lighter tint of the same hue instead, so that is what
+   * 50 < L <= 75 with S > 40 gets. Low saturation and extreme lightness keep
+   * the mirror rule.
    * @param {string} hex - Seed hex color
    * @returns {string} Alternate hex color
    */
@@ -573,7 +581,10 @@
       s = hsl[1],
       l = hsl[2];
     var altL, altS;
-    if (l > 50) {
+    if (l > 50 && l <= 75 && s > 40) {
+      altL = 72;
+      altS = clip$1(s * 0.9, 0, 100);
+    } else if (l > 50) {
       altL = clip$1(100 - l - 10, 8, 40);
       altS = clip$1(s * 0.85, 0, 100);
     } else {
@@ -581,6 +592,21 @@
       altS = clip$1(s * 1.1, 0, 100);
     }
     return hslToHex([h, altS, altL]);
+  }
+
+  /**
+   * WCAG 2.x contrast ratio between two colours, 1 (identical) to 21
+   * (black on white). AA body text needs 4.5, large text and UI 3.
+   * @param {string} a - Hex colour
+   * @param {string} b - Hex colour
+   * @returns {number} Contrast ratio, e.g. 4.83
+   */
+  function contrastRatio(a, b) {
+    var la = relativeLuminance(a),
+      lb = relativeLuminance(b);
+    var hi = Math.max(la, lb),
+      lo = Math.min(la, lb);
+    return (hi + 0.05) / (lo + 0.05);
   }
 
   /**
@@ -663,7 +689,9 @@
     var bgBase = config.background || hslToHex([h, 22, 96]);
     var surfBase = config.surface || hslToHex([h, 25, 94]);
     var surfHsl = hexToHsl(surfBase);
-    var surfAlt = surfHsl[2] <= 50 ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)]) : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]);
+    // A given surfaceAlt wins; StyleConfig declared it for releases while this
+    // line ignored it (found by the bccl-config-drift rule, 2.1.13).
+    var surfAlt = config.surfaceAlt || (surfHsl[2] <= 50 ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)]) : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]));
     var palette = {
       primary: deriveShades(pri),
       secondary: deriveShades(sec),
@@ -968,6 +996,15 @@
     };
 
     // Variant colors handled by palette class on component root
+
+    // Pressed toggle button: text colour on page background, inverted, which
+    // reads in both palettes (the accent fill with textOn was the low-contrast
+    // case for the app that asked, #119).
+    rules[_sx(scope, '.bw_bccl_btn_toggle[aria-pressed="true"]')] = {
+      'background-color': palette.dark.base,
+      'border-color': palette.dark.base,
+      'color': palette.background
+    };
 
     // Size variants (structural, reuse layout radius)
     rules[_sx(scope, '.bw_bccl_btn_lg')] = {
@@ -1299,12 +1336,25 @@
 
   // generateUtilityColors: removed — palette classes replace utility colors
 
+  /**
+   * 'dark' or 'light' for a palette, judged on its background. Exported so
+   * makeStyles can stamp the alternate palette's body override too.
+   * @param {Object} palette - derivePalette() output
+   * @returns {string}
+   */
+  function colorScheme(palette) {
+    return relativeLuminance(palette.background || '#f5f5f5') > 0.179 ? 'light' : 'dark';
+  }
   function generateResetThemed(scope, palette) {
     var rules = {};
     var bg = palette.background || '#f5f5f5';
     var baseReset = {
       'color': palette.dark.base,
-      'background-color': bg
+      'background-color': bg,
+      // Tell the browser which scheme this palette is, so native parts (select
+      // popups, scrollbars, date/number spinners, autofill) follow it instead
+      // of staying light inside a dark theme (#120).
+      'color-scheme': colorScheme(palette)
     };
     rules[_sx(scope, 'body')] = baseReset;
     return rules;
@@ -5675,13 +5725,13 @@
     };
   }
 
-  var _excluded$1 = ["type", "placeholder", "value", "id", "name", "disabled", "readonly", "required", "className", "style"],
-    _excluded2$1 = ["placeholder", "value", "rows", "id", "name", "disabled", "readonly", "required", "className"],
-    _excluded3 = ["options", "value", "id", "name", "disabled", "required", "className"],
-    _excluded4 = ["label", "checked", "id", "name", "disabled", "value", "className"],
-    _excluded5 = ["label", "name", "value", "checked", "id", "disabled", "className"],
-    _excluded6 = ["label", "checked", "id", "name", "disabled", "className"],
-    _excluded7 = ["min", "max", "step", "value", "label", "showValue", "id", "name", "disabled", "className"];
+  var _excluded$1 = ["type", "placeholder", "value", "id", "name", "disabled", "readonly", "required", "className", "class", "style"],
+    _excluded2$1 = ["placeholder", "value", "rows", "id", "name", "disabled", "readonly", "required", "className", "class"],
+    _excluded3 = ["options", "value", "id", "name", "disabled", "required", "className", "class"],
+    _excluded4 = ["label", "checked", "id", "name", "disabled", "value", "className", "class"],
+    _excluded5 = ["label", "name", "value", "checked", "id", "disabled", "className", "class"],
+    _excluded6 = ["label", "checked", "id", "name", "disabled", "className", "class"],
+    _excluded7 = ["min", "max", "step", "value", "label", "showValue", "id", "name", "disabled", "className", "class"];
   /**
    * Bitwrench v2 Components
    *
@@ -5754,7 +5804,8 @@
    * @param {boolean} [props.bordered=true] - Show card border
    * @param {string} [props.shadow] - Shadow level ("none", "sm", "md", "lg")
    * @param {boolean} [props.hoverable=false] - Enable hover lift animation
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @param {Object} [props.style] - Inline style object
    * @param {string} [props.headerClass] - Additional header CSS classes
    * @param {string} [props.bodyClass] - Additional body CSS classes
@@ -5772,7 +5823,8 @@
    */
   function makeCard() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
+    var id = props.id,
+      title = props.title,
       subtitle = props.subtitle,
       content = props.content,
       footer = props.footer,
@@ -5787,7 +5839,9 @@
       _props$hoverable = props.hoverable,
       hoverable = _props$hoverable === void 0 ? false : _props$hoverable,
       _props$className = props.className,
-      className = _props$className === void 0 ? '' : _props$className,
+      _c = _props$className === void 0 ? '' : _props$className,
+      _props$class = props["class"],
+      className = _props$class === void 0 ? _c : _props$class,
       style = props.style,
       _props$headerClass = props.headerClass,
       headerClass = _props$headerClass === void 0 ? '' : _props$headerClass,
@@ -5877,6 +5931,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": cardClasses,
         style: style
       },
@@ -5903,7 +5958,11 @@
    * @param {boolean} [props.disabled=false] - Whether the button is disabled
    * @param {Function} [props.onclick] - Click event handler
    * @param {string} [props.type="button"] - HTML button type ("button", "submit", "reset")
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {boolean} [props.toggle=false] - Press-to-toggle button: keeps aria-pressed state, styled when pressed
+   * @param {boolean} [props.pressed=false] - Initial pressed state of a toggle button
+   * @param {Function} [props.onToggle] - Called with (pressed, event) when a toggle button flips
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @param {Object} [props.style] - Inline style object
    * @returns {Object} TACO object representing a button element
    * @category Component Builders
@@ -5922,6 +5981,7 @@
       text: props
     };
     var _props = props,
+      id = _props.id,
       text = _props.text,
       _props$variant = _props.variant,
       variant = _props$variant === void 0 ? 'primary' : _props$variant,
@@ -5932,20 +5992,50 @@
       action = _props.action,
       _props$type = _props.type,
       type = _props$type === void 0 ? 'button' : _props$type,
+      _props$toggle = _props.toggle,
+      toggle = _props$toggle === void 0 ? false : _props$toggle,
+      _props$pressed = _props.pressed,
+      pressed = _props$pressed === void 0 ? false : _props$pressed,
+      onToggle = _props.onToggle,
       _props$className2 = _props.className,
-      className = _props$className2 === void 0 ? '' : _props$className2,
+      _c = _props$className2 === void 0 ? '' : _props$className2,
+      _props$class2 = _props["class"],
+      className = _props$class2 === void 0 ? _c : _props$class2,
       style = _props.style;
+
+    // Toggle (press-to-stay-on) button: aria-pressed carries the state, the
+    // palette styles [aria-pressed="true"], and el.bw.setPressed(on) lets code
+    // that is not the click handler (a shortcut, a menu) drive it (#119).
+    var click = onclick;
+    if (toggle) {
+      click = function click(e) {
+        var el = e.currentTarget || this;
+        var on = el.getAttribute('aria-pressed') !== 'true';
+        el.setAttribute('aria-pressed', String(on));
+        if (onToggle) onToggle(on, e);
+        if (onclick) onclick.call(el, e);
+      };
+    }
     return {
       t: 'button',
       a: {
+        id: id,
         type: type,
-        "class": ['bw_bccl_btn', variantClass(variant), size && "bw_bccl_btn_".concat(size), action && 'bw_act_' + action, className].filter(Boolean).join(' '),
+        "class": ['bw_bccl_btn', variantClass(variant), size && "bw_bccl_btn_".concat(size), action && 'bw_act_' + action, toggle && 'bw_bccl_btn_toggle', className].filter(Boolean).join(' '),
         disabled: disabled,
-        onclick: onclick,
+        'aria-pressed': toggle ? String(!!pressed) : undefined,
+        onclick: click,
         style: style
       },
       c: text,
-      o: {
+      o: toggle ? {
+        type: 'button',
+        handle: {
+          setPressed: function setPressed(el, on) {
+            el.setAttribute('aria-pressed', String(!!on));
+          }
+        }
+      } : {
         type: 'button'
       }
     };
@@ -5957,7 +6047,8 @@
    * @param {Object} [props] - Container configuration
    * @param {boolean} [props.fluid=false] - Use full-width fluid container
    * @param {Array|Object|string} [props.children] - Child content
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a container div
    * @category Component Builders
    * @example
@@ -5968,14 +6059,18 @@
    */
   function makeContainer() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$fluid = props.fluid,
+    var id = props.id,
+      _props$fluid = props.fluid,
       fluid = _props$fluid === void 0 ? false : _props$fluid,
       children = props.children,
       _props$className3 = props.className,
-      className = _props$className3 === void 0 ? '' : _props$className3;
+      _c = _props$className3 === void 0 ? '' : _props$className3,
+      _props$class3 = props["class"],
+      className = _props$class3 === void 0 ? _c : _props$class3;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_container".concat(fluid ? '_fluid' : '', " ").concat(className).trim()
       },
       c: children
@@ -5987,7 +6082,8 @@
    *
    * @param {Object} [props] - Row configuration
    * @param {Array|Object|string} [props.children] - Child columns
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @param {number} [props.gap] - Gutter size 0-5 applied via bw_g_{gap} (0 = no gutter; omit for the default)
    * @returns {Object} TACO object representing a grid row
    * @category Component Builders
@@ -5999,13 +6095,17 @@
    */
   function makeRow() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var children = props.children,
+    var id = props.id,
+      children = props.children,
       _props$className4 = props.className,
-      className = _props$className4 === void 0 ? '' : _props$className4,
+      _c = _props$className4 === void 0 ? '' : _props$className4,
+      _props$class4 = props["class"],
+      className = _props$class4 === void 0 ? _c : _props$class4,
       gap = props.gap;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_row bw_row ".concat(gap != null ? "bw_g_".concat(gap) : '', " ").concat(className).trim()
       },
       c: children
@@ -6025,7 +6125,8 @@
    * @param {number} [props.pull] - Column pull (1-12)
    * @param {Array|Object|string} [props.content] - Column content (alias for children)
    * @param {Array|Object|string} [props.children] - Column content
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a grid column
    * @category Component Builders
    * @example
@@ -6033,14 +6134,17 @@
    */
   function makeCol() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var size = props.size,
+    var id = props.id,
+      size = props.size,
       offset = props.offset,
       push = props.push,
       pull = props.pull,
       content = props.content,
       children = props.children,
       _props$className5 = props.className,
-      className = _props$className5 === void 0 ? '' : _props$className5;
+      _c = _props$className5 === void 0 ? '' : _props$className5,
+      _props$class5 = props["class"],
+      className = _props$class5 === void 0 ? _c : _props$class5;
     var classes = [];
     if (_typeof(size) === 'object') {
       // Responsive sizes
@@ -6065,6 +6169,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_col ".concat(classes.join(' '), " ").concat(className).trim()
       },
       c: content || children
@@ -6082,7 +6187,8 @@
    * @param {boolean} [props.items[].disabled] - Whether this item is disabled
    * @param {boolean} [props.pills=false] - Use pill styling instead of tabs
    * @param {boolean} [props.vertical=false] - Stack items vertically
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a nav element
    * @category Component Builders
    * @example
@@ -6096,17 +6202,21 @@
    */
   function makeNav() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$items = props.items,
+    var id = props.id,
+      _props$items = props.items,
       items = _props$items === void 0 ? [] : _props$items,
       _props$pills = props.pills,
       pills = _props$pills === void 0 ? false : _props$pills,
       _props$vertical = props.vertical,
       vertical = _props$vertical === void 0 ? false : _props$vertical,
       _props$className6 = props.className,
-      className = _props$className6 === void 0 ? '' : _props$className6;
+      _c = _props$className6 === void 0 ? '' : _props$className6,
+      _props$class6 = props["class"],
+      className = _props$class6 === void 0 ? _c : _props$class6;
     return {
       t: 'ul',
       a: {
+        id: id,
         "class": "bw_bccl_nav bw_nav ".concat(pills ? 'bw_nav_pills' : 'bw_nav_tabs', " ").concat(vertical ? 'bw_nav_vertical' : '', " ").concat(className).trim()
       },
       c: items.map(function (item) {
@@ -6139,7 +6249,8 @@
    * @param {string} [props.items[].href="#"] - Item link URL
    * @param {boolean} [props.items[].active] - Whether this item is active
    * @param {boolean} [props.dark=true] - Use dark theme styling
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a navbar element
    * @category Component Builders
    * @example
@@ -6154,7 +6265,8 @@
    */
   function makeNavbar() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var brand = props.brand,
+    var id = props.id,
+      brand = props.brand,
       _props$brandHref = props.brandHref,
       brandHref = _props$brandHref === void 0 ? '#' : _props$brandHref,
       _props$items2 = props.items,
@@ -6162,10 +6274,13 @@
       _props$dark = props.dark,
       dark = _props$dark === void 0 ? true : _props$dark,
       _props$className7 = props.className,
-      className = _props$className7 === void 0 ? '' : _props$className7;
+      _c = _props$className7 === void 0 ? '' : _props$className7,
+      _props$class7 = props["class"],
+      className = _props$class7 === void 0 ? _c : _props$class7;
     return {
       t: 'nav',
       a: {
+        id: id,
         "class": "bw_bccl_navbar ".concat(dark ? 'bw_bccl_navbar_dark' : 'bw_bccl_navbar_light', " ").concat(className).trim()
       },
       c: {
@@ -6236,11 +6351,16 @@
    */
   function makeTabs() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$tabs = props.tabs,
+    var id = props.id,
+      _props$tabs = props.tabs,
       tabs = _props$tabs === void 0 ? [] : _props$tabs,
       _props$activeIndex = props.activeIndex,
       activeIndex = _props$activeIndex === void 0 ? 0 : _props$activeIndex,
-      onTabChange = props.onTabChange;
+      onTabChange = props.onTabChange,
+      _props$className8 = props.className,
+      _c = _props$className8 === void 0 ? '' : _props$className8,
+      _props$class8 = props["class"],
+      className = _props$class8 === void 0 ? _c : _props$class8;
 
     // Find the active tab index based on the active property or use activeIndex
     var actualActiveIndex = activeIndex;
@@ -6274,7 +6394,8 @@
     return {
       t: 'div',
       a: {
-        "class": 'bw_bccl_tabs'
+        id: id,
+        "class": ('bw_bccl_tabs ' + className).trim()
       },
       c: [{
         t: 'ul',
@@ -6375,7 +6496,8 @@
    * @param {string|Object|Array} [props.content] - Alert message content
    * @param {string} [props.variant="info"] - Color variant ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")
    * @param {boolean} [props.dismissible=false] - Show a close button to dismiss the alert
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing an alert element
    * @category Component Builders
    * @example
@@ -6393,16 +6515,20 @@
       content: props
     };
     var _props2 = props,
+      id = _props2.id,
       content = _props2.content,
       _props2$variant = _props2.variant,
       variant = _props2$variant === void 0 ? 'info' : _props2$variant,
       _props2$dismissible = _props2.dismissible,
       dismissible = _props2$dismissible === void 0 ? false : _props2$dismissible,
       _props2$className = _props2.className,
-      className = _props2$className === void 0 ? '' : _props2$className;
+      _c = _props2$className === void 0 ? '' : _props2$className,
+      _props2$class = _props2["class"],
+      className = _props2$class === void 0 ? _c : _props2$class;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_alert ".concat(variantClass(variant), " ").concat(dismissible ? 'bw_bccl_alert_dismissible' : '', " ").concat(className).trim(),
         role: 'alert'
       },
@@ -6440,7 +6566,8 @@
    * @param {string} [props.variant="primary"] - Color variant
    * @param {string} [props.size] - Size variant: 'sm' or 'lg' (default is medium)
    * @param {boolean} [props.pill=false] - Use pill (rounded) shape
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a badge span
    * @category Component Builders
    * @example
@@ -6455,6 +6582,7 @@
       text: props
     };
     var _props3 = props,
+      id = _props3.id,
       text = _props3.text,
       _props3$variant = _props3.variant,
       variant = _props3$variant === void 0 ? 'primary' : _props3$variant,
@@ -6462,11 +6590,14 @@
       _props3$pill = _props3.pill,
       pill = _props3$pill === void 0 ? false : _props3$pill,
       _props3$className = _props3.className,
-      className = _props3$className === void 0 ? '' : _props3$className;
+      _c = _props3$className === void 0 ? '' : _props3$className,
+      _props3$class = _props3["class"],
+      className = _props3$class === void 0 ? _c : _props3$class;
     var sizeClass = size === 'sm' ? ' bw_bccl_badge_sm' : size === 'lg' ? ' bw_bccl_badge_lg' : '';
     return {
       t: 'span',
       a: {
+        id: id,
         "class": "bw_bccl_badge ".concat(variantClass(variant)).concat(sizeClass, " ").concat(pill ? 'bw_bccl_badge_pill' : '', " ").concat(className).trim()
       },
       c: text
@@ -6496,7 +6627,8 @@
    */
   function makeProgress() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$value = props.value,
+    var id = props.id,
+      _props$value = props.value,
       value = _props$value === void 0 ? 0 : _props$value,
       _props$max = props.max,
       max = _props$max === void 0 ? 100 : _props$max,
@@ -6507,12 +6639,17 @@
       _props$animated = props.animated,
       animated = _props$animated === void 0 ? false : _props$animated,
       label = props.label,
-      height = props.height;
+      height = props.height,
+      _props$className9 = props.className,
+      _c = _props$className9 === void 0 ? '' : _props$className9,
+      _props$class9 = props["class"],
+      className = _props$class9 === void 0 ? _c : _props$class9;
     var percentage = Math.round(value / max * 100);
     return {
       t: 'div',
       a: {
-        "class": 'bw_bccl_progress',
+        id: id,
+        "class": ('bw_bccl_progress ' + className).trim(),
         style: height ? {
           height: "".concat(height, "px")
         } : undefined
@@ -6582,16 +6719,22 @@
    */
   function makeListGroup() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$items3 = props.items,
+    var id = props.id,
+      _props$items3 = props.items,
       items = _props$items3 === void 0 ? [] : _props$items3,
       _props$flush = props.flush,
       flush = _props$flush === void 0 ? false : _props$flush,
       _props$interactive = props.interactive,
-      interactive = _props$interactive === void 0 ? false : _props$interactive;
+      interactive = _props$interactive === void 0 ? false : _props$interactive,
+      _props$className0 = props.className,
+      _c = _props$className0 === void 0 ? '' : _props$className0,
+      _props$class0 = props["class"],
+      className = _props$class0 === void 0 ? _c : _props$class0;
     return {
       t: 'div',
       a: {
-        "class": "bw_bccl_listGroup bw_list_group ".concat(flush ? 'bw_list_group_flush' : '').trim()
+        id: id,
+        "class": "bw_bccl_listGroup bw_list_group ".concat(flush ? 'bw_list_group_flush' : '', " ").concat(className).trim()
       },
       c: items.map(function (item) {
         var isObject = _typeof(item) === 'object';
@@ -6653,13 +6796,19 @@
    */
   function makeBreadcrumb() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$items4 = props.items,
-      items = _props$items4 === void 0 ? [] : _props$items4;
+    var id = props.id,
+      _props$items4 = props.items,
+      items = _props$items4 === void 0 ? [] : _props$items4,
+      _props$className1 = props.className,
+      _c = _props$className1 === void 0 ? '' : _props$className1,
+      _props$class1 = props["class"],
+      className = _props$class1 === void 0 ? _c : _props$class1;
     return {
       t: 'nav',
       a: {
+        id: id,
         'aria-label': 'breadcrumb',
-        "class": 'bw_bccl_breadcrumb'
+        "class": ('bw_bccl_breadcrumb ' + className).trim()
       },
       c: {
         t: 'ol',
@@ -6695,7 +6844,8 @@
    * @param {Object} [props] - Form configuration
    * @param {Array|Object|string} [props.children] - Form contents (form groups, inputs, buttons)
    * @param {Function} [props.onsubmit] - Submit handler (defaults to preventDefault)
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a form element
    * @category Component Builders
    * @example
@@ -6709,17 +6859,21 @@
    */
   function makeForm() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var children = props.children,
+    var id = props.id,
+      children = props.children,
       fields = props.fields,
       onsubmit = props.onsubmit,
-      _props$className8 = props.className,
-      className = _props$className8 === void 0 ? '' : _props$className8;
+      _props$className10 = props.className,
+      _c = _props$className10 === void 0 ? '' : _props$className10,
+      _props$class10 = props["class"],
+      className = _props$class10 === void 0 ? _c : _props$class10;
 
     // Legacy API: just wraps children
     if (!fields) {
       return {
         t: 'form',
         a: {
+          id: id,
           "class": "bw_bccl_form ".concat(className).trim(),
           onsubmit: onsubmit || function (e) {
             return e.preventDefault();
@@ -6776,6 +6930,7 @@
     return {
       t: 'form',
       a: {
+        id: id,
         "class": "bw_bccl_form ".concat(className).trim(),
         onsubmit: onsubmit || function (e) {
           return e.preventDefault();
@@ -6888,17 +7043,24 @@
       id = props.id,
       validation = props.validation,
       feedback = props.feedback,
-      required = props.required;
+      required = props.required,
+      _props$className11 = props.className,
+      _c = _props$className11 === void 0 ? '' : _props$className11,
+      _props$class11 = props["class"],
+      className = _props$class11 === void 0 ? _c : _props$class11;
 
-    // Shallow-clone input TACO to add validation class without mutating original
+    // Shallow-clone input TACO to add the validation class and the group's id
+    // without mutating the original. `id` names the control (the label's `for`
+    // points at it), so it lands on the input, not on the wrapper.
     var styledInput = input;
-    if (validation && input && input.a) {
+    if (input && (validation || id && !(input.a && input.a.id))) {
       styledInput = {
         t: input.t,
         a: Object.assign({}, input.a),
         c: input.c,
         o: input.o
       };
+      if (id && !styledInput.a.id) styledInput.a.id = id;
       var validClass = validation === 'valid' ? 'bw_is_valid' : validation === 'invalid' ? 'bw_is_invalid' : '';
       if (validClass) {
         styledInput.a["class"] = ((styledInput.a["class"] || '') + ' ' + validClass).trim();
@@ -6907,7 +7069,7 @@
     return {
       t: 'div',
       a: {
-        "class": 'bw_bccl_form_group'
+        "class": ('bw_bccl_form_group ' + className).trim()
       },
       c: [label && {
         t: 'label',
@@ -6953,7 +7115,8 @@
    * @param {boolean} [props.disabled=false] - Whether the input is disabled
    * @param {boolean} [props.readonly=false] - Whether the input is read-only
    * @param {boolean} [props.required=false] - Whether the input is required
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @param {Object} [props.style] - Inline style object
    * @returns {Object} TACO object representing an input element
    * @category Component Builders
@@ -6979,8 +7142,10 @@
       readonly = _props$readonly === void 0 ? false : _props$readonly,
       _props$required = props.required,
       required = _props$required === void 0 ? false : _props$required,
-      _props$className9 = props.className,
-      className = _props$className9 === void 0 ? '' : _props$className9,
+      _props$className12 = props.className,
+      _c = _props$className12 === void 0 ? '' : _props$className12,
+      _props$class12 = props["class"],
+      className = _props$class12 === void 0 ? _c : _props$class12,
       style = props.style,
       eventHandlers = _objectWithoutProperties(props, _excluded$1);
     return {
@@ -7012,7 +7177,8 @@
    * @param {boolean} [props.disabled=false] - Whether the textarea is disabled
    * @param {boolean} [props.readonly=false] - Whether the textarea is read-only
    * @param {boolean} [props.required=false] - Whether the textarea is required
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a textarea element
    * @category Component Builders
    * @example
@@ -7036,8 +7202,10 @@
       readonly = _props$readonly2 === void 0 ? false : _props$readonly2,
       _props$required2 = props.required,
       required = _props$required2 === void 0 ? false : _props$required2,
-      _props$className0 = props.className,
-      className = _props$className0 === void 0 ? '' : _props$className0,
+      _props$className13 = props.className,
+      _c = _props$className13 === void 0 ? '' : _props$className13,
+      _props$class13 = props["class"],
+      className = _props$class13 === void 0 ? _c : _props$class13,
       eventHandlers = _objectWithoutProperties(props, _excluded2$1);
     return {
       t: 'textarea',
@@ -7067,7 +7235,8 @@
    * @param {string} [props.name] - Select name attribute
    * @param {boolean} [props.disabled=false] - Whether the select is disabled
    * @param {boolean} [props.required=false] - Whether the select is required
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a select element
    * @category Component Builders
    * @example
@@ -7091,8 +7260,10 @@
       disabled = _props$disabled4 === void 0 ? false : _props$disabled4,
       _props$required3 = props.required,
       required = _props$required3 === void 0 ? false : _props$required3,
-      _props$className1 = props.className,
-      className = _props$className1 === void 0 ? '' : _props$className1,
+      _props$className14 = props.className,
+      _c = _props$className14 === void 0 ? '' : _props$className14,
+      _props$class14 = props["class"],
+      className = _props$class14 === void 0 ? _c : _props$class14,
       eventHandlers = _objectWithoutProperties(props, _excluded3);
     return {
       t: 'select',
@@ -7145,8 +7316,10 @@
       _props$disabled5 = props.disabled,
       disabled = _props$disabled5 === void 0 ? false : _props$disabled5,
       value = props.value,
-      _props$className10 = props.className,
-      className = _props$className10 === void 0 ? '' : _props$className10,
+      _props$className15 = props.className,
+      _c = _props$className15 === void 0 ? '' : _props$className15,
+      _props$class15 = props["class"],
+      className = _props$class15 === void 0 ? _c : _props$class15,
       eventHandlers = _objectWithoutProperties(props, _excluded4);
     return {
       t: 'div',
@@ -7182,7 +7355,8 @@
    * @param {Array|Object|string} [props.children] - Stack children
    * @param {string} [props.direction="vertical"] - Stack direction ("vertical" or "horizontal")
    * @param {number} [props.gap=3] - Gap size (0-5)
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a stack layout
    * @category Component Builders
    * @example
@@ -7197,16 +7371,20 @@
    */
   function makeStack() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var children = props.children,
+    var id = props.id,
+      children = props.children,
       _props$direction = props.direction,
       direction = _props$direction === void 0 ? 'vertical' : _props$direction,
       _props$gap = props.gap,
       gap = _props$gap === void 0 ? 3 : _props$gap,
-      _props$className11 = props.className,
-      className = _props$className11 === void 0 ? '' : _props$className11;
+      _props$className16 = props.className,
+      _c = _props$className16 === void 0 ? '' : _props$className16,
+      _props$class16 = props["class"],
+      className = _props$class16 === void 0 ? _c : _props$class16;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_stack bw_".concat(direction === 'vertical' ? 'vstack' : 'hstack', " bw_gap_").concat(gap, " ").concat(className).trim()
       },
       c: children
@@ -7227,19 +7405,25 @@
    */
   function makeSpinner() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$variant3 = props.variant,
+    var id = props.id,
+      _props$variant3 = props.variant,
       variant = _props$variant3 === void 0 ? 'primary' : _props$variant3,
       _props$size = props.size,
       size = _props$size === void 0 ? 'md' : _props$size,
       _props$type3 = props.type,
-      type = _props$type3 === void 0 ? 'border' : _props$type3;
+      type = _props$type3 === void 0 ? 'border' : _props$type3,
+      _props$className17 = props.className,
+      _c = _props$className17 === void 0 ? '' : _props$className17,
+      _props$class17 = props["class"],
+      className = _props$class17 === void 0 ? _c : _props$class17;
     return {
       t: 'div',
       a: {
+        id: id,
         // Size suffix is underscore-separated like every other bw_ class. It was
         // `-${size}`, which never matched the generated .bw_spinner_border_md /
         // _sm / _lg rules, so the size prop had no effect.
-        "class": "bw_bccl_spinner bw_spinner_".concat(type, " bw_spinner_").concat(type, "_").concat(size, " ").concat(variantClass(variant)),
+        "class": "bw_bccl_spinner bw_spinner_".concat(type, " bw_spinner_").concat(type, "_").concat(size, " ").concat(variantClass(variant), " ").concat(className).trim(),
         role: 'status'
       },
       c: {
@@ -7268,7 +7452,8 @@
    * @param {boolean} [props.overlay=false] - Add dark overlay (for background images)
    * @param {string} [props.backgroundImage] - Background image URL
    * @param {Array|Object} [props.actions] - Call-to-action buttons
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a hero section
    * @category Component Builders
    * @example
@@ -7284,7 +7469,8 @@
    */
   function makeHero() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
+    var id = props.id,
+      title = props.title,
       subtitle = props.subtitle,
       content = props.content,
       _props$variant4 = props.variant,
@@ -7297,8 +7483,10 @@
       overlay = _props$overlay === void 0 ? false : _props$overlay,
       backgroundImage = props.backgroundImage,
       actions = props.actions,
-      _props$className12 = props.className,
-      className = _props$className12 === void 0 ? '' : _props$className12;
+      _props$className18 = props.className,
+      _c = _props$className18 === void 0 ? '' : _props$className18,
+      _props$class18 = props["class"],
+      className = _props$class18 === void 0 ? _c : _props$class18;
     var sizeClasses = {
       sm: 'bw_py_3',
       md: 'bw_py_4',
@@ -7308,6 +7496,7 @@
     return {
       t: 'section',
       a: {
+        id: id,
         "class": "bw_bccl_hero ".concat(variantClass(variant), " ").concat(sizeClasses[size] || sizeClasses.lg, " ").concat(centered ? 'bw_text_center' : '', " ").concat(className).trim(),
         style: backgroundImage ? "background-image: url('".concat(backgroundImage, "'); background-size: cover; background-position: center;") : undefined
       },
@@ -7366,7 +7555,8 @@
    *   span (5 -> 6 per row, 8 -> 6 per row). Stacks to one column below md.
    * @param {boolean} [props.centered=true] - Center-align feature text
    * @param {string} [props.iconSize="3rem"] - Icon font size
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a feature grid
    * @category Component Builders
    * @example
@@ -7381,7 +7571,8 @@
    */
   function makeFeatureGrid() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$features = props.features,
+    var id = props.id,
+      _props$features = props.features,
       features = _props$features === void 0 ? [] : _props$features,
       _props$columns = props.columns,
       columns = _props$columns === void 0 ? 3 : _props$columns,
@@ -7389,14 +7580,17 @@
       centered = _props$centered2 === void 0 ? true : _props$centered2,
       _props$iconSize = props.iconSize,
       iconSize = _props$iconSize === void 0 ? '3rem' : _props$iconSize,
-      _props$className13 = props.className,
-      className = _props$className13 === void 0 ? '' : _props$className13;
+      _props$className19 = props.className,
+      _c = _props$className19 === void 0 ? '' : _props$className19,
+      _props$class19 = props["class"],
+      className = _props$class19 === void 0 ? _c : _props$class19;
 
     // Nearest whole grid span: 12/5 would emit bw_col_md_2.4, which no rule matches
     var colClass = "bw_col_md_".concat(Math.min(12, Math.max(1, Math.round(12 / columns))));
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_featureGrid bw_feature_grid ".concat(className).trim()
       },
       c: {
@@ -7451,7 +7645,8 @@
    * @param {Array|Object} [props.actions] - CTA buttons or content
    * @param {string} [props.variant="light"] - Background variant
    * @param {boolean} [props.centered=true] - Center-align content
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a CTA section
    * @category Component Builders
    * @example
@@ -7465,18 +7660,22 @@
    */
   function makeCTA() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
+    var id = props.id,
+      title = props.title,
       description = props.description,
       actions = props.actions,
       _props$variant5 = props.variant,
       variant = _props$variant5 === void 0 ? 'light' : _props$variant5,
       _props$centered3 = props.centered,
       centered = _props$centered3 === void 0 ? true : _props$centered3,
-      _props$className14 = props.className,
-      className = _props$className14 === void 0 ? '' : _props$className14;
+      _props$className20 = props.className,
+      _c = _props$className20 === void 0 ? '' : _props$className20,
+      _props$class20 = props["class"],
+      className = _props$class20 === void 0 ? _c : _props$class20;
     return {
       t: 'section',
       a: {
+        id: id,
         "class": "bw_bccl_cta bw_cta bw_bg_".concat(variant, " bw_py_5 ").concat(className).trim()
       },
       c: {
@@ -7522,7 +7721,8 @@
    * @param {string|Object|Array} [props.content] - Section body content
    * @param {string} [props.variant="default"] - Background variant ("default" for none, or a color name)
    * @param {string} [props.spacing="md"] - Vertical padding ("sm", "md", "lg", "xl")
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a content section
    * @category Component Builders
    * @example
@@ -7535,15 +7735,18 @@
    */
   function makeSection() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
+    var id = props.id,
+      title = props.title,
       subtitle = props.subtitle,
       content = props.content,
       _props$variant6 = props.variant,
       variant = _props$variant6 === void 0 ? 'default' : _props$variant6,
       _props$spacing = props.spacing,
       spacing = _props$spacing === void 0 ? 'md' : _props$spacing,
-      _props$className15 = props.className,
-      className = _props$className15 === void 0 ? '' : _props$className15;
+      _props$className21 = props.className,
+      _c = _props$className21 === void 0 ? '' : _props$className21,
+      _props$class21 = props["class"],
+      className = _props$class21 === void 0 ? _c : _props$class21;
     var spacingClasses = {
       sm: 'bw_py_3',
       md: 'bw_py_4',
@@ -7553,6 +7756,7 @@
     return {
       t: 'section',
       a: {
+        id: id,
         "class": "bw_bccl_section bw_section ".concat(spacingClasses[spacing] || spacingClasses.md, " ").concat(variant !== 'default' ? "bw_bg_".concat(variant) : '', " ").concat(className).trim()
       },
       c: {
@@ -7619,12 +7823,17 @@
    */
   function makeCodeDemo() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
+    var id = props.id,
+      title = props.title,
       description = props.description,
       code = props.code,
       result = props.result,
       _props$language = props.language,
-      language = _props$language === void 0 ? 'javascript' : _props$language;
+      language = _props$language === void 0 ? 'javascript' : _props$language,
+      _props$className22 = props.className,
+      _c = _props$className22 === void 0 ? '' : _props$className22,
+      _props$class22 = props["class"],
+      className = _props$class22 === void 0 ? _c : _props$class22;
 
     // Generate unique ID for this demo
     var demoId = "demo-".concat(Math.random().toString(36).substr(2, 9));
@@ -7699,7 +7908,8 @@
     return {
       t: 'div',
       a: {
-        "class": 'bw_bccl_codeDemo bw_code_demo'
+        id: id,
+        "class": ('bw_bccl_codeDemo bw_code_demo ' + className).trim()
       },
       c: content
     };
@@ -7725,7 +7935,8 @@
    * @param {number} [props.currentPage=1] - Currently active page (1-based)
    * @param {Function} [props.onPageChange] - Callback when page changes, receives page number
    * @param {string} [props.size] - Size variant ("sm" or "lg")
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a pagination nav
    * @category Component Builders
    * @example
@@ -7737,14 +7948,17 @@
    */
   function makePagination() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$pages = props.pages,
+    var id = props.id,
+      _props$pages = props.pages,
       pages = _props$pages === void 0 ? 1 : _props$pages,
       _props$currentPage = props.currentPage,
       currentPage = _props$currentPage === void 0 ? 1 : _props$currentPage,
       onPageChange = props.onPageChange,
       size = props.size,
-      _props$className16 = props.className,
-      className = _props$className16 === void 0 ? '' : _props$className16;
+      _props$className23 = props.className,
+      _c = _props$className23 === void 0 ? '' : _props$className23,
+      _props$class23 = props["class"],
+      className = _props$class23 === void 0 ? _c : _props$class23;
     function handleClick(page) {
       return function (e) {
         e.preventDefault();
@@ -7816,12 +8030,14 @@
     return {
       t: 'nav',
       a: {
-        'aria-label': 'Pagination'
+        id: id,
+        'aria-label': 'Pagination',
+        "class": className || undefined
       },
       c: {
         t: 'ul',
         a: {
-          "class": "bw_bccl_pagination ".concat(size ? 'bw_bccl_pagination_' + size : '', " ").concat(className).trim()
+          "class": "bw_bccl_pagination ".concat(size ? 'bw_bccl_pagination_' + size : '').trim()
         },
         c: items
       },
@@ -7861,7 +8077,8 @@
    * @param {boolean} [props.checked=false] - Whether the radio is selected
    * @param {string} [props.id] - Element ID (links label to radio)
    * @param {boolean} [props.disabled=false] - Whether the radio is disabled
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a radio form group
    * @category Component Builders
    * @example
@@ -7882,8 +8099,10 @@
       id = props.id,
       _props$disabled6 = props.disabled,
       disabled = _props$disabled6 === void 0 ? false : _props$disabled6,
-      _props$className17 = props.className,
-      className = _props$className17 === void 0 ? '' : _props$className17,
+      _props$className24 = props.className,
+      _c = _props$className24 === void 0 ? '' : _props$className24,
+      _props$class24 = props["class"],
+      className = _props$class24 === void 0 ? _c : _props$class24,
       eventHandlers = _objectWithoutProperties(props, _excluded5);
     return {
       t: 'div',
@@ -7919,7 +8138,8 @@
    * @param {Array} [props.children] - Button TACO objects to group
    * @param {string} [props.size] - Size variant ("sm" or "lg")
    * @param {boolean} [props.vertical=false] - Stack buttons vertically
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a button group
    * @category Component Builders
    * @example
@@ -7933,15 +8153,19 @@
    */
   function makeButtonGroup() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var children = props.children,
+    var id = props.id,
+      children = props.children,
       size = props.size,
       _props$vertical2 = props.vertical,
       vertical = _props$vertical2 === void 0 ? false : _props$vertical2,
-      _props$className18 = props.className,
-      className = _props$className18 === void 0 ? '' : _props$className18;
+      _props$className25 = props.className,
+      _c = _props$className25 === void 0 ? '' : _props$className25,
+      _props$class25 = props["class"],
+      className = _props$class25 === void 0 ? _c : _props$class25;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "".concat(vertical ? 'bw_bccl_btn_group_vertical' : 'bw_bccl_btn_group', " ").concat(size ? 'bw_bccl_btn_group_' + size : '', " ").concat(className).trim(),
         role: 'group'
       },
@@ -7962,7 +8186,8 @@
    * @param {string|Object|Array} props.items[].content - Collapsible content
    * @param {boolean} [props.items[].open=false] - Whether the item is initially open
    * @param {boolean} [props.multiOpen=false] - Allow multiple items open simultaneously
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing an accordion
    * @category Component Builders
    * @example
@@ -7975,15 +8200,19 @@
    */
   function makeAccordion() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$items5 = props.items,
+    var id = props.id,
+      _props$items5 = props.items,
       items = _props$items5 === void 0 ? [] : _props$items5,
       _props$multiOpen = props.multiOpen,
       multiOpen = _props$multiOpen === void 0 ? false : _props$multiOpen,
-      _props$className19 = props.className,
-      className = _props$className19 === void 0 ? '' : _props$className19;
+      _props$className26 = props.className,
+      _c = _props$className26 === void 0 ? '' : _props$className26,
+      _props$class26 = props["class"],
+      className = _props$class26 === void 0 ? _c : _props$class26;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_accordion ".concat(className).trim()
       },
       c: items.map(function (item, index) {
@@ -8136,7 +8365,8 @@
    * @param {string} [props.size] - Modal size ("sm", "lg", "xl")
    * @param {boolean} [props.closeButton=true] - Show X close button in header
    * @param {Function} [props.onClose] - Callback when modal is closed
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a modal
    * @category Component Builders
    * @example
@@ -8148,7 +8378,8 @@
    */
   function makeModal() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
+    var id = props.id,
+      title = props.title,
       content = props.content,
       footer = props.footer,
       size = props.size,
@@ -8159,8 +8390,10 @@
       onClose = props.onClose,
       _props$open = props.open,
       open = _props$open === void 0 ? false : _props$open,
-      _props$className20 = props.className,
-      className = _props$className20 === void 0 ? '' : _props$className20;
+      _props$className27 = props.className,
+      _c = _props$className27 === void 0 ? '' : _props$className27,
+      _props$class27 = props["class"],
+      className = _props$class27 === void 0 ? _c : _props$class27;
     function closeModal(el) {
       var backdrop = el.closest('.bw_bccl_modal');
       /* c8 ignore next -- defensive; closeModal always called from within modal */
@@ -8179,6 +8412,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_modal ".concat(open ? 'bw_bccl_modal_show' : '', " ").concat(className).trim(),
         style: open ? 'display:flex' : undefined
       },
@@ -8289,7 +8523,8 @@
    * @param {boolean} [props.autoDismiss=true] - Auto-dismiss after delay
    * @param {number} [props.delay=5000] - Auto-dismiss delay in ms
    * @param {string} [props.position="top-right"] - Container position
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a toast
    * @category Component Builders
    * @example
@@ -8301,7 +8536,8 @@
    */
   function makeToast() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var title = props.title,
+    var id = props.id,
+      title = props.title,
       content = props.content,
       _props$variant7 = props.variant,
       variant = _props$variant7 === void 0 ? 'info' : _props$variant7,
@@ -8311,11 +8547,14 @@
       delay = _props$delay === void 0 ? 5000 : _props$delay,
       _props$position = props.position,
       position = _props$position === void 0 ? 'top-right' : _props$position,
-      _props$className21 = props.className,
-      className = _props$className21 === void 0 ? '' : _props$className21;
+      _props$className28 = props.className,
+      _c = _props$className28 === void 0 ? '' : _props$className28,
+      _props$class28 = props["class"],
+      className = _props$class28 === void 0 ? _c : _props$class28;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_toast ".concat(variantClass(variant), " bw_bccl_toast_").concat(position.replace(/-/g, '_'), " ").concat(className).trim(),
         role: 'alert'
       },
@@ -8399,7 +8638,8 @@
    * @param {boolean} [props.items[].disabled] - Whether the item is disabled
    * @param {string} [props.align="start"] - Menu alignment ("start" or "end")
    * @param {string} [props.variant="primary"] - Trigger button variant
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a dropdown
    * @category Component Builders
    * @example
@@ -8414,15 +8654,18 @@
    */
   function makeDropdown() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var trigger = props.trigger,
+    var id = props.id,
+      trigger = props.trigger,
       _props$items6 = props.items,
       items = _props$items6 === void 0 ? [] : _props$items6,
       _props$align = props.align,
       align = _props$align === void 0 ? 'start' : _props$align,
       _props$variant8 = props.variant,
       variant = _props$variant8 === void 0 ? 'primary' : _props$variant8,
-      _props$className22 = props.className,
-      className = _props$className22 === void 0 ? '' : _props$className22;
+      _props$className29 = props.className,
+      _c = _props$className29 === void 0 ? '' : _props$className29,
+      _props$class29 = props["class"],
+      className = _props$class29 === void 0 ? _c : _props$class29;
     var triggerTaco;
     if (typeof trigger === 'string' || trigger === undefined) {
       triggerTaco = {
@@ -8444,6 +8687,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_dropdown ".concat(className).trim()
       },
       c: [triggerTaco, {
@@ -8508,7 +8752,8 @@
    * @param {string} [props.id] - Element ID (links label to switch)
    * @param {string} [props.name] - Input name attribute
    * @param {boolean} [props.disabled=false] - Whether the switch is disabled
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a toggle switch
    * @category Component Builders
    * @example
@@ -8527,8 +8772,10 @@
       name = props.name,
       _props$disabled7 = props.disabled,
       disabled = _props$disabled7 === void 0 ? false : _props$disabled7,
-      _props$className23 = props.className,
-      className = _props$className23 === void 0 ? '' : _props$className23,
+      _props$className30 = props.className,
+      _c = _props$className30 === void 0 ? '' : _props$className30,
+      _props$class30 = props["class"],
+      className = _props$class30 === void 0 ? _c : _props$class30,
       eventHandlers = _objectWithoutProperties(props, _excluded6);
     return {
       t: 'div',
@@ -8565,7 +8812,8 @@
    * @param {string} [props.width] - Custom width (e.g. "200px", "100%")
    * @param {string} [props.height] - Custom height (e.g. "20px")
    * @param {number} [props.count=1] - Number of skeleton lines (for text variant)
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a skeleton placeholder
    * @category Component Builders
    * @example
@@ -8573,19 +8821,23 @@
    */
   function makeSkeleton() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$variant9 = props.variant,
+    var id = props.id,
+      _props$variant9 = props.variant,
       variant = _props$variant9 === void 0 ? 'text' : _props$variant9,
       width = props.width,
       height = props.height,
       _props$count = props.count,
       count = _props$count === void 0 ? 1 : _props$count,
-      _props$className24 = props.className,
-      className = _props$className24 === void 0 ? '' : _props$className24;
+      _props$className31 = props.className,
+      _c = _props$className31 === void 0 ? '' : _props$className31,
+      _props$class31 = props["class"],
+      className = _props$class31 === void 0 ? _c : _props$class31;
     if (variant === 'circle') {
       var circleSize = width || height || '3rem';
       return {
         t: 'div',
         a: {
+          id: id,
           "class": "bw_bccl_skeleton bw_skeleton bw_skeleton_circle ".concat(className).trim(),
           style: {
             width: circleSize,
@@ -8598,6 +8850,7 @@
       return {
         t: 'div',
         a: {
+          id: id,
           "class": "bw_bccl_skeleton bw_skeleton bw_skeleton_rect ".concat(className).trim(),
           style: {
             width: width || '100%',
@@ -8612,6 +8865,7 @@
       return {
         t: 'div',
         a: {
+          id: id,
           "class": "bw_bccl_skeleton bw_skeleton bw_skeleton_text ".concat(className).trim(),
           style: {
             width: width || '100%',
@@ -8636,6 +8890,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_skeleton bw_skeleton_group ".concat(className).trim()
       },
       c: lines
@@ -8651,7 +8906,8 @@
    * @param {string} [props.initials] - Fallback initials (e.g. "JD")
    * @param {string} [props.size="md"] - Size ("sm", "md", "lg", "xl")
    * @param {string} [props.variant="primary"] - Background color variant for initials
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing an avatar
    * @category Component Builders
    * @example
@@ -8660,7 +8916,8 @@
    */
   function makeAvatar() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var src = props.src,
+    var id = props.id,
+      src = props.src,
       _props$alt = props.alt,
       alt = _props$alt === void 0 ? '' : _props$alt,
       initials = props.initials,
@@ -8668,12 +8925,15 @@
       size = _props$size3 === void 0 ? 'md' : _props$size3,
       _props$variant0 = props.variant,
       variant = _props$variant0 === void 0 ? 'primary' : _props$variant0,
-      _props$className25 = props.className,
-      className = _props$className25 === void 0 ? '' : _props$className25;
+      _props$className32 = props.className,
+      _c = _props$className32 === void 0 ? '' : _props$className32,
+      _props$class32 = props["class"],
+      className = _props$class32 === void 0 ? _c : _props$class32;
     if (src) {
       return {
         t: 'img',
         a: {
+          id: id,
           "class": "bw_bccl_avatar bw_avatar bw_avatar_".concat(size, " ").concat(className).trim(),
           src: src,
           alt: alt
@@ -8683,6 +8943,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": "bw_bccl_avatar bw_avatar bw_avatar_".concat(size, " ").concat(variantClass(variant), " ").concat(className).trim()
       },
       c: initials || ''
@@ -8705,7 +8966,8 @@
    * @param {number} [props.interval=5000] - Auto-advance interval in ms
    * @param {string} [props.height='300px'] - Carousel height
    * @param {number} [props.startIndex=0] - Initial slide index
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a carousel
    * @category Component Builders
    * @example
@@ -8720,7 +8982,8 @@
    */
   function makeCarousel() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$items7 = props.items,
+    var id = props.id,
+      _props$items7 = props.items,
       items = _props$items7 === void 0 ? [] : _props$items7,
       _props$showControls = props.showControls,
       showControls = _props$showControls === void 0 ? true : _props$showControls,
@@ -8738,8 +9001,10 @@
       prevLabel = _props$prevLabel === void 0 ? 'Previous slide' : _props$prevLabel,
       _props$nextLabel = props.nextLabel,
       nextLabel = _props$nextLabel === void 0 ? 'Next slide' : _props$nextLabel,
-      _props$className26 = props.className,
-      className = _props$className26 === void 0 ? '' : _props$className26;
+      _props$className33 = props.className,
+      _c = _props$className33 === void 0 ? '' : _props$className33,
+      _props$class33 = props["class"],
+      className = _props$class33 === void 0 ? _c : _props$class33;
 
     // Shared navigation logic
     function _goToSlide(carouselEl, index) {
@@ -8875,6 +9140,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": ('bw_bccl_carousel ' + className).trim(),
         style: 'height: ' + height,
         tabindex: '0',
@@ -8978,7 +9244,8 @@
    * @param {string} [props.suffix] - Custom suffix (e.g. "%")
    * @param {string} [props.icon] - Icon content (emoji or text) shown above value
    * @param {string} [props.variant] - Left-border color variant ("primary", "success", "danger", etc.)
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @param {Object} [props.style] - Inline style object
    * @returns {Object} TACO object representing a stat card
    * @category Component Builders
@@ -8997,6 +9264,7 @@
       label: props
     };
     var _props4 = props,
+      id = _props4.id,
       _props4$value = _props4.value,
       value = _props4$value === void 0 ? 0 : _props4$value,
       label = _props4.label,
@@ -9007,7 +9275,9 @@
       icon = _props4.icon,
       variant = _props4.variant,
       _props4$className = _props4.className,
-      className = _props4$className === void 0 ? '' : _props4$className,
+      _c = _props4$className === void 0 ? '' : _props4$className,
+      _props4$class = _props4["class"],
+      className = _props4$class === void 0 ? _c : _props4$class,
       style = _props4.style;
     function formatValue(val, fmt) {
       if (prefix || suffix) return (prefix || '') + val + (suffix || '');
@@ -9061,6 +9331,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": classes,
         style: style
       },
@@ -9090,7 +9361,8 @@
    * @param {string|Object|Array} [props.content] - Trigger content (what the user hovers/focuses)
    * @param {string} [props.text=""] - Tooltip text to display
    * @param {string} [props.placement="top"] - Tooltip placement ("top", "bottom", "left", "right")
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a tooltip wrapper
    * @category Component Builders
    * @example
@@ -9102,16 +9374,20 @@
    */
   function makeTooltip() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var content = props.content,
+    var id = props.id,
+      content = props.content,
       _props$text = props.text,
       text = _props$text === void 0 ? '' : _props$text,
       _props$placement = props.placement,
       placement = _props$placement === void 0 ? 'top' : _props$placement,
-      _props$className27 = props.className,
-      className = _props$className27 === void 0 ? '' : _props$className27;
+      _props$className34 = props.className,
+      _c = _props$className34 === void 0 ? '' : _props$className34,
+      _props$class34 = props["class"],
+      className = _props$class34 === void 0 ? _c : _props$class34;
     return {
       t: 'span',
       a: {
+        id: id,
         "class": ('bw_bccl_tooltip_wrapper ' + className).trim()
       },
       c: [content, {
@@ -9154,7 +9430,8 @@
    * @param {string} [props.title] - Popover header title
    * @param {string|Object|Array} [props.content] - Popover body content
    * @param {string} [props.placement="top"] - Placement ("top", "bottom", "left", "right")
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a popover wrapper
    * @category Component Builders
    * @example
@@ -9167,13 +9444,16 @@
    */
   function makePopover() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var trigger = props.trigger,
+    var id = props.id,
+      trigger = props.trigger,
       title = props.title,
       content = props.content,
       _props$placement2 = props.placement,
       placement = _props$placement2 === void 0 ? 'top' : _props$placement2,
-      _props$className28 = props.className,
-      className = _props$className28 === void 0 ? '' : _props$className28;
+      _props$className35 = props.className,
+      _c = _props$className35 === void 0 ? '' : _props$className35,
+      _props$class35 = props["class"],
+      className = _props$class35 === void 0 ? _c : _props$class35;
     var popoverContent = [title && {
       t: 'div',
       a: {
@@ -9190,6 +9470,7 @@
     return {
       t: 'span',
       a: {
+        id: id,
         "class": ('bw_bccl_popover bw_popover_wrapper ' + className).trim()
       },
       c: [{
@@ -9249,7 +9530,8 @@
    * @param {Function} [props.onInput] - Callback on each keystroke, receives value
    * @param {string} [props.id] - Element ID
    * @param {string} [props.name] - Input name attribute
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a search input
    * @category Component Builders
    * @example
@@ -9272,7 +9554,9 @@
       id = _props5.id,
       name = _props5.name,
       _props5$className = _props5.className,
-      className = _props5$className === void 0 ? '' : _props5$className;
+      _c = _props5$className === void 0 ? '' : _props5$className,
+      _props5$class = _props5["class"],
+      className = _props5$class === void 0 ? _c : _props5$class;
     return {
       t: 'div',
       a: {
@@ -9340,7 +9624,8 @@
    * @param {string} [props.id] - Element ID
    * @param {string} [props.name] - Input name attribute
    * @param {boolean} [props.disabled=false] - Whether the slider is disabled
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a range input
    * @category Component Builders
    * @example
@@ -9368,8 +9653,10 @@
       name = props.name,
       _props$disabled8 = props.disabled,
       disabled = _props$disabled8 === void 0 ? false : _props$disabled8,
-      _props$className29 = props.className,
-      className = _props$className29 === void 0 ? '' : _props$className29,
+      _props$className36 = props.className,
+      _c = _props$className36 === void 0 ? '' : _props$className36,
+      _props$class36 = props["class"],
+      className = _props$class36 === void 0 ? _c : _props$class36,
       eventHandlers = _objectWithoutProperties(props, _excluded7);
     var children = [];
     if (label || showValue) {
@@ -9447,7 +9734,8 @@
    * @param {string|Object|Array} [props.content] - Body content
    * @param {boolean} [props.reverse=false] - Put image on the right
    * @param {string} [props.imageSize="3rem"] - Image width/height
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a media object
    * @category Component Builders
    * @example
@@ -9459,7 +9747,8 @@
    */
   function makeMediaObject() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var src = props.src,
+    var id = props.id,
+      src = props.src,
       _props$alt2 = props.alt,
       alt = _props$alt2 === void 0 ? '' : _props$alt2,
       title = props.title,
@@ -9468,8 +9757,10 @@
       reverse = _props$reverse === void 0 ? false : _props$reverse,
       _props$imageSize = props.imageSize,
       imageSize = _props$imageSize === void 0 ? '3rem' : _props$imageSize,
-      _props$className30 = props.className,
-      className = _props$className30 === void 0 ? '' : _props$className30;
+      _props$className37 = props.className,
+      _c = _props$className37 === void 0 ? '' : _props$className37,
+      _props$class37 = props["class"],
+      className = _props$class37 === void 0 ? _c : _props$class37;
     var imgEl = src ? {
       t: 'img',
       a: {
@@ -9495,6 +9786,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": ('bw_bccl_mediaObject bw_media ' + (reverse ? 'bw_media_reverse ' : '') + className).trim()
       },
       c: reverse ? [bodyEl, imgEl].filter(Boolean) : [imgEl, bodyEl].filter(Boolean),
@@ -9516,7 +9808,8 @@
    * @param {Function} [props.onFiles] - Callback when files are selected, receives FileList
    * @param {string} [props.text="Drop files here or click to browse"] - Zone label text
    * @param {string} [props.id] - Element ID
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a file upload zone
    * @category Component Builders
    * @example
@@ -9535,8 +9828,10 @@
       _props$text2 = props.text,
       text = _props$text2 === void 0 ? 'Drop files here or click to browse' : _props$text2,
       id = props.id,
-      _props$className31 = props.className,
-      className = _props$className31 === void 0 ? '' : _props$className31;
+      _props$className38 = props.className,
+      _c = _props$className38 === void 0 ? '' : _props$className38,
+      _props$class38 = props["class"],
+      className = _props$class38 === void 0 ? _c : _props$class38;
     return {
       t: 'div',
       a: {
@@ -9622,7 +9917,8 @@
    * @param {string|Object|Array} [props.items[].content] - Event description content
    * @param {string} [props.items[].date] - Date or time label
    * @param {string} [props.items[].variant="primary"] - Marker color variant
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a timeline
    * @category Component Builders
    * @example
@@ -9636,13 +9932,17 @@
    */
   function makeTimeline() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$items8 = props.items,
+    var id = props.id,
+      _props$items8 = props.items,
       items = _props$items8 === void 0 ? [] : _props$items8,
-      _props$className32 = props.className,
-      className = _props$className32 === void 0 ? '' : _props$className32;
+      _props$className39 = props.className,
+      _c = _props$className39 === void 0 ? '' : _props$className39,
+      _props$class39 = props["class"],
+      className = _props$class39 === void 0 ? _c : _props$class39;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": ('bw_bccl_timeline ' + className).trim()
       },
       c: items.map(function (item) {
@@ -9701,7 +10001,8 @@
    * @param {string} [props.steps[].label] - Step label text
    * @param {string} [props.steps[].description] - Optional step description
    * @param {number} [props.currentStep=0] - Zero-based index of the active step
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a stepper
    * @category Component Builders
    * @example
@@ -9716,15 +10017,19 @@
    */
   function makeStepper() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$steps = props.steps,
+    var id = props.id,
+      _props$steps = props.steps,
       steps = _props$steps === void 0 ? [] : _props$steps,
       _props$currentStep = props.currentStep,
       currentStep = _props$currentStep === void 0 ? 0 : _props$currentStep,
-      _props$className33 = props.className,
-      className = _props$className33 === void 0 ? '' : _props$className33;
+      _props$className40 = props.className,
+      _c = _props$className40 === void 0 ? '' : _props$className40,
+      _props$class40 = props["class"],
+      className = _props$class40 === void 0 ? _c : _props$class40;
     return {
       t: 'div',
       a: {
+        id: id,
         "class": ('bw_bccl_stepper bw_stepper ' + className).trim(),
         role: 'list'
       },
@@ -9782,7 +10087,8 @@
    * @param {string} [props.placeholder="Add..."] - Input placeholder text
    * @param {Function} [props.onAdd] - Callback when a chip is added, receives value
    * @param {Function} [props.onRemove] - Callback when a chip is removed, receives value
-   * @param {string} [props.className] - Additional CSS classes
+   * @param {string} [props.id] - id attribute for the root element
+   * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object representing a chip input
    * @category Component Builders
    * @example
@@ -9795,14 +10101,17 @@
    */
   function makeChipInput() {
     var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-    var _props$chips = props.chips,
+    var id = props.id,
+      _props$chips = props.chips,
       chips = _props$chips === void 0 ? [] : _props$chips,
       _props$placeholder = props.placeholder,
       placeholder = _props$placeholder === void 0 ? 'Add...' : _props$placeholder,
       onAdd = props.onAdd,
       onRemove = props.onRemove,
-      _props$className34 = props.className,
-      className = _props$className34 === void 0 ? '' : _props$className34;
+      _props$className41 = props.className,
+      _c = _props$className41 === void 0 ? '' : _props$className41,
+      _props$class41 = props["class"],
+      className = _props$class41 === void 0 ? _c : _props$class41;
     function makeChipEl(text) {
       return {
         t: 'span',
@@ -9828,6 +10137,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": ('bw_bccl_chipInput bw_chip_input ' + className).trim()
       },
       c: [].concat(_toConsumableArray(chips.map(makeChipEl)), [{
@@ -10164,8 +10474,8 @@
     variantClass: variantClass
   });
 
-  var _excluded = ["data", "headerRow", "columns"],
-    _excluded2 = ["title", "data", "columns", "className", "striped", "hover", "responsive"];
+  var _excluded = ["data", "headerRow", "columns", "className", "class"],
+    _excluded2 = ["id", "title", "data", "columns", "className", "class", "striped", "hover", "responsive"];
 
   // Environment-aware module loader for optional Node.js built-ins (fs).
   // Strategy: try require() first (CJS/UMD), fall back to import() (ESM).
@@ -10582,6 +10892,14 @@
    * @private
    */
   function _applyTo(el, apply) {
+    // Hooks fire when the tree is in the document. Content applied to a
+    // detached element (a slot set before the component is mounted) waits for
+    // the mount/append that connects it, which runs mountTree over the subtree.
+    // The 2.1.12 slot setter had this guard; the first sink dropped it, and a
+    // test in PR #122 (imshah-id) caught `mounted` firing early.
+    var mountNow = function mountNow() {
+      if (el.isConnected) bw.mountTree(el);
+    };
     if (_is(apply, 'function')) {
       apply(el);
     } else if (_isA(apply)) {
@@ -10590,16 +10908,46 @@
       _flat2(apply).forEach(function (item) {
         if (item != null) el.appendChild(bw.create(item, _nsOptsFor(el)));
       });
-      bw.mountTree(el);
+      mountNow();
     } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
       bw.unmountChildren(el);
       el.innerHTML = '';
       el.appendChild(bw.create(apply, _nsOptsFor(el)));
-      bw.mountTree(el);
+      mountNow();
     } else {
       bw.unmountChildren(el);
-      el.textContent = String(apply);
+      el.textContent = apply == null || typeof apply === 'boolean' ? '' : String(apply);
     }
+  }
+
+  /**
+   * Internal: resolve a verb's target. One rule for every verb (north star,
+   * consequence 14): a live element, an element id, a CSS selector, or a
+   * bw_uuid_* token. Live query FIRST, bw.el second -- bw.el consults a node
+   * cache that can return a detached element (the detach-exempt path), and
+   * acting on a node the document cannot see does work nobody will ever find.
+   * A selector therefore behaves as it always has; bare ids and UUID tokens
+   * fall through to bw.el.
+   *
+   * With a verb name, a miss warns `bw.<verb>: target not found` so that no
+   * verb fails silently (bw.append did, for a release). Without one it is a
+   * silent query, for verbs whose miss is a legitimate answer.
+   * @private
+   */
+  function _resolveTarget(target, verb) {
+    var el = target || null;
+    if (_is(target, 'string')) {
+      // A string that is not a valid selector (',,') must not throw out of a
+      // verb; it is simply not found.
+      try {
+        el = bw.$(target)[0];
+      } catch (e) {
+        el = null;
+      }
+      if (!el) el = bw.el(target);
+    }
+    if (!el && verb) _cw('bw.' + verb + ': target not found');
+    return el;
   }
 
   /**
@@ -10965,8 +11313,10 @@
    */
   bw.html = function (taco) {
     var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-    // Handle null/undefined
-    if (taco == null) return '';
+    // null, undefined and booleans render nothing. The template language is
+    // JavaScript, and `cond && taco` yields false when the condition is off;
+    // skipping it is what makes that idiom work (#123). Numbers still render.
+    if (taco == null || typeof taco === 'boolean') return '';
 
     // Handle arrays of TACOs
     if (_isA(taco)) {
@@ -11378,8 +11728,8 @@
    * @private
    */
   function _createNode(taco, options) {
-    // Handle null/undefined
-    if (taco == null) return document.createTextNode('');
+    // null, undefined and booleans render nothing -- same rule as bw.html (#123)
+    if (taco == null || typeof taco === 'boolean') return document.createTextNode('');
 
     // Handle bw.raw() marked content — inject as HTML
     if (taco && taco.__bw_raw) {
@@ -11480,7 +11830,8 @@
           }
         }
       } else {
-        el.textContent = String(content);
+        // a scalar c: numbers render, booleans do not (#123)
+        el.textContent = typeof content === 'boolean' ? '' : String(content);
       }
     }
 
@@ -11605,17 +11956,10 @@
               }
               var target = el._bw_slot_cache[name];
               if (!target) return;
-              // Always unmount existing children before replacing
-              bw.unmountChildren(target);
-              if (value != null && _typeof(value) === 'object' && value.t) {
-                // TACO through slots runs mount pipeline
-                target.innerHTML = '';
-                var child = bw.create(value, _nsOptsFor(target));
-                target.appendChild(child);
-                if (el.isConnected) bw.mountTree(child);
-              } else {
-                target.textContent = value != null ? String(value) : '';
-              }
+              // One content sink for every verb (north star 14): text, TACO,
+              // array, bw.raw(). The setter had its own narrower switch and
+              // rendered "[object Object]" for raw and arrays (#118).
+              _applyTo(target, value);
             };
             el.bw['get' + cap] = function () {
               if (!el._bw_slot_cache) el._bw_slot_cache = {};
@@ -11640,6 +11984,7 @@
    * @category DOM Generation
    */
   bw.hydrate = function (el, taco) {
+    if (_is(el, 'string')) el = _resolveTarget(el, 'hydrate');
     if (!el || !taco) return;
     var opts = taco.o || {};
     _hydrateElement(el, opts);
@@ -11655,6 +12000,7 @@
    * @category DOM Generation
    */
   bw.mountTree = function (el) {
+    if (_is(el, 'string')) el = _resolveTarget(el, 'mountTree');
     if (!el || el.nodeType !== 1) return;
 
     // Lazy-install janitor observer on first mount
@@ -11778,6 +12124,7 @@
    * @category DOM Generation
    */
   bw.unmount = function (el) {
+    if (_is(el, 'string')) el = _resolveTarget(el, 'unmount');
     if (!el || el.nodeType !== 1) return;
 
     // Collect all addressable nodes: self + descendants in document order
@@ -11891,6 +12238,7 @@
    * @category DOM Generation
    */
   bw.unmountChildren = function (el) {
+    if (_is(el, 'string')) el = _resolveTarget(el, 'unmountChildren');
     if (!el || el.nodeType !== 1) return;
 
     // Find all direct and nested lifecycle/addressable nodes inside children
@@ -11917,7 +12265,7 @@
    * bw.mount('#list', rows.map(function(r) { return { t: 'li', c: r.name }; }));
    */
   bw.clear = function (ref) {
-    var el = bw.el(ref);
+    var el = _resolveTarget(ref, 'clear');
     if (!el) return null;
     bw.unmountChildren(el);
     while (el.firstChild) el.removeChild(el.firstChild);
@@ -12032,7 +12380,7 @@
    * @category DOM Generation
    */
   bw.remove = function (ref) {
-    var el = bw.el(ref);
+    var el = _resolveTarget(ref, 'remove');
     if (!el) return;
     bw.unmount(el);
     if (el.parentNode) el.parentNode.removeChild(el);
@@ -12047,6 +12395,7 @@
    * @category DOM Generation
    */
   bw.detach = function (el) {
+    if (_is(el, 'string')) el = _resolveTarget(el, 'detach');
     if (!el) return;
     var uuid = bw.getUUID(el);
     if (uuid) {
@@ -12354,11 +12703,8 @@
     // renders content nobody will ever find. Resolving bw.el first broke a
     // documented example exactly that way. A selector therefore behaves as it
     // always has, and bare ids and UUID tokens fall through to bw.el.
-    var container = _is(target, 'string') ? bw.$(target)[0] || bw.el(target) : target;
-    if (!container) {
-      _cw('bw.mount: target not found');
-      return null;
-    }
+    var container = _resolveTarget(target, 'mount');
+    if (!container) return null;
 
     // Teardown existing children (compound calls atomic)
     bw.unmountChildren(container);
@@ -12418,11 +12764,8 @@
     // there. append was missed when mount was fixed, and it returned null with
     // no warning at all, so bw.append('status', ...) did nothing and said
     // nothing.
-    var container = _is(target, 'string') ? bw.$(target)[0] || bw.el(target) : target;
-    if (!container) {
-      _cw('bw.append: target not found');
-      return null;
-    }
+    var container = _resolveTarget(target, 'append');
+    if (!container) return null;
     var child = bw.create(content, _nsOptsFor(container));
     if (opts && opts.before !== undefined) {
       var ref = opts.before;
@@ -12439,12 +12782,16 @@
    * Replace an existing element with new content. unmount(old) → create(taco) →
    * insert at position → mountTree. Returns new element. null taco = remove.
    *
-   * @param {Element} ref - Element to replace
+   * @param {string|Element} ref - Element ID, CSS selector, bw_uuid_* class, or element to replace
    * @param {Object|null} taco - Replacement TACO, or null to just remove
    * @returns {Element|null} The new element, or null
    * @category DOM Generation
    */
   bw.replace = function (ref, taco) {
+    // Resolved like every other verb since 2.1.13. Before, a string here read
+    // `.parentNode` of a string, created the new element and never inserted
+    // it: a detached node, no warning (#112).
+    ref = _resolveTarget(ref, 'replace');
     if (!ref) return null;
     var parent = ref.parentNode;
     var next = ref.nextSibling;
@@ -12468,7 +12815,7 @@
    * @category DOM Generation
    */
   bw.refresh = function (ref) {
-    var el = bw.el(ref);
+    var el = _resolveTarget(ref, 'refresh');
     if (!el) return null;
     bw.unmountChildren(el);
     el.innerHTML = '';
@@ -12505,7 +12852,7 @@
    * @category State Management
    */
   bw.update = function (ref, data) {
-    var el = bw.el(ref);
+    var el = _resolveTarget(ref, 'update');
     if (!el) return null;
     if (el.bw && typeof el.bw.update === 'function') {
       el.bw.update(data);
@@ -12546,7 +12893,7 @@
    * @category DOM Generation
    */
   bw.updateSlot = function (ref, name, value) {
-    var el = bw.el(ref);
+    var el = _resolveTarget(ref, 'updateSlot');
     if (!el || !el.bw) return false;
     var setter = 'set' + name.charAt(0).toUpperCase() + name.slice(1);
     if (typeof el.bw[setter] !== 'function') return false;
@@ -12581,47 +12928,23 @@
    * bw.patch('info', { t: 'em', c: 'new' }); // replace children with TACO
    */
   bw.patch = function (id, content, attr) {
-    var el = bw.el(id);
+    var el = _resolveTarget(id, 'patch');
     if (!el) return null;
 
     // v2.1 discriminated patch:
-    // - string/number → text content
-    // - plain object without .t → attributes
-    // - TACO (has .t) → unmountChildren + create + mountTree
-    // - array → unmountChildren + create each + mountTree
     // - legacy 3rd arg: explicit attribute set
-
+    // - plain object without .t → attributes
+    // - everything else (text, TACO, array, bw.raw, function) → the shared
+    //   content sink, the same one bw.el(ref, apply), bw.$ and slot setters use
     if (attr) {
-      // Legacy: explicit attribute patch
       el.setAttribute(attr, String(content));
-    } else if (_is(content, 'string') || _is(content, 'number')) {
-      // Text patch. Replacing child elements with text still runs their unmount.
-      if (el.firstElementChild) bw.unmountChildren(el);
-      el.textContent = String(content);
-    } else if (_isA(content)) {
-      // Array of children: full pipeline
-      bw.unmountChildren(el);
-      el.innerHTML = '';
-      content = _flat2(content);
-      for (var i = 0; i < content.length; i++) {
-        if (content[i] != null) el.appendChild(bw.create(content[i], _nsOptsFor(el)));
-      }
-      bw.mountTree(el);
-    } else if (_is(content, 'object') && content !== null && (content.t || content.__bw_raw)) {
-      // TACO or bw.raw() content: full pipeline
-      bw.unmountChildren(el);
-      el.innerHTML = '';
-      el.appendChild(bw.create(content, _nsOptsFor(el)));
-      bw.mountTree(el);
-    } else if (_is(content, 'object') && content !== null) {
-      // Plain object without .t → attribute patch
+    } else if (_is(content, 'object') && content !== null && !_isA(content) && !content.t && !content.__bw_raw) {
       var attrKeys = _keys(content);
       for (var ak = 0; ak < attrKeys.length; ak++) {
         el.setAttribute(attrKeys[ak], String(content[attrKeys[ak]]));
       }
     } else {
-      if (el.firstElementChild) bw.unmountChildren(el);
-      el.textContent = String(content);
+      _applyTo(el, content);
     }
     return el;
   };
@@ -12663,6 +12986,7 @@
    * @category DOM Generation
    */
   bw.syncChildren = function (parentEl, items, opts) {
+    if (_is(parentEl, 'string')) parentEl = _resolveTarget(parentEl, 'syncChildren');
     if (!parentEl || !items || !opts) return;
     var keyFn = opts.key;
     var createFn = opts.create;
@@ -12756,7 +13080,7 @@
    * // Dispatches CustomEvent 'bw:statechange' on the element
    */
   bw.emit = function (target, eventName, detail) {
-    var el = bw.el(target);
+    var el = _resolveTarget(target, 'emit');
     if (el) {
       el.dispatchEvent(new CustomEvent('bw:' + eventName, {
         bubbles: true,
@@ -12776,7 +13100,7 @@
    *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
    * @param {string} eventName - Event name (will be prefixed with 'bw:')
    * @param {Function} handler - Called with (detail, event)
-   * @returns {Element|null} The element (for chaining), or null if not found
+   * @returns {Function} A function that removes the listener; a no-op when the target was not found
    * @category Events (DOM)
    * @see bw.emit
    * @example
@@ -12785,7 +13109,7 @@
    * });
    */
   bw.on = function (target, eventName, handler) {
-    var el = bw.el(target);
+    var el = _resolveTarget(target, 'on');
     if (!el) return function () {};
     var wrapped = function wrapped(e) {
       handler(e.detail, e);
@@ -13311,14 +13635,18 @@
    * };
    */
   bw.message = function (target, action, data) {
-    var el = bw.el(target);
+    var el = _resolveTarget(target);
     // Fallback: try class selector, but only for safe selector strings
     if (!el && _is(target, 'string') && target.indexOf('#') !== 0 && target.indexOf('.') !== 0) {
       try {
         el = bw.$('.' + target)[0];
       } catch (e) {/* invalid selector */}
     }
-    if (!el || !el.bw || typeof el.bw[action] !== 'function') {
+    if (!el) {
+      _cw('bw.message: target not found');
+      return false;
+    }
+    if (!el.bw || typeof el.bw[action] !== 'function') {
       _cw('bw.message: no handle method "' + action + '" on ' + target);
       return false;
     }
@@ -14095,8 +14423,7 @@
    * console.log(JSON.stringify(bw.inspect('#app', 5), null, 2));
    */
   bw.inspect = function (target, depth) {
-    var el = bw.el(target);
-    if (!el && _is(target, 'string')) el = bw.$(target)[0];
+    var el = _resolveTarget(target);
     if (!el) return null;
     if (depth === undefined || depth === null) depth = 3;
     function walk(node, d) {
@@ -14117,9 +14444,10 @@
       if (uuid) info.uuid = uuid;
       if (node._bw_type) info.type = node._bw_type;
 
-      // CSS classes (first 5 for readability)
+      // CSS classes (first 5 for readability). The field is `class`, the HTML
+      // name, same as TACO `a.class` -- not `classes`/`cls` (#116).
       if (node.className && typeof node.className === 'string') {
-        info.classes = node.className.split(' ').slice(0, 5).join(' ');
+        info['class'] = node.className.split(' ').slice(0, 5).join(' ');
       }
 
       // Bitwrench handle methods
@@ -14518,6 +14846,9 @@
    * @param {string} [config.tertiary] - Tertiary color hex (defaults to primary)
    * @param {string} [config.spacing='normal'] - 'compact' | 'normal' | 'spacious'
    * @param {string} [config.radius='md'] - 'none' | 'sm' | 'md' | 'lg' | 'pill'
+   * @param {Object} [config.alternate] - Seeds for the alternate (dark/light) palette that
+   *   override the derived ones: any of primary, secondary, tertiary, success, danger,
+   *   warning, info, light, dark, background, surface. Keys you omit still derive.
    * @returns {Object} { css, alternateCss, rules, alternateRules, palette, alternatePalette, isLightPrimary }
    * @category CSS & Styling
    * @see bw.applyStyles
@@ -14533,11 +14864,7 @@
 
     // Contrast check: warn if primary/secondary seeds are too close
     if (fullConfig.primary && fullConfig.secondary) {
-      var l1 = relativeLuminance(fullConfig.primary);
-      var l2 = relativeLuminance(fullConfig.secondary);
-      var bright = Math.max(l1, l2);
-      var dark = Math.min(l1, l2);
-      var ratio = (bright + 0.05) / (dark + 0.05);
+      var ratio = contrastRatio(fullConfig.primary, fullConfig.secondary);
       if (ratio < 1.5) {
         bw.pub('bw:diag', {
           code: 'contrast_aa',
@@ -14556,8 +14883,10 @@
     var themedRules = generateThemedCSS('', palette, layout);
     var cssStr = bw.css(themedRules);
 
-    // Derive alternate palette (luminance-inverted)
-    var altConfig = deriveAlternateConfig(fullConfig);
+    // Derive the alternate palette from the same seeds, then let the caller's
+    // `alternate: { primary, background, ... }` seeds win over the derivation.
+    // A brand's dark-mode accent is a design decision, not a formula (#115).
+    var altConfig = Object.assign(deriveAlternateConfig(fullConfig), fullConfig.alternate || {});
     var altPalette = derivePalette(altConfig);
 
     // Generate alternate CSS rules WITHOUT .bw_theme_alt prefix (raw rules)
@@ -14569,7 +14898,8 @@
     /* c8 ignore next 3 -- altPalette.surface always provided by derivePalette */
     altRawRules['body'] = {
       'color': altPalette.dark.base,
-      'background-color': altPalette.surface || altPalette.light.base
+      'background-color': altPalette.surface || altPalette.light.base,
+      'color-scheme': colorScheme(altPalette)
     };
     var altCssStr = bw.css(altRawRules);
 
@@ -14905,6 +15235,7 @@
   bw.mixColor = mixColor;
   bw.relativeLuminance = relativeLuminance;
   bw.textOnColor = textOnColor;
+  bw.contrastRatio = contrastRatio;
   bw.deriveShades = deriveShades;
   bw.derivePalette = derivePalette;
   bw.harmonize = harmonize;
@@ -15119,7 +15450,8 @@
    * @param {Object} config - Table configuration
    * @param {Array<Object>} config.data - Array of row objects to display
    * @param {Array<Object>} [config.columns] - Column definitions with key, label, render
-   * @param {string} [config.className=''] - Additional CSS classes for table element
+   * @param {string} [config.id] - id attribute for the table element
+   * @param {string} [config.class] - Additional CSS classes for the table element (`className` is a deprecated alias)
    * @param {boolean} [config.sortable=true] - Enable click-to-sort headers
    * @param {Function} [config.onSort] - Sort callback (column, direction)
    * @param {boolean} [config.selectable=false] - Enable row selection on click
@@ -15148,11 +15480,14 @@
    * });
    */
   bw.makeTable = function (config) {
-    var _config$data = config.data,
+    var id = config.id,
+      _config$data = config.data,
       data = _config$data === void 0 ? [] : _config$data,
       columns = config.columns,
       _config$className = config.className,
-      className = _config$className === void 0 ? '' : _config$className,
+      _c = _config$className === void 0 ? '' : _config$className,
+      _config$class = config["class"],
+      className = _config$class === void 0 ? _c : _config$class,
       _config$striped = config.striped,
       striped = _config$striped === void 0 ? false : _config$striped,
       _config$hover = config.hover,
@@ -15457,7 +15792,9 @@
     }
     var table = {
       t: 'table',
+      // id names the root: the table itself, or the paginated wrapper below
       a: {
+        id: pageSize ? undefined : id,
         "class": cls
       },
       c: [thead, tbody],
@@ -15504,6 +15841,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": 'bw_bccl_table_paginated'
       },
       c: [table, {
@@ -15532,7 +15870,8 @@
    * @param {boolean} [config.hover=false] - Hover highlight
    * @param {boolean} [config.sortable=true] - Enable sort
    * @param {Array<Object>} [config.columns] - Override auto-generated column defs
-   * @param {string} [config.className=''] - Additional CSS classes
+   * @param {string} [config.id] - id attribute for the root element
+   * @param {string} [config.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @param {Function} [config.onSort] - Sort callback
    * @param {string} [config.sortColumn] - Currently sorted column key
    * @param {string} [config.sortDirection='asc'] - Sort direction
@@ -15556,11 +15895,15 @@
       _config$headerRow = config.headerRow,
       headerRow = _config$headerRow === void 0 ? true : _config$headerRow,
       columns = config.columns,
+      _c = config.className,
+      _config$class2 = config["class"],
+      cls = _config$class2 === void 0 ? _c : _config$class2,
       rest = _objectWithoutProperties(config, _excluded);
     if (!_isA(data) || data.length === 0) {
       return bw.makeTable(_objectSpread2({
         data: [],
-        columns: columns || []
+        columns: columns || [],
+        "class": cls
       }, rest));
     }
 
@@ -15606,7 +15949,8 @@
     });
     return bw.makeTable(_objectSpread2({
       data: objData,
-      columns: cols
+      columns: cols,
+      "class": cls
     }, rest));
   };
 
@@ -15626,7 +15970,8 @@
    * @param {Function} [config.formatValue] - Value label formatter: (value) => string
    * @param {boolean} [config.showValues=true] - Show value labels above bars
    * @param {boolean} [config.showLabels=true] - Show labels below bars
-   * @param {string} [config.className=''] - Additional CSS classes
+   * @param {string} [config.id] - id attribute for the root element
+   * @param {string} [config.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
    * @returns {Object} TACO object
    * @category Component Builders
    * @example
@@ -15642,7 +15987,8 @@
    * });
    */
   bw.makeBarChart = function (config) {
-    var _config$data3 = config.data,
+    var id = config.id,
+      _config$data3 = config.data,
       data = _config$data3 === void 0 ? [] : _config$data3,
       _config$labelKey = config.labelKey,
       labelKey = _config$labelKey === void 0 ? 'label' : _config$labelKey,
@@ -15659,7 +16005,9 @@
       _config$showLabels = config.showLabels,
       showLabels = _config$showLabels === void 0 ? true : _config$showLabels,
       _config$className2 = config.className,
-      className = _config$className2 === void 0 ? '' : _config$className2;
+      _c = _config$className2 === void 0 ? '' : _config$className2,
+      _config$class3 = config["class"],
+      className = _config$class3 === void 0 ? _c : _config$class3;
     if (!_isA(data) || data.length === 0) {
       return {
         t: 'div',
@@ -15732,6 +16080,7 @@
     return {
       t: 'div',
       a: {
+        id: id,
         "class": ('bw_bar_chart_container ' + className).trim()
       },
       c: chartChildren
@@ -15750,7 +16099,8 @@
    * @param {string} [config.title] - Table title heading
    * @param {Array<Object>} config.data - Array of row objects
    * @param {Array<Object>} [config.columns] - Column definitions
-   * @param {string} [config.className=''] - Additional CSS classes for the table
+   * @param {string} [config.id] - id attribute for the wrapper element
+   * @param {string} [config.class] - Additional CSS classes for the wrapper element (`className` is a deprecated alias)
    * @param {boolean} [config.striped=true] - Add striped row styling
    * @param {boolean} [config.hover=true] - Add hover row highlighting
    * @param {boolean} [config.responsive=true] - Wrap table in responsive overflow div
@@ -15763,11 +16113,14 @@
    * });
    */
   bw.makeDataTable = function (config) {
-    var title = config.title,
+    var id = config.id,
+      title = config.title,
       data = config.data,
       columns = config.columns,
       _config$className3 = config.className,
-      className = _config$className3 === void 0 ? '' : _config$className3,
+      _c = _config$className3 === void 0 ? '' : _config$className3,
+      _config$class4 = config["class"],
+      className = _config$class4 === void 0 ? _c : _config$class4,
       _config$striped2 = config.striped,
       striped = _config$striped2 === void 0 ? true : _config$striped2,
       _config$hover2 = config.hover,
@@ -15778,7 +16131,6 @@
     var table = bw.makeTable(_objectSpread2({
       data: data,
       columns: columns,
-      className: className,
       striped: striped,
       hover: hover
     }, tableConfig));
@@ -15806,7 +16158,8 @@
     return {
       t: 'div',
       a: {
-        "class": 'bw_bccl_dataTable table-container'
+        id: id,
+        "class": ('bw_bccl_dataTable table-container ' + className).trim()
       },
       c: content
     };
@@ -15835,7 +16188,7 @@
   bw.render = function (target, position, taco) {
     try {
       // Same resolution as bw.mount and bw.append -- one rule for every verb.
-      var targetEl = _is(target, 'string') ? bw.$(target)[0] || bw.el(target) : target;
+      var targetEl = _resolveTarget(target);
       if (!targetEl) return {
         el: null,
         ok: false,
@@ -16018,13 +16371,21 @@
   }
   function _checkProps(name, fn, props) {
     if (!bw.warnUnknownProps || !props || !_is(props, 'object') || _isA(props)) return;
+    // `className` is a deprecated alias of `class` (2.1.13). Factories still
+    // read it, so it is not "unknown"; it gets its own one-time notice.
+    if (props.className !== undefined && !_propWarned[name + 'className']) {
+      _propWarned[name + 'className'] = 1;
+      _cw('bw.' + name + ': "className" is deprecated, use "class"');
+    }
     if (!_hop.call(_propKeys, name)) _propKeys[name] = _parseKeys(fn);
     var known = _propKeys[name];
     if (!known) return;
     _keys(props).forEach(function (k) {
       if (known.indexOf(k) !== -1 || _propWarned[name + k]) return;
       _propWarned[name + k] = 1;
-      _cw('bw.' + name + ': unknown option "' + k + '" ignored. Accepted: ' + known.join(', '));
+      _cw('bw.' + name + ': unknown option "' + k + '" ignored. Accepted: ' + known.filter(function (a) {
+        return a !== 'className';
+      }).join(', '));
     });
   }
 

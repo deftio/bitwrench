@@ -4,12 +4,12 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.12 |
-| Generated | 2026-10-31 |
-| Total APIs | 169 |
+| Version | 2.1.13 |
+| Generated | 2026-11-07 |
+| Total APIs | 170 |
 | Categories | 23 |
-| bitwrench.js | 5602 lines |
-| bitwrench-bccl.js | 3968 lines |
+| bitwrench.js | 5630 lines |
+| bitwrench-bccl.js | 4092 lines |
 
 ## Table of Contents
 
@@ -24,7 +24,7 @@
 - [Component Builders](#component-builders) (52)
 - [Routing](#routing) (3)
 - [Color](#color) (4)
-- [Color Utilities](#color-utilities) (12)
+- [Color Utilities](#color-utilities) (13)
 - [Math](#math) (2)
 - [Array Utilities](#array-utilities) (6)
 - [Text Generation](#text-generation) (1)
@@ -172,7 +172,8 @@ full entry: parameters, return value and an example.
 | [`bw.textOnColor(hex)`](#bwtextoncolorhex) | Color Utilities | Return '#fff' or '#000' for readable text on a given background color |
 | [`bw.harmonize(sourceHex, targetHex, amount)`](#bwharmonizesourcehextargethexamount) | Color Utilities | Shift a color's hue toward a target hue by a given amount |
 | [`bw.deriveShades(hex)`](#bwderiveshadeshex) | Color Utilities | Derive a full shade palette for a single semantic color |
-| [`bw.deriveAlternateSeed(hex)`](#bwderivealternateseedhex) | Color Utilities | Derive the alternate (luminance-inverted) version of a single seed color |
+| [`bw.deriveAlternateSeed(hex)`](#bwderivealternateseedhex) | Color Utilities | Derive the alternate-palette version of a single seed color: same hue, lightness moved to the other side so it keeps its contrast against the alternate surface |
+| [`bw.contrastRatio(a, b)`](#bwcontrastratioab) | Color Utilities | WCAG 2.x contrast ratio between two colours, 1 (identical) to 21 (black on white) |
 | [`bw.isLightPalette(config)`](#bwislightpaletteconfig) | Color Utilities | Determine whether a palette config is "light-flavored" based on the average luminance of its seed colors |
 | [`bw.deriveAlternateConfig(config)`](#bwderivealternateconfigconfig) | Color Utilities | Derive a complete alternate config from a primary theme config |
 | [`bw.derivePalette(config)`](#bwderivepaletteconfig) | Color Utilities | Derive complete palette from a theme config object |
@@ -334,7 +335,8 @@ Create a ready-to-use data table with title and responsive wrapper. Convenience 
 | `config.title` | `string` | - Table title heading |
 | `config.data` | `Array<Object>` | - Array of row objects |
 | `config.columns` | `Array<Object>` | - Column definitions |
-| `config.className` | `string` | - Additional CSS classes for the table |
+| `config.id` | `string` | - id attribute for the wrapper element |
+| `config.class` | `string` | - Additional CSS classes for the wrapper element (`className` is a deprecated alias) |
 | `config.striped` | `boolean` | - Add striped row styling |
 | `config.hover` | `boolean` | - Add hover row highlighting |
 | `config.responsive` | `boolean` | - Wrap table in responsive overflow div |
@@ -619,7 +621,7 @@ Replace an existing element with new content. unmount(old) → create(taco) → 
 
 | Name | Type | Description |
 |------|------|-------------|
-| `ref` | `Element` | - Element to replace |
+| `ref` | `string|Element` | - Element ID, CSS selector, bw_uuid_* class, or element to replace |
 | `taco` | `Object|null` | - Replacement TACO, or null to just remove |
 
 **Returns:** `Element|null` — new element, or null
@@ -1011,7 +1013,7 @@ Listen for a custom bitwrench event on a DOM element. Handler receives `(detail,
 | `eventName` | `string` | - Event name (will be prefixed with 'bw:') |
 | `handler` | `Function` | - Called with (detail, event) |
 
-**Returns:** `Element|null` — element (for chaining), or null if not found
+**Returns:** `Function` — function that removes the listener; a no-op when the target was not found
 
 **Example:**
 ```javascript
@@ -1244,6 +1246,7 @@ Generate a complete styles object from seed colors and layout config. Pure funct
 | `config.tertiary` | `string` | - Tertiary color hex (defaults to primary) |
 | `config.spacing` | `string` | - 'compact' | 'normal' | 'spacious' |
 | `config.radius` | `string` | - 'none' | 'sm' | 'md' | 'lg' | 'pill' |
+| `config.alternate` | `Object` | - Seeds for the alternate (dark/light) palette that override the derived ones: any of primary, secondary, tertiary, success, danger, warning, info, light, dark, background, surface. Keys you omit still derive. |
 
 **Returns:** `Object` — css, alternateCss, rules, alternateRules, palette, alternatePalette, isLightPrimary }
 
@@ -1418,7 +1421,8 @@ Create a sortable TACO table from an array of row objects. Returns a bare `<tabl
 | `config` | `Object` | - Table configuration |
 | `config.data` | `Array<Object>` | - Array of row objects to display |
 | `config.columns` | `Array<Object>` | - Column definitions with key, label, render |
-| `config.className` | `string` | - Additional CSS classes for table element |
+| `config.id` | `string` | - id attribute for the table element |
+| `config.class` | `string` | - Additional CSS classes for the table element (`className` is a deprecated alias) |
 | `config.sortable` | `boolean` | - Enable click-to-sort headers |
 | `config.onSort` | `Function` | - Sort callback (column, direction) |
 | `config.selectable` | `boolean` | - Enable row selection on click |
@@ -1465,7 +1469,8 @@ Create a table from a 2D array. Converts a 2D array into the object-array format
 | `config.hover` | `boolean` | - Hover highlight |
 | `config.sortable` | `boolean` | - Enable sort |
 | `config.columns` | `Array<Object>` | - Override auto-generated column defs |
-| `config.className` | `string` | - Additional CSS classes |
+| `config.id` | `string` | - id attribute for the root element |
+| `config.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 | `config.onSort` | `Function` | - Sort callback |
 | `config.sortColumn` | `string` | - Currently sorted column key |
 | `config.sortDirection` | `string` | - Sort direction |
@@ -1505,7 +1510,8 @@ Create a vertical bar chart from data. Renders a pure-CSS bar chart using flexbo
 | `config.formatValue` | `Function` | - Value label formatter: (value) => string |
 | `config.showValues` | `boolean` | - Show value labels above bars |
 | `config.showLabels` | `boolean` | - Show labels below bars |
-| `config.className` | `string` | - Additional CSS classes |
+| `config.id` | `string` | - id attribute for the root element |
+| `config.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object
 
@@ -1561,7 +1567,8 @@ Create a card component with optional header, body, footer, and image support Su
 | `props.bordered` | `boolean` | - Show card border |
 | `props.shadow` | `string` | - Shadow level ("none", "sm", "md", "lg") |
 | `props.hoverable` | `boolean` | - Enable hover lift animation |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 | `props.style` | `Object` | - Inline style object |
 | `props.headerClass` | `string` | - Additional header CSS classes |
 | `props.bodyClass` | `string` | - Additional body CSS classes |
@@ -1597,7 +1604,11 @@ Create a button component
 | `props.disabled` | `boolean` | - Whether the button is disabled |
 | `props.onclick` | `Function` | - Click event handler |
 | `props.type` | `string` | - HTML button type ("button", "submit", "reset") |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.toggle` | `boolean` | - Press-to-toggle button: keeps aria-pressed state, styled when pressed |
+| `props.pressed` | `boolean` | - Initial pressed state of a toggle button |
+| `props.onToggle` | `Function` | - Called with (pressed, event) when a toggle button flips |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 | `props.style` | `Object` | - Inline style object |
 
 **Returns:** `Object` — object representing a button element
@@ -1626,7 +1637,8 @@ Create a container component for centering and constraining content width
 | `props` | `Object` | - Container configuration |
 | `props.fluid` | `boolean` | - Use full-width fluid container |
 | `props.children` | `Array|Object|string` | - Child content |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a container div
 
@@ -1650,7 +1662,8 @@ Create a flexbox row for the grid system
 |------|------|-------------|
 | `props` | `Object` | - Row configuration |
 | `props.children` | `Array|Object|string` | - Child columns |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 | `props.gap` | `number` | - Gutter size 0-5 applied via bw_g_{gap} (0 = no gutter; omit for the default) |
 
 **Returns:** `Object` — object representing a grid row
@@ -1680,7 +1693,8 @@ Create a grid column with responsive sizing Supports both fixed and responsive c
 | `props.pull` | `number` | - Column pull (1-12) |
 | `props.content` | `Array|Object|string` | - Column content (alias for children) |
 | `props.children` | `Array|Object|string` | - Column content |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a grid column
 
@@ -1707,7 +1721,8 @@ Create a navigation component with tabs or pills styling
 | `props.items[].disabled` | `boolean` | - Whether this item is disabled |
 | `props.pills` | `boolean` | - Use pill styling instead of tabs |
 | `props.vertical` | `boolean` | - Stack items vertically |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a nav element
 
@@ -1740,7 +1755,8 @@ Create a navbar component with brand and navigation links
 | `props.items[].href` | `string` | - Item link URL |
 | `props.items[].active` | `boolean` | - Whether this item is active |
 | `props.dark` | `boolean` | - Use dark theme styling |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a navbar element
 
@@ -1801,7 +1817,8 @@ Create an alert/notification component
 | `props.content` | `string|Object|Array` | - Alert message content |
 | `props.variant` | `string` | - Color variant ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark") |
 | `props.dismissible` | `boolean` | - Show a close button to dismiss the alert |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing an alert element
 
@@ -1831,7 +1848,8 @@ Create an inline badge/label component
 | `props.variant` | `string` | - Color variant |
 | `props.size` | `string` | - Size variant: 'sm' or 'lg' (default is medium) |
 | `props.pill` | `boolean` | - Use pill (rounded) shape |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a badge span
 
@@ -1950,7 +1968,8 @@ Create a form wrapper with default submit prevention
 | `props` | `Object` | - Form configuration |
 | `props.children` | `Array|Object|string` | - Form contents (form groups, inputs, buttons) |
 | `props.onsubmit` | `Function` | - Submit handler (defaults to preventDefault) |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a form element
 
@@ -2015,7 +2034,8 @@ Create an input element with form control styling Additional event handlers (oni
 | `props.disabled` | `boolean` | - Whether the input is disabled |
 | `props.readonly` | `boolean` | - Whether the input is read-only |
 | `props.required` | `boolean` | - Whether the input is required |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 | `props.style` | `Object` | - Inline style object |
 
 **Returns:** `Object` — object representing an input element
@@ -2048,7 +2068,8 @@ Create a textarea element with form control styling
 | `props.disabled` | `boolean` | - Whether the textarea is disabled |
 | `props.readonly` | `boolean` | - Whether the textarea is read-only |
 | `props.required` | `boolean` | - Whether the textarea is required |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a textarea element
 
@@ -2080,7 +2101,8 @@ Create a select dropdown with options
 | `props.name` | `string` | - Select name attribute |
 | `props.disabled` | `boolean` | - Whether the select is disabled |
 | `props.required` | `boolean` | - Whether the select is required |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a select element
 
@@ -2139,7 +2161,8 @@ Create a flexbox stack layout (vertical or horizontal)
 | `props.children` | `Array|Object|string` | - Stack children |
 | `props.direction` | `string` | - Stack direction ("vertical" or "horizontal") |
 | `props.gap` | `number` | - Gap size (0-5) |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a stack layout
 
@@ -2197,7 +2220,8 @@ Create a hero section for landing pages and headers Supports gradient background
 | `props.overlay` | `boolean` | - Add dark overlay (for background images) |
 | `props.backgroundImage` | `string` | - Background image URL |
 | `props.actions` | `Array|Object` | - Call-to-action buttons |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a hero section
 
@@ -2232,7 +2256,8 @@ Create a responsive feature grid for showcasing capabilities Renders features in
 | `props.columns` | `number` | - Items per row at md+ widths. Uses the 12-column grid, so use a divisor of 12 (1, 2, 3, 4, 6, 12); other counts round to the nearest span (5 -> 6 per row, 8 -> 6 per row). Stacks to one column below md. |
 | `props.centered` | `boolean` | - Center-align feature text |
 | `props.iconSize` | `string` | - Icon font size |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a feature grid
 
@@ -2264,7 +2289,8 @@ Create a call-to-action section with title, description, and action buttons
 | `props.actions` | `Array|Object` | - CTA buttons or content |
 | `props.variant` | `string` | - Background variant |
 | `props.centered` | `boolean` | - Center-align content |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a CTA section
 
@@ -2295,7 +2321,8 @@ Create a page section with optional centered header and background
 | `props.content` | `string|Object|Array` | - Section body content |
 | `props.variant` | `string` | - Background variant ("default" for none, or a color name) |
 | `props.spacing` | `string` | - Vertical padding ("sm", "md", "lg", "xl") |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a content section
 
@@ -2353,7 +2380,8 @@ Create a pagination navigation component
 | `props.currentPage` | `number` | - Currently active page (1-based) |
 | `props.onPageChange` | `Function` | - Callback when page changes, receives page number |
 | `props.size` | `string` | - Size variant ("sm" or "lg") |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a pagination nav
 
@@ -2383,7 +2411,8 @@ Create a radio button input with label
 | `props.checked` | `boolean` | - Whether the radio is selected |
 | `props.id` | `string` | - Element ID (links label to radio) |
 | `props.disabled` | `boolean` | - Whether the radio is disabled |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a radio form group
 
@@ -2411,7 +2440,8 @@ Create a button group wrapper
 | `props.children` | `Array` | - Button TACO objects to group |
 | `props.size` | `string` | - Size variant ("sm" or "lg") |
 | `props.vertical` | `boolean` | - Stack buttons vertically |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a button group
 
@@ -2442,7 +2472,8 @@ Create an accordion component with collapsible items
 | `props.items[].content` | `string|Object|Array` | - Collapsible content |
 | `props.items[].open` | `boolean` | - Whether the item is initially open |
 | `props.multiOpen` | `boolean` | - Allow multiple items open simultaneously |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing an accordion
 
@@ -2473,7 +2504,8 @@ Create a modal dialog overlay
 | `props.size` | `string` | - Modal size ("sm", "lg", "xl") |
 | `props.closeButton` | `boolean` | - Show X close button in header |
 | `props.onClose` | `Function` | - Callback when modal is closed |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a modal
 
@@ -2503,7 +2535,8 @@ Create a toast notification popup
 | `props.autoDismiss` | `boolean` | - Auto-dismiss after delay |
 | `props.delay` | `number` | - Auto-dismiss delay in ms |
 | `props.position` | `string` | - Container position |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a toast
 
@@ -2536,7 +2569,8 @@ Create a dropdown menu triggered by a button
 | `props.items[].disabled` | `boolean` | - Whether the item is disabled |
 | `props.align` | `string` | - Menu alignment ("start" or "end") |
 | `props.variant` | `string` | - Trigger button variant |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a dropdown
 
@@ -2568,7 +2602,8 @@ Create a toggle switch (styled checkbox)
 | `props.id` | `string` | - Element ID (links label to switch) |
 | `props.name` | `string` | - Input name attribute |
 | `props.disabled` | `boolean` | - Whether the switch is disabled |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a toggle switch
 
@@ -2596,7 +2631,8 @@ Create a skeleton loading placeholder
 | `props.width` | `string` | - Custom width (e.g. "200px", "100%") |
 | `props.height` | `string` | - Custom height (e.g. "20px") |
 | `props.count` | `number` | - Number of skeleton lines (for text variant) |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a skeleton placeholder
 
@@ -2621,7 +2657,8 @@ Create a user avatar with image or initials fallback
 | `props.initials` | `string` | - Fallback initials (e.g. "JD") |
 | `props.size` | `string` | - Size ("sm", "md", "lg", "xl") |
 | `props.variant` | `string` | - Background color variant for initials |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing an avatar
 
@@ -2651,7 +2688,8 @@ Create a carousel/slideshow component with slide transitions Supports image slid
 | `props.interval` | `number` | - Auto-advance interval in ms |
 | `props.height` | `string` | - Carousel height |
 | `props.startIndex` | `number` | - Initial slide index |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a carousel
 
@@ -2686,7 +2724,8 @@ Create a stat card for dashboard metrics display Shows a large value with a labe
 | `props.suffix` | `string` | - Custom suffix (e.g. "%") |
 | `props.icon` | `string` | - Icon content (emoji or text) shown above value |
 | `props.variant` | `string` | - Left-border color variant ("primary", "success", "danger", etc.) |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 | `props.style` | `Object` | - Inline style object |
 
 **Returns:** `Object` — object representing a stat card
@@ -2716,7 +2755,8 @@ Create a tooltip wrapper around trigger content Wraps the trigger element in a c
 | `props.content` | `string|Object|Array` | - Trigger content (what the user hovers/focuses) |
 | `props.text` | `string` | - Tooltip text to display |
 | `props.placement` | `string` | - Tooltip placement ("top", "bottom", "left", "right") |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a tooltip wrapper
 
@@ -2744,7 +2784,8 @@ Create a popover wrapper around trigger content Like a tooltip but richer — su
 | `props.title` | `string` | - Popover header title |
 | `props.content` | `string|Object|Array` | - Popover body content |
 | `props.placement` | `string` | - Placement ("top", "bottom", "left", "right") |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a popover wrapper
 
@@ -2775,7 +2816,8 @@ Create a search input with clear button Wraps a text input with a clear (×) but
 | `props.onInput` | `Function` | - Callback on each keystroke, receives value |
 | `props.id` | `string` | - Element ID |
 | `props.name` | `string` | - Input name attribute |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a search input
 
@@ -2807,7 +2849,8 @@ Create a styled range slider input
 | `props.id` | `string` | - Element ID |
 | `props.name` | `string` | - Input name attribute |
 | `props.disabled` | `boolean` | - Whether the slider is disabled |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a range input
 
@@ -2838,7 +2881,8 @@ Create a media object layout (image + text side-by-side) Classic media object pa
 | `props.content` | `string|Object|Array` | - Body content |
 | `props.reverse` | `boolean` | - Put image on the right |
 | `props.imageSize` | `string` | - Image width/height |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a media object
 
@@ -2867,7 +2911,8 @@ Create a file upload zone with drag-and-drop support Styled drop zone with file 
 | `props.onFiles` | `Function` | - Callback when files are selected, receives FileList |
 | `props.text` | `string` | - Zone label text |
 | `props.id` | `string` | - Element ID |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a file upload zone
 
@@ -2896,7 +2941,8 @@ Create a vertical timeline for chronological event display Renders events as a v
 | `props.items[].content` | `string|Object|Array` | - Event description content |
 | `props.items[].date` | `string` | - Date or time label |
 | `props.items[].variant` | `string` | - Marker color variant |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a timeline
 
@@ -2926,7 +2972,8 @@ Create a multi-step wizard/progress indicator Displays numbered steps with activ
 | `props.steps[].label` | `string` | - Step label text |
 | `props.steps[].description` | `string` | - Optional step description |
 | `props.currentStep` | `number` | - Zero-based index of the active step |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a stepper
 
@@ -2957,7 +3004,8 @@ Create a chip/tag input for managing a list of items Displays existing chips wit
 | `props.placeholder` | `string` | - Input placeholder text |
 | `props.onAdd` | `Function` | - Callback when a chip is added, receives value |
 | `props.onRemove` | `Function` | - Callback when a chip is removed, receives value |
-| `props.className` | `string` | - Additional CSS classes |
+| `props.id` | `string` | - id attribute for the root element |
+| `props.class` | `string` | - Additional CSS classes, merged with the component's own (`className` is a deprecated alias) |
 
 **Returns:** `Object` — object representing a chip input
 
@@ -3282,7 +3330,7 @@ Derive a full shade palette for a single semantic color.
 
 ### `bw.deriveAlternateSeed(hex)`
 
-Derive the alternate (luminance-inverted) version of a single seed color. Preserves hue, mirrors lightness, adjusts saturation for readability.
+Derive the alternate-palette version of a single seed color: same hue, lightness moved to the other side so it keeps its contrast against the alternate surface. A saturated mid-lightness accent (the common brand colour: indigo #6366f1, bootstrap blue, a warning amber) is NOT inverted. Inverting L 67 to L 23 put a near-black accent on a dark surface (#115). Every design system's dark mode uses a lighter tint of the same hue instead, so that is what 50 < L <= 75 with S > 40 gets. Low saturation and extreme lightness keep the mirror rule.
 
 **Parameters:**
 
@@ -3291,6 +3339,21 @@ Derive the alternate (luminance-inverted) version of a single seed color. Preser
 | `hex` | `string` | - Seed hex color |
 
 **Returns:** `string` — hex color
+
+---
+
+### `bw.contrastRatio(a, b)`
+
+WCAG 2.x contrast ratio between two colours, 1 (identical) to 21 (black on white). AA body text needs 4.5, large text and UI 3.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `a` | `string` | - Hex colour |
+| `b` | `string` | - Hex colour |
+
+**Returns:** `number` — ratio, e.g. 4.83
 
 ---
 

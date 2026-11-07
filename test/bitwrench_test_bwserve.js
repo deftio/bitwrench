@@ -571,9 +571,19 @@ describe("client.query()", function() {
     var client = new BwServeClient('q-2', null);
     var promise = client.query('1+1');
     var requestId = client._sent[0].args[0].requestId;
-    client._resolvePending(requestId, { result: 2 });
+    // The server passes the client's result, already unwrapped from the POST
+    // envelope (2.1.13, #116); callers never see {requestId, route, result}.
+    client._resolvePending(requestId, 2);
     var result = await promise;
-    assert.deepStrictEqual(result, { result: 2 });
+    assert.strictEqual(result, 2);
+  });
+
+  it("rejects when the client reported an error", async function() {
+    var client = new BwServeClient('q-2e', null);
+    var promise = client.query('boom');
+    var requestId = client._sent[0].args[0].requestId;
+    client._resolvePending(requestId, null, 'ReferenceError: boom is not defined');
+    await assert.rejects(promise, /boom is not defined/);
   });
 
   it("uses custom timeout", function() {
@@ -1822,9 +1832,8 @@ describe("client.screenshot()", function() {
     assert.strictEqual(args.selector, '#app');
     assert.strictEqual(args.format, 'jpeg');
     assert.strictEqual(args.maxWidth, 400);
-    client._resolvePending(args.requestId, { requestId: args.requestId, route: 'screenshot',
-      result: { data: 'data:image/jpeg;base64,' + Buffer.from('img').toString('base64'), width: 4, height: 3, format: 'jpeg' },
-      error: null });
+    client._resolvePending(args.requestId,
+      { data: 'data:image/jpeg;base64,' + Buffer.from('img').toString('base64'), width: 4, height: 3, format: 'jpeg' });
     var r = await p;
     assert.ok(Buffer.isBuffer(r.data));
     assert.strictEqual(r.data.toString(), 'img');
@@ -1837,7 +1846,7 @@ describe("client.screenshot()", function() {
     var p = client.screenshot();
     var id = client._sent[0].args[0].requestId;
     assert.strictEqual(client._sent[0].args[0].selector, 'body');
-    client._resolvePending(id, { requestId: id, result: null, error: 'Element not found: body' });
+    client._resolvePending(id, null, 'Element not found: body');
     await assert.rejects(p, /Element not found/);
   });
 });
@@ -2451,9 +2460,11 @@ describe("BwServeApp._handleReturn — _resolvePending branch", function() {
         pagePath: '/',
         client: {
           _dispatch: function() {},
-          _resolvePending: function(reqId, data) {
+          _resolvePending: function(reqId, result, error) {
             pendingResolved = true;
             assert.strictEqual(reqId, 'req123');
+            assert.strictEqual(result, 'hello', 'server must pass the unwrapped result');
+            assert.strictEqual(error, undefined);
           }
         }
       });

@@ -1142,7 +1142,7 @@
         "// loadStyles = makeStyles + applyStyles in one call.";
 
       bw.DOM('#apply-theme-code', useCE
-        ? bw.codeEditor({ code: wholePageCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        ? bw.codeEditor({ code: wholePageCode, lang: 'js', readOnly: true, height: 'auto', class: ceClass })
         : { t: 'pre', c: { t: 'code', c: wholePageCode } }
       );
 
@@ -1164,7 +1164,7 @@
         "});";
 
       bw.DOM('#scoped-theme-code', useCE
-        ? bw.codeEditor({ code: scopedCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        ? bw.codeEditor({ code: scopedCode, lang: 'js', readOnly: true, height: 'auto', class: ceClass })
         : { t: 'pre', c: { t: 'code', c: scopedCode } }
       );
 
@@ -1181,7 +1181,7 @@
         "// and potentially causing CSS specificity conflicts.";
 
       bw.DOM('#switch-theme-code', useCE
-        ? bw.codeEditor({ code: switchCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        ? bw.codeEditor({ code: switchCode, lang: 'js', readOnly: true, height: 'auto', class: ceClass })
         : { t: 'pre', c: { t: 'code', c: switchCode } }
       );
     }
@@ -1324,7 +1324,7 @@
             c: bw.raw('Pass <code>background</code> and/or <code>surface</code> in the config to replace the auto-derived values:')
           },
           useCE
-            ? bw.codeEditor({ code: overrideCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+            ? bw.codeEditor({ code: overrideCode, lang: 'js', readOnly: true, height: 'auto', class: ceClass })
             : { t: 'pre', c: { t: 'code', c: overrideCode } }
         ]
       });
@@ -1480,10 +1480,10 @@
       var useCE = typeof bw.codeEditor === 'function';
       var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
       var jsEditor = useCE
-        ? bw.codeEditor({ code: jsCall, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+        ? bw.codeEditor({ code: jsCall, lang: 'js', readOnly: true, height: 'auto', class: ceClass })
         : { t: 'div', a: { class: 'code-export-block' }, c: jsCall };
       var cssEditor = useCE
-        ? bw.codeEditor({ code: cssText, lang: 'css', readOnly: true, height: '300px', className: ceClass })
+        ? bw.codeEditor({ code: cssText, lang: 'css', readOnly: true, height: '300px', class: ceClass })
         : { t: 'textarea', a: { class: 'css-output-area', readonly: '', rows: 14 }, c: cssText };
 
       bw.DOM('#code-export', {
@@ -1598,7 +1598,7 @@
                   var toggleCode = '// Generate theme (always produces both palettes)\nvar styles = bw.makeStyles({\n  primary: \'#0077b6\',\n  secondary: \'#90e0ef\'\n});\nbw.applyStyles(styles);\n\n// Switch to alternate palette\nbw.toggleThemeMode();\n\n// Switch back to primary\nbw.toggleThemeMode();';
                   var ceClass = state.codeTheme === 'light' ? 'bw_ce_light' : '';
                   return typeof bw.codeEditor === 'function'
-                    ? bw.codeEditor({ code: toggleCode, lang: 'js', readOnly: true, height: 'auto', className: ceClass })
+                    ? bw.codeEditor({ code: toggleCode, lang: 'js', readOnly: true, height: 'auto', class: ceClass })
                     : { t: 'pre', c: { t: 'code', c: toggleCode } };
                 })()
               ]

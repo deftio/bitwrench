@@ -85,6 +85,11 @@ The element's content. This can be:
   Nested arrays are flattened, so `c: [header, rows.map(row)]` works without
   `.flat()`. (Before 2.1.9 only `bw.html()` flattened them; `bw.mount()` and
   `bw.create()` printed `[object Object]`.)
+- **A number** — rendered as text, including `0`.
+- **`null`, `undefined`, `false` or `true`** — renders nothing. This is what
+  makes `c: [header, isAdmin && adminPanel]` a conditional: when the condition
+  is off the expression is `false`, and `false` is skipped. (Before 2.1.13
+  booleans rendered as the words "false" and "true".)
 
 ```javascript
 // String content
@@ -284,6 +289,17 @@ bw.DOM('#list', { t: 'div', c: cards });
 const content = isLoggedIn
   ? { t: 'div', c: 'Welcome back' }
   : { t: 'div', c: 'Please log in' };
+```
+
+For an optional child, `&&` is enough: `null`, `undefined`, `false` and `true`
+in content render nothing, so the expression below contributes a link or
+nothing.
+
+```javascript
+const nav = { t: 'nav', c: [
+  { t: 'a', a: { href: '#' }, c: 'Home' },
+  isAdmin && { t: 'a', a: { href: '#admin' }, c: 'Admin' }
+]};
 ```
 
 ### Loops

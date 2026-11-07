@@ -51,7 +51,7 @@ Centered page container.
 bw.makeContainer({
   fluid: false,      // true = full width, false = max-width centered
   children: [...],   // content (TACO or array of TACOs)
-  className: ''
+  class: ''
 })
 ```
 
@@ -64,7 +64,7 @@ Flexbox row for grid layouts.
 bw.makeRow({
   children: [...],   // array of makeCol() TACOs
   gap: 3,            // gap size (1-5)
-  className: ''
+  class: ''
 })
 ```
 
@@ -81,7 +81,7 @@ bw.makeCol({
   offset: 0,                        // column offset (1-12)
   content: 'Text or TACO',          // alias for children
   children: [...],
-  className: ''
+  class: ''
 })
 ```
 
@@ -95,7 +95,7 @@ bw.makeStack({
   children: [...],
   direction: 'vertical',   // 'vertical' or 'horizontal'
   gap: 3,                  // gap size (1-8)
-  className: ''
+  class: ''
 })
 ```
 
@@ -132,7 +132,7 @@ bw.makeCard({
   bordered: true,
   shadow: 'md',              // 'none' | 'sm' | 'md' | 'lg'
   hoverable: false,          // add hover shadow effect
-  className: '',
+  class: '',
   style: ''
 })
 ```
@@ -147,7 +147,7 @@ bw.makeAlert({
   content: 'Check your input.',
   variant: 'warning',       // 'info' | 'success' | 'warning' | 'danger'
   dismissible: true,        // show close button
-  className: ''
+  class: ''
 })
 ```
 
@@ -160,7 +160,7 @@ bw.makeBadge({
   text: 'New',
   variant: 'primary',
   pill: false,               // rounded pill shape
-  className: ''
+  class: ''
 })
 ```
 
@@ -194,7 +194,7 @@ bw.makeStatCard({
   suffix: '',                // e.g. '%'
   icon: '',
   variant: '',
-  className: '',
+  class: '',
   style: ''
 })
 
@@ -214,7 +214,7 @@ bw.makeMediaObject({
   content: 'Description text',
   reverse: false,           // image on right instead of left
   imageSize: '3rem',
-  className: ''
+  class: ''
 })
 ```
 
@@ -228,7 +228,7 @@ bw.makeTimeline({
     { title: 'Event 1', content: 'Details...', date: '2026-01-15', variant: 'success' },
     { title: 'Event 2', content: 'Details...', date: '2026-02-01', variant: 'info' }
   ],
-  className: ''
+  class: ''
 })
 ```
 
@@ -240,7 +240,7 @@ Multi-step wizard indicator.
 bw.makeStepper({
   steps: ['Account', 'Profile', 'Review', 'Confirm'],
   currentStep: 1,           // 0-indexed; completed steps show checkmarks
-  className: ''
+  class: ''
 })
 ```
 
@@ -261,7 +261,7 @@ bw.makeNav({
   ],
   pills: false,             // pill style instead of tabs
   vertical: false,
-  className: ''
+  class: ''
 })
 ```
 
@@ -278,7 +278,7 @@ bw.makeNavbar({
     { text: 'Docs', href: '#' }
   ],
   dark: true,                // dark background
-  className: ''
+  class: ''
 })
 ```
 
@@ -327,7 +327,7 @@ bw.makePagination({
   currentPage: 3,
   onPageChange: function(page) { /* load page data */ },
   size: '',                  // 'sm' or 'lg'
-  className: ''
+  class: ''
 })
 ```
 
@@ -349,7 +349,7 @@ bw.makeButton({
   disabled: false,
   onclick: function() {},
   type: 'button',           // 'button' | 'submit' | 'reset'
-  className: '',
+  class: '',
   style: ''
 })
 
@@ -370,7 +370,7 @@ bw.makeButtonGroup({
   ],
   size: '',                  // 'sm' or 'lg'
   vertical: false,
-  className: ''
+  class: ''
 })
 ```
 
@@ -387,7 +387,7 @@ Form wrapper with submit handler.
 bw.makeForm({
   children: [...],           // form controls
   onsubmit: function(e) { e.preventDefault(); },
-  className: ''
+  class: ''
 })
 ```
 
@@ -401,7 +401,7 @@ bw.makeFormGroup({
   help: 'We will not share your email.',
   error: '',                 // error message (shows red)
   required: false,
-  className: ''
+  class: ''
 })
 ```
 
@@ -419,7 +419,7 @@ bw.makeInput({
   disabled: false,
   readonly: false,
   required: false,
-  className: '',
+  class: '',
   style: '',
   oninput: function(e) {},
   onchange: function(e) {},
@@ -442,7 +442,7 @@ bw.makeTextarea({
   disabled: false,
   readonly: false,
   required: false,
-  className: ''
+  class: ''
 })
 ```
 
@@ -462,7 +462,7 @@ bw.makeSelect({
   name: '',
   disabled: false,
   required: false,
-  className: '',
+  class: '',
   onchange: function(e) {}
 })
 ```
@@ -479,7 +479,7 @@ bw.makeCheckbox({
   name: '',
   disabled: false,
   value: '',
-  className: ''
+  class: ''
 })
 ```
 
@@ -495,7 +495,7 @@ bw.makeRadio({
   checked: false,
   id: '',
   disabled: false,
-  className: ''
+  class: ''
 })
 ```
 
@@ -510,7 +510,7 @@ bw.makeSwitch({
   id: '',
   name: '',
   disabled: false,
-  className: ''
+  class: ''
 })
 ```
 
@@ -529,7 +529,7 @@ bw.makeRange({
   id: '',
   name: '',
   disabled: false,
-  className: ''
+  class: ''
 })
 ```
 
@@ -545,7 +545,7 @@ bw.makeSearchInput({
   onInput: function(e) {},         // called on each keystroke
   id: '',
   name: '',
-  className: ''
+  class: ''
 })
 
 // String shorthand:
@@ -562,7 +562,7 @@ bw.makeChipInput({
   placeholder: 'Add tag...',
   onAdd: function(text) {},
   onRemove: function(text) {},
-  className: ''
+  class: ''
 })
 ```
 
@@ -577,7 +577,7 @@ bw.makeFileUpload({
   onFiles: function(files) {},
   text: 'Drop files here or click to browse',
   id: '',
-  className: ''
+  class: ''
 })
 ```
 
@@ -597,7 +597,7 @@ bw.makeAccordion({
     { title: 'Section 3', content: { t: 'div', c: 'TACO content' } }
   ],
   multiOpen: false,          // allow multiple sections open at once
-  className: ''
+  class: ''
 })
 ```
 
@@ -616,7 +616,7 @@ bw.makeModal({
   size: '',                  // 'sm' | 'lg' | 'xl'
   closeButton: true,         // show X in header
   onClose: function() {},
-  className: ''
+  class: ''
 })
 ```
 
@@ -633,7 +633,7 @@ bw.makeToast({
   delay: 5000,               // ms before auto-dismiss
   position: 'top-right',    // 'top-left' | 'top-center' | 'top-right' |
                              // 'bottom-left' | 'bottom-center' | 'bottom-right'
-  className: ''
+  class: ''
 })
 ```
 
@@ -652,7 +652,7 @@ bw.makeDropdown({
   ],
   align: 'start',           // 'start' | 'end'
   variant: 'primary',
-  className: ''
+  class: ''
 })
 ```
 
@@ -672,7 +672,7 @@ bw.makeCarousel({
   interval: 5000,            // ms between auto-advance
   height: '300px',
   startIndex: 0,
-  className: ''
+  class: ''
 })
 ```
 
@@ -689,7 +689,7 @@ bw.makeTooltip({
   content: bw.makeButton({ text: 'Hover me' }),   // the trigger element
   text: 'Tooltip text',
   placement: 'top',         // 'top' | 'bottom' | 'left' | 'right'
-  className: ''
+  class: ''
 })
 ```
 
@@ -703,7 +703,7 @@ bw.makePopover({
   title: 'Details',
   content: 'Extended information here...',
   placement: 'top',         // 'top' | 'bottom' | 'left' | 'right'
-  className: ''
+  class: ''
 })
 ```
 
@@ -733,7 +733,7 @@ bw.makeSkeleton({
   width: '',
   height: '',
   count: 1,                 // number of text lines
-  className: ''
+  class: ''
 })
 ```
 
@@ -748,7 +748,7 @@ bw.makeAvatar({
   initials: 'AC',           // fallback when no src
   size: 'md',               // 'sm' | 'md' | 'lg' | 'xl'
   variant: 'primary',       // background color for initials
-  className: ''
+  class: ''
 })
 ```
 
@@ -773,7 +773,7 @@ bw.makeHero({
   actions: [                 // array of button TACOs
     bw.makeButton({ text: 'Get Started', variant: 'light', size: 'lg' })
   ],
-  className: ''
+  class: ''
 })
 ```
 
@@ -788,7 +788,7 @@ bw.makeSection({
   content: 'Text or TACO',
   variant: 'default',
   spacing: 'md',            // vertical padding
-  className: ''
+  class: ''
 })
 ```
 
@@ -806,7 +806,7 @@ bw.makeFeatureGrid({
   columns: 3,
   centered: true,
   iconSize: '3rem',
-  className: ''
+  class: ''
 })
 ```
 
@@ -828,7 +828,7 @@ bw.makeCTA({
   ],
   variant: 'light',
   centered: true,
-  className: ''
+  class: ''
 })
 ```
 
@@ -873,7 +873,7 @@ bw.makeTable({
   pageSize: undefined,       // set to enable pagination (e.g. 10)
   currentPage: 1,            // current page (1-based)
   onPageChange: null,        // function(newPage) — fires on page navigation
-  className: ''
+  class: ''
 })
 ```
 
@@ -1011,7 +1011,7 @@ bw.makeBarChart({
   formatValue: function(v) { return '$' + (v/1000).toFixed(1) + 'k'; },
   showValues: true,
   showLabels: true,
-  className: ''
+  class: ''
 })
 ```
 

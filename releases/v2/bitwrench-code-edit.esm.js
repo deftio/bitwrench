@@ -1,4 +1,4 @@
-/*! bitwrench v2.1.12 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench v2.1.13 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * bitwrench-code-edit.js - syntax-highlighted contenteditable code editor addon
  *
@@ -558,7 +558,9 @@ function codeEditor(opts) {
   var height = opts.height || '180px';
   var readOnly = !!opts.readOnly;
   var showLineNumbers = !!opts.lineNumbers;
-  var className = 'bw_ce' + (opts.className ? ' ' + opts.className : '');
+  // `class` is the prop name everywhere in bitwrench (same as TACO a.class); `className` is a deprecated alias.
+  var extraClass = opts['class'] || opts.className;
+  var className = 'bw_ce' + (extraClass ? ' ' + extraClass : '');
 
   var highlighted = highlight(code, lang);
 

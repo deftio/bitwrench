@@ -383,7 +383,19 @@ const esmGzipped = gzSize('dist/bitwrench.esm.min.js');
 console.log(`  UMD: ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped`);
 console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 
-// Raised from 45KB to 46KB in 2.1.7, deliberately and once.
+// Raised from 45KB to 46KB in 2.1.7, and from 46KB to 47KB in 2.1.13.
+//
+// 2.1.13 (2026-11-07): the bytes buy API consistency, not features. Every
+// BCCL factory now takes `id` and `class` (44 factories gained the props), the
+// `className` alias warns once, one resolver and one content sink replace
+// the per-verb copies, acting verbs warn on a missed target, plus the toggle
+// button, `alternate` palette seeds, `color-scheme` and `bw.contrastRatio`.
+// Measured level-9 .gz before the raise: UMD 47,368 and ESM 47,508 against a
+// 47,104 ceiling. Dropping the two smallest features recovered ~200 bytes
+// and still left ESM over; shipping `id` on only some factories would have
+// reintroduced the inconsistency the release removes. Decision: raise once,
+// and make 2.1.14 the release that takes bytes out (see "make lean leaner"
+// in dev/bw-css-split-plan.md). Headroom under 47KB is ~620 bytes on ESM.
 //
 // A budget you move whenever you bump into it is not a budget, so the reason is
 // on the record: 2.1.7 spends its bytes making the string path agree with the
@@ -399,17 +411,16 @@ console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 // wrong on both the release number and the beneficiary. See
 // dev/bw-css-split-plan.md. Per-SKU budgets land with that split.
 //
-// Treat 46KB as the ceiling, not as headroom to spend. Headroom is thin:
-// around 100 bytes on ESM as of 2.1.12. Read dist/<file>.gz for the current
-// figure rather than trusting a number written in prose.
-const BUDGET = 46 * 1024; // 46KB
+// Treat 47KB as the ceiling, not as headroom to spend. Read dist/<file>.gz for
+// the current figure rather than trusting a number written in prose.
+const BUDGET = 47 * 1024; // 47KB
 if (gzipped > BUDGET) {
-  fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 46KB budget!`);
+  fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 47KB budget!`);
 }
 if (esmGzipped > BUDGET) {
-  fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 46KB budget!`);
+  fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 47KB budget!`);
 }
-console.log('  ✓ UMD + ESM both under 46KB budget');
+console.log('  ✓ UMD + ESM both under 47KB budget');
 
 // ── 7. Docker clean-room install test ──────────────────────────────────
 

@@ -67,9 +67,14 @@ describe('makePagination', function() {
     assert.ok(result.c.a.class.includes('bw_bccl_pagination_sm'));
   });
 
-  it('should accept className prop', function() {
-    const result = makePagination({ pages: 3, currentPage: 1, className: 'custom' });
-    assert.ok(result.c.a.class.includes('custom'));
+  it('should accept a class prop on the root (className is the deprecated alias)', function() {
+    // 2.1.13: the caller's class lands on the root <nav>, like every factory,
+    // not on the inner <ul> (the factory contract).
+    const result = makePagination({ pages: 3, currentPage: 1, class: 'custom' });
+    assert.ok(result.a.class.includes('custom'));
+    assert.ok(result.c.a.class.includes('bw_bccl_pagination'));
+    const alias = makePagination({ pages: 3, currentPage: 1, className: 'custom' });
+    assert.ok(alias.a.class.includes('custom'));
   });
 
   it('should use defaults when called with no props', function() {
@@ -5098,7 +5103,8 @@ describe('Unknown factory options warn (#92)', function() {
     bw.makeTabs({ tabs: [], onChange: function() {} });
     assert.strictEqual(warnings.length, 3);
     assert.ok(warnings.some(function(w) { return /makeTable: unknown option "headers"/.test(w); }));
-    assert.ok(warnings.some(function(w) { return /makeTabs: unknown option "onChange" ignored\. Accepted: tabs, activeIndex, onTabChange/.test(w); }));
+    // Every factory now reads id and class (2.1.13); className is the deprecated alias and is not listed.
+    assert.ok(warnings.some(function(w) { return /makeTabs: unknown option "onChange" ignored\. Accepted: id, tabs, activeIndex, onTabChange, class$/.test(w); }));
   });
 
   it('warns through bw.make(type, props) too', function() {

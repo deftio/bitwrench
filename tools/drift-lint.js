@@ -822,6 +822,119 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
   });
 })();
 
+// 4. bccl-config-drift -- a *Config interface that disagrees with its factory.
+//
+// Ten BCCL config interfaces in src/bitwrench.d.ts certified props the
+// factories never read (`closable`, `clickable`, `outline`) and omitted ones
+// they do (`closeButton`, `onClose`, `subtitle`), so TypeScript-clean code
+// warned at runtime and `makeInput({ class })` type-checked while erasing the
+// form-control class (#114). The unknown-prop guard already parses each
+// factory's destructuring pattern at runtime; this reads the same pattern
+// from source and holds the .d.ts to it in both directions. Factories that
+// take `...rest` pass unknown keys through as attributes, so for them only
+// the "declared but unread" direction is skipped.
+(function checkBcclConfigDrift() {
+  var rule = { id: 'bccl-config-drift', fileFilter: null, fileExclude: null };
+  if (!ruleApplies(rule, 'src')) return;
+
+  var dtsPath = resolve(ROOT, 'src', 'bitwrench.d.ts');
+  var bcclPath = resolve(ROOT, 'src', 'bitwrench-bccl.js');
+  var corePath = resolve(ROOT, 'src', 'bitwrench.js');
+  if (!existsSync(dtsPath) || !existsSync(bcclPath) || !existsSync(corePath)) return;
+  var dts = readFileSync(dtsPath, 'utf8');
+  var dtsLines = dts.split('\n');
+  var sources = readFileSync(bcclPath, 'utf8') + '\n' + readFileSync(corePath, 'utf8');
+
+  // Keys every factory takes (FactoryProps), never flagged.
+  var universal = { id: 1, 'class': 1, className: 1 };
+
+  // interface -> factories, from the Bitwrench interface signatures
+  var users = {};
+  var sigRe = /^\s*(make[A-Z]\w*)\(config\?:\s*(\w+Config)/gm, sm;
+  while ((sm = sigRe.exec(dts))) {
+    if (sm[2] === 'ComponentConfig' || sm[2] === 'StyleConfig') continue;
+    (users[sm[2]] = users[sm[2]] || []).push(sm[1]);
+  }
+
+  // factory -> { keys, rest } from its destructuring pattern in source
+  function patternOf(name) {
+    var fm = new RegExp('(?:^export function ' + name + '\\s*\\([^)]*\\)\\s*\\{|^bw\\.' + name + ' = function\\s*\\([^)]*\\)\\s*\\{)', 'm').exec(sources);
+    if (!fm) return null;
+    var body = sources.slice(fm.index, fm.index + 6000);
+    var dm = /(?:const|let|var)\s*\{([^{}]*)\}\s*=\s*(?:props|config)/.exec(body);
+    if (!dm) return null;
+    var pat = dm[1].replace(/\s+/g, ' ');
+    var keys = {}, re = /(?:^|,)\s*([A-Za-z_$][\w$]*)\s*(?=[,:=]|$)/g, k;
+    while ((k = re.exec(pat))) if (k[1] !== '_c') keys[k[1]] = true;
+    return { keys: keys, rest: pat.indexOf('...') !== -1 };
+  }
+
+  function lineOf(iface, key) {
+    var inIface = false;
+    for (var i = 0; i < dtsLines.length; i++) {
+      if (new RegExp('^export interface ' + iface + '\\b').test(dtsLines[i])) inIface = true;
+      else if (inIface && /^\}/.test(dtsLines[i])) return 0;
+      if (inIface && key && new RegExp('^\\s*' + key.replace(/\$/g, '\\$') + '\\??\\s*:').test(dtsLines[i])) return i + 1;
+      if (inIface && !key) return i + 1;
+    }
+    return 0;
+  }
+
+  Object.keys(users).forEach(function(iface) {
+    var block = new RegExp('export interface ' + iface + '\\b[^{]*\\{([\\s\\S]*?)\\n\\}').exec(dts);
+    if (!block) return;
+    var declared = {};
+    block[1].split('\n').forEach(function(line) {
+      var m = /^\s*([A-Za-z_$][\w$]*)\??\s*:/.exec(line);
+      if (m && !/^\s*(\*|\/\/)/.test(line)) declared[m[1]] = true;
+    });
+    var readByAny = {}, allRest = true;
+    users[iface].forEach(function(f) {
+      var p = patternOf(f);
+      if (!p) return;
+      if (!p.rest) allRest = false;
+      Object.keys(p.keys).forEach(function(k) { readByAny[k] = true; });
+      // read by this factory but not declared
+      Object.keys(p.keys).forEach(function(k) {
+        if (universal[k] || declared[k]) return;
+        allHits.push({
+          file: 'src/bitwrench.d.ts', line: lineOf(iface), rule: 'bccl-config-drift',
+          message: iface + ' omits `' + k + '`, which bw.' + f + ' reads from its props',
+          text: 'add `' + k + '?: ...` to ' + iface + ' (the factory pattern is the source of truth)'
+        });
+      });
+    });
+    // declared but read by no factory (skip when every user passes ...rest through)
+    if (!allRest) {
+      Object.keys(declared).forEach(function(k) {
+        if (universal[k] || readByAny[k]) return;
+        allHits.push({
+          file: 'src/bitwrench.d.ts', line: lineOf(iface, k), rule: 'bccl-config-drift',
+          message: iface + ' declares `' + k + '` but no factory using it (' + users[iface].join(', ') + ') reads that prop -- TypeScript would certify an option the guard warns about',
+          text: 'remove it from ' + iface + ', or make the factory read it'
+        });
+      });
+    }
+  });
+
+  // StyleConfig: keys must be read as config.<key> / fullConfig.<key> somewhere in the style engine.
+  var styleBlock = /export interface StyleConfig\s*\{([\s\S]*?)\n\}/.exec(dts);
+  if (styleBlock) {
+    var engine = sources + '\n' + readFileSync(resolve(ROOT, 'src', 'bitwrench-styles.js'), 'utf8') + '\n' + readFileSync(resolve(ROOT, 'src', 'bitwrench-color-utils.js'), 'utf8');
+    var read = {}, rr = /\b(?:config|fullConfig|cfg)\.([A-Za-z_$][\w$]*)/g, rm;
+    while ((rm = rr.exec(engine))) read[rm[1]] = true;
+    styleBlock[1].split('\n').forEach(function(line) {
+      var m = /^\s*([A-Za-z_$][\w$]*)\??\s*:/.exec(line);
+      if (!m || /^\s*(\*|\/\/)/.test(line) || read[m[1]]) return;
+      allHits.push({
+        file: 'src/bitwrench.d.ts', line: lineOf('StyleConfig', m[1]), rule: 'bccl-config-drift',
+        message: 'StyleConfig declares `' + m[1] + '` but nothing in the style engine reads config.' + m[1],
+        text: 'remove it, or read it in makeStyles/resolveLayout/derivePalette'
+      });
+    });
+  }
+})();
+
 // 2. stale-size -- a size claim in prose that matches no shipped artifact.
 (function checkSizeClaims() {
   var rule = { id: 'stale-size', fileFilter: null, fileExclude: null };
@@ -841,7 +954,8 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
       for (var d = -2; d <= 2; d++) realKB[kb + d] = true;   // prose rounds; drift is bigger than 2KB
     });
   });
-  realKB[46] = true;   // the bundle budget, quoted as a ceiling in several docs
+  realKB[46] = true;   // the 2.1.7-2.1.12 bundle budget, still quoted in history notes
+  realKB[47] = true;   // the bundle budget since 2.1.13, quoted as a ceiling in several docs
 
   var SIZE = /(?:~|about\s+)?(\d{2,3})\s?KB\b/gi;
   // Only claims about bitwrench's own artifacts, and never a line that is

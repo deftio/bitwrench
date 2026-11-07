@@ -209,10 +209,25 @@ Set `harmonize: 0` for pure, unmodified semantic colors.
 
 ## Primary and alternate palettes
 
-Every theme has two palettes: primary and alternate. The alternate is derived automatically by inverting the luminance of each seed color.
+Every theme has two palettes: primary and alternate. The alternate is derived automatically from the same seeds: each role keeps its hue and moves its lightness to the other side so it keeps contrast against the alternate surface.
 
 - If your primary palette is light, the alternate will be dark
 - If your primary palette is dark, the alternate will be light
+- A saturated mid-lightness accent (indigo `#6366f1`, a bootstrap blue, an amber) becomes a *lighter* tint of the same hue in the dark palette, not a darker one. Literal inversion turned `#6366f1` into near-black on a dark surface (contrast 1.0:1); the tint reads at about 5:1. Low-saturation and very light or dark seeds mirror as before.
+
+When the derivation is not what the brand wants, seed the alternate palette directly. Any key you give wins; the rest still derive:
+
+```javascript
+bw.loadStyles({
+  primary: '#6366f1',
+  secondary: '#6b7280',
+  alternate: { primary: '#818cf8', background: '#0f1419' }   // dark-mode accent and page colour
+});
+```
+
+`alternate` takes the same colour keys as the top level: `primary`, `secondary`, `tertiary`, `success`, `danger`, `warning`, `info`, `light`, `dark`, `background`, `surface`.
+
+Both palettes also declare `color-scheme` (`light` or `dark`, judged on the palette's background) on `body` and on a scope root, so native parts -- `<select>` popups, scrollbars, date and number spinners, autofill -- follow the theme instead of staying light inside a dark one.
 
 ```javascript
 var theme = bw.makeStyles({
@@ -222,7 +237,7 @@ var theme = bw.makeStyles({
 bw.applyStyles(theme);
 
 theme.isLightPrimary;        // true -- judged on the whole primary palette
-theme.alternatePalette;      // the luminance-inverted counterpart
+theme.alternatePalette;      // the derived (or seeded) counterpart
 theme.alternateCss;          // its CSS, scoped under .bw_theme_alt
 ```
 

@@ -472,9 +472,12 @@ class BwServeApp {
             : (data.result ? data.result.data : data.data || data);
           record.client._dispatch(action, payload);
         } else {
-          // All other routes: resolve pending promise if mechanism exists
+          // All other routes: resolve the pending promise with the client's
+          // RESULT, not the whole POST envelope. Every caller used to unwrap
+          // `.result` itself, and the one that forgot (attach /tree) printed
+          // `?` for every page (#116). Unwrap once, here; reject on `error`.
           if (record.client._resolvePending) {
-            record.client._resolvePending(data.requestId, data);
+            record.client._resolvePending(data.requestId, data.result, data.error);
           }
         }
         res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });

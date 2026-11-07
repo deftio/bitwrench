@@ -402,13 +402,13 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 
 | Format | File | Use case |
 | --- | --- | --- |
-| UMD | bitwrench.umd.min.js | Browsers and Node.js -- the `<script>` tag default (~45 KB gz) |
-| UMD, lean | bitwrench-lean.umd.min.js | Your own design: everything except the built-in `make*()` components (~35 KB gz) |
+| UMD | bitwrench.umd.min.js | Browsers and Node.js -- the `<script>` tag default (~46 KB gz) |
+| UMD, lean | bitwrench-lean.umd.min.js | Your own design: everything except the built-in `make*()` components (~36 KB gz) |
 | ESM | bitwrench.esm.min.js | Modern bundlers (Vite, webpack, etc.), `import` without npm |
 | ESM, lean | bitwrench-lean.esm.min.js | As above, without the built-in components |
 | CJS | bitwrench.min.cjs | Node.js require() |
 | ES5 | bitwrench.es5.min.js | Legacy browsers (IE11) |
-| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~118 KB gz) |
+| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~121 KB gz) |
 | Verify | bitwrench-verify.min.js (+ `.cjs`, `.esm.js`, `.esm.min.js`, `.d.ts`) | The opt-in TACO checker (under 3 KB gz). Separate on purpose -- a development-time tool, outside the core budget. [Guide](docs/verify.md) |
 
 The lean builds still include `makeTable`, `makeDataTable`, `makeTableFromArray` and
@@ -419,7 +419,7 @@ class helpers. The only thing they drop is the 47 BCCL component factories
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.
 
-Every release is gated at 46KB gzipped for the UMD and ESM builds, measured against the pre-compressed `.gz` that ships. (The gate was 45KB through 2.1.6; it was raised once, deliberately, in 2.1.7 -- and the core/BCCL CSS split planned for 2.2 is expected to give the byte back and then some.) If you are working on bundle size, [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output *larger*), and where the remaining headroom is.
+Every release is gated at 47KB gzipped for the UMD and ESM builds, measured against the pre-compressed `.gz` that ships. (The gate was 45KB through 2.1.6, 46KB from 2.1.7, and 47KB from 2.1.13; each raise is recorded with its reason in `tools/release.js`. The core/BCCL CSS split planned next shrinks the lean build, not this one.) If you are working on bundle size, [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output *larger*), and where the remaining headroom is.
 
 ## Documentation
 

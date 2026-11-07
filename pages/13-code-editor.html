@@ -175,7 +175,7 @@
                   t: 'p',
                   c: [
                     'Pass ',
-                    { t: 'code', c: "className: 'bw_ce_light'" },
+                    { t: 'code', c: "class: 'bw_ce_light'" },
                     ' for a light background.'
                   ]
                 },
@@ -277,7 +277,7 @@
 
     bw.DOM('#demo-editor-light', bw.codeEditor({
       code: jsCode, lang: 'js', readOnly: true, height: '140px',
-      className: 'bw_ce_light'
+      class: 'bw_ce_light'
     }));
 
     bw.DOM('#demo-editor-css', bw.codeEditor({
@@ -297,7 +297,7 @@
         { fn: 'opts.lang', returns: 'string', desc: 'Language: "js", "css", or "html" (default: "js")' },
         { fn: 'opts.height', returns: 'string', desc: 'Max height CSS value (default: "180px")' },
         { fn: 'opts.readOnly', returns: 'boolean', desc: 'If true, editor is not editable (default: false)' },
-        { fn: 'opts.className', returns: 'string', desc: 'Extra CSS class (e.g. "bw_ce_light" for light theme)' },
+        { fn: 'opts.class', returns: 'string', desc: 'Extra CSS class (e.g. "bw_ce_light" for light theme)' },
         { fn: 'opts.onChange', returns: 'function', desc: 'Callback called with new code on each edit' },
         { fn: 'el._bwCodeEdit.getValue()', returns: 'string', desc: 'Get current code from mounted editor element' },
         { fn: 'el._bwCodeEdit.setValue(code)', returns: 'void', desc: 'Set code and re-highlight' }

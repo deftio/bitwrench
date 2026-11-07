@@ -142,7 +142,7 @@ Slot-based components auto-generate `el.bw.setName()` / `el.bw.getName()` pairs 
 ```javascript
 var card = bw.mount('#info', bw.makeCard({ title: 'Stats', content: '0' }));
 card.bw.setTitle('Revenue');                  // update just the title
-card.bw.setContent({ t: 'b', c: '$42k' });   // accepts TACO objects
+card.bw.setContent({ t: 'b', c: '$42k' });   // text, TACO, array or bw.raw(), like bw.patch
 card.bw.getTitle();                           // => 'Revenue'
 ```
 

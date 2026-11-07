@@ -888,18 +888,18 @@ describe("handleSlashCommand()", function() {
     assert.ok(errors.some(function(l) { return l.includes('Invalid JSON'); }));
   });
 
-  it("/render with valid TACO calls client.render", function() {
-    var renderCalled = false;
+  it("/render with valid TACO calls client.mount (render is the deprecated alias)", function() {
+    var mountCalled = false;
     var mockClient = {
-      render: function(sel, taco) {
-        renderCalled = true;
+      mount: function(sel, taco) {
+        mountCalled = true;
         assert.strictEqual(sel, '#app');
         assert.deepStrictEqual(taco, { t: 'h1', c: 'Hi' });
       }
     };
     handleSlashCommand('/render #app {"t":"h1","c":"Hi"}', mockClient, new Map(), {}, mockRl);
-    assert.strictEqual(renderCalled, true);
-    assert.ok(logged.some(function(l) { return l.includes('Rendered'); }));
+    assert.strictEqual(mountCalled, true);
+    assert.ok(logged.some(function(l) { return l.includes('Mounted'); }));
   });
 
   it("/render with invalid JSON shows error", function() {
@@ -1723,5 +1723,139 @@ describe("startAttach() without input/output in opts (lines 246-247)", function(
       assert.ok(result.app, 'should have app');
       done();
     }, 50);
+  });
+});
+
+// ===================================================================================
+// Wire round trips (2.1.13, #116 #117). Both sides of each boundary are the
+// real producer and the real consumer: bw.inspect() on a jsdom page is what
+// the client's _bw_tree builtin sends, the HTTP return route is how it
+// arrives, and printTree() is what the REPL shows. The old tests fed
+// printTree hand-built {tag, cls} nodes and the server passed the whole
+// envelope through, so `/tree` printed `?` for every page and no test saw it.
+// ===================================================================================
+
+describe("wire round trip: _bw_tree -> /bw/return -> printTree", function() {
+  var apps = [];
+  function createApp(opts) {
+    var a = bwserve.create(Object.assign({ port: 0 }, opts || {}));
+    apps.push(a);
+    return a;
+  }
+  afterEach(async function() {
+    this.timeout(5000);
+    for (var a of apps) { if (a._server) await a.close(); }
+    apps = [];
+  });
+
+  async function connectedClient(app) {
+    await app.listen();
+    var port = app._server.address().port;
+    var html = await (await fetch('http://localhost:' + port + '/')).text();
+    var clientId = html.match(/"(c\d+)"/)[1];
+    fetch('http://localhost:' + port + '/bw/events/' + clientId).catch(function() {});
+    await new Promise(function(r) { setTimeout(r, 100); });
+    return { port: port, clientId: clientId, client: app._clients.get(clientId).client };
+  }
+
+  function captureLog(fn) {
+    var lines = [];
+    var orig = console.log;
+    console.log = function(m) { lines.push(String(m)); };
+    try { fn(); } finally { console.log = orig; }
+    return lines;
+  }
+
+  it("prints the real bw.inspect() tree, classes included, after the real return route", async function() {
+    this.timeout(5000);
+    resetApp();
+    bw.DOM('#app', {
+      t: 'div', a: { id: 'container', class: 'main-panel wide' }, c: [
+        { t: 'h1', a: { id: 'title' }, c: 'Hello' },
+        { t: 'ul', a: { id: 'list' }, c: [{ t: 'li', c: 'a' }, { t: 'li', c: 'b' }] }
+      ]
+    });
+    // What the browser builtin produces (bwclient prefers bw.inspect when present)
+    var tree = bw.inspect('#container', 3);
+
+    var app = createApp();
+    app.page('/', function() {});
+    var c = await connectedClient(app);
+    var pend = c.client._pend(2000);
+
+    // What bwclient.respond() POSTs, byte for byte in shape
+    var res = await fetch('http://localhost:' + c.port + '/bw/return/query/' + c.clientId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId: pend.requestId, route: 'query', result: tree, error: null })
+    });
+    assert.strictEqual(res.status, 200);
+    var got = await pend.promise;
+    assert.strictEqual(got.tag, 'div', 'the promise must resolve with the tree, not the envelope');
+    assert.strictEqual(got.requestId, undefined);
+
+    var lines = captureLog(function() { printTree(got, 0); });
+    assert.deepStrictEqual(lines, [
+      'div#container.main-panel.wide',
+      '  h1#title',
+      '  ul#list',
+      '    li',
+      '    li'
+    ]);
+  });
+
+  it("rejects the pending promise when the client reports an error", async function() {
+    this.timeout(5000);
+    var app = createApp();
+    app.page('/', function() {});
+    var c = await connectedClient(app);
+    var pend = c.client._pend(2000);
+    await fetch('http://localhost:' + c.port + '/bw/return/query/' + c.clientId, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId: pend.requestId, route: 'query', result: null, error: 'Element not found: #nope' })
+    });
+    await assert.rejects(pend.promise, /Element not found: #nope/);
+  });
+
+  it("bw.inspect() emits the class list under `class`, the HTML name", function() {
+    resetApp();
+    bw.DOM('#app', { t: 'p', a: { id: 'p1', class: 'x y' } });
+    var info = bw.inspect('#p1', 0);
+    assert.strictEqual(info['class'], 'x y');
+    assert.strictEqual(info.classes, undefined);
+    assert.strictEqual(info.cls, undefined);
+  });
+
+  it("printTree still reads the pre-2.1.13 spellings for one release", function() {
+    var lines = captureLog(function() {
+      printTree({ tag: 'a', classes: 'old' }, 0);
+      printTree({ tag: 'b', cls: 'older' }, 0);
+    });
+    assert.deepStrictEqual(lines, ['a.old', 'b.older']);
+  });
+});
+
+describe("wire: every /bw/ URL the client script builds is server-origin", function() {
+  it("the generated client never uses a page-relative /bw/ path", function() {
+    var js = generateAttachScript({ origin: 'http://localhost:7902' });
+    // Every string literal that starts a /bw/ path must be preceded by `base +`
+    // or `origin +`; a bare one resolves against the PAGE and 404s cross-origin (#117).
+    var re = /"\/bw\//g;
+    var m, bare = [];
+    while ((m = re.exec(js))) {
+      var before = js.slice(0, m.index).replace(/\s+$/, '');
+      if (!/\+$/.test(before)) bare.push(js.slice(Math.max(0, m.index - 40), m.index + 30));
+    }
+    assert.deepStrictEqual(bare, [], 'page-relative /bw/ URLs in the client script');
+  });
+
+  it("the html2canvas loader uses the server origin", function() {
+    var js = generateAttachScript({ origin: 'http://localhost:7902' });
+    assert.ok(/base \+ "\/bw\/lib\/vendor\/html2canvas\.min\.js"/.test(js), 'captureUrl default must be base + /bw/lib/vendor/...');
+  });
+
+  it("the fallback tree walk emits `class`, matching bw.inspect", function() {
+    var js = generateAttachScript({ origin: 'http://localhost:7902' });
+    assert.ok(js.indexOf('info["class"] = el.className') !== -1);
+    assert.ok(js.indexOf('info.cls') === -1, 'no `cls` spelling left in the client');
   });
 });

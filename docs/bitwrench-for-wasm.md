@@ -201,6 +201,7 @@ index.html
 
 JavaScript glue (minimal):
 
+<!-- doc-test: skip (imports the wasm-bindgen output; render and handle_event come from the module) -->
 ```javascript
 // Glue code -- the only JS you write
 import init, { render, handle_event } from './app.js'; // wasm-bindgen output
@@ -251,6 +252,7 @@ bw.DOM(), bw.apply()                 state + logic
 
 Main thread (glue):
 
+<!-- doc-test: skip (needs a Worker and worker.js built from the WASM module) -->
 ```javascript
 var worker = new Worker('worker.js');
 
@@ -271,6 +273,7 @@ bw.el('#app').addEventListener('click', function(e) {
 
 Worker:
 
+<!-- doc-test: skip (Web Worker script: importScripts and the wasm glue exist only in the worker) -->
 ```javascript
 // worker.js
 importScripts('app_wasm_glue.js');
@@ -631,6 +634,7 @@ const char* handle_event(const char* target_id) {
 
 The JS glue calls `render()` and `handle_event()`, gets back r-prefixed JSON strings, and passes them to `bw.apply()`. An empty string means "nothing to do", so the glue checks before parsing:
 
+<!-- doc-test: skip (handle_event is the WASM export the prose describes) -->
 ```javascript
 var out = handle_event(id);
 if (out) bw.apply(bw.parseJSONFlex(out));

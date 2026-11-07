@@ -154,7 +154,7 @@
       // LED control
       var ledSection = bw.makeCard({
         title: 'Onboard LED (CYW43)',
-        className: 'bw_mb_3',
+        class: 'bw_mb_3',
         content: [
           bw.makeBadge({ text: state.led ? 'ON' : 'OFF', variant: state.led ? 'success' : 'secondary', pill: true }),
           ' ',
@@ -168,7 +168,7 @@
         return bw.makeCol({ size: { xs: 12, md: 4 }, content:
           bw.makeCard({
             title: 'ADC' + i + ' (GP' + (26 + i) + ')',
-            className: 'bw_mb_2',
+            class: 'bw_mb_2',
             content: [
               { t: 'div', a: { class: 'bw_mb_1' }, c: v.toFixed(3) + ' V' },
               bw.makeProgress({ value: pct, label: pct + '%', variant: pct > 80 ? 'danger' : pct > 50 ? 'warning' : 'primary' })
@@ -182,7 +182,7 @@
         return bw.makeCol({ size: { xs: 6, md: 3 }, content:
           bw.makeCard({
             title: 'PWM' + ch + ' (GP' + ch + ')',
-            className: 'bw_mb_2',
+            class: 'bw_mb_2',
             content: [
               bw.makeProgress({ value: duty, label: duty + '%', variant: 'info' }),
               { t: 'div', a: { class: 'bw_mt_1' }, c: [
@@ -206,7 +206,7 @@
         return bw.makeCol({ size: { xs: 6, sm: 3 }, content:
           bw.makeCard({
             title: 'GP' + pin,
-            className: 'bw_mb_2',
+            class: 'bw_mb_2',
             content: [
               bw.makeBadge({ text: v ? 'HIGH' : 'LOW', variant: v ? 'success' : 'secondary', pill: true }),
               ' ',
@@ -238,7 +238,7 @@
       });
 
       bw.DOM('#app', bw.makeContainer({
-        className: 'bw_py_3',
+        class: 'bw_py_3',
         children: [
           connected ? null : bw.makeAlert({
             content: 'Connecting to ' + state.board + '...',

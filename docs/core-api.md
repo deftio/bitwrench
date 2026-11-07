@@ -6,7 +6,9 @@ HTML, CSS from JS, updates, and messaging. One line each. No built-in components
 work, the [lean build](../README.md#build-formats) has everything on this page.
 
 The full reference is [bitwrench_api.md](bitwrench_api.md); the object format is
-[taco-format.md](taco-format.md); SVG has its own guide, [svg.md](svg.md).
+[taco-format.md](taco-format.md); SVG has its own guide, [svg.md](svg.md). If
+you arrived with a problem rather than a function name, start with
+[When you want X](when-you-want.md), which is this card indexed by task.
 
 ## What is in which build
 
@@ -37,10 +39,19 @@ editor are separate files; see [Build Formats](../README.md#build-formats).
 |------|------|
 | `bw.mount(target, taco)` | Replace target's content; returns the new root element (`bw.DOM` is the same) |
 | `bw.append(target, taco, {before})` | Add a child; returns it |
-| `bw.replace(el, taco)` | Swap one element for a new one (old one is unmounted) |
+| `bw.replace(ref, taco)` | Swap one element for a new one (old one is unmounted) |
 | `bw.remove(ref)` | Unmount and remove |
 | `bw.html(taco)` | HTML string -- works in Node, for SSR and static files |
 | `bw.create(taco)` | Detached DOM element, not yet in the page |
+
+**One vocabulary.** Every `target`/`ref` above, and in every verb on this page,
+is the same thing: a live element, an element id (`'status'`), a CSS selector
+(`'#status'`, `'.card'`), or a `bw_uuid_*` token. A verb that acts and cannot
+find its target warns `bw.<verb>: target not found` and returns null; the
+queries (`bw.el`, `bw.$`, `bw.hasClass`, `bw.inspect`) and the class verbs
+stay silent on a miss. Every `content` is the same thing too: text, a TACO, an
+array of either, or `bw.raw()` -- in `bw.patch`, slot setters,
+`bw.el(ref, content)` and `bw.$(sel, content)` alike.
 
 ## Update
 
@@ -89,7 +100,7 @@ passes them through. See [Bring your own design](theming.md#bring-your-own-desig
 
 | Call | Does |
 |------|------|
-| `bw.inspect(ref, depth)` | Component tree as text |
+| `bw.inspect(ref, depth)` | Component tree as an object: `{ tag, id, class, uuid, type, handles, state, children }`. `bwcli attach` prints it with `/tree` |
 | `bw.warnUnknownProps` | `true` by default: a `make*()` factory warns once when handed an option it does not read. Set `false` to silence |
 | `bwcli attach` | Drive a live page from a terminal: REPL, inspect, screenshot ([bw-attach.md](bw-attach.md)) |
 | `verify(taco)` / `verify.assert(taco)` | Check a TACO's shape: an array of findings, or a throw. A separate module under 3 KB gzipped (`bitwrench/verify`), not in either build, never in production ([verify.md](verify.md)) |

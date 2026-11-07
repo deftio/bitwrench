@@ -2975,10 +2975,10 @@ describe("bw.patch — text content fallback (L2098)", function() {
     assert.strictEqual(document.getElementById('num-patch').textContent, '42');
   });
 
-  it("should set textContent for boolean content", function() {
+  it("should clear textContent for boolean content (#123: booleans render nothing)", function() {
     bw.mount('#app', { t: 'span', a: { id: 'bool-patch' }, c: 'old' });
     bw.patch('bool-patch', true);
-    assert.strictEqual(document.getElementById('bool-patch').textContent, 'true');
+    assert.strictEqual(document.getElementById('bool-patch').textContent, '');
   });
 });
 

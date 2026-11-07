@@ -1,5 +1,27 @@
 # agents.md -- Instructions for AI coding agents working on bitwrench
 
+## Read docs/thinking-in-bitwrench.md first
+
+Read **docs/thinking-in-bitwrench.md** in full before writing or changing
+bitwrench code. The rest of this file is a reference and assumes that model.
+
+The reason is measured, not stylistic. Three apps built on bitwrench were
+audited after they shipped. Between them they re-implemented eight things the
+loaded build already had -- `bw.h`, `bw.patch`, the class verbs, the router,
+`bw.el`, `bw.clear`, `makeTooltip`, `syncChildren` -- and the code in each case
+followed a React or vanilla-JS habit: `className` for `class`,
+`document.querySelector` and `innerHTML` after the first mount, listeners in
+`mounted`, a view re-mounted to change one label.
+
+bitwrench is a different model, not a set of helpers over the DOM. The whole UI
+(HTML, CSS, actions) is composed from `{t, a, c, o}` objects, and bitwrench
+manages the full lifecycle from that object, in JavaScript, with no extra
+tools. The same object renders to a string on the server and to live DOM in
+the browser; CSS is a function over data; a UI can be validated and sent over
+a wire as JSON; no build chain is required. The document sets that model out,
+with the three common starting points (React, vanilla JS, server templates)
+and what each maps to.
+
 ## What bitwrench is
 
 bitwrench is a JavaScript UI library where every UI element is a plain JS
@@ -20,11 +42,11 @@ design choice happens to work everywhere from cloud dashboards to ESP32
 microcontrollers.
 
 bitwrench is NOT a DOM helper or a lightweight Bootstrap. It is a complete
-UI system with its own rendering model. Code that uses bitwrench should
-look fundamentally different from code that uses jQuery, vanilla JS, or
-React. If the code you are writing contains `document.querySelector`,
-`innerHTML`, raw CSS strings, or `addEventListener` inside lifecycle hooks,
-you are doing it wrong. Read the patterns below.
+UI system with its own rendering model. Code that uses bitwrench
+looks different from code that uses jQuery, vanilla JS, or React. Code that
+contains `document.querySelector`, `innerHTML`, raw CSS strings, or
+`addEventListener` inside lifecycle hooks is working around the library
+rather than with it; the patterns below show the bitwrench form of each.
 
 ## Lifecycle
 
@@ -39,32 +61,37 @@ you are doing it wrong. Read the patterns below.
 
 Before writing or modifying bitwrench code, read these docs in order:
 
-1. **docs/quickstart.md** -- Hello world in one script tag, which dist
-   file to load, then an annotated 100-line app covering the full
-   lifecycle from theming through stateful components. Start here for
-   the fastest onramp; then read docs/thinking-in-bitwrench.md (3).
+1. **docs/thinking-in-bitwrench.md** -- The model. Builds from a static
+   HTML string to a live server-driven app, one layer at a time, and
+   opens with three common starting points (React, vanilla JS, server
+   templates) and what each maps to. Read in full first; the section at
+   the top of this file gives the reason.
 
-2. **docs/llm-bitwrench-guide.md** -- Compact code-first tutorial.
+2. **docs/quickstart.md** -- Hello world in one script tag, which dist
+   file to load, ten calls the audited apps re-implemented, then an
+   annotated 100-line app covering the full lifecycle.
+
+3. **docs/when-you-want.md** -- The core API indexed by the problem you
+   have ("change one label", "update a list without losing typed input",
+   "a tooltip"), one running example each. Check it before writing any
+   helper function.
+
+4. **docs/llm-bitwrench-guide.md** -- Compact code-first tutorial.
    Covers TACO format, rendering, events, CSS, BCCL components, state,
    handles/slots, routing, bwserve, and the #1 mistake (events in
    o.mounted). ~700 lines -- you can read it in full.
 
-3. **docs/thinking-in-bitwrench.md** -- Full progressive walkthrough.
-   Builds from a static HTML string to a live server-driven app, one
-   layer at a time. Explains WHY bitwrench works the way it does and
-   how it differs from frameworks. Read when you need to understand
-   design rationale, not just API calls.
-
-4. **docs/component-cheatsheet.md** -- Every built-in component with
+5. **docs/component-cheatsheet.md** -- Every built-in component with
    key props and handle methods. Check this BEFORE building custom
    UI -- bitwrench ships 51 components. If one exists for your need,
    use it; do not hand-build a replacement.
 
-5. **docs/bitwrench-northstar-principles.md** -- Core design philosophy.
+6. **docs/bitwrench-northstar-principles.md** -- Core design philosophy.
    Read when proposing architectural changes or new patterns.
 
-6. **docs/core-api.md** -- One-page card of the core calls (mount, patch,
-   syncChildren, css, pub/sub). Keep it open while writing code.
+7. **docs/core-api.md** -- One-page card of the core calls (mount, patch,
+   syncChildren, css, pub/sub) and the table of what is in the lean
+   build. Keep it open while writing code.
 
 SVG is ordinary TACO (`{t: 'svg', ...}`) -- full guide in **docs/svg.md**,
 short version in docs/taco-format.md#svg. Never build SVG as strings with
@@ -463,13 +490,32 @@ example-grade and unpublished as of 2.1.11; before changing them read
 `dev/bw-embedded-release-plan-2.1.x.md`, which holds the scope boundary, the
 inconsistency register and the open decisions.
 
+## Helpers and tools (optional, outside the core bundle)
+
+None of these is required to use bitwrench, and none is in the core budget.
+They exist because the UI is data, so it can be checked, driven and generated
+by tools. Point users at them; do not reimplement them.
+
+| Tool | What it is | Doc |
+|---|---|---|
+| `bwcli` | Command line: Markdown to themed HTML, theme presets, `verify`, a pipe server that turns any program into a bwserve backend | docs/cli.md |
+| `bwcli attach` | A REPL on a live bitwrench page: inspect the component tree, call handles, click, screenshot. For anything a headless browser cannot reach (Web MIDI, hardware, a device) | docs/bw-attach.md |
+| `bitwrench-verify` | Structural checker for TACO you did not write: findings or a throw, authored and wire modes, under 3 KB, its own artifact | docs/verify.md |
+| `drift-lint` | Maintainer tool: fails the build when docs, types or examples name an API that is not in the source | docs/drift-lint.md |
+| `bwmcp` | MCP server exposing bitwrench to AI agents: component catalog, live rendering, screenshots | docs/bitwrench-mcp.md |
+| `bitwrench-debug.js` | Console toolkit (`bwd.tree`, `bwd.state`, `bwd.listen`, `bwd.screenshot`) -- the attach helpers without the server | dist/bitwrench-debug.min.js; same commands as docs/bw-attach.md |
+| `bitwrench-util-css` | `bw.u('flex gap4 p4')`: utility shorthand to a style object, a CSS string or class names. A plugin loaded after bitwrench | docs/llm-bitwrench-guide.md, "bw.u()" |
+| `bitwrench-util-color` | Legacy CSS color parsing, RGB/HSL conversion and multi-stop interpolation, extracted from core in 2.1 | docs/bitwrench_api.md, Color |
+| `bitwrench-code-edit` | `bw.codeEditor()` and `bw.highlight()`: a live, syntax-colored editable code block as TACO | pages/13-code-editor.html |
+| `dist/builds.json` | Every shipped file with size and SRI hash; the source of truth for "which file do I load" | docs/core-api.md |
+
 ## Commit and release rules
 
 - NEVER commit directly to main -- work on feature branches
 - NEVER push feature branches to GitHub -- only main is pushed
 - NEVER run npm publish or create tags manually -- CI owns this
 - Run `npm run release` on feature branch, then squash-merge to main
-- Bundle budget: 46 KB gzipped for both UMD and ESM, measured on the shipped .gz
+- Bundle budget: 47 KB gzipped for both UMD and ESM, measured on the shipped .gz (raised from 46 KB in 2.1.13; the reason is in `tools/release.js`)
 
 <!-- drift-lint:ignore-start: removal documentation must name the removed APIs -->
 ## Removed APIs (will throw or silently fail)
@@ -486,8 +532,9 @@ inconsistency register and the open decisions.
 For the full doc map, see llms.txt in the project root.
 
 Essential reading for code changes:
-- docs/quickstart.md -- hello world, which file to load, annotated 100-line app
-- docs/thinking-in-bitwrench.md -- progressive walkthrough, design rationale
+- docs/thinking-in-bitwrench.md -- the model; read first (see top of this file)
+- docs/quickstart.md -- hello world, which file to load, ten calls that already exist, annotated 100-line app
+- docs/when-you-want.md -- core API indexed by problem, one running example each
 - docs/llm-bitwrench-guide.md -- compact tutorial with all API patterns
 - docs/core-api.md -- one-page core API card (also: what is in the lean build)
 - docs/svg.md -- SVG as TACO: charts, diagrams, interaction, in-place updates

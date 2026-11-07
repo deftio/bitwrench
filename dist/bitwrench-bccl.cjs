@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.1.12 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-bccl v2.1.13 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 /**
@@ -73,7 +73,8 @@ function variantClass(v) {
  * @param {boolean} [props.bordered=true] - Show card border
  * @param {string} [props.shadow] - Shadow level ("none", "sm", "md", "lg")
  * @param {boolean} [props.hoverable=false] - Enable hover lift animation
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @param {Object} [props.style] - Inline style object
  * @param {string} [props.headerClass] - Additional header CSS classes
  * @param {string} [props.bodyClass] - Additional body CSS classes
@@ -91,6 +92,7 @@ function variantClass(v) {
  */
 function makeCard(props = {}) {
   const {
+    id,
     title,
     subtitle,
     content,
@@ -102,7 +104,7 @@ function makeCard(props = {}) {
     bordered = true,
     shadow,
     hoverable = false,
-    className = '',
+    className: _c = '', class: className = _c,
     style,
     headerClass = '',
     bodyClass = '',
@@ -187,7 +189,7 @@ function makeCard(props = {}) {
 
   return {
     t: 'div',
-    a: { class: cardClasses, style },
+    a: { id, class: cardClasses, style },
     c: cardContent,
     o: {
       type: 'card',
@@ -211,7 +213,11 @@ function makeCard(props = {}) {
  * @param {boolean} [props.disabled=false] - Whether the button is disabled
  * @param {Function} [props.onclick] - Click event handler
  * @param {string} [props.type="button"] - HTML button type ("button", "submit", "reset")
- * @param {string} [props.className] - Additional CSS classes
+ * @param {boolean} [props.toggle=false] - Press-to-toggle button: keeps aria-pressed state, styled when pressed
+ * @param {boolean} [props.pressed=false] - Initial pressed state of a toggle button
+ * @param {Function} [props.onToggle] - Called with (pressed, event) when a toggle button flips
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @param {Object} [props.style] - Inline style object
  * @returns {Object} TACO object representing a button element
  * @category Component Builders
@@ -227,6 +233,7 @@ function makeCard(props = {}) {
 function makeButton(props = {}) {
   if (typeof props === 'string') props = { text: props };
   const {
+    id,
     text,
     variant = 'primary',
     size,
@@ -234,27 +241,52 @@ function makeButton(props = {}) {
     onclick,
     action,
     type = 'button',
-    className = '',
+    toggle = false,
+    pressed = false,
+    onToggle,
+    className: _c = '', class: className = _c,
     style
   } = props;
+
+  // Toggle (press-to-stay-on) button: aria-pressed carries the state, the
+  // palette styles [aria-pressed="true"], and el.bw.setPressed(on) lets code
+  // that is not the click handler (a shortcut, a menu) drive it (#119).
+  var click = onclick;
+  if (toggle) {
+    click = function(e) {
+      var el = e.currentTarget || this;
+      var on = el.getAttribute('aria-pressed') !== 'true';
+      el.setAttribute('aria-pressed', String(on));
+      if (onToggle) onToggle(on, e);
+      if (onclick) onclick.call(el, e);
+    };
+  }
 
   return {
     t: 'button',
     a: {
+      id,
       type,
       class: [
         'bw_bccl_btn',
         variantClass(variant),
         size && `bw_bccl_btn_${size}`,
         action && ('bw_act_' + action),
+        toggle && 'bw_bccl_btn_toggle',
         className
       ].filter(Boolean).join(' '),
       disabled,
-      onclick,
+      'aria-pressed': toggle ? String(!!pressed) : undefined,
+      onclick: click,
       style
     },
     c: text,
-    o: {
+    o: toggle ? {
+      type: 'button',
+      handle: {
+        setPressed: function(el, on) { el.setAttribute('aria-pressed', String(!!on)); }
+      }
+    } : {
       type: 'button'
     }
   };
@@ -266,7 +298,8 @@ function makeButton(props = {}) {
  * @param {Object} [props] - Container configuration
  * @param {boolean} [props.fluid=false] - Use full-width fluid container
  * @param {Array|Object|string} [props.children] - Child content
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a container div
  * @category Component Builders
  * @example
@@ -276,11 +309,11 @@ function makeButton(props = {}) {
  * });
  */
 function makeContainer(props = {}) {
-  const { fluid = false, children, className = '' } = props;
+  const { id, fluid = false, children, className: _c = '', class: className = _c } = props;
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_container${fluid ? '_fluid' : ''} ${className}`.trim() },
+    a: { id, class: `bw_bccl_container${fluid ? '_fluid' : ''} ${className}`.trim() },
     c: children
   };
 }
@@ -290,7 +323,8 @@ function makeContainer(props = {}) {
  *
  * @param {Object} [props] - Row configuration
  * @param {Array|Object|string} [props.children] - Child columns
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @param {number} [props.gap] - Gutter size 0-5 applied via bw_g_{gap} (0 = no gutter; omit for the default)
  * @returns {Object} TACO object representing a grid row
  * @category Component Builders
@@ -301,11 +335,12 @@ function makeContainer(props = {}) {
  * });
  */
 function makeRow(props = {}) {
-  const { children, className = '', gap } = props;
+  const { id, children, className: _c = '', class: className = _c, gap } = props;
 
   return {
     t: 'div',
     a: {
+      id,
       class: `bw_bccl_row bw_row ${gap != null ? `bw_g_${gap}` : ''} ${className}`.trim()
     },
     c: children
@@ -325,14 +360,15 @@ function makeRow(props = {}) {
  * @param {number} [props.pull] - Column pull (1-12)
  * @param {Array|Object|string} [props.content] - Column content (alias for children)
  * @param {Array|Object|string} [props.children] - Column content
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a grid column
  * @category Component Builders
  * @example
  * const col = bw.makeCol({ size: { xs: 12, md: 6 }, content: "Responsive column" });
  */
 function makeCol(props = {}) {
-  const { size, offset, push, pull, content, children, className = '' } = props;
+  const { id, size, offset, push, pull, content, children, className: _c = '', class: className = _c } = props;
 
   const classes = [];
 
@@ -357,7 +393,7 @@ function makeCol(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_col ${classes.join(' ')} ${className}`.trim() },
+    a: { id, class: `bw_bccl_col ${classes.join(' ')} ${className}`.trim() },
     c: content || children
   };
 }
@@ -373,7 +409,8 @@ function makeCol(props = {}) {
  * @param {boolean} [props.items[].disabled] - Whether this item is disabled
  * @param {boolean} [props.pills=false] - Use pill styling instead of tabs
  * @param {boolean} [props.vertical=false] - Stack items vertically
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a nav element
  * @category Component Builders
  * @example
@@ -387,15 +424,17 @@ function makeCol(props = {}) {
  */
 function makeNav(props = {}) {
   const {
+    id,
     items = [],
     pills = false,
     vertical = false,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'ul',
     a: {
+      id,
       class: `bw_bccl_nav bw_nav ${pills ? 'bw_nav_pills' : 'bw_nav_tabs'} ${vertical ? 'bw_nav_vertical' : ''} ${className}`.trim()
     },
     c: items.map(item => ({
@@ -424,7 +463,8 @@ function makeNav(props = {}) {
  * @param {string} [props.items[].href="#"] - Item link URL
  * @param {boolean} [props.items[].active] - Whether this item is active
  * @param {boolean} [props.dark=true] - Use dark theme styling
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a navbar element
  * @category Component Builders
  * @example
@@ -439,16 +479,18 @@ function makeNav(props = {}) {
  */
 function makeNavbar(props = {}) {
   const {
+    id,
     brand,
     brandHref = '#',
     items = [],
     dark = true,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'nav',
     a: {
+      id,
       class: `bw_bccl_navbar ${dark ? 'bw_bccl_navbar_dark' : 'bw_bccl_navbar_light'} ${className}`.trim()
     },
     c: {
@@ -508,7 +550,7 @@ function makeNavbar(props = {}) {
  * bw.DOM("#app", tabs);
  */
 function makeTabs(props = {}) {
-  const { tabs = [], activeIndex = 0, onTabChange } = props;
+  const { id, tabs = [], activeIndex = 0, onTabChange, className: _c = '', class: className = _c } = props;
 
   // Find the active tab index based on the active property or use activeIndex
   let actualActiveIndex = activeIndex;
@@ -540,7 +582,7 @@ function makeTabs(props = {}) {
 
   return {
     t: 'div',
-    a: { class: 'bw_bccl_tabs' },
+    a: { id, class: ('bw_bccl_tabs ' + className).trim() },
     c: [
       {
         t: 'ul',
@@ -628,7 +670,8 @@ function makeTabs(props = {}) {
  * @param {string|Object|Array} [props.content] - Alert message content
  * @param {string} [props.variant="info"] - Color variant ("primary", "secondary", "success", "danger", "warning", "info", "light", "dark")
  * @param {boolean} [props.dismissible=false] - Show a close button to dismiss the alert
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing an alert element
  * @category Component Builders
  * @example
@@ -643,15 +686,17 @@ function makeTabs(props = {}) {
 function makeAlert(props = {}) {
   if (typeof props === 'string') props = { content: props };
   const {
+    id,
     content,
     variant = 'info',
     dismissible = false,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
     a: {
+      id,
       class: `bw_bccl_alert ${variantClass(variant)} ${dismissible ? 'bw_bccl_alert_dismissible' : ''} ${className}`.trim(),
       role: 'alert'
     },
@@ -688,7 +733,8 @@ function makeAlert(props = {}) {
  * @param {string} [props.variant="primary"] - Color variant
  * @param {string} [props.size] - Size variant: 'sm' or 'lg' (default is medium)
  * @param {boolean} [props.pill=false] - Use pill (rounded) shape
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a badge span
  * @category Component Builders
  * @example
@@ -700,11 +746,12 @@ function makeAlert(props = {}) {
 function makeBadge(props = {}) {
   if (typeof props === 'string') props = { text: props };
   const {
+    id,
     text,
     variant = 'primary',
     size,
     pill = false,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   const sizeClass = size === 'sm' ? ' bw_bccl_badge_sm' : size === 'lg' ? ' bw_bccl_badge_lg' : '';
@@ -712,6 +759,7 @@ function makeBadge(props = {}) {
   return {
     t: 'span',
     a: {
+      id,
       class: `bw_bccl_badge ${variantClass(variant)}${sizeClass} ${pill ? 'bw_bccl_badge_pill' : ''} ${className}`.trim()
     },
     c: text
@@ -741,13 +789,15 @@ function makeBadge(props = {}) {
  */
 function makeProgress(props = {}) {
   const {
+    id,
     value = 0,
     max = 100,
     variant = 'primary',
     striped = false,
     animated = false,
     label,
-    height
+    height,
+    className: _c = '', class: className = _c
   } = props;
 
   const percentage = Math.round((value / max) * 100);
@@ -755,7 +805,8 @@ function makeProgress(props = {}) {
   return {
     t: 'div',
     a: {
-      class: 'bw_bccl_progress',
+      id,
+      class: ('bw_bccl_progress ' + className).trim(),
       style: height ? { height: `${height}px` } : undefined
     },
     c: {
@@ -825,11 +876,11 @@ function makeProgress(props = {}) {
  * });
  */
 function makeListGroup(props = {}) {
-  const { items = [], flush = false, interactive = false } = props;
+  const { id, items = [], flush = false, interactive = false, className: _c = '', class: className = _c } = props;
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_listGroup bw_list_group ${flush ? 'bw_list_group_flush' : ''}`.trim() },
+    a: { id, class: `bw_bccl_listGroup bw_list_group ${flush ? 'bw_list_group_flush' : ''} ${className}`.trim() },
     c: items.map(item => {
       const isObject = typeof item === 'object';
       const text = isObject ? item.text : item;
@@ -897,11 +948,11 @@ function makeListGroup(props = {}) {
  * });
  */
 function makeBreadcrumb(props = {}) {
-  const { items = [] } = props;
+  const { id, items = [], className: _c = '', class: className = _c } = props;
 
   return {
     t: 'nav',
-    a: { 'aria-label': 'breadcrumb', class: 'bw_bccl_breadcrumb' },
+    a: { id, 'aria-label': 'breadcrumb', class: ('bw_bccl_breadcrumb ' + className).trim() },
     c: {
       t: 'ol',
       // These carried bw_breadcrumb / bw_breadcrumb_item, but the stylesheet
@@ -930,7 +981,8 @@ function makeBreadcrumb(props = {}) {
  * @param {Object} [props] - Form configuration
  * @param {Array|Object|string} [props.children] - Form contents (form groups, inputs, buttons)
  * @param {Function} [props.onsubmit] - Submit handler (defaults to preventDefault)
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a form element
  * @category Component Builders
  * @example
@@ -943,13 +995,14 @@ function makeBreadcrumb(props = {}) {
  * });
  */
 function makeForm(props = {}) {
-  const { children, fields, onsubmit, className = '' } = props;
+  const { id, children, fields, onsubmit, className: _c = '', class: className = _c } = props;
 
   // Legacy API: just wraps children
   if (!fields) {
     return {
       t: 'form',
       a: {
+        id,
         class: `bw_bccl_form ${className}`.trim(),
         onsubmit: onsubmit || ((e) => e.preventDefault())
       },
@@ -999,6 +1052,7 @@ function makeForm(props = {}) {
   return {
     t: 'form',
     a: {
+      id,
       class: `bw_bccl_form ${className}`.trim(),
       onsubmit: onsubmit || ((e) => e.preventDefault())
     },
@@ -1101,12 +1155,15 @@ function makeForm(props = {}) {
  * });
  */
 function makeFormGroup(props = {}) {
-  var { label, input, help, id, validation, feedback, required } = props;
+  var { label, input, help, id, validation, feedback, required, className: _c = '', class: className = _c } = props;
 
-  // Shallow-clone input TACO to add validation class without mutating original
+  // Shallow-clone input TACO to add the validation class and the group's id
+  // without mutating the original. `id` names the control (the label's `for`
+  // points at it), so it lands on the input, not on the wrapper.
   var styledInput = input;
-  if (validation && input && input.a) {
+  if (input && (validation || (id && !(input.a && input.a.id)))) {
     styledInput = { t: input.t, a: Object.assign({}, input.a), c: input.c, o: input.o };
+    if (id && !styledInput.a.id) styledInput.a.id = id;
     var validClass = validation === 'valid' ? 'bw_is_valid' : validation === 'invalid' ? 'bw_is_invalid' : '';
     if (validClass) {
       styledInput.a.class = ((styledInput.a.class || '') + ' ' + validClass).trim();
@@ -1115,7 +1172,7 @@ function makeFormGroup(props = {}) {
 
   return {
     t: 'div',
-    a: { class: 'bw_bccl_form_group' },
+    a: { class: ('bw_bccl_form_group ' + className).trim() },
     c: [
       label && {
         t: 'label',
@@ -1152,7 +1209,8 @@ function makeFormGroup(props = {}) {
  * @param {boolean} [props.disabled=false] - Whether the input is disabled
  * @param {boolean} [props.readonly=false] - Whether the input is read-only
  * @param {boolean} [props.required=false] - Whether the input is required
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @param {Object} [props.style] - Inline style object
  * @returns {Object} TACO object representing an input element
  * @category Component Builders
@@ -1174,7 +1232,7 @@ function makeInput(props = {}) {
     disabled = false,
     readonly = false,
     required = false,
-    className = '',
+    className: _c = '', class: className = _c,
     style,
     ...eventHandlers
   } = props;
@@ -1209,7 +1267,8 @@ function makeInput(props = {}) {
  * @param {boolean} [props.disabled=false] - Whether the textarea is disabled
  * @param {boolean} [props.readonly=false] - Whether the textarea is read-only
  * @param {boolean} [props.required=false] - Whether the textarea is required
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a textarea element
  * @category Component Builders
  * @example
@@ -1229,7 +1288,7 @@ function makeTextarea(props = {}) {
     disabled = false,
     readonly = false,
     required = false,
-    className = '',
+    className: _c = '', class: className = _c,
     ...eventHandlers
   } = props;
 
@@ -1262,7 +1321,8 @@ function makeTextarea(props = {}) {
  * @param {string} [props.name] - Select name attribute
  * @param {boolean} [props.disabled=false] - Whether the select is disabled
  * @param {boolean} [props.required=false] - Whether the select is required
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a select element
  * @category Component Builders
  * @example
@@ -1283,7 +1343,7 @@ function makeSelect(props = {}) {
     name,
     disabled = false,
     required = false,
-    className = '',
+    className: _c = '', class: className = _c,
     ...eventHandlers
   } = props;
 
@@ -1335,7 +1395,7 @@ function makeCheckbox(props = {}) {
     name,
     disabled = false,
     value,
-    className = '',
+    className: _c = '', class: className = _c,
     ...eventHandlers
   } = props;
 
@@ -1372,7 +1432,8 @@ function makeCheckbox(props = {}) {
  * @param {Array|Object|string} [props.children] - Stack children
  * @param {string} [props.direction="vertical"] - Stack direction ("vertical" or "horizontal")
  * @param {number} [props.gap=3] - Gap size (0-5)
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a stack layout
  * @category Component Builders
  * @example
@@ -1387,15 +1448,17 @@ function makeCheckbox(props = {}) {
  */
 function makeStack(props = {}) {
   const {
+    id,
     children,
     direction = 'vertical',
     gap = 3,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
     a: {
+      id,
       class: `bw_bccl_stack bw_${direction === 'vertical' ? 'vstack' : 'hstack'} bw_gap_${gap} ${className}`.trim()
     },
     c: children
@@ -1416,18 +1479,21 @@ function makeStack(props = {}) {
  */
 function makeSpinner(props = {}) {
   const {
+    id,
     variant = 'primary',
     size = 'md',
-    type = 'border'
+    type = 'border',
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
     a: {
+      id,
       // Size suffix is underscore-separated like every other bw_ class. It was
       // `-${size}`, which never matched the generated .bw_spinner_border_md /
       // _sm / _lg rules, so the size prop had no effect.
-      class: `bw_bccl_spinner bw_spinner_${type} bw_spinner_${type}_${size} ${variantClass(variant)}`,
+      class: `bw_bccl_spinner bw_spinner_${type} bw_spinner_${type}_${size} ${variantClass(variant)} ${className}`.trim(),
       role: 'status'
     },
     c: {
@@ -1454,7 +1520,8 @@ function makeSpinner(props = {}) {
  * @param {boolean} [props.overlay=false] - Add dark overlay (for background images)
  * @param {string} [props.backgroundImage] - Background image URL
  * @param {Array|Object} [props.actions] - Call-to-action buttons
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a hero section
  * @category Component Builders
  * @example
@@ -1470,6 +1537,7 @@ function makeSpinner(props = {}) {
  */
 function makeHero(props = {}) {
   const {
+    id,
     title,
     subtitle,
     content,
@@ -1479,7 +1547,7 @@ function makeHero(props = {}) {
     overlay = false,
     backgroundImage,
     actions,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   const sizeClasses = {
@@ -1492,6 +1560,7 @@ function makeHero(props = {}) {
   return {
     t: 'section',
     a: {
+      id,
       class: `bw_bccl_hero ${variantClass(variant)} ${sizeClasses[size] || sizeClasses.lg} ${centered ? 'bw_text_center' : ''} ${className}`.trim(),
       style: backgroundImage ? `background-image: url('${backgroundImage}'); background-size: cover; background-position: center;` : undefined
     },
@@ -1546,7 +1615,8 @@ function makeHero(props = {}) {
  *   span (5 -> 6 per row, 8 -> 6 per row). Stacks to one column below md.
  * @param {boolean} [props.centered=true] - Center-align feature text
  * @param {string} [props.iconSize="3rem"] - Icon font size
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a feature grid
  * @category Component Builders
  * @example
@@ -1561,11 +1631,12 @@ function makeHero(props = {}) {
  */
 function makeFeatureGrid(props = {}) {
   const {
+    id,
     features = [],
     columns = 3,
     centered = true,
     iconSize = '3rem',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   // Nearest whole grid span: 12/5 would emit bw_col_md_2.4, which no rule matches
@@ -1573,7 +1644,7 @@ function makeFeatureGrid(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_featureGrid bw_feature_grid ${className}`.trim() },
+    a: { id, class: `bw_bccl_featureGrid bw_feature_grid ${className}`.trim() },
     c: {
       t: 'div',
       a: { class: 'bw_row bw_g_4' },
@@ -1619,7 +1690,8 @@ function makeFeatureGrid(props = {}) {
  * @param {Array|Object} [props.actions] - CTA buttons or content
  * @param {string} [props.variant="light"] - Background variant
  * @param {boolean} [props.centered=true] - Center-align content
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a CTA section
  * @category Component Builders
  * @example
@@ -1633,17 +1705,18 @@ function makeFeatureGrid(props = {}) {
  */
 function makeCTA(props = {}) {
   const {
+    id,
     title,
     description,
     actions,
     variant = 'light',
     centered = true,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'section',
-    a: { class: `bw_bccl_cta bw_cta bw_bg_${variant} bw_py_5 ${className}`.trim() },
+    a: { id, class: `bw_bccl_cta bw_cta bw_bg_${variant} bw_py_5 ${className}`.trim() },
     c: {
       t: 'div',
       a: { class: 'bw_container' },
@@ -1673,7 +1746,8 @@ function makeCTA(props = {}) {
  * @param {string|Object|Array} [props.content] - Section body content
  * @param {string} [props.variant="default"] - Background variant ("default" for none, or a color name)
  * @param {string} [props.spacing="md"] - Vertical padding ("sm", "md", "lg", "xl")
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a content section
  * @category Component Builders
  * @example
@@ -1686,12 +1760,13 @@ function makeCTA(props = {}) {
  */
 function makeSection(props = {}) {
   const {
+    id,
     title,
     subtitle,
     content,
     variant = 'default',
     spacing = 'md',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   const spacingClasses = {
@@ -1704,6 +1779,7 @@ function makeSection(props = {}) {
   return {
     t: 'section',
     a: {
+      id,
       class: `bw_bccl_section bw_section ${spacingClasses[spacing] || spacingClasses.md} ${variant !== 'default' ? `bw_bg_${variant}` : ''} ${className}`.trim()
     },
     c: {
@@ -1760,15 +1836,17 @@ function makeSection(props = {}) {
  */
 function makeCodeDemo(props = {}) {
   const {
+    id,
     title,
     description,
     code,
     result,
-    language = 'javascript'
+    language = 'javascript',
+    className: _c = '', class: className = _c
   } = props;
 
   // Generate unique ID for this demo
-  `demo-${Math.random().toString(36).substr(2, 9)}`;
+  const demoId = `demo-${Math.random().toString(36).substr(2, 9)}`;
 
   const tabs = [
     {
@@ -1829,12 +1907,12 @@ function makeCodeDemo(props = {}) {
       a: { class: 'bw_text_muted bw_mb_3' },
       c: description
     },
-    makeTabs({ tabs})
+    makeTabs({ tabs, id: demoId })
   ].filter(Boolean);
 
   return {
     t: 'div',
-    a: { class: 'bw_bccl_codeDemo bw_code_demo' },
+    a: { id, class: ('bw_bccl_codeDemo bw_code_demo ' + className).trim() },
     c: content
   };
 }
@@ -1859,7 +1937,8 @@ function makeCodeDemo(props = {}) {
  * @param {number} [props.currentPage=1] - Currently active page (1-based)
  * @param {Function} [props.onPageChange] - Callback when page changes, receives page number
  * @param {string} [props.size] - Size variant ("sm" or "lg")
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a pagination nav
  * @category Component Builders
  * @example
@@ -1871,11 +1950,12 @@ function makeCodeDemo(props = {}) {
  */
 function makePagination(props = {}) {
   const {
+    id,
     pages = 1,
     currentPage = 1,
     onPageChange,
     size,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   function handleClick(page) {
@@ -1927,11 +2007,11 @@ function makePagination(props = {}) {
 
   return {
     t: 'nav',
-    a: { 'aria-label': 'Pagination' },
+    a: { id, 'aria-label': 'Pagination', class: className || undefined },
     c: {
       t: 'ul',
       a: {
-        class: `bw_bccl_pagination ${size ? 'bw_bccl_pagination_' + size : ''} ${className}`.trim()
+        class: `bw_bccl_pagination ${size ? 'bw_bccl_pagination_' + size : ''}`.trim()
       },
       c: items
     },
@@ -1968,7 +2048,8 @@ function makePagination(props = {}) {
  * @param {boolean} [props.checked=false] - Whether the radio is selected
  * @param {string} [props.id] - Element ID (links label to radio)
  * @param {boolean} [props.disabled=false] - Whether the radio is disabled
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a radio form group
  * @category Component Builders
  * @example
@@ -1987,7 +2068,7 @@ function makeRadio(props = {}) {
     checked = false,
     id,
     disabled = false,
-    className = '',
+    className: _c = '', class: className = _c,
     ...eventHandlers
   } = props;
 
@@ -2024,7 +2105,8 @@ function makeRadio(props = {}) {
  * @param {Array} [props.children] - Button TACO objects to group
  * @param {string} [props.size] - Size variant ("sm" or "lg")
  * @param {boolean} [props.vertical=false] - Stack buttons vertically
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a button group
  * @category Component Builders
  * @example
@@ -2038,15 +2120,17 @@ function makeRadio(props = {}) {
  */
 function makeButtonGroup(props = {}) {
   const {
+    id,
     children,
     size,
     vertical = false,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
     a: {
+      id,
       class: `${vertical ? 'bw_bccl_btn_group_vertical' : 'bw_bccl_btn_group'} ${size ? 'bw_bccl_btn_group_' + size : ''} ${className}`.trim(),
       role: 'group'
     },
@@ -2067,7 +2151,8 @@ function makeButtonGroup(props = {}) {
  * @param {string|Object|Array} props.items[].content - Collapsible content
  * @param {boolean} [props.items[].open=false] - Whether the item is initially open
  * @param {boolean} [props.multiOpen=false] - Allow multiple items open simultaneously
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing an accordion
  * @category Component Builders
  * @example
@@ -2080,14 +2165,15 @@ function makeButtonGroup(props = {}) {
  */
 function makeAccordion(props = {}) {
   const {
+    id,
     items = [],
     multiOpen = false,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_accordion ${className}`.trim() },
+    a: { id, class: `bw_bccl_accordion ${className}`.trim() },
     c: items.map(function(item, index) {
       var panelId = 'bw_acc_panel_' + Math.random().toString(36).substr(2, 9) + '_' + index;
       return {
@@ -2232,7 +2318,8 @@ function makeAccordion(props = {}) {
  * @param {string} [props.size] - Modal size ("sm", "lg", "xl")
  * @param {boolean} [props.closeButton=true] - Show X close button in header
  * @param {Function} [props.onClose] - Callback when modal is closed
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a modal
  * @category Component Builders
  * @example
@@ -2244,6 +2331,7 @@ function makeAccordion(props = {}) {
  */
 function makeModal(props = {}) {
   const {
+    id,
     title,
     content,
     footer,
@@ -2252,7 +2340,7 @@ function makeModal(props = {}) {
     closeLabel = 'Close',
     onClose,
     open = false,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   function closeModal(el) {
@@ -2274,6 +2362,7 @@ function makeModal(props = {}) {
   return {
     t: 'div',
     a: {
+      id,
       class: `bw_bccl_modal ${open ? 'bw_bccl_modal_show' : ''} ${className}`.trim(),
       style: open ? 'display:flex' : undefined
     },
@@ -2373,7 +2462,8 @@ function makeModal(props = {}) {
  * @param {boolean} [props.autoDismiss=true] - Auto-dismiss after delay
  * @param {number} [props.delay=5000] - Auto-dismiss delay in ms
  * @param {string} [props.position="top-right"] - Container position
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a toast
  * @category Component Builders
  * @example
@@ -2385,18 +2475,20 @@ function makeModal(props = {}) {
  */
 function makeToast(props = {}) {
   const {
+    id,
     title,
     content,
     variant = 'info',
     autoDismiss = true,
     delay = 5000,
     position = 'top-right',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
     a: {
+      id,
       class: `bw_bccl_toast ${variantClass(variant)} bw_bccl_toast_${position.replace(/-/g, '_')} ${className}`.trim(),
       role: 'alert'
     },
@@ -2473,7 +2565,8 @@ function makeToast(props = {}) {
  * @param {boolean} [props.items[].disabled] - Whether the item is disabled
  * @param {string} [props.align="start"] - Menu alignment ("start" or "end")
  * @param {string} [props.variant="primary"] - Trigger button variant
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a dropdown
  * @category Component Builders
  * @example
@@ -2488,11 +2581,12 @@ function makeToast(props = {}) {
  */
 function makeDropdown(props = {}) {
   const {
+    id,
     trigger,
     items = [],
     align = 'start',
     variant = 'primary',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   var triggerTaco;
@@ -2516,7 +2610,7 @@ function makeDropdown(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_dropdown ${className}`.trim() },
+    a: { id, class: `bw_bccl_dropdown ${className}`.trim() },
     c: [
       triggerTaco,
       {
@@ -2575,7 +2669,8 @@ function makeDropdown(props = {}) {
  * @param {string} [props.id] - Element ID (links label to switch)
  * @param {string} [props.name] - Input name attribute
  * @param {boolean} [props.disabled=false] - Whether the switch is disabled
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a toggle switch
  * @category Component Builders
  * @example
@@ -2592,7 +2687,7 @@ function makeSwitch(props = {}) {
     id,
     name,
     disabled = false,
-    className = '',
+    className: _c = '', class: className = _c,
     ...eventHandlers
   } = props;
 
@@ -2630,7 +2725,8 @@ function makeSwitch(props = {}) {
  * @param {string} [props.width] - Custom width (e.g. "200px", "100%")
  * @param {string} [props.height] - Custom height (e.g. "20px")
  * @param {number} [props.count=1] - Number of skeleton lines (for text variant)
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a skeleton placeholder
  * @category Component Builders
  * @example
@@ -2638,11 +2734,12 @@ function makeSwitch(props = {}) {
  */
 function makeSkeleton(props = {}) {
   const {
+    id,
     variant = 'text',
     width,
     height,
     count = 1,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   if (variant === 'circle') {
@@ -2650,6 +2747,7 @@ function makeSkeleton(props = {}) {
     return {
       t: 'div',
       a: {
+        id,
         class: `bw_bccl_skeleton bw_skeleton bw_skeleton_circle ${className}`.trim(),
         style: { width: circleSize, height: circleSize }
       }
@@ -2660,6 +2758,7 @@ function makeSkeleton(props = {}) {
     return {
       t: 'div',
       a: {
+        id,
         class: `bw_bccl_skeleton bw_skeleton bw_skeleton_rect ${className}`.trim(),
         style: {
           width: width || '100%',
@@ -2674,6 +2773,7 @@ function makeSkeleton(props = {}) {
     return {
       t: 'div',
       a: {
+        id,
         class: `bw_bccl_skeleton bw_skeleton bw_skeleton_text ${className}`.trim(),
         style: {
           width: width || '100%',
@@ -2699,7 +2799,7 @@ function makeSkeleton(props = {}) {
 
   return {
     t: 'div',
-    a: { class: `bw_bccl_skeleton bw_skeleton_group ${className}`.trim() },
+    a: { id, class: `bw_bccl_skeleton bw_skeleton_group ${className}`.trim() },
     c: lines
   };
 }
@@ -2713,7 +2813,8 @@ function makeSkeleton(props = {}) {
  * @param {string} [props.initials] - Fallback initials (e.g. "JD")
  * @param {string} [props.size="md"] - Size ("sm", "md", "lg", "xl")
  * @param {string} [props.variant="primary"] - Background color variant for initials
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing an avatar
  * @category Component Builders
  * @example
@@ -2722,18 +2823,20 @@ function makeSkeleton(props = {}) {
  */
 function makeAvatar(props = {}) {
   const {
+    id,
     src,
     alt = '',
     initials,
     size = 'md',
     variant = 'primary',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   if (src) {
     return {
       t: 'img',
       a: {
+        id,
         class: `bw_bccl_avatar bw_avatar bw_avatar_${size} ${className}`.trim(),
         src: src,
         alt: alt
@@ -2744,6 +2847,7 @@ function makeAvatar(props = {}) {
   return {
     t: 'div',
     a: {
+      id,
       class: `bw_bccl_avatar bw_avatar bw_avatar_${size} ${variantClass(variant)} ${className}`.trim()
     },
     c: initials || ''
@@ -2766,7 +2870,8 @@ function makeAvatar(props = {}) {
  * @param {number} [props.interval=5000] - Auto-advance interval in ms
  * @param {string} [props.height='300px'] - Carousel height
  * @param {number} [props.startIndex=0] - Initial slide index
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a carousel
  * @category Component Builders
  * @example
@@ -2781,6 +2886,7 @@ function makeAvatar(props = {}) {
  */
 function makeCarousel(props = {}) {
   const {
+    id,
     items = [],
     showControls = true,
     showIndicators = true,
@@ -2790,7 +2896,7 @@ function makeCarousel(props = {}) {
     startIndex = 0,
     prevLabel = 'Previous slide',
     nextLabel = 'Next slide',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   // Shared navigation logic
@@ -2903,6 +3009,7 @@ function makeCarousel(props = {}) {
   return {
     t: 'div',
     a: {
+      id,
       class: ('bw_bccl_carousel ' + className).trim(),
       style: 'height: ' + height,
       tabindex: '0',
@@ -2994,7 +3101,8 @@ function makeCarousel(props = {}) {
  * @param {string} [props.suffix] - Custom suffix (e.g. "%")
  * @param {string} [props.icon] - Icon content (emoji or text) shown above value
  * @param {string} [props.variant] - Left-border color variant ("primary", "success", "danger", etc.)
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @param {Object} [props.style] - Inline style object
  * @returns {Object} TACO object representing a stat card
  * @category Component Builders
@@ -3010,6 +3118,7 @@ function makeCarousel(props = {}) {
 function makeStatCard(props = {}) {
   if (typeof props === 'string') props = { label: props };
   var {
+    id,
     value = 0,
     label,
     change,
@@ -3018,7 +3127,7 @@ function makeStatCard(props = {}) {
     suffix,
     icon,
     variant,
-    className = '',
+    className: _c = '', class: className = _c,
     style
   } = props;
 
@@ -3074,7 +3183,7 @@ function makeStatCard(props = {}) {
 
   return {
     t: 'div',
-    a: { class: classes, style: style },
+    a: { id, class: classes, style: style },
     c: children,
     o: {
       type: 'stat-card',
@@ -3101,7 +3210,8 @@ function makeStatCard(props = {}) {
  * @param {string|Object|Array} [props.content] - Trigger content (what the user hovers/focuses)
  * @param {string} [props.text=""] - Tooltip text to display
  * @param {string} [props.placement="top"] - Tooltip placement ("top", "bottom", "left", "right")
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a tooltip wrapper
  * @category Component Builders
  * @example
@@ -3113,15 +3223,16 @@ function makeStatCard(props = {}) {
  */
 function makeTooltip(props = {}) {
   var {
+    id,
     content,
     text = '',
     placement = 'top',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'span',
-    a: { class: ('bw_bccl_tooltip_wrapper ' + className).trim() },
+    a: { id, class: ('bw_bccl_tooltip_wrapper ' + className).trim() },
     c: [
       content,
       {
@@ -3165,7 +3276,8 @@ function makeTooltip(props = {}) {
  * @param {string} [props.title] - Popover header title
  * @param {string|Object|Array} [props.content] - Popover body content
  * @param {string} [props.placement="top"] - Placement ("top", "bottom", "left", "right")
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a popover wrapper
  * @category Component Builders
  * @example
@@ -3178,11 +3290,12 @@ function makeTooltip(props = {}) {
  */
 function makePopover(props = {}) {
   var {
+    id,
     trigger,
     title,
     content,
     placement = 'top',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   var popoverContent = [
@@ -3200,7 +3313,7 @@ function makePopover(props = {}) {
 
   return {
     t: 'span',
-    a: { class: ('bw_bccl_popover bw_popover_wrapper ' + className).trim() },
+    a: { id, class: ('bw_bccl_popover bw_popover_wrapper ' + className).trim() },
     c: [
       {
         t: 'span',
@@ -3261,7 +3374,8 @@ function makePopover(props = {}) {
  * @param {Function} [props.onInput] - Callback on each keystroke, receives value
  * @param {string} [props.id] - Element ID
  * @param {string} [props.name] - Input name attribute
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a search input
  * @category Component Builders
  * @example
@@ -3279,7 +3393,7 @@ function makeSearchInput(props = {}) {
     onInput,
     id,
     name,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
@@ -3348,7 +3462,8 @@ function makeSearchInput(props = {}) {
  * @param {string} [props.id] - Element ID
  * @param {string} [props.name] - Input name attribute
  * @param {boolean} [props.disabled=false] - Whether the slider is disabled
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a range input
  * @category Component Builders
  * @example
@@ -3370,7 +3485,7 @@ function makeRange(props = {}) {
     id,
     name,
     disabled = false,
-    className = '',
+    className: _c = '', class: className = _c,
     ...eventHandlers
   } = props;
 
@@ -3446,7 +3561,8 @@ function makeRange(props = {}) {
  * @param {string|Object|Array} [props.content] - Body content
  * @param {boolean} [props.reverse=false] - Put image on the right
  * @param {string} [props.imageSize="3rem"] - Image width/height
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a media object
  * @category Component Builders
  * @example
@@ -3458,13 +3574,14 @@ function makeRange(props = {}) {
  */
 function makeMediaObject(props = {}) {
   var {
+    id,
     src,
     alt = '',
     title,
     content,
     reverse = false,
     imageSize = '3rem',
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   var imgEl = src ? {
@@ -3488,7 +3605,7 @@ function makeMediaObject(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_bccl_mediaObject bw_media ' + (reverse ? 'bw_media_reverse ' : '') + className).trim() },
+    a: { id, class: ('bw_bccl_mediaObject bw_media ' + (reverse ? 'bw_media_reverse ' : '') + className).trim() },
     c: reverse
       ? [bodyEl, imgEl].filter(Boolean)
       : [imgEl, bodyEl].filter(Boolean),
@@ -3508,7 +3625,8 @@ function makeMediaObject(props = {}) {
  * @param {Function} [props.onFiles] - Callback when files are selected, receives FileList
  * @param {string} [props.text="Drop files here or click to browse"] - Zone label text
  * @param {string} [props.id] - Element ID
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a file upload zone
  * @category Component Builders
  * @example
@@ -3525,7 +3643,7 @@ function makeFileUpload(props = {}) {
     onFiles,
     text = 'Drop files here or click to browse',
     id,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
@@ -3605,7 +3723,8 @@ function makeFileUpload(props = {}) {
  * @param {string|Object|Array} [props.items[].content] - Event description content
  * @param {string} [props.items[].date] - Date or time label
  * @param {string} [props.items[].variant="primary"] - Marker color variant
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a timeline
  * @category Component Builders
  * @example
@@ -3619,13 +3738,14 @@ function makeFileUpload(props = {}) {
  */
 function makeTimeline(props = {}) {
   var {
+    id,
     items = [],
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
-    a: { class: ('bw_bccl_timeline ' + className).trim() },
+    a: { id, class: ('bw_bccl_timeline ' + className).trim() },
     c: items.map(function(item) {
       return {
         t: 'div',
@@ -3673,7 +3793,8 @@ function makeTimeline(props = {}) {
  * @param {string} [props.steps[].label] - Step label text
  * @param {string} [props.steps[].description] - Optional step description
  * @param {number} [props.currentStep=0] - Zero-based index of the active step
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a stepper
  * @category Component Builders
  * @example
@@ -3688,14 +3809,15 @@ function makeTimeline(props = {}) {
  */
 function makeStepper(props = {}) {
   var {
+    id,
     steps = [],
     currentStep = 0,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   return {
     t: 'div',
-    a: { class: ('bw_bccl_stepper bw_stepper ' + className).trim(), role: 'list' },
+    a: { id, class: ('bw_bccl_stepper bw_stepper ' + className).trim(), role: 'list' },
     c: steps.map(function(step, index) {
       var state = index < currentStep ? 'completed' : index === currentStep ? 'active' : 'pending';
       return {
@@ -3738,7 +3860,8 @@ function makeStepper(props = {}) {
  * @param {string} [props.placeholder="Add..."] - Input placeholder text
  * @param {Function} [props.onAdd] - Callback when a chip is added, receives value
  * @param {Function} [props.onRemove] - Callback when a chip is removed, receives value
- * @param {string} [props.className] - Additional CSS classes
+ * @param {string} [props.id] - id attribute for the root element
+ * @param {string} [props.class] - Additional CSS classes, merged with the component's own (`className` is a deprecated alias)
  * @returns {Object} TACO object representing a chip input
  * @category Component Builders
  * @example
@@ -3751,11 +3874,12 @@ function makeStepper(props = {}) {
  */
 function makeChipInput(props = {}) {
   var {
+    id,
     chips = [],
     placeholder = 'Add...',
     onAdd,
     onRemove,
-    className = ''
+    className: _c = '', class: className = _c
   } = props;
 
   function makeChipEl(text) {
@@ -3784,7 +3908,7 @@ function makeChipInput(props = {}) {
 
   return {
     t: 'div',
-    a: { class: ('bw_bccl_chipInput bw_chip_input ' + className).trim() },
+    a: { id, class: ('bw_bccl_chipInput bw_chip_input ' + className).trim() },
     c: [
       ...chips.map(makeChipEl),
       {

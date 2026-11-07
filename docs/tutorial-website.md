@@ -1,4 +1,5 @@
 # Tutorial: Building a Website with Bitwrench
+<!-- doc-test: sequential -->
 
 This tutorial walks through building a complete, styled website using bitwrench — from a blank HTML file to a multi-section landing page with theme, navigation, and responsive layout.
 

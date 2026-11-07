@@ -82,7 +82,11 @@ is just another output of JS functions. This means:
 - Inline styles compose via `bw.s()` (merge style objects to a string),
   graduating to `bw.css()` (generate class-based CSS from JS objects)
   when you need pseudo-classes, media queries, or keyframes
-- Dark mode is palette inversion, not a parallel set of CSS overrides
+- Dark mode is a second palette derived from the same seeds, not a parallel
+  set of CSS overrides. The derivation keeps each role's hue and its contrast
+  against its surface; it does not literally invert lightness. A seed may also
+  be given for the alternate palette directly (`alternate: { primary: ... }`),
+  because a brand's dark-mode accent is a design decision, not a formula
 - Theme switching = swap the palette object, regenerate. One function call.
 
 **Decided: bitwrench does not style bare HTML elements.** `h1`, `p`, `button`,
@@ -310,6 +314,36 @@ bodies, and string `on*` attributes are stripped from wire TACOs.
 Interactivity for server-sent UI is the `bw_act_*` class namespace plus
 a client-side delegated dispatcher.
 
+### 14. One vocabulary for callers
+
+Every verb that acts on a target accepts the same forms: a live element, an
+element id, a CSS selector, or a `bw_uuid_*` token. Every sink that takes
+content accepts the same forms: text, a TACO, an array of either, or
+`bw.raw()`. A verb that acts on one target and cannot resolve it warns with
+the verb's name and returns null; it never fails silently. Query verbs
+(`bw.el`, `bw.$`, `bw.hasClass`, `bw.inspect`) return null or an empty list
+without warning, because a miss is a legitimate answer to a question. Set
+verbs (`bw.addClass`, `bw.removeClass`, `bw.toggleClass`) act on every match
+and return the list, and an empty match is a valid outcome, so they are
+silent too. No sink ever stringifies an object.
+
+The resolver and the sink are one function each (`_resolveTarget`,
+`_applyTo`). Verbs call them; they do not copy them. A rule over the *set* of
+verbs is what a contract test can be written against; a sentence in a
+changelog about one verb is not. `bw.replace` and the slot setter drifted
+for two releases because the rule was written about `mount`.
+
+### 15. Types and docs describe the runtime
+
+The runtime is the source of truth. `src/bitwrench.d.ts`, the generated API
+reference, `verify`, and the unknown-prop guard all describe what the
+renderer and the factories actually read. Where that description can be
+generated, it is generated. Where it cannot, drift-lint checks it against
+the source (`taco-options-drift`, `bccl-config-drift`). The types are never
+corrected by changing the runtime to match them -- with one exception: when
+the runtime was wrong by this document's own rules and the type happened to
+be right, the runtime moves (the `class` prop, 2.1.13).
+
 ### Validation: industry protocol adapters
 
 The bitwrench-ag-ui adapter (separate repo, not yet published to npm)
@@ -343,6 +377,22 @@ their own component libraries on top of bitwrench core (TACO, lifecycle,
 pub/sub, DOM helpers, bwserve). BCCL shows how to write components
 correctly. A company's component library extends the base TACO schema,
 not BCCL's schemas.
+
+**The factory contract.** Every factory accepts `id` and `class`. `id` lands
+on the element the component treats as its addressable control (the root,
+or the `<input>` of a labelled form control). A caller-supplied `class` is
+merged with the component's own classes, never substituted for them. Props a
+factory does not read produce a warning (the unknown-prop guard), never a
+silent drop; the form-control factories are the exception and pass unread
+props through as HTML attributes (`maxlength`, `aria-label`), which is why
+their guard is off. Attribute-shaped props carry the HTML attribute name
+(`class`, `for`), never a DOM-property or React spelling (`className`,
+`htmlFor`): a TACO's `a` object and a factory's props must spread into each
+other with no key translation. `makeX({ ...taco.a })` and `a: { ...props }`
+only work blindly if the two vocabularies agree, and `a` has always used the
+HTML name. The reserved word costs the factory author one rename inside the
+destructuring pattern (`class: cls`), once. `className` is accepted as a
+deprecated alias through 2.1.x.
 
 ### Design system from seed colors
 
@@ -413,6 +463,7 @@ answered.
 | "TACO syntax is ugly compared to JSX" | TACO optimizes for a different developer profile: backend devs, embedded devs, LLM-native devs who think in data structures. JSX optimizes for designers who think in markup. Different tools, different audiences. |
 | "No time-travel debugging, no profiler, no HMR" | Tooling maturity is a function of time, not architecture. Nothing in bitwrench prevents these tools -- the DOM IS the component tree. Meanwhile, machine-driven tooling (remote inspect, LLM composition, structural validation) is structurally trivial here and structurally hard to retrofit onto virtual-DOM frameworks. |
 | "How does this scale to 500+ components on a page?" | Handle methods and slot setters are O(1). Pub/sub dispatch is O(subscribers). Need a benchmark page to verify. Expect it's fine -- the bottleneck is browser layout/paint, not JS dispatch. |
+| "The API is not consistent across verbs" | Since 2.1.13 it is, and `test/bitwrench_test_vocabulary.js` is the matrix that proves it: every target-taking verb against every target form, every content sink against every content form, every factory against the contract. Before 2.1.13 the honest answer was "it is not, and the docs claimed it was" (three consumer apps each filed a batch of sibling-inconsistency bugs). |
 
 ### Questions with established answers
 
@@ -448,4 +499,9 @@ Before writing code:
 | Am I registering anything before mount? | Drift. Registration is mount-to-unmount only. | Good. |
 | Am I moving a live node across an async boundary without `bw.detach`? | Drift. The janitor will reap it. | Good. |
 | Does this component look/feel different from others? | Drift. Check design tokens. | Good. |
+| Am I adding a verb that resolves its own target or applies its own content? | Drift. Call `_resolveTarget` / `_applyTo`. | Good. |
+| Am I editing `bitwrench.d.ts` by hand for something the runtime already declares? | Drift. Generate it, or add the drift-lint rule. | Good. |
+| Am I testing a wire boundary with a hand-built fixture on either side? | Drift. Feed the real producer's output through the real consumer. | Good. |
+| Am I adding a factory prop to some factories and not others? | Drift. The contract is per-factory-set, not per-factory. | Good. |
+| Am I naming a prop or wire field after a DOM property (`className`, `htmlFor`, `cls`, `classes`)? | Drift. Use the HTML attribute name (`class`, `for`); destructure as `class: cls`. | Good. |
 | Would an MFC/Swing developer recognize this pattern? | Good. | Rethink. |

@@ -855,7 +855,7 @@ describe("bw.inspect()", function() {
     var info = bw.inspect(div, 0);
     assert.equal(info.tag, 'div');
     assert.equal(info.id, 'test-div');
-    assert.equal(info.classes, 'foo bar');
+    assert.equal(info['class'], 'foo bar');
     assert.equal(info.children, undefined); // depth 0, no children
   });
 
@@ -999,7 +999,7 @@ describe("bw.inspect()", function() {
     div.className = 'a b c d e f g';
     container.appendChild(div);
     var info = bw.inspect(div, 0);
-    assert.equal(info.classes, 'a b c d e');
+    assert.equal(info['class'], 'a b c d e');
   });
 
   it("should not include undefined properties for plain elements", function() {
@@ -1542,12 +1542,13 @@ describe('bw.el() apply support', function() {
     assert.strictEqual(el.children[0].children[1].tagName, 'P');
   });
 
-  it('should apply boolean false as string "false"', function() {
+  it('should apply boolean false as nothing (#123: booleans render nothing, like null)', function() {
     var el = document.createElement('div');
     el.id = 'el-false';
+    el.textContent = 'old';
     document.body.appendChild(el);
     bw.el('el-false', false);
-    assert.strictEqual(el.textContent, 'false');
+    assert.strictEqual(el.textContent, '');
   });
 
   it('should apply zero as string "0"', function() {

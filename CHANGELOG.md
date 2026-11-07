@@ -3,6 +3,192 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.13 (2026-11-07)
+
+API consistency and stability. Three consumer apps (triops, jazzmac, quikleaf)
+each filed a batch of bugs with the same shape: no single function wrong, but
+siblings that the docs said obey one rule did not. This release fixes the
+class of defect, not the instances, and adds the matrix tests that make the
+rule enforceable (`test/bitwrench_test_vocabulary.js`: every verb x every
+target form, every content sink x every content form, every factory x the
+factory contract). Plan: `dev/bw-2.1.13-plan.md`. North star: new consequences
+14 (one vocabulary for callers) and 15 (types and docs describe the runtime),
+and the factory contract under "BCCL".
+
+### Fixed
+
+- **`false` and `true` in content rendered as the words "false" and "true"**
+  (#123). Both `bw.html()` and `bw.create()` stringified booleans, while
+  three docs said they were skipped, so `c: [header, isAdmin && panel]` printed
+  "false" whenever the condition was off. Booleans now render nothing on both
+  paths and in every content sink (`patch`, slot setters, `bw.el`/`bw.$`
+  apply); numbers, including `0`, still render. Found during the Timeify
+  migration.
+- **One target rule for every verb** (#112). `bw.replace('some-id', taco)`
+  created the new element and never inserted it: it read `.parentNode` of a
+  string and returned a detached node with no warning. Every verb that takes a
+  target now resolves it through one internal resolver (live query first,
+  `bw.el` second, the order `mount` already documented): `replace`, `refresh`,
+  `update`, `updateSlot`, `patch`, `clear`, `remove`, `emit`, `on`, `message`,
+  `inspect`, `render`, and the phase verbs `unmount`, `unmountChildren`,
+  `mountTree`, `hydrate`, `detach`, `syncChildren` all accept a live element,
+  an element id, a CSS selector, or a `bw_uuid_*` token. A verb that acts on
+  one target and cannot find it warns `bw.<verb>: target not found` and
+  returns null; `bw.patch`, `bw.remove`, `bw.refresh`, `bw.update`, `bw.emit`
+  and `bw.on` used to return silently. Queries (`bw.el`, `bw.$`, `bw.hasClass`,
+  `bw.inspect`) and the class verbs stay silent on a miss.
+- (carried from 2.1.12, which shipped it without a line) **`bw.append` accepted
+  a bare element id** from 2.1.12 on. Before that it resolved the string with a
+  plain selector query, so `bw.append('status', taco)` returned `null` with no
+  warning (reported in #112).
+- **One content sink** (#118). Slot setters (`el.bw.setBody(v)`,
+  `bw.updateSlot`) rendered `"[object Object]"` for `bw.raw()` and for arrays;
+  they had their own narrower switch. The setter and `bw.patch` now delegate to
+  the same sink `bw.el(ref, content)` and `bw.$(sel, content)` use, so text, a
+  TACO, an array (nested arrays flattened), `bw.raw()`, a function, and `null`
+  (renders empty, not `"null"`) behave identically in all five places. The
+  same defect was fixed independently in PR #122 by Shahid Shamim Shah
+  (imshah-id), bitwrench's first outside contribution; the release carries the
+  shared sink together with that PR's tests and documentation. One of those
+  tests caught a regression in the sink: it had dropped the 2.1.12 slot
+  setter's `isConnected` guard, so content applied to a component not yet in
+  the document fired `mounted` early. The guard is now in the sink, so
+  `patch`, `bw.el`/`bw.$` apply and slots all defer hooks until the tree is
+  mounted.
+- **BCCL config types describe the factories** (#114). `ModalConfig`,
+  `ButtonConfig`, `CardConfig`, `InputConfig`, `TableConfig`, `NavConfig`,
+  `TabsConfig`, `AccordionConfig`, `AlertConfig` and `CarouselConfig` declared
+  props the factories never read (`closable`, `clickable`, `outline`, `block`,
+  `label`, `indicators`) and omitted ones they do (`closeButton`, `onClose`,
+  `open`, `subtitle`, `header`, `readonly`, `action`, `pageSize`, ...). All ten
+  are rewritten from the factories' destructuring patterns, and a new
+  drift-lint rule `bccl-config-drift` fails the release when they disagree
+  again, in either direction. `StyleConfig` loses `palette` and `compact`
+  (read nowhere) and gains `harmonize`, `fontSize` and `alternate`;
+  `surfaceAlt`, declared for releases, is now actually honoured by
+  `derivePalette`. `bw.patch` is typed for its attribute-map and function
+  forms; `bw.append` and `bw.replace` return `HTMLElement | null`.
+- **`makeInput({ class })` no longer erases `bw_bccl_form_control`** (#114).
+  `class` fell through the form controls' rest spread and replaced the
+  component class. It is now a read prop on every factory and merges.
+- **bwcli attach `/tree` printed `?`** (#116). The server resolved every
+  pending promise with the whole POST envelope `{requestId, route, result,
+  error}`; `screenshot()` unwrapped it, `/tree` did not. The server now
+  unwraps once (`_resolvePending(requestId, result, error)`), resolves with
+  the client's result and rejects with its error, for every caller including
+  `client.query()`, the MCP `inspect_dom` tool and `bwcli serve`. The class
+  field of `bw.inspect()` is `class` (it was `classes`; the client fallback
+  walk said `cls`); `printTree` reads the old spellings for one release.
+  Tested as a round trip: real `bw.inspect()` output, real HTTP return route,
+  real printer.
+- **bwcli attach `/screenshot` failed cross-origin** (#117). The html2canvas
+  loader defaulted to a page-relative `/bw/lib/vendor/...` URL while every
+  other client URL was prefixed with the server origin. It now uses the same
+  `base` as `respond()`; a test asserts the generated client script contains no
+  page-relative `/bw/` URL.
+- **Alternate palette for a mid-lightness accent** (#115).
+  `deriveAlternateSeed` inverted lightness literally, so indigo `#6366f1`
+  (L 67) became `#111366` (L 23) on a `#202027` background, contrast 1.0:1.
+  A saturated mid-lightness seed (50 < L <= 75, S > 40) now becomes a lighter
+  tint of the same hue (L 72), the convention every design system's dark mode
+  uses: `#6366f1` -> `#8284ed`, contrast 5.0:1. This changes the derived dark
+  palette of 14 role/preset pairs across the built-in presets (sunset, forest,
+  rose, indigo, amber, emerald, nord, coral), every one from a contrast
+  between 1.1 and 4.2 to between 5.2 and 10.7. Low-saturation and very light
+  or dark seeds derive as before.
+- **`makeDataTable` and `makePagination` put the caller's class on the root.**
+  DataTable forwarded it to the inner `<table>`, Pagination to the inner
+  `<ul>`; the factory contract says the root. Style selectors that relied on
+  the inner placement need `.bw_bccl_table` / `.bw_bccl_pagination` instead.
+
+### Added
+
+- **Every factory takes `id` and `class`** (#113). 7 of 51 factories read
+  `id`; `makeButton({ id })` warned and dropped it. All 51 now take `id` (on
+  the root, or on the `<input>` of a labelled form control, where the label's
+  `for` points) and `class`, merged with the component's own classes. The
+  prop is `class`, the HTML attribute name and the same key as TACO
+  `a.class`, so a TACO's `a` and a factory's props spread into each other
+  with no translation. **`className` is deprecated**: still accepted on every
+  factory and `bw.codeEditor`, warns once per factory, removed in a later
+  minor. The .d.ts exports `FactoryProps` (`id`, `class`, `className`) and
+  every `*Config` extends it.
+- **`alternate` seeds in the style config** (#115): `bw.loadStyles({ primary,
+  alternate: { primary: '#818cf8', background: '#0f1419' } })`. Any key given
+  overrides the derived alternate seed; the rest derive. Same keys as the top
+  level.
+- **`color-scheme` on every theme** (#120). The generated `body` and scope-root
+  rules declare `color-scheme: light` or `dark`, judged on the palette's
+  background, for both palettes. Native parts (`<select>` popups, scrollbars,
+  date and number spinners, autofill) follow a dark theme instead of staying
+  light.
+- **`bw.makeButton({ toggle: true, pressed, onToggle })`** (#119). A
+  press-to-stay-on button: `aria-pressed` carries the state, clicking flips it
+  and calls `onToggle(pressed, e)` then `onclick`, the root gets
+  `bw_bccl_btn_toggle`, and the palette styles `[aria-pressed="true"]` (text
+  colour on page background, which reads in both palettes). Code that is not
+  the click handler drives it through the component: `el.bw.setPressed(on)`
+  or `bw.message(id, 'setPressed', true)`; read it back from `aria-pressed`.
+- **`bw.contrastRatio(a, b)`** (#121): WCAG contrast ratio between two colours,
+  1 to 21. `makeStyles` uses it for its existing seed-contrast check.
+
+### Changed
+
+- `bw.unmount`, `bw.unmountChildren`, `bw.mountTree`, `bw.hydrate`,
+  `bw.detach` and `bw.syncChildren` accept a target string (id, selector,
+  UUID token) as well as an element. Passing `null` is still a silent no-op.
+- `bw.patch(id, fn)` calls `fn(el)`, like `bw.el(id, fn)`.
+- The unknown-option warning no longer lists `className` among accepted keys.
+- bwcli attach `/render` sends `mount` (the `render` verb has been a
+  deprecated alias since 2.1.x).
+- Docs: `docs/core-api.md` states the one-vocabulary rule once for every
+  verb; `theming.md` describes the alternate derivation and the `alternate`
+  seeds; `state-management.md` and the cheatsheet list what slot setters
+  accept; `component-library.md`, `bitwrench_api.md` and the pages use
+  `class`.
+- **Docs: the model first, then the reference.** Three consumer apps
+  re-implemented eight things the library ships; the docs were indexed by
+  function and did not say how bitwrench's model differs from the one the
+  code was written in. `docs/thinking-in-bitwrench.md` now opens with how
+  bitwrench works, then how that compares with three common starting points
+  (React, vanilla JS, server templates), what one decision buys (server
+  rendering, CSS as data, schemable UI, no build chain), and the five concepts
+  the audited apps missed. The quickstart gains a "How bitwrench works"
+  section and a table of ten calls that already exist. New
+  `docs/when-you-want.md`: the core API indexed by problem, 33 running
+  examples. `agents.md` and `llms.txt` open by pointing at
+  thinking-in-bitwrench, with the audit as the reason, and gain a table of the
+  optional helpers (`bwcli`, `bwcli attach`, `verify`, `drift-lint`, `bwmcp`,
+  `bitwrench-debug`, `util-css`, `util-color`, `code-edit`) with their docs.
+- Bundle budget raised from 46 KB to 47 KB (level-9 gzip of the shipped UMD
+  and ESM). The bytes are the `id`/`class` contract on 44 factories, the
+  resolver and sink, the toggle button, `alternate` seeds and `color-scheme`.
+  Reason on record in `tools/release.js`; the lean build is where the next
+  size work goes.
+- `bw.on` JSDoc says what it returns: the function that removes the listener
+  (it has done so since 2.1).
+
+### Tests
+
+- `test/bitwrench_test_vocabulary.js`: 361 tests. A meta test reads every
+  `bw.*` verb whose first JSDoc parameter is a target out of the source and
+  fails if it is in neither the matrix nor the exemption list with a reason, so
+  a new verb cannot opt out. 29 verbs x 5 target forms plus miss behaviour;
+  5 sinks x 9 content forms plus unmount-hook behaviour; 51 factories x
+  (`class` merges, `className` warns exactly once, `id` lands once).
+- Wire round trips in `test/bitwrench_test_attach.js`: real `bw.inspect()`
+  tree through the real `/bw/return` route into `printTree`; error envelope
+  rejects; no page-relative `/bw/` URL in the generated client.
+- drift-lint `bccl-config-drift` (release gate).
+- Doc examples: seven more files run in `test/bitwrench_test_doc_examples.js`
+  (both tutorials, `bwserve.md`, `cli.md`, the TypeScript and WASM guides,
+  `when-you-want.md`), 507 blocks in all. The harness now ignores a mount
+  inside a `//` comment and supplies the real bwserve client method names, so
+  a doc calling a method the client lacks fails. One `bwserve.md` block that
+  mixed bare literals with statements is now runnable.
+- Coverage: 99.44% of statements and lines, 98.32% of branches, with 4420
+  tests passing (4050 at 2.1.12; the matrix suite is 361 of the new ones).
+
 ## v2.1.12 (2026-10-31)
 
 Verification tooling, and the type drift it found on day one.

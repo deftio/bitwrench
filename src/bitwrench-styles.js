@@ -22,7 +22,7 @@
  * @author M A Chatterjee <deftio [at] deftio [dot] com>
  */
 
-import { derivePalette } from './bitwrench-color-utils.js';
+import { derivePalette, relativeLuminance } from './bitwrench-color-utils.js';
 
 // Re-export for use by bitwrench.js
 export { derivePalette };
@@ -259,6 +259,15 @@ function generateButtons(scope, palette, layout) {
   };
 
   // Variant colors handled by palette class on component root
+
+  // Pressed toggle button: text colour on page background, inverted, which
+  // reads in both palettes (the accent fill with textOn was the low-contrast
+  // case for the app that asked, #119).
+  rules[_sx(scope, '.bw_bccl_btn_toggle[aria-pressed="true"]')] = {
+    'background-color': palette.dark.base,
+    'border-color': palette.dark.base,
+    'color': palette.background
+  };
 
   // Size variants (structural, reuse layout radius)
   rules[_sx(scope, '.bw_bccl_btn_lg')] = {
@@ -598,12 +607,26 @@ function generateProgress(scope, palette, layout) {
 
 // generateUtilityColors: removed — palette classes replace utility colors
 
+/**
+ * 'dark' or 'light' for a palette, judged on its background. Exported so
+ * makeStyles can stamp the alternate palette's body override too.
+ * @param {Object} palette - derivePalette() output
+ * @returns {string}
+ */
+export function colorScheme(palette) {
+  return relativeLuminance(palette.background || '#f5f5f5') > 0.179 ? 'light' : 'dark';
+}
+
 function generateResetThemed(scope, palette) {
   var rules = {};
   var bg = palette.background || '#f5f5f5';
   var baseReset = {
     'color': palette.dark.base,
-    'background-color': bg
+    'background-color': bg,
+    // Tell the browser which scheme this palette is, so native parts (select
+    // popups, scrollbars, date/number spinners, autofill) follow it instead
+    // of staying light inside a dark theme (#120).
+    'color-scheme': colorScheme(palette)
   };
   rules[_sx(scope, 'body')] = baseReset;
   // Also apply to the scope element itself so themes work on any container, not just body

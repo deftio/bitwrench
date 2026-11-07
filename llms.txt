@@ -3,6 +3,29 @@
 > Build web UIs from plain JavaScript objects. ~45 KB gzipped for the
 > minified script-tag build, zero dependencies, no build step.
 
+## Read docs/thinking-in-bitwrench.md before writing code
+
+If you are an LLM about to write bitwrench code, read
+`docs/thinking-in-bitwrench.md` first, in full. This file is the reference
+that assumes it.
+
+The reason is measured. Three apps built on bitwrench were audited after they
+shipped. Between them they re-implemented eight things the loaded build
+already had -- `bw.h`, `bw.patch`, the class verbs, the router, `bw.el`,
+`bw.clear`, `makeTooltip`, `syncChildren` -- and the code followed a React or
+vanilla-JS habit in each case: `className` for `class`, `document.querySelector`
+and `innerHTML` after the first mount, listeners in `mounted`, a view re-mounted
+to change one label.
+
+bitwrench is a different model, not a set of helpers over the DOM. The whole UI
+-- HTML, CSS and actions -- is composed from `{t, a, c, o}` objects, and
+bitwrench manages the full lifecycle from that object, in JavaScript, with no
+extra tools. One object renders to a string on the server and to live DOM in
+the browser; CSS is a function over data; a UI can be validated and sent over a
+wire as JSON; no build chain is required. The document sets out that model,
+with three common starting points (React, vanilla JS, server templates) and
+what each maps to.
+
 ## What bitwrench is
 
 bitwrench is a UI library where every element -- a button, a card, a full
@@ -11,6 +34,13 @@ Attributes, Content, Options). You describe UI as data, and bitwrench
 renders it to live DOM or HTML strings. It ships 51 ready-made `make*()`
 components (tables, cards, modals, tabs, forms, charts), a palette-based theming
 system, client-side routing, and server-driven UI via SSE (bwserve).
+
+Because the entire UI is plain objects, these come with it and are documented
+below: server-side and static rendering (`bw.html`), CSS and utility shorthand
+as JavaScript (`bw.css`, `bw.makeStyles`, `bw.u`), schemable UI (a TACO without
+functions is JSON; `verify()` checks one; bwserve ships them over SSE), and a
+no-build-tool workflow with optional helpers (`bwcli`, `bwcli attach`,
+`verify`, `drift-lint`, `bwmcp`).
 
 ## How it came to exist
 
@@ -38,9 +68,9 @@ Create already hydrates -- you do not call `bw.hydrate()` on the normal path
 
 This is NOT a thin wrapper around the DOM. bitwrench replaces the entire
 workflow: rendering, components, styling, state, theming, routing, and
-server-driven UI. If you find yourself reaching for document.querySelector,
-innerHTML, or raw CSS strings with hex colors, you are fighting the library
-instead of using it. (Classes are fine -- a class on a TACO is how a rule
+server-driven UI. Code that reaches for document.querySelector,
+innerHTML, or raw CSS strings with hex colors is working around the library
+rather than with it. (Classes are fine -- a class on a TACO is how a rule
 from `bw.css()` attaches.) Read the mental model below before writing code.
 
 ## The Mental Model (read this first)
@@ -75,10 +105,13 @@ bitwrench is closer to Qt/MFC than to React or jQuery. The key differences:
    -- never addEventListener in lifecycle hooks. Handlers in attributes
    survive re-renders; addEventListener in o.mounted does not.
 
-Start with `docs/quickstart.md` (hello world, which file to load, then a full
-annotated app), then read `docs/thinking-in-bitwrench.md` for the complete
-progressive walkthrough. For a compact code-first tutorial, read
-`docs/llm-bitwrench-guide.md`; for a one-page API card, `docs/core-api.md`.
+Read `docs/thinking-in-bitwrench.md` first (the model, and three common
+starting points). Then `docs/quickstart.md` (hello world, which file to load,
+ten calls that already exist, a full annotated app). For a problem rather than
+a function name, `docs/when-you-want.md` indexes the core API by task with a
+running example each. For a compact code-first
+tutorial, `docs/llm-bitwrench-guide.md`; for a one-page API card,
+`docs/core-api.md`.
 
 ## Common Mistakes (and what to do instead)
 
@@ -165,6 +198,13 @@ navigation, charts, and more. Tables have handles -- `el.bw.sort()`,
 `setData()`, `update()` -- so update them in place instead of re-mounting. Check
 `docs/component-cheatsheet.md` or `docs/component-library.md` before
 building from scratch.
+
+Every factory takes `id` and `class` (2.1.13). `id` lands on the element you
+will address later (`bw.patch(id, ...)`); `class` is merged with the
+component's own classes. The prop is `class`, the HTML name, same as TACO
+`a.class` -- never `className` (accepted as a deprecated alias, warns once).
+A factory warns once about any other prop it does not read; the form-control
+factories instead pass unread props through as HTML attributes.
 
 ### Mistake 5: addEventListener in lifecycle hooks
 
@@ -399,6 +439,25 @@ as a flash array, so a board with no filesystem can answer
 published to any package registry -- see
 `dev/bw-embedded-release-plan-2.1.x.md`.
 
+## Helpers and tools (optional, outside the core bundle)
+
+None of these is required and none is in the core budget. They exist because
+the UI is data, so it can be checked, driven and generated by tools. Use them
+instead of reimplementing them.
+
+| Tool | What it is | Doc |
+|---|---|---|
+| `bwcli` | Command line: Markdown to themed HTML, theme presets, `verify`, a pipe server that makes any program a bwserve backend | docs/cli.md |
+| `bwcli attach` | REPL on a live bitwrench page: inspect the tree, call handles, click, screenshot. For what a headless browser cannot reach (Web MIDI, hardware, a device) | docs/bw-attach.md |
+| `bitwrench-verify` | Structural checker for TACO you did not write; authored and wire modes; under 3 KB; its own artifact | docs/verify.md |
+| `drift-lint` | Maintainer tool that fails the build when docs, types or examples name an API the source does not have | docs/drift-lint.md |
+| `bwmcp` | MCP server for AI agents: component catalog, live rendering, screenshots | docs/bitwrench-mcp.md |
+| `bitwrench-debug.js` | Console toolkit: `bwd.tree`, `bwd.state`, `bwd.listen`, `bwd.screenshot` -- the attach helpers without a server | dist/bitwrench-debug.min.js; commands as in docs/bw-attach.md |
+| `bitwrench-util-css` | `bw.u('flex gap4 p4')`: utility shorthand to a style object, CSS string or class names; a plugin loaded after bitwrench | docs/llm-bitwrench-guide.md, "bw.u()" |
+| `bitwrench-util-color` | Legacy color parsing, RGB/HSL conversion, multi-stop interpolation; extracted from core in 2.1 | docs/bitwrench_api.md, Color |
+| `bitwrench-code-edit` | `bw.codeEditor()` / `bw.highlight()`: live syntax-colored editable code as TACO | pages/13-code-editor.html |
+| `dist/builds.json` | Every shipped file with size and SRI hash | docs/core-api.md |
+
 ## Checking generated TACO (bitwrench-verify)
 
 Opt-in checker, its own artifact -- NOT in core, never in production. bitwrench
@@ -439,10 +498,11 @@ fixed and few and someone can see the page. It is not a type checker
 ## Documentation Map
 
 Start here:
-- docs/quickstart.md -- Hello world, which dist file to load, annotated 100-line app
-- docs/thinking-in-bitwrench.md -- Full progressive walkthrough with design rationale
+- docs/thinking-in-bitwrench.md -- The model, read first: common starting points, what one decision buys, progressive walkthrough
+- docs/quickstart.md -- Hello world, which dist file to load, ten calls that already exist, annotated 100-line app
+- docs/when-you-want.md -- Core API indexed by problem, one running example each
 - docs/llm-bitwrench-guide.md -- Compact code-first tutorial (700 lines)
-- docs/core-api.md -- One-page core API card (bring-your-own-design path)
+- docs/core-api.md -- One-page core API card (bring-your-own-design path; what is in lean)
 
 Core concepts:
 - docs/taco-format.md -- TACO object specification
@@ -465,6 +525,13 @@ Reference:
 - docs/verify.md -- bitwrench-verify: opt-in TACO checker, findings, authored vs wire mode
 - docs/framework-translation-table.md -- React/Vue/Svelte equivalents
 - docs/bitwrench-northstar-principles.md -- Core design philosophy
+
+Tools and helpers:
+- docs/cli.md -- bwcli: convert, theme, verify, pipe server
+- docs/bw-attach.md -- bwcli attach: REPL on a live page, inspect, screenshot
+- docs/verify.md -- bitwrench-verify
+- docs/drift-lint.md -- docs/types/examples consistency checker
+- docs/bitwrench-mcp.md -- bwmcp MCP server for agents
 
 Specialized:
 - docs/tutorial-embedded.md -- ESP32, Pico W, Arduino

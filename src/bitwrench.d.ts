@@ -149,13 +149,17 @@ export interface StyleConfig {
   background?: string;
   surface?: string;
   surfaceAlt?: string;
-  palette?: Partial<Palette>;
+  /** Seeds for the alternate (dark/light) palette; any key given overrides the derived one. */
+  alternate?: Partial<Pick<StyleConfig, 'primary' | 'secondary' | 'tertiary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark' | 'background' | 'surface'>>;
+  /** Hue shift of the semantic colours toward primary, 0-1 (default 0.2). */
+  harmonize?: number;
   spacing?: string;
   radius?: string;
+  /** Base font size in px for the type ramp (default 16). */
+  fontSize?: number;
   typeRatio?: string;
   elevation?: string;
   motion?: string;
-  compact?: boolean;
 }
 
 /** Layout tokens resolved by bw.makeStyles() / bw.loadStyles() */
@@ -190,37 +194,60 @@ export type Variant =
   | 'success' | 'danger' | 'warning' | 'info'
   | 'light' | 'dark';
 
-export interface CardConfig {
-  title?: string | Taco;
-  content?: string | Taco | TacoContent[];
-  footer?: string | Taco;
-  image?: string;
-  variant?: Variant;
-  shadow?: 'none' | 'sm' | 'md' | 'lg';
-  clickable?: boolean;
-  style?: Record<string, string | number>;
+/**
+ * Props every BCCL factory takes (the factory contract, north star "BCCL").
+ * `id` lands on the component's addressable element; `class` is merged with
+ * the component's own classes. `className` is a deprecated alias of `class`.
+ */
+export interface FactoryProps {
+  id?: string;
   class?: string;
+  /** @deprecated use `class` */
+  className?: string;
 }
 
-export interface ButtonConfig {
+// The *Config interfaces below list exactly the keys each factory's
+// destructuring pattern reads. `node tools/drift-lint.js` (rule
+// bccl-config-drift) fails when they disagree with src/bitwrench-bccl.js.
+
+export interface CardConfig extends FactoryProps {
+  title?: string | Taco;
+  subtitle?: string | Taco;
+  content?: TacoContent;
+  footer?: TacoContent;
+  header?: TacoContent;
+  image?: string;
+  imagePosition?: 'top' | 'bottom' | 'left' | 'right';
+  variant?: Variant;
+  bordered?: boolean;
+  shadow?: 'none' | 'sm' | 'md' | 'lg';
+  hoverable?: boolean;
+  style?: Record<string, string | number>;
+  headerClass?: string;
+  bodyClass?: string;
+  footerClass?: string;
+}
+
+export interface ButtonConfig extends FactoryProps {
   text?: string | Taco;
   variant?: Variant;
-  size?: 'sm' | 'md' | 'lg';
-  outline?: boolean;
+  size?: 'sm' | 'lg';
   disabled?: boolean;
-  block?: boolean;
   onclick?: (e: Event) => void;
+  /** bw_act_* action name for server-driven dispatch */
+  action?: string;
   type?: string;
+  /** Press-to-toggle button: aria-pressed carries the state, el.bw.setPressed(on) drives it */
+  toggle?: boolean;
+  pressed?: boolean;
+  onToggle?: (pressed: boolean, e: Event) => void;
   style?: Record<string, string | number>;
-  class?: string;
 }
 
-export interface NavConfig {
-  items: Array<{ text: string; href?: string; active?: boolean; onclick?: (e: Event) => void }>;
-  variant?: Variant;
+export interface NavConfig extends FactoryProps {
+  items?: Array<{ text: string; href?: string; active?: boolean; disabled?: boolean; onclick?: (e: Event) => void }>;
+  pills?: boolean;
   vertical?: boolean;
-  style?: Record<string, string | number>;
-  class?: string;
 }
 
 /** `{ selector: { prop: value } }`; at-rules (`@media`, `@keyframes`) nest as objects. */
@@ -231,81 +258,91 @@ export type ElementRef = string | HTMLElement | Element | ArrayLike<Element>;
 
 export interface TabItem { label: string | Taco; content: TacoContent; active?: boolean; [key: string]: any }
 
-export interface TabsConfig {
-  tabs: TabItem[];
+export interface TabsConfig extends FactoryProps {
+  tabs?: TabItem[];
   activeIndex?: number;
   /** Called when the active tab changes (click, keyboard, or el.bw.setActiveTab). */
   onTabChange?: (index: number, tab: TabItem, el: HTMLElement) => void;
-  variant?: Variant;
-  style?: Record<string, string | number>;
-  class?: string;
 }
 
-export interface AccordionConfig {
-  items: Array<{ title: string; content: TacoContent }>;
-  multiple?: boolean;
-  variant?: Variant;
-  style?: Record<string, string | number>;
-  class?: string;
+export interface AccordionConfig extends FactoryProps {
+  items?: Array<{ title: string; content: TacoContent; open?: boolean }>;
+  multiOpen?: boolean;
 }
 
-export interface ModalConfig {
+export interface ModalConfig extends FactoryProps {
   title?: string | Taco;
   content?: TacoContent;
   footer?: TacoContent;
-  size?: 'sm' | 'md' | 'lg';
-  closable?: boolean;
-  variant?: Variant;
-  style?: Record<string, string | number>;
-  class?: string;
+  size?: 'sm' | 'lg' | 'xl';
+  closeButton?: boolean;
+  closeLabel?: string;
+  onClose?: (el: HTMLElement) => void;
+  open?: boolean;
 }
 
-export interface AlertConfig {
-  content?: string | Taco;
+export interface AlertConfig extends FactoryProps {
+  content?: TacoContent;
   variant?: Variant;
   dismissible?: boolean;
-  style?: Record<string, string | number>;
-  class?: string;
 }
 
-export interface TableConfig {
-  columns?: Array<string | { key: string; label?: string; sortable?: boolean }>;
-  rows?: Array<Record<string, any>>;
+/** bw.makeTable (rows of objects). makeTableFromArray and makeDataTable take this plus their own keys and pass the rest through. */
+export interface TableConfig extends FactoryProps {
   data?: Array<Record<string, any>>;
-  sortable?: boolean;
+  columns?: Array<string | { key: string; label?: string; sortable?: boolean; format?: (v: any, row: any) => TacoContent }>;
   striped?: boolean;
-  bordered?: boolean;
   hover?: boolean;
-  style?: Record<string, string | number>;
-  class?: string;
+  sortable?: boolean;
+  onSort?: (column: string, direction: 'asc' | 'desc') => void;
+  sortColumn?: string;
+  sortDirection?: 'asc' | 'desc';
+  selectable?: boolean;
+  onRowClick?: (row: any, index: number, e: Event) => void;
+  rowKey?: string | ((row: any) => string);
+  pageSize?: number;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  /** makeTableFromArray: first row is the header (default true) */
+  headerRow?: boolean;
+  /** makeDataTable: caption above the table */
+  title?: string;
+  /** makeDataTable: wrap in a responsive container (default true) */
+  responsive?: boolean;
 }
 
-export interface InputConfig {
+/**
+ * bw.makeInput. Keys not listed are passed through as HTML attributes
+ * (`maxlength`, `autocomplete`, `aria-label`, any `on*` handler), which is why
+ * the unknown-prop guard is off for the form-control factories. There is no
+ * `label` prop: wrap the input in makeFormGroup for a label.
+ */
+export interface InputConfig extends FactoryProps {
   type?: string;
-  label?: string;
   placeholder?: string;
   value?: string | number;
   name?: string;
   disabled?: boolean;
+  readonly?: boolean;
   required?: boolean;
-  onchange?: (e: Event) => void;
-  oninput?: (e: Event) => void;
   style?: Record<string, string | number>;
-  class?: string;
+  [attr: string]: any;
 }
 
-export interface CarouselConfig {
-  items: TacoContent[];
+export interface CarouselConfig extends FactoryProps {
+  items?: Array<TacoContent | { content: TacoContent; caption?: TacoContent }>;
+  showControls?: boolean;
+  showIndicators?: boolean;
   autoPlay?: boolean;
   interval?: number;
-  indicators?: boolean;
-  controls?: boolean;
-  style?: Record<string, string | number>;
-  class?: string;
+  height?: string;
+  startIndex?: number;
+  prevLabel?: string;
+  nextLabel?: string;
 }
 
-/** Generic config for BCCL components not individually typed */
-export interface ComponentConfig {
+/** Generic config for BCCL components not individually typed. Every factory takes FactoryProps. */
+export interface ComponentConfig extends FactoryProps {
   [key: string]: any;
 }
 
@@ -388,13 +425,19 @@ export interface Bitwrench {
   /** Mark element as detach-exempt (survives parent unmount) */
   detach(element: HTMLElement): void;
   /** Append TACO as child of target */
-  append(target: string | HTMLElement, content: Taco | TacoContent): HTMLElement;
+  /** Resolves target like every verb (id, selector, bw_uuid_* token, element); warns and returns null on a miss. */
+  append(target: string | HTMLElement, content: Taco | TacoContent, opts?: { before?: Element | number }): HTMLElement | null;
   /** Replace target's content with new TACO */
-  replace(target: string | HTMLElement, content: Taco | TacoContent): HTMLElement;
+  replace(target: string | HTMLElement, content: Taco | TacoContent | null): HTMLElement | null;
   /** Remove element from DOM with unmount */
   remove(target: string | HTMLElement): void;
   /** Quick-patch element content or attribute */
-  patch(id: string | HTMLElement, content?: TacoContent, attr?: string): HTMLElement | null;
+  /**
+   * Text, TACO, array or bw.raw() replaces the content; a plain object without `t`
+   * sets attributes (`bw.patch(id, { 'aria-pressed': 'true' })`); a function is
+   * called with the element. `attr` names one attribute to set to `content`.
+   */
+  patch(id: string | HTMLElement, content?: TacoContent | Record<string, string | number | boolean | null> | ((el: HTMLElement) => void), attr?: string): HTMLElement | null;
   /** RFC 6902 JSON Patch on plain objects. Mutates and returns obj. @see bw.patch */
   jsonPatch(obj: object, ops: Array<{ op: string; path: string; value?: any; from?: string }>): object;
   /** Batch patch multiple elements */
@@ -518,6 +561,8 @@ export interface Bitwrench {
   mixColor(hex1: string, hex2: string, ratio: number): string;
   relativeLuminance(hex: string): number;
   textOnColor(hex: string): string;
+  /** WCAG contrast ratio between two colours, 1 to 21 (AA text needs 4.5). */
+  contrastRatio(a: string, b: string): number;
   deriveShades(hex: string): ColorShades;
   derivePalette(config: StyleConfig): Palette;
   harmonize(sourceHex: string, targetHex: string, amount: number): string;

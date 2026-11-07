@@ -1,4 +1,4 @@
-/*! bitwrench-verify v2.1.12 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-verify v2.1.13 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -346,8 +346,8 @@ function walk(ctx, node, path, depth) {
     return;
   }
 
-  // Content primitives. All of these render: strings and numbers are
-  // stringified, booleans too, null is skipped.
+  // Content primitives. Strings and numbers are stringified; null, undefined
+  // and booleans render nothing (`cond && taco` is legal content, #123).
   if (node === null || node === undefined) return;
   var t = typeof node;
   if (t === 'string' || t === 'number' || t === 'boolean') return;

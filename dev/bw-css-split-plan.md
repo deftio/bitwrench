@@ -12,7 +12,18 @@ to land on top of that.
 
 The `tools/release.js` note has been corrected already: it said 2.2 and claimed
 ~14 KB would leave the full file. Both wrong; the full file does not shrink.
-Do not raise the 46 KB budget.
+The budget was raised to 47 KB for 2.1.13 (API consistency, Manu 2026-11-07);
+this split must not raise it again.
+
+**Build shape, decided 2026-11-01 (Manu).** `bitwrench.js` stays the
+full build with BCCL included; `bitwrench-lean` stays the smaller artifact.
+The alternative that was under consideration for a while -- `bitwrench.js`
+becoming the lean build and some other name carrying BCCL -- is dropped: it
+changes every CDN pin and import for no capability gain, and the 2.2 plan
+already rules out a `bitwrench-full` duplicate for the same reason. The
+direction is instead "make lean leaner": this CSS split is the first cut
+(about 5.6 KB gz), and further cuts to the lean engine (see "What this does
+not do") are a follow-on plan, not a rename.
 
 **Re-measure before starting.** The baseline in the Sizes table below is from
 2026-10-11 and the tree moved after it (see the note there). In particular the
@@ -219,8 +230,8 @@ overstates it, because one minify of the joined program shares the
 dictionary the way today's full build does. Expect the gate number to
 stay near 46,791. Any growth is the install-and-merge glue.
 
-If either full file exceeds 47,104, shorten the glue. Do not raise the
-budget, and do not ship the split over the gate.
+If either full file exceeds 48,128 (the 47 KB gate as of 2.1.13), shorten the
+glue. Do not raise the budget, and do not ship the split over the gate.
 
 Lean shrinks by about **5.6 KB** gzipped. That is the whole prize.
 
@@ -270,12 +281,18 @@ the router, the wire protocol, color math, and the four core factories.
    not "the full look without the factories." The header comment in
    `src/bitwrench-lean.js` says the same. Replace the 2.2 paragraph in
    `tools/release.js`: this split is 2.1.12, it removes about 5.6 KB
-   gzip from lean, and the full file stays under the same 46 KB ceiling.
+   gzip from lean, and the full file stays under the same 47 KB ceiling.
 
 ## What this does not do
 
 It does not make lean a micro kernel. 30 KB gzipped is still both
-renderers and the protocol. A further cut is a different plan.
+renderers and the protocol. A further cut is a different plan, and that
+plan is the agreed direction (2026-11-01): keep `bitwrench.js` as the full
+build and keep taking weight out of lean. Candidates to measure for that
+follow-on: the wire protocol and `bw.connect` client, the router, the
+four core factories, and the file I/O and cookie utilities. Each needs a
+sourcemap-attribution number before it is moved, and anything moved out
+of lean must still be loadable after it (the `registerBCCL` pattern).
 
 It does not change the north-star decision on bare elements. Reset and
 `body` stay. Widget chrome does not move onto `button` or `h1`.

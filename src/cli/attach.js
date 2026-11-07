@@ -403,8 +403,8 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
         rl.prompt();
         break;
       }
-      activeClient.render(renderSel, renderTaco);
-      console.log('Rendered at ' + renderSel);
+      activeClient.mount(renderSel, renderTaco);
+      console.log('Mounted at ' + renderSel);
       rl.prompt();
       break;
 
@@ -476,8 +476,8 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
 }
 
 /**
- * Pretty-print a DOM tree from _bw_tree.
- * @param {object} node - Tree node with tag, id, cls, children
+ * Pretty-print a DOM tree from _bw_tree (bw.inspect output).
+ * @param {object} node - Tree node with tag, id, class, children
  * @param {number} indent - Current indentation level
  */
 export function printTree(node, indent) {
@@ -485,7 +485,11 @@ export function printTree(node, indent) {
   var prefix = '  '.repeat(indent);
   var label = node.tag || '?';
   if (node.id) label += '#' + node.id;
-  if (node.cls) label += '.' + node.cls.split(' ').join('.');
+  // The wire field is `class` (the HTML name, same as TACO a.class) since
+  // 2.1.13; `classes` (bw.inspect <= 2.1.12) and `cls` (old client walk) are
+  // read for one release.
+  var cls = node['class'] || node.classes || node.cls;
+  if (cls) label += '.' + cls.split(' ').join('.');
   console.log(prefix + label);
   if (node.children) {
     for (var i = 0; i < node.children.length; i++) {

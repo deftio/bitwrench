@@ -326,7 +326,7 @@ live-updating value:
 ```javascript
 function makeStatCard(label, id) {
     return bw.makeCol({ size: { xs: 6, md: 4, lg: 3 }, content:
-        bw.makeCard({ className: 'bw_mb_2', content: [
+        bw.makeCard({ class: 'bw_mb_2', content: [
             { t: 'div', a: { style: 'font-size:0.75rem;color:#94a3b8;text-transform:uppercase' }, c: label },
             { t: 'div', a: { id: id, style: 'font-size:1.3rem;font-weight:700;color:#38bdf8' },
               c: state[{ 'val-temp':'temp', 'val-voltage':'voltage', 'val-rssi':'rssi',

@@ -1,4 +1,5 @@
 # Tutorial: Building a Server App with bwserve
+<!-- doc-test: sequential -->
 
 This tutorial builds a Streamlit-style dashboard where all state lives on the server. The browser is a thin display — the server pushes UI updates over SSE.
 
@@ -21,6 +22,7 @@ A real-time analytics dashboard:
 
 Create `server.js`:
 
+<!-- doc-test: skip (Node server: `import bwserve` and app.listen bind a port) -->
 ```javascript
 import bwserve from 'bitwrench/bwserve';
 
@@ -217,6 +219,7 @@ Append a scrolling log that records every action:
 
 Pass the config object from Step 2 straight through:
 
+<!-- doc-test: skip (Node server: bwserve.create needs the bwserve module and a port) -->
 ```javascript
 var app = bwserve.create({
   port: 7902,
@@ -317,6 +320,7 @@ own `v: 1`.
 
 The server can capture what the browser is displaying:
 
+<!-- doc-test: skip (Node server: imports fs and bwserve, awaits a live browser screenshot) -->
 ```javascript
 import { writeFileSync } from 'fs';
 
