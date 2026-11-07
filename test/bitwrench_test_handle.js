@@ -162,6 +162,51 @@ describe("o.slots — create", function() {
     assert.strictEqual(strong.textContent, 'bold text');
   });
 
+  it("slot setters render raw HTML without stringifying it", function() {
+    var el = bw.mount('#app', {
+      t: 'div', c: { t: 'div', a: { class: 'slot' } },
+      o: { slots: { slot: '.slot' } }
+    });
+    el.bw.setSlot(bw.raw('<p>hello</p><b>world</b>'));
+    assert.strictEqual(el.querySelector('.slot').innerHTML, '<p>hello</p><b>world</b>');
+  });
+
+  it("slot arrays mount new children and unmount replaced children once", function() {
+    var mounted = 0;
+    var unmounted = 0;
+    var el = bw.mount('#app', {
+      t: 'div', c: { t: 'div', a: { class: 'slot' } },
+      o: { slots: { slot: '.slot' } }
+    });
+    assert.strictEqual(bw.updateSlot(el, 'slot', [
+      { t: 'b', c: 'one', o: {
+        mounted: function() { mounted++; }, unmount: function() { unmounted++; }
+      } },
+      [' < ', null, { t: 'i', c: 'two' }], bw.raw('<em>three</em>')
+    ]), true);
+    var slot = el.querySelector('.slot');
+    assert.strictEqual(slot.textContent, 'one < twothree');
+    assert.ok(slot.querySelector('b') && slot.querySelector('i') && slot.querySelector('em'));
+    assert.strictEqual(mounted, 1);
+    el.bw.setSlot([]);
+    assert.strictEqual(slot.childNodes.length, 0);
+    assert.strictEqual(unmounted, 1);
+  });
+
+  it("slot arrays preserve SVG namespaces and defer mounting while disconnected", function() {
+    var mounted = 0;
+    var el = bw.create({
+      t: 'svg', c: { t: 'g', a: { class: 'slot' } },
+      o: { slots: { slot: '.slot' } }
+    });
+    el.bw.setSlot([{ t: 'circle', a: { r: 2 }, o: { mounted: function() { mounted++; } } }]);
+    assert.strictEqual(el.querySelector('circle').namespaceURI, 'http://www.w3.org/2000/svg');
+    assert.strictEqual(mounted, 0);
+    document.getElementById('app').appendChild(el);
+    bw.mountTree(el);
+    assert.strictEqual(mounted, 1);
+  });
+
   it("slot setter with null clears content", function() {
     var el = bw.create({
       t: 'div',

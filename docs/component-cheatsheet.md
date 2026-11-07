@@ -146,7 +146,7 @@ card.bw.setContent({ t: 'b', c: '$42k' });   // accepts TACO objects
 card.bw.getTitle();                           // => 'Revenue'
 ```
 
-Slot setters update only the targeted child -- input focus, scroll, and animation state in siblings are preserved.
+Slot setters accept text, TACO objects, arrays of content, and `bw.raw()` HTML; `null` and `undefined` clear the slot. They update only the targeted child -- input focus, scroll, and animation state in siblings are preserved.
 
 Build your own with `o.slots`:
 
