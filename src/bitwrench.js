@@ -457,8 +457,15 @@ function _applyTo(el, apply) {
     el.appendChild(bw.create(apply, _nsOptsFor(el)));
     mountNow();
   } else {
+    var text = (apply == null || typeof apply === 'boolean') ? '' : String(apply);
+    // Same string as the one text node already there: no write (#129). A
+    // naive update handle that sets every slot on every tick then costs
+    // nothing, and a selection inside the slot survives. Only the identical
+    // string short-circuits; TACO and array content always replace.
+    var only = el.firstChild;
+    if (only && !only.nextSibling && only.nodeType === 3 && only.data === text) return;
     bw.unmountChildren(el);
-    el.textContent = (apply == null || typeof apply === 'boolean') ? '' : String(apply);
+    el.textContent = text;
   }
 }
 
@@ -731,6 +738,39 @@ var _escapeAttr = function(str) {
 // bitwrench's business.
 var _ATTR_NAME_BAD = /[\s"'>/=]/;
 
+// Attributes whose grammar is the literal words "true" / "false": the ARIA
+// states (aria-pressed, aria-expanded, aria-hidden, ...) and the enumerated
+// HTML attributes draggable, contenteditable and spellcheck. For these a
+// boolean is a VALUE: `aria-expanded: false` is the meaningful state and
+// `draggable=""` is invalid. Everything else is an HTML boolean attribute,
+// where true is presence and false is absence (disabled, hidden, required).
+// `translate` is enumerated too, but its words are yes / no.
+var _ATTR_ENUM_BOOL = /^(aria-|draggable$|contenteditable$|spellcheck$)/i;
+
+// The one attribute serialiser. Every sink that writes an attribute from a
+// TACO value -- bw.html(), bw.create(), bw.patch() with an attribute object --
+// goes through here, so the three agree by construction (#124; through 2.1.13
+// html/create wrote `aria-pressed=""` for true and dropped false, and patch
+// wrote `hidden="false"`). Returns null to omit the attribute, '' for
+// present-and-empty, otherwise the string to write.
+var _attrValue = function(key, value) {
+  if (value == null) return null;
+  if (typeof value === 'boolean') {
+    if (String(key).toLowerCase() === 'translate') return value ? 'yes' : 'no';
+    if (_ATTR_ENUM_BOOL.test(key)) return String(value);
+    return value ? '' : null;
+  }
+  return String(value);
+};
+
+// setAttribute through _attrValue: null removes, so a sink that writes
+// `{ hidden: false }` clears the attribute rather than writing the word.
+var _setAttr = function(el, key, value) {
+  var v = _attrValue(key, value);
+  if (v === null) el.removeAttribute(key);
+  else el.setAttribute(key, v);
+};
+
 /**
  * Mark a string as raw HTML so it will not be escaped by bw.html() or bw.create().
  *
@@ -883,9 +923,10 @@ bw.html = function(taco, options = {}) {
   var fnMarkers = []; // bw_fn_* markers to add to class
   var fnsRegistry = options.fns || null;
 
-  for (const [key, value] of Object.entries(attrs)) {
-    // Skip null, undefined, false
-    if (value == null || value === false) continue;
+  for (const [key, rawValue] of Object.entries(attrs)) {
+    let value = rawValue;
+    // Skip null, undefined
+    if (value == null) continue;
 
     // Drop names that cannot be serialised (see _ATTR_NAME_BAD). Dropping
     // rather than throwing keeps a page rendering, and the diag says which key
@@ -894,6 +935,14 @@ bw.html = function(taco, options = {}) {
     if (_ATTR_NAME_BAD.test(key)) {
       bw.pub('bw:diag', { code: 'attr_name_invalid', name: key });
       continue;
+    }
+
+    // Booleans: presence for HTML boolean attributes, the word for ARIA and
+    // enumerated attributes. One rule with bw.create() and bw.patch() (#124).
+    if (typeof value === 'boolean') {
+      value = _attrValue(key, value);
+      if (value === null) continue;
+      if (value === '') { attrStr += ` ${key}`; continue; }
     }
 
     // Serialize event handlers
@@ -971,8 +1020,6 @@ bw.html = function(taco, options = {}) {
     } else if (key === 'class') {
       // Handled below with identity stamps
       continue;
-    } else if (value === true) {
-      attrStr += ` ${key}`;
     } else {
       let resolvedVal = String(value);
       if (options.state && resolvedVal.indexOf('${') >= 0) {
@@ -1277,7 +1324,14 @@ function _createNode(taco, options) {
   for (var ai = 0; ai < attrKeys.length; ai++) {
     var key = attrKeys[ai];
     var value = attrs[key];
-    if (value == null || value === false) continue;
+    if (value == null) continue;
+
+    // Booleans: one rule with bw.html() and bw.patch() (#124), see _attrValue.
+    if (typeof value === 'boolean') {
+      value = _attrValue(key, value);
+      if (value === null) continue;
+      if (value === '') { el.setAttribute(key, ''); continue; }
+    }
 
     if (key === 'style' && _is(value, 'object')) {
       Object.assign(el.style, value);
@@ -1292,8 +1346,6 @@ function _createNode(taco, options) {
       el.addEventListener(eventName, value);
     } else if (key === 'value' && tag === 'input') {
       el.value = value;
-    } else if (value === true) {
-      el.setAttribute(key, '');
     } else {
       el.setAttribute(key, String(value));
     }
@@ -2443,7 +2495,9 @@ bw.updateSlot = function(ref, name, value) {
  *
  * @param {string|Element} id - Element ID, bw_uuid_* class, CSS selector, or DOM element.
  *   Uses node cache for O(1) lookup; falls back to DOM query on cache miss.
- * @param {string|Object} content - New text content, or TACO object to replace children
+ * @param {string|Object} content - New text content, or TACO object to replace children.
+ *   A plain object without `t` is a set of attributes (`{ hidden: false }` removes).
+ *   A string equal to the element's one text node is a no-op: nothing is written.
  * @param {string} [attr] - If provided, sets this attribute instead of content
  * @returns {Element|null} The patched element, or null if not found
  * @category State Management
@@ -2464,11 +2518,13 @@ bw.patch = function(id, content, attr) {
   // - everything else (text, TACO, array, bw.raw, function) → the shared
   //   content sink, the same one bw.el(ref, apply), bw.$ and slot setters use
   if (attr) {
-    el.setAttribute(attr, String(content));
+    _setAttr(el, attr, content);
   } else if (_is(content, 'object') && content !== null && !_isA(content) && !content.t && !content.__bw_raw) {
+    // Same serialiser as the render paths (#124): `{ hidden: false }` removes
+    // the attribute, `{ 'aria-expanded': false }` writes the word.
     var attrKeys = _keys(content);
     for (var ak = 0; ak < attrKeys.length; ak++) {
-      el.setAttribute(attrKeys[ak], String(content[attrKeys[ak]]));
+      _setAttr(el, attrKeys[ak], content[attrKeys[ak]]);
     }
   } else {
     _applyTo(el, content);
@@ -2506,6 +2562,9 @@ bw.patchAll = function(patches) {
 /**
  * Keyed reconciliation: match existing children by `el._bw_key`, move/add/remove
  * to match `items` order. Moved nodes are the SAME DOM nodes (state/focus survives).
+ * A kept row receives its item through `opts.update(el, item)` when given, else
+ * through its own `update` handle (`el.bw.update(item)`), the target
+ * `bw.update()` dispatches to; a row with neither is only moved.
  *
  * @param {Element} parentEl - Container element
  * @param {Array} items - Data array for desired children
@@ -2560,8 +2619,12 @@ bw.syncChildren = function(parentEl, items, opts) {
     var existing = existingByKey[k];
 
     if (existing) {
-      // Update existing
+      // Update existing: the caller's function, else the row's own `update`
+      // handle, the same target bw.update(ref, data) dispatches to (#128).
+      // Without this a kept row with an update handle was only moved and
+      // showed its old data, silently.
       if (updateFn) updateFn(existing, items[j]);
+      else if (existing.bw && _is(existing.bw.update, 'function')) existing.bw.update(items[j]);
       // Move into correct position if needed
       var expectedAfter = prevNode ? prevNode.nextSibling : parentEl.firstChild;
       if (existing !== expectedAfter) {
@@ -4281,8 +4344,9 @@ bw.makeStyles = function(config) {
   // Resolve layout
   var layout = resolveLayout(fullConfig);
 
-  // Generate primary themed CSS rules (unscoped)
-  var themedRules = generateThemedCSS('', palette, layout);
+  // Generate primary themed CSS rules (unscoped). Installed sheets (the BCCL
+  // widget sheet, absent in lean) are merged in by generateThemedCSS.
+  var themedRules = generateThemedCSS('', palette, layout, bw._bw_style_sheets);
   var cssStr = bw.css(themedRules);
 
   // Derive the alternate palette from the same seeds, then let the caller's
@@ -4293,7 +4357,7 @@ bw.makeStyles = function(config) {
 
   // Generate alternate CSS rules WITHOUT .bw_theme_alt prefix (raw rules)
   // applyStyles() wraps them appropriately based on scope
-  var altRawRules = generateThemedCSS('', altPalette, layout);
+  var altRawRules = generateThemedCSS('', altPalette, layout, bw._bw_style_sheets);
 
   // Add body-level surface overrides for the alternate palette.
   // When .bw_theme_alt is on <html>, ".bw_theme_alt body" correctly matches.
@@ -4420,6 +4484,41 @@ bw.loadStyles = function(config, scope) {
 };
 
 /**
+ * The style sheets bw.loadStructural and bw.makeStyles merge after the core
+ * sheet. Core is the reset, typography, role colours, utilities, grid, tables
+ * and bar chart. A sheet is `{ structural: fn, themed: fn }` -- see
+ * src/bitwrench-bccl-styles.js, the one sheet that exists: the widget rules,
+ * which ship with the BCCL factories and are absent from the lean build.
+ * @private
+ */
+bw._bw_style_sheets = [];
+
+/**
+ * Install a style sheet so that `bw.loadStyles()` emits its rules. Idempotent
+ * by identity: the full build installs the BCCL sheet at load, and the
+ * standalone BCCL script installs the same object again through
+ * `registerBCCL`; the second call is a no-op, so no widget rule prints twice.
+ *
+ * Order matters on the lean path: load lean, load the BCCL script, then call
+ * `bw.loadStyles()`. A `loadStyles()` that ran before the BCCL script does not
+ * pick up the widget structure later; call `bw.clearStyles()` first if that
+ * order cannot be arranged.
+ *
+ * @param {Object|null} sheet - `{ structural(), themed(scope, palette, layout, helpers) }`; null is ignored
+ * @returns {boolean} true if the sheet was added, false if null or already installed
+ * @category CSS & Styling
+ * @see bw.loadStyles
+ * @example
+ * // lean + bccl loaded as separate scripts: registerBCCL does this for you
+ * bw._installStyleSheet(bcclStyles);
+ */
+bw._installStyleSheet = function(sheet) {
+  if (!sheet || bw._bw_style_sheets.indexOf(sheet) !== -1) return false;
+  bw._bw_style_sheets.push(sheet);
+  return true;
+};
+
+/**
  * Inject structural (theme-independent) CSS only. Idempotent.
  *
  * @returns {Element|null} The `<style>` element, or null in Node.js
@@ -4431,7 +4530,7 @@ bw.loadStructural = function() {
   if (!bw._isBrowser) return null;
   var existing = document.getElementById('bw_style_structural');
   if (existing) return existing;
-  var structuralCSS = bw.css(getStructuralStyles());
+  var structuralCSS = bw.css(getStructuralStyles(bw._bw_style_sheets));
   return bw.injectCSS(structuralCSS, { id: 'bw_style_structural', append: false, _internal: true });
 };
 
@@ -5489,6 +5588,9 @@ bw.BCCL.barChart = { make: bw.makeBarChart };
 
 // Variant class helper: bw.variantClass('primary') → 'bw_primary'
 bw.variantClass = components.variantClass;
+// The widget stylesheet ships with the factories (2.1.14). In the lean build
+// the stub exports null and nothing is installed.
+bw._installStyleSheet(components.bcclStyles);
 
 // v2.1: codegen create* family removed (§12). Use bw.create(bw.makeX(props)) instead.
 

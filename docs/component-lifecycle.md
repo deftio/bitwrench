@@ -66,8 +66,10 @@ setters. Both live on `el.bw`. They don't collide because they have different
 names: `setValue` (slot) vs `update` (handle).
 
 The handle named `update` is special: `bw.update(ref, data)` dispatches to
-`el.bw.update(data)` automatically. Define an `update` handle and your
-component works with the dispatch API for free.
+`el.bw.update(data)` automatically, and `bw.syncChildren()` delivers a kept
+row's item to it when no `update` option is given (2.1.14). Define an `update`
+handle and your component works with the dispatch API, and with keyed lists,
+for free.
 
 ---
 
@@ -150,6 +152,11 @@ el.bw.setValue('SOLD OUT');
 
 This is intentional. Slot setters are low-level; handle methods are the public
 API. If you call `setValue()` directly, keeping state consistent is on you.
+
+A setter given the same string the slot already holds does not touch the DOM
+(2.1.14, #129): the one text node stays, so an `update` handle can set every
+slot on every call without caching last values, and a selection inside the
+slot survives. TACO and array content always replace.
 
 ### Dispatch via bw.update
 

@@ -260,17 +260,20 @@ CSS. `data-bw-action` existed in bwserve by mistake and was removed in v2.1.0. S
 
 No build step. No npm. Open the file in a browser.
 
-Which file: `dist/bitwrench.umd.min.js` for a script tag (everything, ~46 KB
-gzipped); `bitwrench-lean.umd.min.js` (~36 KB) if you bring your own design and
-don't need the built-in components; `bitwrench.umd.js` / `bitwrench.esm.js` are
+Which file: `dist/bitwrench.umd.min.js` for a script tag (everything, ~47 KB
+gzipped); `bitwrench-lean.umd.min.js` (~29 KB) if you bring your own design and
+don't need the built-in components or their CSS; `bitwrench.umd.js` / `bitwrench.esm.js` are
 **unminified, for readable stack traces only** -- never vendor them into a page
 you ship. `dist/builds.json` lists every file.
 
 Lean is not a stripped-down core: the router, pub/sub, `derive`, `patch`,
 `syncChildren`, the class verbs and `makeTable`/`makeDataTable`/`makeBarChart`
-are all in it. The only thing it drops is the 47 BCCL component factories
-(`makeButton`, `makeCard`, `makeTooltip`, …). Do not hand-roll a router or a
-DOM helper because you are on lean -- check `docs/core-api.md` first.
+are all in it. What it drops is the 47 BCCL component factories (`makeButton`,
+`makeCard`, `makeTooltip`, …) and their stylesheet (2.1.14). A page on lean
+that needs one widget loads `bitwrench-bccl.umd.min.js` after lean and calls
+`bw.loadStyles()` after both; that adds the factories and their CSS. Do not
+hand-roll a router, a DOM helper or a tooltip because you are on lean -- check
+`docs/core-api.md` first.
 
 ## TACO Format
 
@@ -293,6 +296,12 @@ DOM helper because you are on lean -- check `docs/core-api.md` first.
   }
 }
 ```
+
+Attribute values: a boolean is presence for HTML boolean attributes
+(`disabled: true` renders `disabled`, `false` omits it) and the word for ARIA
+states and `draggable`/`contenteditable`/`spellcheck` (`'aria-expanded': false`
+renders `aria-expanded="false"`). Same rule in `bw.html`, `bw.create` and
+`bw.patch(ref, attrs)`, where `false`/`null` remove the attribute (2.1.14).
 
 Content is HTML-escaped by default. Use `bw.raw(str)` for trusted HTML.
 Nested arrays in `c` are flattened. `bw.h(tag, attrs, content, opts)` builds

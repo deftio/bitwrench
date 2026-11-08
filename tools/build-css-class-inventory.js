@@ -27,6 +27,8 @@ import {
   DEFAULT_PALETTE_CONFIG
 } from '../src/bitwrench-styles.js';
 import { derivePalette } from '../src/bitwrench-color-utils.js';
+import { bcclStyles } from '../src/bitwrench-bccl.js';
+import { bcclStructural } from '../src/bitwrench-bccl-styles.js';
 import { CSS_TEXT as CODE_EDITOR_CSS } from '../src/bitwrench-code-edit.js';
 import { utilCSS } from '../src/bitwrench-util-css.js';
 import {
@@ -109,21 +111,26 @@ function walkRuleObject(obj, layer, category) {
   });
 }
 
-// Structural category attribution from the categorized compatibility view.
+// Structural category attribution from the categorized compatibility view
+// (core), then the widget sheet's categories (2.1.14: they ship with BCCL).
 Object.keys(defaultStyles).forEach(function(category) {
   walkRuleObject(defaultStyles[category], 'structural', category);
 });
+var widgetCats = bcclStructural();
+Object.keys(widgetCats).forEach(function(category) {
+  walkRuleObject(widgetCats[category], 'structural', 'bccl:' + category);
+});
 
-// Catch generated utility/alias selectors not represented by defaultStyles.
-walkRuleObject(getStructuralStyles(), 'structural', 'generated-utility-or-alias');
+// Catch generated utility/alias selectors not represented by either view.
+walkRuleObject(getStructuralStyles([bcclStyles]), 'structural', 'generated-utility-or-alias');
 
 var palette = derivePalette(DEFAULT_PALETTE_CONFIG);
 var layout = resolveLayout({});
-walkRuleObject(generateThemedCSS('', palette, layout), 'themed', 'default-theme');
+walkRuleObject(generateThemedCSS('', palette, layout, [bcclStyles]), 'themed', 'default-theme');
 
 // Alternate mode reuses the themed class set under this core scope token.
 // Record the scope without duplicating every alternate selector in the detail.
-var alternate = generateAlternateCSS('', palette, layout);
+var alternate = generateAlternateCSS('', palette, layout, [bcclStyles]);
 if (alternate && Object.keys(alternate).length) {
   var altRec = ensureRecord('bw_theme_alt');
   altRec.layers.add('themed-scope');

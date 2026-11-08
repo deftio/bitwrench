@@ -680,7 +680,12 @@ renderHeld([{ midi: 64, name: 'E4', sustained: true }, { midi: 67, name: 'G4' }]
 ```
 
 `key` must return a string that is unique within the list. `create` returns a
-TACO. `update` is optional; without it, kept rows are only moved.
+TACO. `update` is optional. Without it, a kept row that defines an `update`
+handle receives the item through it, `el.bw.update(item)`, the same target
+`bw.update(ref, data)` dispatches to (see
+[component lifecycle](component-lifecycle.md)); a row with neither is only
+moved. So a list of components needs `key` and `create`, and each row decides
+what to patch.
 
 ---
 

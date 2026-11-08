@@ -299,7 +299,7 @@ The same protocol works from Python, Go, Rust, or a shell script with `curl`. Se
 > making them a first-class library is in
 > [`dev/bw-embedded-release-plan-2.1.x.md`](dev/bw-embedded-release-plan-2.1.x.md).
 
-The library is 169KB on disk (46KB gzipped). A lean build without the component library (BCCL) is 130KB (36KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
+The library is 172KB on disk (47KB gzipped). A lean build without the component library (BCCL) and its stylesheet is 86KB (29KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
 
 ## CLI
 
@@ -403,19 +403,22 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 | Format | File | Use case |
 | --- | --- | --- |
 | UMD | bitwrench.umd.min.js | Browsers and Node.js -- the `<script>` tag default (~46 KB gz) |
-| UMD, lean | bitwrench-lean.umd.min.js | Your own design: everything except the built-in `make*()` components (~36 KB gz) |
+| UMD, lean | bitwrench-lean.umd.min.js | Your own design: the engine, reset, utilities, grid, tables and bar chart; no component factories and no component CSS (~29 KB gz) |
 | ESM | bitwrench.esm.min.js | Modern bundlers (Vite, webpack, etc.), `import` without npm |
 | ESM, lean | bitwrench-lean.esm.min.js | As above, without the built-in components |
 | CJS | bitwrench.min.cjs | Node.js require() |
 | ES5 | bitwrench.es5.min.js | Legacy browsers (IE11) |
-| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these (~121 KB gz) |
+| Debug | bitwrench.umd.js, bitwrench.esm.js | Unminified, for readable stack traces. Don't ship these; sizes in `dist/builds.json` |
 | Verify | bitwrench-verify.min.js (+ `.cjs`, `.esm.js`, `.esm.min.js`, `.d.ts`) | The opt-in TACO checker (under 3 KB gz). Separate on purpose -- a development-time tool, outside the core budget. [Guide](docs/verify.md) |
 
 The lean builds still include `makeTable`, `makeDataTable`, `makeTableFromArray` and
 `makeBarChart` -- and the router, pub/sub, `bw.syncChildren`, `bw.patch` and the
-class helpers. The only thing they drop is the 47 BCCL component factories
-(`makeButton`, `makeCard`, `makeTooltip`, …), which is the ~10 KB difference.
-`dist/builds.json` lists every file with its size and SRI hash.
+class helpers. What they drop is the 47 BCCL component factories (`makeButton`,
+`makeCard`, `makeTooltip`, …) and, since 2.1.14, the stylesheet those factories
+use: a widget rule ships with its factory. Loading `bitwrench-bccl.umd.min.js`
+after lean adds both, so lean plus BCCL is the full build in two files; call
+`bw.loadStyles()` after both scripts. `dist/builds.json` lists every file with
+its size and SRI hash.
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.
 

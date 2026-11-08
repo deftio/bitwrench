@@ -15,6 +15,7 @@
 import assert from "assert";
 import bw from "../src/bitwrench.js";
 import { getStructuralStyles } from "../src/bitwrench-styles.js";
+import { bcclStyles } from "../src/bitwrench-bccl.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -167,7 +168,8 @@ describe('Invariant: every bw_* class a component emits has a CSS rule', functio
   // by default through their absence (a pending step looks like a plain step).
   TYPE_MARKERS.push('bw_step_pending');
 
-  var css = bw.css(getStructuralStyles()) + bw.css(bw.makeStyles({ primary: '#336699', secondary: '#cc6633' }).rules);
+  // The full build: core structural rules plus the widget sheet the factories ship with (2.1.14).
+  var css = bw.css(getStructuralStyles([bcclStyles])) + bw.css(bw.makeStyles({ primary: '#336699', secondary: '#cc6633' }).rules);
   var defined = {};
   (css.match(/\.bw_[A-Za-z0-9_]+/g) || []).forEach(function(s) { defined[s.slice(1)] = true; });
 

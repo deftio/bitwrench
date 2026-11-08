@@ -6,3 +6,5 @@ export const componentHandles = {};
 export function variantClass() { return ''; }
 export var BCCL = {};
 export function make() { throw new Error('bw.make() requires the full bitwrench build (not lean)'); }
+// The widget stylesheet ships with the factories; lean has neither.
+export var bcclStyles = null;

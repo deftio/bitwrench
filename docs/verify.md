@@ -164,7 +164,7 @@ renaming one is a breaking change.
 
 | Code | Means | Example |
 |------|-------|---------|
-| `attr-typo` | an attribute one edit from a name the library treats specially. Unknown attributes are forwarded on purpose, so this is a suggestion, and a real HTML attribute (`form`, `is`) is never offered one | `{ a: { clas: 'x' } }` |
+| `attr-typo` | an attribute one edit from a name the library treats specially. Unknown attributes are forwarded on purpose, so this is a suggestion, and a real HTML or SVG attribute (`form`, `is`, a path's `d`) is never offered one | `{ a: { clas: 'x' } }` |
 | `handler-string` | `a.on*` holds a string. Correct for `bw.html()` and `runtime: 'shim'`; stripped by `bw.apply()`, so a dead control on a frame. **An error in wire mode**, where it is definitively dead | `{ a: { onclick: 'save()' } }` |
 | `unknown-opt-maybe` | an `o` key the renderer may not read. A hint, because tier 1 does not own the option list | `{ o: { nope: 1 } }` |
 | `object-as-content` | a non-plain object as content (a `Date`, a `Map`, a class instance); it gets stringified | `{ c: new Map() }` |

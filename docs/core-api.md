@@ -17,12 +17,16 @@ library:
 
 | Build | Has | Does not have | Size (gzip) |
 |-------|-----|---------------|-------------|
-| `bitwrench.umd.min.js` (full) | TACO → DOM/HTML, CSS generation + theming, state, pub/sub, `derive`, router, the class and DOM helpers, `makeTable`/`makeTableFromArray`/`makeDataTable`/`makeBarChart`, **and all 47 BCCL components** (`makeButton`, `makeCard`, `makeModal`, `makeTooltip`, …) | -- | ~46 KB |
-| `bitwrench-lean.umd.min.js` | everything in the first column **except** the BCCL components | the 47 BCCL factories (`makeButton`, `makeCard`, `makeTooltip`, ...) | ~36 KB |
+| `bitwrench.umd.min.js` (full) | TACO → DOM/HTML, CSS generation + theming, state, pub/sub, `derive`, router, the class and DOM helpers, `makeTable`/`makeTableFromArray`/`makeDataTable`/`makeBarChart`, **and all 47 BCCL components** (`makeButton`, `makeCard`, `makeModal`, `makeTooltip`, …) with their stylesheet | -- | ~47 KB |
+| `bitwrench-lean.umd.min.js` | everything in the first column **except** the BCCL components: the engine, the reset and typography, role colours and utilities, the grid, tables and bar chart | the 47 BCCL factories (`makeButton`, `makeCard`, `makeTooltip`, ...) and the widget CSS they use | ~29 KB |
+| `bitwrench-bccl.umd.min.js` | the 47 factories and their stylesheet; loaded after lean it registers both, so lean + BCCL is the full build in two files | the engine | ~19 KB |
 
 So the router, pub/sub, `syncChildren`, `patch` and the class verbs are all in
-lean -- you do not need the full build to get them. `bwserve` and the code
-editor are separate files; see [Build Formats](../README.md#build-formats).
+lean -- you do not need the full build to get them. A widget rule ships with its
+factory (2.1.14): lean's `loadStyles()` emits no `.bw_bccl_btn` or `.bw_bccl_card`
+rules, and adding the BCCL script adds them. Load lean, then BCCL, then call
+`bw.loadStyles()`. `bwserve` and the code editor are separate files; see
+[Build Formats](../README.md#build-formats).
 
 ## Build
 
@@ -60,7 +64,7 @@ Cheapest first -- see [Names carry cost](bitwrench-northstar-principles.md#10-na
 | Call | Does |
 |------|------|
 | `el.bw.method(...)` | Call a component's own method (`o.handle`, `o.slots`) |
-| `bw.patch(ref, content)` | Replace one element's content: text, TACO, array or `bw.raw()` |
+| `bw.patch(ref, content)` | Replace one element's content: text, TACO, array or `bw.raw()`; an unchanged string is a no-op |
 | `bw.syncChildren(parent, items, {key, create, update})` | Keyed list update; existing nodes move instead of being rebuilt ([example](state-management.md#keyed-lists-with-bwsyncchildren)) |
 | `bw.toggleClass(ref, names, force?)` | Flip classes, or force them on/off. Touches no node, so focus and transitions survive |
 | `bw.addClass(ref, names)` / `bw.removeClass(ref, names)` / `bw.hasClass(ref, name)` | The rest of the class verbs; `names` is a string, space-separated list, or array |

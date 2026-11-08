@@ -327,8 +327,11 @@ verbs (`bw.addClass`, `bw.removeClass`, `bw.toggleClass`) act on every match
 and return the list, and an empty match is a valid outcome, so they are
 silent too. No sink ever stringifies an object.
 
-The resolver and the sink are one function each (`_resolveTarget`,
-`_applyTo`). Verbs call them; they do not copy them. A rule over the *set* of
+The resolver, the sink and the attribute serialiser are one function each
+(`_resolveTarget`, `_applyTo`, `_attrValue`). Verbs call them; they do not
+copy them. The serialiser is where a boolean becomes presence for an HTML
+boolean attribute and the word for an ARIA or enumerated one; `bw.html`,
+`bw.create` and `bw.patch` agreed only by accident until it existed (#124). A rule over the *set* of
 verbs is what a contract test can be written against; a sentence in a
 changelog about one verb is not. `bw.replace` and the slot setter drifted
 for two releases because the rule was written about `mount`.
@@ -499,7 +502,7 @@ Before writing code:
 | Am I registering anything before mount? | Drift. Registration is mount-to-unmount only. | Good. |
 | Am I moving a live node across an async boundary without `bw.detach`? | Drift. The janitor will reap it. | Good. |
 | Does this component look/feel different from others? | Drift. Check design tokens. | Good. |
-| Am I adding a verb that resolves its own target or applies its own content? | Drift. Call `_resolveTarget` / `_applyTo`. | Good. |
+| Am I adding a verb that resolves its own target, applies its own content, or writes an attribute from a TACO value inline? | Drift. Call `_resolveTarget` / `_applyTo` / `_attrValue`. | Good. |
 | Am I editing `bitwrench.d.ts` by hand for something the runtime already declares? | Drift. Generate it, or add the drift-lint rule. | Good. |
 | Am I testing a wire boundary with a hand-built fixture on either side? | Drift. Feed the real producer's output through the real consumer. | Good. |
 | Am I adding a factory prop to some factories and not others? | Drift. The contract is per-factory-set, not per-factory. | Good. |

@@ -388,3 +388,193 @@ describe("booleans in content render nothing (#123)", function() {
       "<nav><a>Home</a></nav>");
   });
 });
+
+// ---------------------------------------------------------------------------
+// D. Attribute booleans: one rule across every attribute sink (#124)
+//
+// Through 2.1.13 bw.html() and bw.create() treated every boolean as an HTML
+// boolean attribute (true = present-and-empty, false = absent), which is wrong
+// for ARIA states and the enumerated attributes whose values are the words
+// "true"/"false"; and bw.patch() with an attribute object stringified every
+// value, so `{ hidden: false }` wrote hidden="false". The serialiser is now
+// one function (_attrValue) and this matrix checks the set, not an instance.
+// ---------------------------------------------------------------------------
+
+describe("D. Attribute booleans: bw.html, bw.create and bw.patch agree (#124)", function() {
+  var ATTRS = {
+    'aria-pressed': true, 'aria-expanded': false, 'aria-hidden': false, 'aria-label': 'Menu',
+    draggable: true, contenteditable: false, spellcheck: true, translate: false,
+    hidden: false, disabled: true, required: true, checked: false,
+    title: null, 'data-x': undefined, tabindex: 0
+  };
+  var EXPECT = {
+    'aria-pressed': 'true', 'aria-expanded': 'false', 'aria-hidden': 'false', 'aria-label': 'Menu',
+    draggable: 'true', contenteditable: 'false', spellcheck: 'true', translate: 'no',
+    disabled: '', required: '', tabindex: '0'
+  };
+  var ABSENT = ['hidden', 'checked', 'title', 'data-x'];
+
+  function attrMap(el) {
+    var m = {};
+    for (var i = 0; i < el.attributes.length; i++) m[el.attributes[i].name] = el.attributes[i].value;
+    delete m['class'];
+    return m;
+  }
+  function check(sink, m) {
+    Object.keys(EXPECT).forEach(function(k) { assert.strictEqual(m[k], EXPECT[k], sink + ': ' + k); });
+    ABSENT.forEach(function(k) { assert.ok(!(k in m), sink + ': ' + k + ' should be absent, got ' + JSON.stringify(m[k])); });
+  }
+  function fromHtml(taco) {
+    // Parse the string sink's output back into attributes so all three sinks
+    // are compared on the same footing.
+    var holder = document.createElement('div');
+    holder.innerHTML = bw.html(taco);
+    return holder.firstChild;
+  }
+
+  beforeEach(freshDOM);
+
+  it("bw.html(): the word for ARIA and enumerated attributes, presence for HTML booleans", function() {
+    var html = bw.html({ t: "button", a: ATTRS, c: "Menu" });
+    assert.ok(html.indexOf('aria-pressed="true"') !== -1 && html.indexOf('aria-expanded="false"') !== -1, html);
+    assert.ok(html.indexOf('draggable="true"') !== -1 && html.indexOf('translate="no"') !== -1, html);
+    assert.ok(/<button[^>]* disabled[ >]/.test(html) && !/ hidden[ >]/.test(html), html);
+    check('html', attrMap(fromHtml({ t: "button", a: ATTRS })));
+  });
+
+  it("bw.create(): the same", function() {
+    check('create', attrMap(bw.create({ t: "button", a: ATTRS })));
+  });
+
+  it("bw.patch(ref, attrs): the same, and false / null remove what was there", function() {
+    var el = bw.create({ t: "button", a: { hidden: true, checked: true, title: "old", 'data-x': "1" } });
+    bw.patch(el, ATTRS);
+    check('patch', attrMap(el));
+  });
+
+  it("bw.patch(ref, value, attr): the third-argument form uses the same rule", function() {
+    var el = bw.create({ t: "button", a: { hidden: true } });
+    bw.patch(el, false, 'hidden');
+    bw.patch(el, true, 'aria-expanded');
+    bw.patch(el, true, 'disabled');
+    bw.patch(el, 3, 'tabindex');
+    assert.deepStrictEqual(attrMap(el), { 'aria-expanded': 'true', disabled: '', tabindex: '3' });
+  });
+
+  it("the three sinks produce identical attribute maps for the whole matrix", function() {
+    var viaHtml = attrMap(fromHtml({ t: "button", a: ATTRS }));
+    var viaCreate = attrMap(bw.create({ t: "button", a: ATTRS }));
+    var el = bw.create({ t: "button" });
+    bw.patch(el, ATTRS);
+    assert.deepStrictEqual(viaCreate, viaHtml, 'create vs html');
+    assert.deepStrictEqual(attrMap(el), viaHtml, 'patch vs html');
+  });
+
+  it("meta: no sink special-cases booleans inline; the rule lives in _attrValue", function() {
+    assert.ok(!/value === (true|false)\b/.test(SRC), 'a sink compares a value to true/false instead of calling _attrValue');
+    assert.ok((SRC.match(/= _attrValue\(/g) || []).length >= 3, 'html, create and _setAttr (patch) all call _attrValue');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// E. The `update` handle is one dispatch target (#128). bw.update(ref, data)
+// delivers to el.bw.update(data); syncChildren, the list form of the same
+// idea, did not, so a kept row with an update handle was moved and left
+// showing its old data unless the caller wrote update: (el, it) =>
+// el.bw.update(it) by hand.
+// ---------------------------------------------------------------------------
+
+describe("E. syncChildren dispatches kept rows to their update handle (#128)", function() {
+  beforeEach(freshDOM);
+  function row(it) {
+    return { t: "li", c: String(it.n), o: { handle: { update: function(el, it2) { bw.patch(el, String(it2.n)); } } } };
+  }
+  var key = function(it) { return it.id; };
+
+  it("without opts.update, a kept row receives the item through el.bw.update", function() {
+    var list = bw.mount("#app", { t: "ul" });
+    bw.syncChildren(list, [{ id: "a", n: 1 }, { id: "b", n: 2 }], { key: key, create: row });
+    var a = list.children[0];
+    bw.syncChildren(list, [{ id: "b", n: 20 }, { id: "a", n: 10 }], { key: key, create: row });
+    assert.strictEqual(list.children[1], a, "the same node, moved");
+    assert.strictEqual(a.textContent, "10");
+    assert.strictEqual(list.children[0].textContent, "20");
+  });
+
+  it("an explicit opts.update still wins", function() {
+    var list = bw.mount("#app", { t: "ul" });
+    bw.syncChildren(list, [{ id: "a", n: 1 }], { key: key, create: row });
+    var calls = 0;
+    bw.syncChildren(list, [{ id: "a", n: 2 }], { key: key, create: row, update: function(el, it) { calls++; el.textContent = "custom " + it.n; } });
+    assert.strictEqual(calls, 1);
+    assert.strictEqual(list.children[0].textContent, "custom 2");
+  });
+
+  it("a row with neither is only moved, as before", function() {
+    var list = bw.mount("#app", { t: "ul" });
+    var plain = function(it) { return { t: "li", c: String(it.n) }; };
+    bw.syncChildren(list, [{ id: "a", n: 1 }, { id: "b", n: 2 }], { key: key, create: plain });
+    bw.syncChildren(list, [{ id: "b", n: 9 }, { id: "a", n: 9 }], { key: key, create: plain });
+    assert.strictEqual(list.children[0].textContent, "2");
+    assert.strictEqual(list.children[1].textContent, "1");
+  });
+
+  it("bw.update and syncChildren reach the same handle", function() {
+    var list = bw.mount("#app", { t: "ul" });
+    bw.syncChildren(list, [{ id: "a", n: 1 }], { key: key, create: row });
+    bw.update(list.children[0], { n: 5 });
+    assert.strictEqual(list.children[0].textContent, "5");
+    bw.syncChildren(list, [{ id: "a", n: 6 }], { key: key, create: row });
+    assert.strictEqual(list.children[0].textContent, "6");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// F. The content sink skips an unchanged string (#129). Slot setters, bw.patch
+// with a string and bw.el(ref, apply) share _applyTo, so one check covers all.
+// ---------------------------------------------------------------------------
+
+describe("F. the content sink skips the write when the string is unchanged (#129)", function() {
+  beforeEach(freshDOM);
+
+  it("a slot setter with the same string keeps the text node", function() {
+    var card = bw.mount("#app", { t: "div", c: [{ t: "p", a: { class: "meta" }, c: "3 items" }], o: { slots: { meta: ".meta" } } });
+    var node = card.querySelector(".meta").firstChild;
+    card.bw.setMeta("3 items");
+    assert.strictEqual(card.querySelector(".meta").firstChild, node, "same node");
+    card.bw.setMeta("4 items");
+    assert.notStrictEqual(card.querySelector(".meta").firstChild, node, "a different string replaces");
+    assert.strictEqual(card.bw.getMeta(), "4 items");
+  });
+
+  it("bw.patch with a string and a number use the same rule", function() {
+    var el = bw.mount("#app", { t: "span", c: "5" });
+    var node = el.firstChild;
+    bw.patch(el, 5);
+    assert.strictEqual(el.firstChild, node);
+    bw.patch(el, "6");
+    assert.strictEqual(el.textContent, "6");
+  });
+
+  it("TACO and array content always replace; mixed children are not short-circuited", function() {
+    var el = bw.mount("#app", { t: "div", c: "x" });
+    var node = el.firstChild;
+    bw.patch(el, { t: "b", c: "x" });
+    assert.notStrictEqual(el.firstChild, node);
+    assert.strictEqual(el.innerHTML, "<b>x</b>");
+    bw.patch(el, "x");
+    assert.strictEqual(el.innerHTML, "x", "a string after a TACO still writes");
+    var two = bw.mount("#app", { t: "div", c: ["a", { t: "i", c: "b" }] });
+    bw.patch(two, "ab");
+    assert.strictEqual(two.innerHTML, "ab");
+  });
+
+  it("empty string, null and boolean clear once and are then no-ops", function() {
+    var el = bw.mount("#app", { t: "span", c: "gone" });
+    bw.patch(el, null);
+    assert.strictEqual(el.childNodes.length, 0);
+    bw.patch(el, false);
+    bw.patch(el, "");
+    assert.strictEqual(el.childNodes.length, 0);
+  });
+});

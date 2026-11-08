@@ -5,9 +5,11 @@
  * BCCL components as separate files. The UMD build auto-registers all
  * make*() functions onto the global `bw` object if present.
  *
- * Usage (browser):
+ * Usage (browser) -- order matters, and bw.loadStyles() comes after both,
+ * because this script also installs the widget stylesheet (2.1.14):
  *   <script src="bitwrench-lean.umd.min.js"></script>
  *   <script src="bitwrench-bccl.umd.min.js"></script>
+ *   <script>bw.loadStyles({ primary: '#336699' });</script>
  *
  * Usage (ESM):
  *   import bw from 'bitwrench/lean';
@@ -45,6 +47,9 @@ export function registerBCCL(bw) {
 
   // Variant class helper
   bw.variantClass = components.variantClass;
+  // The widget stylesheet (2.1.14): lean's loadStyles() emits no widget CSS
+  // until this runs, so load lean, then this script, then call loadStyles().
+  if (typeof bw._installStyleSheet === 'function') bw._installStyleSheet(components.bcclStyles);
 
   // Create functions that return DOM elements
   if (typeof bw.create === 'function') {

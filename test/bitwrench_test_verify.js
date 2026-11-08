@@ -897,3 +897,39 @@ describe('verify: agreement with the renderer', function() {
       []);
   });
 });
+
+// ---------------------------------------------------------------------------
+// SVG attributes are real attributes (#126). `d` is one deletion from `id`, so
+// through 2.1.13 every <path> drew an attr-typo warning: 83 of 83 findings on
+// one 5,000-line app were this one. The real-attribute list now carries the
+// short SVG names that can collide, and the check below sweeps the whole
+// surface rather than the one case, so a longer name never needs listing.
+// ---------------------------------------------------------------------------
+
+describe('attr-typo and SVG attributes (#126)', function() {
+  it('a path d is not a typo of id', function() {
+    assert.deepStrictEqual(verify({ t: 'svg', c: [{ t: 'path', a: { d: 'M0 0h10v10z' } }] }), []);
+  });
+
+  it('the SVG attribute surface is silent, including the four within one edit of a special name', function() {
+    var names = ['d', 'r', 'x', 'y', 'cx', 'cy', 'rx', 'ry', 'x1', 'y1', 'x2', 'y2', 'dx', 'dy', 'fx', 'fy', 'fr',
+      'in', 'in2', 'k1', 'k2', 'k3', 'k4', 'z', 'by', 'to', 'from', 'values', 'keyTimes', 'dur', 'begin', 'end',
+      'repeatCount', 'attributeName', 'points', 'pathLength', 'viewBox', 'preserveAspectRatio', 'transform',
+      'fill', 'fill-rule', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-dasharray', 'opacity',
+      'clip-path', 'mask', 'filter', 'result', 'mode', 'stdDeviation', 'offset', 'stop-color', 'gradientUnits',
+      'spreadMethod', 'markerWidth', 'refX', 'refY', 'orient', 'text-anchor', 'dominant-baseline', 'font-size',
+      'xmlns', 'xlink:href', 'vector-effect'];
+    var fired = names.filter(function(n) {
+      var a = {}; a[n] = '1';
+      return verify({ t: 'svg', c: [{ t: 'g', a: a }] }).some(function(f) { return f.code === 'attr-typo'; });
+    });
+    assert.deepStrictEqual(fired, []);
+  });
+
+  it('a real typo inside an svg still fires', function() {
+    var f = verify({ t: 'svg', c: [{ t: 'rect', a: { clas: 'x' } }] });
+    assert.strictEqual(f.length, 1);
+    assert.strictEqual(f[0].code, 'attr-typo');
+    assert.strictEqual(f[0].hint, 'class');
+  });
+});

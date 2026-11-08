@@ -64,7 +64,7 @@ Every UI element is a plain JS object `{t, a, c, o}`:
 ```
 
 - `t` -- tag name (defaults to `'div'` if omitted)
-- `a` -- object of HTML attributes (including event handlers)
+- `a` -- object of HTML attributes (including event handlers). A boolean is presence for HTML boolean attributes (`disabled: true`) and the word for ARIA states and `draggable`/`contenteditable`/`spellcheck` (`'aria-expanded': false` renders `aria-expanded="false"`)
 - `c` -- string, TACO, or array of TACOs (nested arbitrarily deep)
 - `o` -- bitwrench-only metadata (lifecycle, state) -- never in HTML output
 

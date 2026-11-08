@@ -282,6 +282,13 @@ click handling uses `bw_act_*` class tokens instead, which the thin client
 delegates on: `{ t: 'button', a: { class: 'bw_act_save' } }`.
 <!-- drift-lint:ignore-end -->
 
+Attribute booleans follow one rule in every sink (`bw.html`, `bw.create`,
+`bw.patch(ref, attrs)`): presence for HTML boolean attributes (`disabled: true`
+renders `disabled`, `false` omits it), the word for ARIA states and
+`draggable`/`contenteditable`/`spellcheck` (`'aria-pressed': true` renders
+`aria-pressed="true"`, `'aria-expanded': false` renders the meaningful
+`aria-expanded="false"`). Write booleans, not the strings "true"/"false".
+
 ### 5. Explicit state, not hand-coded reactivity
 
 Do not manually track state in outer variables and update DOM nodes by

@@ -5,6 +5,8 @@
 import assert from "assert";
 import bw from "../src/bitwrench.js";
 import { getStructuralStyles, getResetStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout, scopeRulesUnder, THEME_PRESETS, generateTypeScale, deepMerge, updateTheme, theme } from "../src/bitwrench-styles.js";
+import { bcclStyles } from "../src/bitwrench-bccl.js";
+import { bcclStructural } from "../src/bitwrench-bccl-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -854,7 +856,7 @@ describe('Structural Styles', function() {
   });
 
   it('structural styles should include key component selectors', function() {
-    const rules = getStructuralStyles();
+    const rules = getStructuralStyles([bcclStyles]);
     const expectedSelectors = [
       '.bw_bccl_btn', '.bw_bccl_card', '.bw_bccl_form_control', '.bw_bccl_table',
       '.bw_bccl_alert', '.bw_bccl_badge', '.bw_nav', '.bw_bccl_tab_content',
@@ -899,7 +901,7 @@ describe('Themed CSS Completeness', function() {
 
   it('generateThemedCSS should produce selectors for all component types', function() {
     const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
-    const rules = generateThemedCSS('', palette, resolveLayout({}));
+    const rules = generateThemedCSS('', palette, resolveLayout({}), [bcclStyles]);
     const css = bw.css(rules);
     // Palette classes (single class per variant)
     assert.ok(css.includes('.bw_primary'), 'should have palette class .bw_primary');
@@ -944,7 +946,7 @@ describe('Themed CSS Completeness', function() {
 
   it('generateThemedCSS should produce card variant overrides', function() {
     const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
-    const rules = generateThemedCSS('', palette, resolveLayout({}));
+    const rules = generateThemedCSS('', palette, resolveLayout({}), [bcclStyles]);
     const css = bw.css(rules);
     // Card variants via single palette class
     assert.ok(css.includes('.bw_bccl_card.bw_primary'), 'should have card primary');
@@ -953,7 +955,7 @@ describe('Themed CSS Completeness', function() {
 
   it('generateThemedCSS should produce progress bar variants', function() {
     const palette = bw.derivePalette(bw.DEFAULT_PALETTE_CONFIG);
-    const rules = generateThemedCSS('', palette, resolveLayout({}));
+    const rules = generateThemedCSS('', palette, resolveLayout({}), [bcclStyles]);
     const css = bw.css(rules);
     // Progress bar colors via palette class
     assert.ok(css.includes('.bw_bccl_progress_bar.bw_primary'), 'should have progress-bar-primary');
@@ -1060,31 +1062,28 @@ describe('Alternate Palette', function() {
 
 describe('Structural + Cosmetic = Full Coverage', function() {
 
-  it('getAllStyles should return all defaultStyles categories merged', function() {
+  it('getAllStyles is the core sheet: tables, stacks, grid -- and no widget rules (2.1.14 split)', function() {
     const all = getAllStyles();
     assert.ok(Object.keys(all).length > 100, 'should have many selectors');
-    // Check for key selectors from different categories
-    assert.ok('.bw_bccl_btn' in all, 'should have buttons');
-    assert.ok('.bw_bccl_card' in all, 'should have cards');
-    assert.ok('.bw_bccl_alert' in all, 'should have alerts');
     assert.ok('.bw_bccl_table' in all, 'should have tables');
-    assert.ok('.bw_spinner_border' in all, 'should have spinners');
-    assert.ok('.bw_bccl_form_check' in all, 'should have form checks');
-    assert.ok('.bw_close' in all, 'should have close button');
     assert.ok('.bw_vstack' in all, 'should have stacks');
+    assert.ok('.bw_bccl_container, .bw_container' in all || '.bw_bccl_container' in all, 'should have the grid container');
+    // Widget rules ship with the factories, in bitwrench-bccl-styles.js
+    ['.bw_bccl_btn', '.bw_bccl_card', '.bw_bccl_alert', '.bw_spinner_border', '.bw_bccl_form_check', '.bw_close']
+      .forEach(function(sel) { assert.ok(!(sel in all), sel + ' is a widget rule and must not be in core'); });
+    const withWidgets = getStructuralStyles([bcclStyles]);
+    ['.bw_bccl_btn', '.bw_bccl_card', '.bw_bccl_alert', '.bw_spinner_border', '.bw_bccl_form_check', '.bw_close']
+      .forEach(function(sel) { assert.ok(sel in withWidgets, sel + ' missing once the BCCL sheet is installed'); });
   });
 
-  it('defaultStyles should have all expected categories', function() {
-    const expectedCategories = [
-      'reset', 'typography', 'grid', 'buttons', 'cards', 'forms',
-      'formChecks', 'navigation', 'tables', 'tableResponsive', 'alerts',
-      'badges', 'progress', 'tabs', 'listGroups', 'pagination', 'breadcrumb',
-      'hero', 'features', 'enhancedCards', 'sections', 'cta', 'spinner',
-      'closeButton', 'stacks', 'offsets', 'codeDemo', 'utilities', 'responsive'
-    ];
-    expectedCategories.forEach(function(cat) {
-      assert.ok(cat in defaultStyles, 'defaultStyles should have category: ' + cat);
-    });
+  it('defaultStyles has the core categories; the widget sheet has the rest', function() {
+    ['reset', 'typography', 'grid', 'tables', 'tableResponsive', 'stacks', 'offsets', 'barChart', 'utilities', 'responsive']
+      .forEach(function(cat) { assert.ok(cat in defaultStyles, 'defaultStyles should have category: ' + cat); });
+    const widget = bcclStructural();
+    ['buttons', 'cards', 'forms', 'formChecks', 'navigation', 'alerts', 'badges', 'progress', 'tabs',
+     'listGroups', 'pagination', 'breadcrumb', 'hero', 'features', 'sections', 'cta', 'spinner',
+     'closeButton', 'codeDemo', 'responsive']
+      .forEach(function(cat) { assert.ok(cat in widget, 'widget sheet should have category: ' + cat); assert.ok(!(cat in defaultStyles) || cat === 'responsive', cat + ' left core'); });
   });
 
   it('loadStyles combined output should cover structural + themed', function() {

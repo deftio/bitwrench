@@ -129,7 +129,10 @@ Every key is optional. These are all valid TACOs:
 { t: 'div' }                                         // empty div
 ```
 
-If `t` is omitted, it defaults to `'div'`.
+If `t` is omitted, it defaults to `'div'`. A boolean attribute value is
+presence for HTML booleans (`required: true` renders `required`) and the word
+for ARIA states and `draggable`/`contenteditable`/`spellcheck`
+(`'aria-expanded': false` renders `aria-expanded="false"`).
 
 ### Nesting -- TACOs inside TACOs
 

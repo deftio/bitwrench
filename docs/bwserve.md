@@ -344,7 +344,7 @@ Returns a Promise that resolves with the evaluated result. Rejects on timeout or
 
 ## Screenshots
 
-The server can capture what the client is displaying as a PNG or JPEG image. This uses html2canvas on the client side (lazy-loaded on first call, vendored at ~194 KB).
+The server can capture what the client is displaying as a PNG or JPEG image. This uses html2canvas on the client side (lazy-loaded on first call, vendored at ~194 KB). html2canvas 1.4.1 does not parse the CSS Color 4 functions (`color-mix()`, `oklch()`, `color()`, `light-dark()`), and a page using them anywhere makes `client.screenshot()` reject with `Attempting to parse an unsupported color function`.
 
 ### `client.screenshot(selector?, options?)`
 

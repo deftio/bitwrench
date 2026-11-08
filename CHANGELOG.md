@@ -3,6 +3,138 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.14 (2026-11-07)
+
+The lean build gets lean. Through 2.1.13 `bitwrench-lean` carried the full
+component stylesheet -- 132 `bw_bccl_*` class names in CSS -- with no factories
+to use it. The widget rules now live in `src/bitwrench-bccl-styles.js` and ship
+with the factories; core keeps the reset, typography, role colours, utilities,
+grid, tables and bar chart. Measured on the shipped level-9 `.gz`:
+
+| Artifact | 2.1.13 | 2.1.14 |
+|---|---|---|
+| `bitwrench-lean.umd.min.js` | 36,995 | 29,941 |
+| `bitwrench-lean.esm.min.js` | 36,783 | 29,735 |
+| `bitwrench-bccl.umd.min.js` | 11,398 | 19,782 |
+| `bitwrench.umd.min.js` | 47,387 | 47,944 |
+| `bitwrench.esm.min.js` | 47,527 | 48,083 |
+
+Of the full build's growth, the install glue and the pager rules are about
+320 bytes, the attribute serialiser (#124, below) about 180, and the two
+dispatch fixes (#128, #129) about 40 together. The ESM file is 45 bytes under
+the 47 KB gate. The next change to the engine has to take bytes out first;
+`dev/bw-lean-engine-cuts-plan.md` is where.
+
+Lean is 20% smaller. The full file grows by the install glue and the pager
+rules, about 320 bytes, and stays under its 47 KB gate with roughly 270 bytes
+to spare on the ESM side. Lean gets a gate of its own, 30 KB, in
+`tools/release.js`.
+
+### Changed
+
+- **Widget CSS ships with the factories.** `bw.loadStyles()` is still the one
+  call. In the full build nothing changes for the page. On lean, `loadStyles()`
+  emits no `.bw_bccl_btn`, `.bw_bccl_card` or `.bw_bccl_modal` rules; loading
+  `bitwrench-bccl.umd.min.js` after lean (or `registerBCCL(bw)` in ESM) installs
+  the sheet along with the factories, and a `loadStyles()` called after both
+  emits everything. Order matters: lean, then BCCL, then `loadStyles()`. A
+  `loadStyles()` that ran before the BCCL script does not pick up widget
+  structure later. This answers the jazzmac item "makeTooltip reachable from
+  lean" (#108): lean plus BCCL is the full build in two files.
+- The lean build still styles everything it emits. The table pager uses the
+  button classes, so the tables category carries a pager-scoped copy of the
+  small-button rules; full and lean render the pager identically. A test
+  renders the four core factories and checks every class they emit against
+  the core sheet alone.
+- `bitwrench-styles.js`: `generateThemedCSS`, `getStructuralStyles` and
+  `generateAlternateCSS` take an optional `sheets` argument. `defaultStyles`
+  no longer has the widget categories (`buttons`, `cards`, `modal`, ...); they
+  are `bcclStructural()` in `bitwrench-bccl-styles.js`. The rule order of the
+  one file is kept: widget structure before the utilities, widget themed rules
+  before the role classes, so nothing resolves differently on a page.
+- Docs: the README, quickstart, core API card, `llms.txt` and the lean entry's
+  header describe lean as the engine, reset, utilities, grid, tables and bar
+  chart, with no component CSS, and give the lean-then-BCCL order. The
+  unminified debug builds no longer have a size quoted in prose; it moves every
+  release and cost two rebuild cycles in 2.1.13. `dist/builds.json` is the
+  reference.
+
+### Fixed
+
+Four from the quikleaf and Timeify ports, each landed as a rule over the set
+rather than a patch to the one case that was reported.
+
+- **Attribute booleans are one rule across every sink** (#124). `bw.html()`
+  and `bw.create()` treated every boolean as an HTML boolean attribute, so
+  `'aria-pressed': true` rendered `aria-pressed=""` (invalid; assistive tech
+  reads it as unset) and `'aria-expanded': false`, the meaningful state,
+  disappeared. `bw.patch()` with an attribute object went the other way and
+  wrote `hidden="false"`. The serialiser is now one function, `_attrValue`:
+  presence for HTML booleans (`disabled`, `hidden`, `required`), the word for
+  ARIA states and the enumerated `draggable`, `contenteditable`, `spellcheck`,
+  `yes`/`no` for `translate`; in `patch`, `false` and `null` remove the
+  attribute. A vocabulary matrix renders the same attribute set through all
+  three sinks and asserts identical attribute maps, and a meta test fails if a
+  sink grows an inline boolean branch again. North star consequence 14 names
+  the serialiser alongside the resolver and the sink.
+- **`verify` no longer flags the SVG path attribute `d` as a typo of `id`**
+  (#126). The real-attribute list was HTML-only; `d` is one deletion from
+  `id`, so every `<path>` drew a warning (83 of 83 findings on one app). The
+  short SVG geometry, filter and animation names (`d`, `r`, `cx`, `x1`, `fr`,
+  `in`, `k1`..`k4`, `values`, `points`, ...) are real attributes now. A hint is
+  only ever offered for a name within one edit of a special one, so longer
+  names (`fill`, `viewBox`, `transform`) never needed listing; the test sweeps
+  the whole surface to prove it, and the verify module stays under its 7 KB.
+- **`makeFormGroup` writes `id` onto a labelable control only** (#127, item
+  1). 2.1.13 copied the group's `id` onto whatever TACO was passed as `input`,
+  so a wrapper div holding the control shared its id and the label's `for`
+  pointed at a div. The id lands on `input`, `select`, `textarea`, `button`,
+  `meter`, `output` or `progress` without one of their own; a wrapper is never
+  written to. Item 2, a throwing form of `append`/`replace`, is a 3.x
+  question; 2.x keeps warn-and-null.
+- **`syncChildren` delivers kept rows to their `update` handle** (#128). The
+  handle named `update` is the dispatch target of `bw.update(ref, data)`; the
+  list form of the same idea did not honour it, so a kept row with an update
+  handle was moved and showed its old data unless the caller wrote
+  `update: (el, it) => el.bw.update(it)` by hand. Without `opts.update` the
+  row's own handle now receives the item; an explicit function still wins; a
+  row with neither is only moved, as before. A list of components is `key`
+  and `create`, and each row decides what to patch.
+- **The content sink skips the write when the string is unchanged** (#129).
+  Slot setters, `bw.patch(ref, string)` and `bw.el(ref, apply)` share
+  `_applyTo`, so one check covers all: when the target holds a single text
+  node whose data equals the new string, nothing is touched. A naive update
+  handle that sets every slot on every tick costs nothing, and a selection
+  inside the slot survives. Only the identical string short-circuits; TACO and
+  array content always replace.
+- **`bwcli attach /screenshot` names its failure** (#125, item 2). The capture
+  error did reach the REPL, as a bare `[error] ...` line that read like a
+  relayed console message. It now prints `Screenshot failed: <message>` and,
+  when html2canvas rejects a colour function, says that the bundled 1.4.1
+  cannot parse CSS Color 4 (`color-mix()`, `oklch()`, `color()`,
+  `light-dark()`). `docs/bw-attach.md` and `docs/bwserve.md` state the limit.
+  Replacing the capturer (item 1) is separate work with #80.
+
+### Tests
+
+- `test/bitwrench_test_css_split.js`: the lean path from the full source (no
+  sheet installed, then installed, then installed twice), both palettes, the
+  merged small-screen media block, rule order, and the core-factory invariant.
+- Bundle tests on the shipped files: lean emits no widget rule, lean + BCCL
+  ESM and UMD register the sheet once, the BCCL artifact carries the sheet
+  and not the engine, the full build is unchanged.
+- `tools/build-css-class-inventory.js` walks the widget sheet as well.
+- Vocabulary matrix D: attribute booleans through `bw.html`, `bw.create`,
+  `bw.patch(ref, attrs)` and `bw.patch(ref, value, attr)`, plus the meta check
+  on the source. `verify`: the SVG attribute sweep and a real typo inside an
+  svg still firing. `makeFormGroup`: bare control, select/textarea, wrapper
+  div untouched with one `id` in the rendered page, caller TACO not mutated.
+  attach: the `Screenshot failed:` line and the CSS Color 4 note. Matrix E:
+  syncChildren with and without `opts.update`, rows with no handle, and
+  `bw.update` reaching the same handle. Matrix F: the unchanged-string
+  short-circuit through a slot setter and `bw.patch`, TACO and array content
+  still replacing, and the clear-once cases.
+
 ## v2.1.13 (2026-11-07)
 
 API consistency and stability. Three consumer apps (triops, jazzmac, quikleaf)

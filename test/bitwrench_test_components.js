@@ -12,6 +12,8 @@ import {
   makeAvatar, makeCodeDemo
 } from "../src/bitwrench-bccl.js";
 import { defaultStyles, getStructuralStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, resolveLayout } from "../src/bitwrench-styles.js";
+import { bcclStyles } from "../src/bitwrench-bccl.js";
+import { bcclStructural } from "../src/bitwrench-bccl-styles.js";
 import jsdom from 'jsdom';
 const { JSDOM } = jsdom;
 
@@ -519,7 +521,8 @@ describe('makeAvatar', function() {
 // =========================================================================
 
 describe('Component CSS', function() {
-  it('defaultStyles should have new component categories', function() {
+  it('the widget sheet has the newer component categories (they left defaultStyles in 2.1.14)', function() {
+    const defaultStyles = bcclStructural();
     assert.ok(defaultStyles.buttonGroup, 'buttonGroup missing');
     assert.ok(defaultStyles.accordion, 'accordion missing');
     assert.ok(defaultStyles.modal, 'modal missing');
@@ -540,8 +543,8 @@ describe('Component CSS', function() {
     assert.ok(defaultStyles.chipInput, 'chipInput missing');
   });
 
-  it('getAllStyles should include new component selectors', function() {
-    const all = getAllStyles();
+  it('structural styles with the widget sheet include the newer component selectors', function() {
+    const all = getStructuralStyles([bcclStyles]);
     assert.ok(all['.bw_bccl_btn_group, .bw_bccl_btn_group_vertical'], 'btn-group missing');
     assert.ok(all['.bw_bccl_accordion'], 'accordion missing');
     assert.ok(all['.bw_bccl_modal'], 'modal missing');
@@ -563,7 +566,7 @@ describe('Component CSS', function() {
   });
 
   it('getStructuralStyles should include new component rules', function() {
-    const structural = getStructuralStyles();
+    const structural = getStructuralStyles([bcclStyles]);
     assert.ok(structural['.bw_bccl_btn_group, .bw_bccl_btn_group_vertical'], 'btn-group structural missing');
     assert.ok(structural['.bw_bccl_accordion'], 'accordion structural missing');
     assert.ok(structural['.bw_bccl_modal'], 'modal structural missing');
@@ -585,7 +588,7 @@ describe('Component CSS', function() {
   });
 
   it('getStructuralStyles should include underscore aliases', function() {
-    const structural = getStructuralStyles();
+    const structural = getStructuralStyles([bcclStyles]);
     assert.ok(structural['.bw_bccl_accordion'], 'underscore alias missing for accordion');
     assert.ok(structural['.bw_bccl_modal'], 'underscore alias missing for modal');
     assert.ok(structural['.bw_avatar'], 'underscore alias missing for avatar');
@@ -596,7 +599,7 @@ describe('Component CSS', function() {
     const altConfig = bw.deriveAlternateConfig(config);
     const altPalette = bw.derivePalette(altConfig);
     const layout = resolveLayout({});
-    const altRules = generateAlternateCSS('', altPalette, layout);
+    const altRules = generateAlternateCSS('', altPalette, layout, [bcclStyles]);
     const css = bw.css(altRules);
     assert.ok(css.includes('.bw_theme_alt'), 'should use .bw_theme_alt scope');
     assert.ok(css.includes('.bw_bccl_btn'), 'should include button rules');
@@ -881,7 +884,7 @@ describe('Form validation', function() {
   });
 
   it('validation CSS classes should exist in structural styles', function() {
-    const structural = getStructuralStyles();
+    const structural = getStructuralStyles([bcclStyles]);
     assert.ok(structural['.bw_valid_feedback'], 'valid-feedback structural missing');
     assert.ok(structural['.bw_invalid_feedback'], 'invalid-feedback structural missing');
   });
@@ -1257,7 +1260,7 @@ describe('Breadcrumb active state', function() {
   });
 
   it('breadcrumb link styles should exist', function() {
-    const all = getAllStyles();
+    const all = getStructuralStyles([bcclStyles]);
     assert.ok(all['.bw_bccl_breadcrumb_item a'], 'breadcrumb link styles missing');
   });
 });
@@ -4766,7 +4769,7 @@ describe('makeSelect option label (#98 note)', function() {
 });
 
 describe('Grid and navbar structural CSS (#101, #103, #104)', function() {
-  var css = bw.css(getStructuralStyles());
+  var css = bw.css(getStructuralStyles([bcclStyles]));
 
   it('navbar layout rule matches the container makeNavbar renders', function() {
     assert.ok(bw.html(bw.makeNavbar({ brand: 'B' })).indexOf('class="bw_container"') > 0);
@@ -5217,5 +5220,54 @@ describe('bw.clear()', function() {
 
   it('returns null for a ref that matches nothing', function() {
     assert.strictEqual(bw.clear('#nope'), null);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// makeFormGroup `id` lands on a labelable control only (#127). 2.1.13 copied
+// the id onto whatever TACO was passed as `input`; a wrapper div holding the
+// control then shared the id with it and the label's `for` pointed at a div.
+// ---------------------------------------------------------------------------
+
+describe('makeFormGroup id lands on a labelable control only (#127)', function() {
+  function byTag(group, tag) {
+    return group.c.find(function(ch) { return ch && ch.t === tag; });
+  }
+
+  it('a bare makeInput() gets the id and the label points at it', function() {
+    var g = bw.makeFormGroup({ label: 'Email', id: 'email', input: bw.makeInput({ type: 'email' }) });
+    assert.strictEqual(byTag(g, 'label').a.for, 'email');
+    assert.strictEqual(byTag(g, 'input').a.id, 'email');
+  });
+
+  it('select and textarea are labelable too', function() {
+    var s = bw.makeFormGroup({ label: 'Size', id: 'size', input: bw.makeSelect({ options: ['S', 'M'] }) });
+    var t = bw.makeFormGroup({ label: 'Notes', id: 'notes', input: bw.makeTextarea({}) });
+    assert.strictEqual(byTag(s, 'select').a.id, 'size');
+    assert.strictEqual(byTag(t, 'textarea').a.id, 'notes');
+  });
+
+  it('a wrapper div passed as input is not written to, so the page has one element per id', function() {
+    var g = bw.makeFormGroup({
+      label: 'Model', id: 'set-model',
+      input: { t: 'div', a: { class: 'model-row' }, c: [
+        { t: 'input', a: { id: 'set-model' } },
+        bw.makeButton({ text: 'Fetch Models' })
+      ] }
+    });
+    var wrapper = byTag(g, 'div');
+    assert.strictEqual(wrapper.a.id, undefined, 'wrapper must not receive the id');
+    assert.strictEqual(wrapper.a.class, 'model-row');
+    assert.strictEqual(byTag(g, 'label').a.for, 'set-model');
+    var html = bw.html(g);
+    assert.strictEqual((html.match(/id="set-model"/g) || []).length, 1, html);
+  });
+
+  it('a control that already has an id keeps it, and the caller TACO is not mutated', function() {
+    var input = bw.makeInput({ id: 'mine' });
+    var g = bw.makeFormGroup({ label: 'X', id: 'theirs', input: input, validation: 'invalid' });
+    assert.strictEqual(byTag(g, 'input').a.id, 'mine');
+    assert.strictEqual(input.a.id, 'mine');
+    assert.ok(!(input.a.class || '').includes('bw_is_invalid'), 'validation class goes on the clone, not the caller object');
   });
 });

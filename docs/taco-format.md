@@ -45,6 +45,15 @@ The HTML element name. Required for rendering.
 
 An object of HTML attributes. All standard attributes work, including event handlers.
 
+A boolean value means presence for the HTML boolean attributes: `disabled: true`
+renders `disabled`, `false` omits it. ARIA states and the enumerated attributes
+`draggable`, `contenteditable` and `spellcheck` take the words instead, so
+`'aria-expanded': false` renders `aria-expanded="false"`, which is the
+meaningful state; `translate` renders `yes`/`no`. The rule is the same in
+`bw.html()`, `bw.create()` and `bw.patch()` with an attribute object, where
+`false` and `null` remove the attribute. (Before 2.1.14 the render paths wrote
+`aria-pressed=""` and dropped `false`, and patch wrote `hidden="false"`.)
+
 ```javascript
 {
   t: 'button',

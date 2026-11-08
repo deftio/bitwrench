@@ -1,8 +1,19 @@
 # CSS split — core sheet and BCCL sheet
 
-Decided 2026-10-11. **Retargeted to 2.1.13** (2026-10-11): the release
-sequence is 2.1.12 verify, 2.1.13 CSS/lean cleanup, 2.1.14 embedded. Do this on
-a fresh branch off a shipped 2.1.12, not on `feature/verify-tool`.
+Decided 2026-10-11. **Implemented 2026-11-07 on `feature/css-lean-split`
+(2.1.14).** Measured on the shipped level-9 `.gz`: lean 36,995 -> 29,758 (UMD)
+and 36,783 -> 29,548 (ESM), a 20% cut and 1.6 KB more than the 5.6 KB this plan
+predicted, because the responsive widget lines and the role-override block
+also left. BCCL 11,398 -> 19,731. Full 47,387 -> 47,709 (UMD) and 47,527 ->
+47,860 (ESM): the glue and the pager rules cost ~320 bytes, under the 47 KB
+gate with ~270 bytes left on ESM. Deviations from
+the order of work below: the sheets are passed into `generateThemedCSS`,
+`getStructuralStyles` and `generateAlternateCSS` as an argument rather than
+read from `bw` inside the styles module, so the styles module stays free of
+`bw`; the table pager (which emits the button classes) carries a pager-scoped
+copy of the small-button rules in core so lean renders it; a lean gate of 30 KB
+is in `tools/release.js`. Earlier history: retargeted to 2.1.13 on
+2026-10-11, then slid to 2.1.14 when 2.1.13 became the API-consistency release.
 
 Why it moved: the prize is lean-only, nothing about shipping verify depends on
 it, and `feature/verify-tool` ended up carrying the verify feature plus seven

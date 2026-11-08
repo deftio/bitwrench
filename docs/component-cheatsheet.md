@@ -46,7 +46,7 @@
 | makePagination | pages, currentPage, onPageChange, size | Page change callbacks, sm/lg sizes | -- |
 | **Forms** | | | |
 | makeForm | children, onsubmit | Form wrapper with default preventDefault | -- |
-| makeFormGroup | label, input, help, validation, feedback, required | Required indicator (*), validation feedback (valid/invalid) | -- |
+| makeFormGroup | label, input, id, help, validation, feedback, required | Required indicator (*), validation feedback (valid/invalid) | -- |
 | makeInput | type, placeholder, value, disabled, oninput | All HTML5 types, bw_form_control styling | -- |
 | makeTextarea | placeholder, value, rows, disabled | Multi-line input, bw_form_control styling | -- |
 | makeSelect | options [{value, text or label}], value, disabled | Dropdown select, bw_form_control styling | -- |

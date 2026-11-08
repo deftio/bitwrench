@@ -22,6 +22,8 @@ import { resolve, dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { tmpdir } from 'os';
 import { gzipSync } from 'zlib';
+import jsdom from 'jsdom';
+const { JSDOM } = jsdom;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -1167,5 +1169,68 @@ describe('Dist Bundle Smoke Tests', function () {
       assert.strictEqual(core.indexOf('not-an-element'), -1,
         'a verify-only finding code appears in core: verify leaked into the bundle');
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The CSS split (2.1.14): widget rules ship with the BCCL factories. Measured
+// on the shipped files, not the source, because the lean build is produced by
+// a Rollup plugin that swaps bitwrench-bccl.js for a stub, and only the
+// artifact shows whether the swap took the widget sheet with it.
+// ---------------------------------------------------------------------------
+describe('CSS split across the shipped bundles (2.1.14)', function () {
+  // Themed widget selectors (makeStyles().css carries the themed half; the
+  // structural half is covered by test/bitwrench_test_css_split.js).
+  const WIDGET = ['.bw_bccl_btn_outline.bw_primary', '.bw_bccl_card.bw_primary', '.bw_bccl_alert.bw_primary', '.bw_bccl_progress_bar.bw_primary'];
+
+  it('lean: makeStyles() emits no widget rule, and keeps tables, grid and role classes', async function () {
+    const bw = (await loadESM(LEAN_BUNDLES.esmMin)).default;
+    const styles = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+    const css = styles.css + styles.alternateCss;
+    for (const sel of WIDGET) assert.ok(!css.includes(sel), `lean emits ${sel}`);
+    assert.ok(css.includes('.bw_bccl_table'), 'lean keeps table rules');
+    assert.ok(css.includes('.bw_primary'), 'lean keeps role classes');
+    assert.ok(css.includes('.bw_bccl_table_pagination .bw_bccl_btn_sm'), 'lean styles the table pager itself');
+    assert.strictEqual(bw._bw_style_sheets.length, 0, 'no sheet installed in lean');
+  });
+
+  it('lean + BCCL (ESM): registerBCCL installs the sheet; makeStyles() then emits every widget rule once', async function () {
+    const bw = (await loadESM(LEAN_BUNDLES.esmMin)).default;
+    const bccl = await loadESM(BCCL_BUNDLES.esmMin);
+    bccl.registerBCCL(bw);
+    bccl.registerBCCL(bw);
+    assert.strictEqual(bw._bw_style_sheets.length, 1, 'one sheet after two registrations');
+    assert.strictEqual(typeof bw.makeTooltip, 'function', 'makeTooltip arrives with the BCCL file (#108)');
+    const styles = bw.makeStyles({ primary: '#336699', secondary: '#cc6633' });
+    for (const sel of WIDGET) assert.ok(styles.css.includes(sel), `widget rule ${sel} missing after registerBCCL`);
+    assert.ok(styles.alternateCss.includes('.bw_bccl_btn_outline.bw_primary'), 'alternate palette colours a button');
+    assert.strictEqual(styles.css.split('.bw_bccl_btn_outline.bw_primary:hover {').length - 1, 1, 'printed once');
+  });
+
+  it('full: makeStyles() emits the widget rules without any registration', async function () {
+    const bw = (await loadESM(MAIN_BUNDLES.esmMin)).default;
+    const styles = bw.makeStyles({ primary: '#336699' });
+    for (const sel of WIDGET) assert.ok(styles.css.includes(sel), `full build lacks ${sel}`);
+  });
+
+  it('the BCCL artifact carries the widget sheet and not the style engine', function () {
+    const text = readFileSync(resolve(ROOT, BCCL_BUNDLES.umdMin), 'utf8');
+    assert.ok(text.includes('bw_bccl_modal_dialog'), 'widget rules are in the BCCL file');
+    assert.ok(!text.includes('derivePalette'), 'derivePalette must not be bundled into BCCL');
+    assert.ok(!/bw_m_0|bw_gap_0/.test(text), 'the utility kit must not be bundled into BCCL');
+    const lean = readFileSync(resolve(ROOT, LEAN_BUNDLES.umdMin), 'utf8');
+    assert.ok(!lean.includes('bw_bccl_modal_dialog'), 'lean must not carry the widget sheet');
+  });
+
+  it('lean and BCCL UMD files, loaded in that order on one page, register the sheet through the global', function () {
+    const dom = new JSDOM('<!DOCTYPE html><div id="app"></div>', { runScripts: 'outside-only', url: 'http://localhost/' });
+    const w = dom.window;
+    w.eval(readFileSync(resolve(ROOT, LEAN_BUNDLES.umdMin), 'utf8'));
+    assert.strictEqual(typeof w.bw.makeButton, 'undefined', 'lean has no factories');
+    w.eval(readFileSync(resolve(ROOT, BCCL_BUNDLES.umdMin), 'utf8'));
+    assert.strictEqual(typeof w.bw.makeButton, 'function', 'BCCL registered its factories');
+    assert.strictEqual(w.bw._bw_style_sheets.length, 1, 'BCCL registered its sheet');
+    const css = w.bw.makeStyles({ primary: '#336699' }).css;
+    assert.ok(css.includes('.bw_bccl_btn_outline.bw_primary'), 'widget CSS available after both scripts');
   });
 });

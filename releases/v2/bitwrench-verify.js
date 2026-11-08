@@ -1,4 +1,4 @@
-/*! bitwrench-verify v2.1.13 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-verify v2.1.14 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -79,6 +79,18 @@
     'start', 'step', 'target', 'title', 'translate', 'type', 'usemap', 'width',
     'wrap'
   ];
+
+  // SVG attributes (#126). The renderer infers the SVG namespace from the
+  // parent and svg.md is a first-class guide, so a path's `d` is as real as an
+  // input's `type`; through 2.1.13 it drew an attr-typo hint for `id` on every
+  // <path> (83 of 83 warnings on one app). A hint is only ever offered for a
+  // name within one edit of a special name, so the names that can collide are
+  // the short geometry, filter and animation ones; these are listed. `fill`,
+  // `viewBox`, `transform` and the rest are more than one edit from anything
+  // special and pass without being named (the sweep test proves it), which
+  // keeps this module inside the size verify.md promises.
+  var SVG_ATTRS = 'd r x y z cx cy rx ry x1 y1 x2 y2 dx dy fx fy fr in in2 k1 k2 k3 k4 by to from values points'.split(' ');
+  REAL_ATTRS = REAL_ATTRS.concat(SVG_ATTRS);
 
   // Raw content that executes. Not a safety guarantee -- see rawFindings().
   var RAW_HANDLER = /<[^>]+\s+on[a-z]+\s*=/i;

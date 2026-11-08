@@ -165,6 +165,8 @@ Saved: card.png (400x300, 48291 bytes)
 
 On the first screenshot, html2canvas (vendored, ~194KB) is lazy-loaded in the browser. Subsequent screenshots are fast.
 
+html2canvas 1.4.1 cannot parse the CSS Color 4 functions (`color-mix()`, `oklch()`, `color()`, `light-dark()`); one such value anywhere in the page's computed styles aborts the capture. The REPL reports this as `Screenshot failed: Attempting to parse an unsupported color function ...` with a note naming the limit, and `client.screenshot()` rejects with the same message. Pages built on those functions need a different capturer; see #125 and #80.
+
 ### `/mount <selector> <component> [json-props]`
 
 Mounts a BCCL component at the specified selector. The component name is camelCased automatically (e.g., `card` → `makeCard`).

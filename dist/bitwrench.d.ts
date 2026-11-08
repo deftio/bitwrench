@@ -444,7 +444,7 @@ export interface Bitwrench {
   patchAll(patches: Record<string, TacoContent> | Array<{ id: string; content?: TacoContent; attr?: string }>): Record<string, HTMLElement>;
   /** Janitor: document-level cleanup for orphaned lifecycle elements */
   janitor(options?: { verbose?: boolean }): void;
-  /** Reconcile children of parent with new TACO list */
+  /** Reconcile children of parent with new TACO list. A kept row gets `update(el, item)`, else its own `el.bw.update(item)` handle. */
   syncChildren(
     parent: HTMLElement,
     items: unknown[],

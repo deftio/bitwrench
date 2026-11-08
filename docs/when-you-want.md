@@ -8,7 +8,9 @@ search for. Every code block on this page runs in the test suite.
 
 Everything here is in the lean build as well as the full one, except where an
 entry says otherwise. If you are on `bitwrench-lean` and about to write a
-helper, check this page first.
+helper, check this page first. If what you need is a component, load
+`bitwrench-bccl.umd.min.js` after lean: it adds the 47 factories and their
+stylesheet, and `bw.loadStyles()` called after both emits the widget CSS.
 
 ## Build it
 
@@ -250,9 +252,10 @@ btn.bw.setPressed(true);
 ```
 
 **You want a tooltip or help bubble.** `bw.makeTooltip` wraps a trigger and
-shows on hover and focus with `role="tooltip"`. It is a BCCL component, so it
-is in the full build and not in lean -- two apps hand-rolled a `data-help`
-system because they were on lean and did not know it existed.
+shows on hover and focus with `role="tooltip"`. It is a BCCL component, so on
+lean it arrives with the BCCL script, together with its CSS -- two apps
+hand-rolled a `data-help` system because they were on lean and did not know
+it existed.
 
 ```javascript
 bw.mount('#app', bw.makeTooltip({

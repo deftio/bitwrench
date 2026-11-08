@@ -4,12 +4,12 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.13 |
-| Generated | 2026-11-07 |
+| Version | 2.1.14 |
+| Generated | 2026-11-08 |
 | Total APIs | 170 |
 | Categories | 23 |
-| bitwrench.js | 5630 lines |
-| bitwrench-bccl.js | 4092 lines |
+| bitwrench.js | 5732 lines |
+| bitwrench-bccl.js | 4111 lines |
 
 ## Table of Contents
 
@@ -660,7 +660,7 @@ Update a specific slot on a component by reference.
 
 ### `bw.syncChildren(parentEl, items, opts)`
 
-Keyed reconciliation: match existing children by `el._bw_key`, move/add/remove to match `items` order. Moved nodes are the SAME DOM nodes (state/focus survives).
+Keyed reconciliation: match existing children by `el._bw_key`, move/add/remove to match `items` order. Moved nodes are the SAME DOM nodes (state/focus survives). A kept row receives its item through `opts.update(el, item)` when given, else through its own `update` handle (`el.bw.update(item)`), the target `bw.update()` dispatches to; a row with neither is only moved.
 
 **Parameters:**
 
@@ -942,7 +942,7 @@ Targeted DOM update by element ID — change one element's content or attribute 
 | Name | Type | Description |
 |------|------|-------------|
 | `id` | `string|Element` | - Element ID, bw_uuid_* class, CSS selector, or DOM element. Uses node cache for O(1) lookup; falls back to DOM query on cache miss. |
-| `content` | `string|Object` | - New text content, or TACO object to replace children |
+| `content` | `string|Object` | - New text content, or TACO object to replace children. A plain object without `t` is a set of attributes (`{ hidden: false }` removes). A string equal to the element's one text node is a no-op: nothing is written. |
 | `attr` | `string` | - If provided, sets this attribute instead of content |
 
 **Returns:** `Element|null` — patched element, or null if not found
@@ -1998,7 +1998,7 @@ Create a form group with label, input, optional help text and validation feedbac
 | `props.label` | `string` | - Label text |
 | `props.input` | `Object` | - Input TACO object (from makeInput, makeSelect, etc.) |
 | `props.help` | `string` | - Help text displayed below the input |
-| `props.id` | `string` | - Input ID (links label to input via for/id) |
+| `props.id` | `string` | - Control id. The label's `for` points at it. When `input` is a labelable control (input, select, textarea, button, meter, output, progress) without an id of its own, the id is copied onto it; a wrapper TACO (a div holding the control) is never written to -- the caller owns its attributes (#127). |
 | `props.validation` | `string` | - Validation state ("valid" or "invalid") |
 | `props.feedback` | `string` | - Validation feedback text shown below input |
 | `props.required` | `boolean` | - Show required indicator (*) on label |

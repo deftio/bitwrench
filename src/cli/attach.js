@@ -346,7 +346,13 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
         console.log('Saved: ' + ssFile + ' (' + result.width + 'x' + result.height + ', ' + result.data.length + ' bytes)');
         rl.prompt();
       }).catch(function(err) {
-        console.error('[error] ' + err.message);
+        // The browser's capture error arrives here through the wire. Say what
+        // failed, not just that something did: a bare "[error] ..." read as a
+        // relayed console line and the missing file went unexplained (#125).
+        console.error('Screenshot failed: ' + err.message);
+        if (/unsupported color function/i.test(err.message)) {
+          console.error('  The bundled html2canvas 1.4.1 cannot parse CSS Color 4 (color-mix, oklch, color, light-dark); a page using them cannot be captured yet.');
+        }
         rl.prompt();
       });
       break;

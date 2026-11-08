@@ -398,12 +398,20 @@ Label + input + help text wrapper.
 ```javascript
 bw.makeFormGroup({
   label: 'Email',
+  id: 'email',               // the label's `for`; copied onto a bare control
+  input: bw.makeInput({ type: 'email' }),
   help: 'We will not share your email.',
-  error: '',                 // error message (shows red)
+  validation: 'invalid',     // 'valid' | 'invalid' | undefined
+  feedback: 'Enter a valid address.',
   required: false,
   class: ''
 })
 ```
+
+`id` lands on the control when `input` is a labelable element (`input`,
+`select`, `textarea`, `button`, `meter`, `output`, `progress`) that has no id
+of its own. A wrapper TACO passed as `input` (a div holding the control and a
+button) is never written to; put the id on the control inside it.
 
 ### makeInput
 

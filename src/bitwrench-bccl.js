@@ -17,6 +17,16 @@
  * @author M A Chatterjee <deftio [at] deftio [dot] com>
  */
 
+import { bcclStructural, bcclThemed } from './bitwrench-bccl-styles.js';
+
+/**
+ * The widget stylesheet: structural categories and themed generators for
+ * every bw_bccl_* class the factories emit. bitwrench.js installs it at load
+ * in the full build; registerBCCL installs it when the BCCL script is loaded
+ * after lean. See src/bitwrench-bccl-styles.js.
+ */
+export var bcclStyles = { structural: bcclStructural, themed: bcclThemed };
+
 // =========================================================================
 // Variant → Utility Class Mapping
 //
@@ -1129,6 +1139,9 @@ export function makeForm(props = {}) {
   };
 }
 
+// The HTML labelable elements: the only tags a <label for> may point at.
+var _LABELABLE = { input: 1, select: 1, textarea: 1, button: 1, meter: 1, output: 1, progress: 1 };
+
 /**
  * Create a form group with label, input, optional help text and validation feedback
  *
@@ -1136,7 +1149,10 @@ export function makeForm(props = {}) {
  * @param {string} [props.label] - Label text
  * @param {Object} [props.input] - Input TACO object (from makeInput, makeSelect, etc.)
  * @param {string} [props.help] - Help text displayed below the input
- * @param {string} [props.id] - Input ID (links label to input via for/id)
+ * @param {string} [props.id] - Control id. The label's `for` points at it. When `input`
+ *   is a labelable control (input, select, textarea, button, meter, output, progress)
+ *   without an id of its own, the id is copied onto it; a wrapper TACO (a div holding
+ *   the control) is never written to -- the caller owns its attributes (#127).
  * @param {string} [props.validation] - Validation state ("valid" or "invalid")
  * @param {string} [props.feedback] - Validation feedback text shown below input
  * @param {boolean} [props.required=false] - Show required indicator (*) on label
@@ -1156,11 +1172,14 @@ export function makeFormGroup(props = {}) {
 
   // Shallow-clone input TACO to add the validation class and the group's id
   // without mutating the original. `id` names the control (the label's `for`
-  // points at it), so it lands on the input, not on the wrapper.
+  // points at it), so it lands on the control and only on a control: a
+  // wrapper div passed as `input` keeps the caller's attributes, else the
+  // wrapper and the control inside it would share one id (#127).
   var styledInput = input;
-  if (input && (validation || (id && !(input.a && input.a.id)))) {
+  var wantsId = !!(id && input && _LABELABLE[input.t] && !(input.a && input.a.id));
+  if (input && (validation || wantsId)) {
     styledInput = { t: input.t, a: Object.assign({}, input.a), c: input.c, o: input.o };
-    if (id && !styledInput.a.id) styledInput.a.id = id;
+    if (wantsId) styledInput.a.id = id;
     var validClass = validation === 'valid' ? 'bw_is_valid' : validation === 'invalid' ? 'bw_is_invalid' : '';
     if (validClass) {
       styledInput.a.class = ((styledInput.a.class || '') + ' ' + validClass).trim();

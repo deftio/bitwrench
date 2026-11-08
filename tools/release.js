@@ -404,12 +404,17 @@ console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 // gate did its job -- it caught the growth and forced this to be a decision
 // instead of a drift.
 //
-// The CSS split is 2.1.13, not 2.2, and it does NOT shrink this artifact.
-// Measured 2026-10-11: moving widget CSS out of core takes about 5.6KB gzipped
-// off the LEAN build (36.7KB -> ~31KB). The full file is both halves, so it
-// stays where it is -- the earlier "~14KB comes out of this artifact" note was
-// wrong on both the release number and the beneficiary. See
-// dev/bw-css-split-plan.md. Per-SKU budgets land with that split.
+// The CSS split landed in 2.1.14 and, as predicted, did not shrink this
+// artifact: the widget rules left the core half and entered the BCCL half,
+// and the full file is both halves plus ~320 bytes of install glue and pager
+// rules, ~180 bytes for the one attribute serialiser (#124) that made html,
+// create and patch agree, and ~40 for the two dispatch fixes (#128, #129)
+// (UMD 47,387 -> 47,944; ESM 47,527 -> 48,083, 45 bytes under this gate).
+// The LEAN build is where the bytes came out: 36,995 -> 29,941 (UMD) and
+// 36,783 -> 29,735 (ESM), 20%. See
+// dev/bw-css-split-plan.md. Lean has its own ceiling below so the cut cannot
+// drift back unnoticed, and dev/bw-lean-engine-cuts-plan.md is the next cut
+// for both files; the full gate is not to be raised for it.
 //
 // Treat 47KB as the ceiling, not as headroom to spend. Read dist/<file>.gz for
 // the current figure rather than trusting a number written in prose.
@@ -421,6 +426,21 @@ if (esmGzipped > BUDGET) {
   fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 47KB budget!`);
 }
 console.log('  ✓ UMD + ESM both under 47KB budget');
+
+// Lean budget, set with the 2.1.14 split: measured 29,941 / 29,735 at
+// release, so 30KB is a ceiling with ~0.8KB of headroom, not a target. The
+// follow-on plan (engine cuts: wire client, router, file I/O) lowers it.
+const LEAN_BUDGET = 30 * 1024; // 30KB
+const leanGzipped = gzSize('dist/bitwrench-lean.umd.min.js');
+const leanEsmGzipped = gzSize('dist/bitwrench-lean.esm.min.js');
+console.log(`  Lean: ${kb(leanGzipped)} gzipped (UMD) | ${kb(leanEsmGzipped)} gzipped (ESM)`);
+if (leanGzipped > LEAN_BUDGET) {
+  fail(`Lean UMD gzipped bundle (${kb(leanGzipped)}) exceeds 30KB budget!`);
+}
+if (leanEsmGzipped > LEAN_BUDGET) {
+  fail(`Lean ESM gzipped bundle (${kb(leanEsmGzipped)}) exceeds 30KB budget!`);
+}
+console.log('  ✓ Lean UMD + ESM both under 30KB budget');
 
 // ── 7. Docker clean-room install test ──────────────────────────────────
 

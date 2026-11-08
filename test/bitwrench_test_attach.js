@@ -864,7 +864,25 @@ describe("handleSlashCommand()", function() {
     };
     handleSlashCommand('/screenshot', mockClient, new Map(), { allowScreenshot: true }, mockRl);
     setTimeout(function() {
-      assert.ok(errors.some(function(l) { return l.includes('no html2canvas'); }));
+      // Named as a screenshot failure, not a bare "[error]" line that reads as
+      // a relayed console message (#125).
+      assert.ok(errors.some(function(l) { return l.includes('Screenshot failed: no html2canvas'); }), errors.join('|'));
+      assert.ok(!errors.some(function(l) { return l.includes('CSS Color 4'); }), 'no colour hint for an unrelated error');
+      done();
+    }, 50);
+  });
+
+  it("/screenshot names the CSS Color 4 limit when html2canvas rejects a colour function (#125)", function(done) {
+    var mockClient = {
+      screenshot: function() {
+        return Promise.reject(new Error('Attempting to parse an unsupported color function "color"'));
+      }
+    };
+    handleSlashCommand('/screenshot', mockClient, new Map(), { allowScreenshot: true }, mockRl);
+    setTimeout(function() {
+      assert.ok(errors.some(function(l) { return l.indexOf('Screenshot failed: Attempting to parse') === 0; }), errors.join('|'));
+      assert.ok(errors.some(function(l) { return l.includes('CSS Color 4') && l.includes('color-mix'); }), errors.join('|'));
+      assert.ok(promptCalled > 0, 'prompt returns');
       done();
     }, 50);
   });

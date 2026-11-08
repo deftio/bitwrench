@@ -126,10 +126,11 @@ for a list, `bw.clear` to empty a container. The
 
 | You want | Load | Size (gzip) |
 |----------|------|-------------|
-| A `<script>` tag, everything included | `dist/bitwrench.umd.min.js` | ~46 KB |
-| Your own design, no built-in components | `dist/bitwrench-lean.umd.min.js` | ~36 KB |
-| Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | ~121 KB |
-| `import bw from ...` without npm | `dist/bitwrench.esm.min.js` (or `-lean.esm.min.js`) | ~46 KB |
+| A `<script>` tag, everything included | `dist/bitwrench.umd.min.js` | ~47 KB |
+| Your own design, no built-in components | `dist/bitwrench-lean.umd.min.js` | ~29 KB |
+| Lean, plus the components as a second file | `dist/bitwrench-bccl.umd.min.js` after lean | ~19 KB |
+| Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | see `builds.json` |
+| `import bw from ...` without npm | `dist/bitwrench.esm.min.js` (or `-lean.esm.min.js`) | ~47 KB |
 | npm | `npm install bitwrench`, then `import bw from 'bitwrench'` | -- |
 
 Every file has a source map next to it. The unminified builds are for
@@ -137,10 +138,11 @@ debugging -- don't vendor them into a page you ship. All builds and their
 hashes are listed in `dist/builds.json`.
 
 Lean is not a stripped-down core. It keeps the router, pub/sub, `patch`,
-`syncChildren`, the class verbs, `bw.el`/`bw.$` and the table factories. The
-only thing it drops is the 47 BCCL component factories (`makeButton`,
-`makeCard`, `makeTooltip`, ...). The exact table is on the
-[core API card](core-api.md#what-is-in-which-build).
+`syncChildren`, the class verbs, `bw.el`/`bw.$` and the table factories. What
+it drops is the 47 BCCL component factories (`makeButton`, `makeCard`,
+`makeTooltip`, ...) and the stylesheet they use. Loading the BCCL file after
+lean adds both; call `bw.loadStyles()` after the two scripts. The exact table
+is on the [core API card](core-api.md#what-is-in-which-build).
 
 ## Lifecycle at a glance
 
