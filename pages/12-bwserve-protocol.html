@@ -238,7 +238,7 @@
       site.makeCallout('concept', 'Why is this useful?', {
         t: 'div', c: [
           { t: 'p', c: [
-            'The browser already has bitwrench loaded (~45KB). The server sends tiny JSON messages (50\u2013500 bytes each) instead of full HTML pages. This makes server-driven UI practical for ',
+            'The browser already has bitwrench loaded (~47KB). The server sends tiny JSON messages (50\u2013500 bytes each) instead of full HTML pages. This makes server-driven UI practical for ',
             { t: 'strong', c: 'embedded devices' },
             ' (ESP32, Raspberry Pi), ',
             { t: 'strong', c: 'dashboards and internal tools' },
@@ -268,7 +268,7 @@
     // 2. Protocol Messages
     // =========================================================================
     var secMessages = section('messages', 'Protocol Messages', [
-      { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: 'All messages are JSON objects sent as SSE data frames. Each has a type field that determines how the client processes it. The v2.1 protocol defines 10 message types.' },
+      { t: 'p', a: { class: 'bw_site_pages_demo_desc' }, c: 'All messages are JSON objects sent as SSE data frames. Each has a type field that determines how the client processes it. The v2.1 protocol defines 13 message types.' },
 
       protoTable(
         ['Type', 'Purpose', 'Client Action'],
@@ -278,6 +278,9 @@
           [badge('patch'), 'Update text content or attributes', code('bw.patch(ref, { text, attr })')],
           [badge('append'), 'Add a new child element', code('bw.append(ref, taco)')],
           [badge('remove'), 'Remove an element from the DOM', code('bw.remove(ref)')],
+          [badge('replace'), 'Swap an element for a new TACO tree', code('bw.replace(ref, taco)')],
+          [badge('refresh'), 'Re-run the render function of a component', code('bw.refresh(ref)')],
+          [badge('update'), 'Deliver data to a component\'s update handler', code('bw.update(ref, data)')],
           [badge('batch'), 'Execute multiple operations atomically', code('ops.forEach(bw.apply)')],
           [badge('call'), 'Invoke a built-in function', code('fn.apply(null, args)')],
           [badge('message'), 'Send notification/dispatch to component', code('bw.pub() or component dispatch')],
@@ -324,6 +327,25 @@
       { t: 'h3', c: [badge('remove'), ' remove'] },
       { t: 'p', c: 'Removes an element from the DOM. Calls bw.unmount() first to tear down lifecycle hooks.' },
       site.makeCodeBlock('{ v: 1, type: "remove", ref: "#todo-5" }'),
+
+      // replace
+      { t: 'h3', c: [badge('replace'), ' replace'] },
+      { t: 'p', c: 'Swaps the element itself for a new TACO tree, unmounting the old one. Where mount replaces the contents of a container, replace replaces the node.' },
+      site.makeCodeBlock([
+        '{ v: 1, type: "replace", ref: "#status-card",',
+        '  taco: { t: "div", a: { class: "bw_bccl_card" }, c: "Rebuilt" }',
+        '}'
+      ].join('\n')),
+
+      // refresh
+      { t: 'h3', c: [badge('refresh'), ' refresh'] },
+      { t: 'p', c: 'Re-runs the render function of a component that was created with o.render, keeping its state. Rejected with a bw:diag event when the target has no render function.' },
+      site.makeCodeBlock('{ v: 1, type: "refresh", ref: "#clock" }'),
+
+      // update
+      { t: 'h3', c: [badge('update'), ' update'] },
+      { t: 'p', c: 'Delivers data to a component: the wire form of bw.update(), which dispatches to the component\'s own el.bw.update(data) handler. The component decides what changes; nothing is rebuilt unless it does so itself. The most common verb for server-owned state.' },
+      site.makeCodeBlock('{ v: 1, type: "update", ref: "#counter", data: { count: 42 } }'),
 
       // batch
       { t: 'h3', c: [badge('batch'), ' batch'] },
@@ -590,7 +612,7 @@
 
       { t: 'h3', c: 'bw.apply(msg)' },
       { t: 'p', c: [
-        'Applies a single protocol message to the DOM. Called automatically by the shell connection, but usable standalone for testing or custom transports. Handles all 10 v2.1 message types.'
+        'Applies a single protocol message to the DOM. Called automatically by the shell connection, but usable standalone for testing or custom transports. Handles all 13 v2.1 message types.'
       ]},
       site.makeCodeBlock([
         'bw.apply({ v: 1, type: "mount", ref: "#app", taco: { t: "div", c: "Hello" } });',

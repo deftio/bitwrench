@@ -35,7 +35,7 @@ your JavaScript.
 
 Its own artifact, deliberately: **under 7 KB raw, under 3 KB gzipped**, and not part of
 the bitwrench core bundle. A development-time checker has no business in
-anyone's production payload, which is also why it sits outside the 46 KB core
+anyone's production payload, which is also why it sits outside the 47 KB core
 budget. A bundle test asserts it never leaks in.
 
 **Browser**, a script tag after bitwrench:
@@ -178,7 +178,7 @@ will not call a working thing a failure.
 ### Raw content: what verify can and cannot say
 
 `bw.raw()` content is a string that bypasses escaping. Verify is not in the
-46 KB bundle, so unlike the library it can afford to look inside it.
+47 KB bundle, so unlike the library it can afford to look inside it.
 
 It reports with confidence: an event-handler attribute (`onerror`,
 `onmouseover`, ...), a `javascript:` URL, `srcdoc`, and `<script>`. The

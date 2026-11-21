@@ -320,7 +320,8 @@ Every verb that acts on a target accepts the same forms: a live element, an
 element id, a CSS selector, or a `bw_uuid_*` token. Every sink that takes
 content accepts the same forms: text, a TACO, an array of either, or
 `bw.raw()`. A verb that acts on one target and cannot resolve it warns with
-the verb's name and returns null; it never fails silently. Query verbs
+the verb's name and returns null, or throws the same message when
+`bw.strictTargets` is set; it never fails silently. Query verbs
 (`bw.el`, `bw.$`, `bw.hasClass`, `bw.inspect`) return null or an empty list
 without warning, because a miss is a legitimate answer to a question. Set
 verbs (`bw.addClass`, `bw.removeClass`, `bw.toggleClass`) act on every match
@@ -415,9 +416,11 @@ No ad-hoc values. Every component draws from the shared token scales:
   (`TYPE_RATIO_PRESETS`: tight 1.125, normal 1.2, relaxed 1.25, dramatic 1.333)
 - **Color roles**: primary, secondary, tertiary, success, danger, warning,
   info, light, dark -- each a shade object (`base`, `hover`, `active`, `light`,
-  `darkText`, `border`, `focus`, `textOn`) -- plus background, surface and
-  surfaceAlt, which are plain color strings. The error role is named `danger`;
-  there is no `muted`.
+  `darkText`, `text`, `border`, `focus`, `textOn`) -- plus background, surface and
+  surfaceAlt, textMuted and textFaint, which are plain color strings. The
+  error role is named `danger`; there is no `muted` role. Muted text is
+  `textMuted`, derived from `dark` toward `background` with a 4.5:1 floor on
+  every surface (#121); an accent seed is never a text colour.
 - **Elevation**: sm, md, lg, xl
 - **Motion**: `fast`, `normal`, `slow` and one `easing` per preset.
   `standard` is 100ms / 200ms / 300ms `ease-out`; `expressive` is

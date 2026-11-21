@@ -4,16 +4,16 @@
 
 | Field | Value |
 |-------|-------|
-| Version | 2.1.14 |
-| Generated | 2026-11-08 |
-| Total APIs | 170 |
+| Version | 2.1.15 |
+| Generated | 2026-11-21 |
+| Total APIs | 172 |
 | Categories | 23 |
-| bitwrench.js | 5732 lines |
+| bitwrench.js | 5810 lines |
 | bitwrench-bccl.js | 4111 lines |
 
 ## Table of Contents
 
-- [Core](#core) (8)
+- [Core](#core) (9)
 - [DOM Generation](#dom-generation) (19)
 - [DOM Selection](#dom-selection) (6)
 - [Identifiers](#identifiers) (4)
@@ -35,7 +35,7 @@
 - [Function Registry](#function-registry) (5)
 - [Component](#component) (4)
 - [Data Utilities](#data-utilities) (1)
-- [Server (bwserve)](#server-bwserve-) (4)
+- [Server (bwserve)](#server-bwserve-) (5)
 
 ## Index
 
@@ -47,6 +47,7 @@ full entry: parameters, return value and an example.
 | [`bw.getVersion()`](#bwgetversion) | Core | Get version metadata object (v1-compatible callable API) |
 | [`bw.isNodeJS()`](#bwisnodejs) | Core | Detect if running in Node.js environment |
 | [`bw.debug`](#bwdebug) | Core | Debug flag |
+| [`bw.strictTargets`](#bwstricttargets) | Core | Strict targets |
 | [`bw.typeOf(x, baseTypeOnly)`](#bwtypeofxbasetypeonly) | Core | Enhanced type detection that distinguishes arrays, dates, regexps, and more |
 | [`bw.janitor`](#bwjanitor) | Core | Janitor: document-level cleanup for ungraceful teardown |
 | [`bw.parseJSONFlex(str)`](#bwparsejsonflexstr) | Core | Parse a bwserve protocol message string, supporting both strict JSON and r-prefixed relaxed JSON (single-quoted strings, trailing commas) |
@@ -171,7 +172,7 @@ full entry: parameters, return value and an example.
 | [`bw.relativeLuminance(hex)`](#bwrelativeluminancehex) | Color Utilities | Compute WCAG 2.0 relative luminance of a hex color |
 | [`bw.textOnColor(hex)`](#bwtextoncolorhex) | Color Utilities | Return '#fff' or '#000' for readable text on a given background color |
 | [`bw.harmonize(sourceHex, targetHex, amount)`](#bwharmonizesourcehextargethexamount) | Color Utilities | Shift a color's hue toward a target hue by a given amount |
-| [`bw.deriveShades(hex)`](#bwderiveshadeshex) | Color Utilities | Derive a full shade palette for a single semantic color |
+| [`bw.deriveShades(hex, ctx)`](#bwderiveshadeshexctx) | Color Utilities | Derive a full shade palette for a single semantic color |
 | [`bw.deriveAlternateSeed(hex)`](#bwderivealternateseedhex) | Color Utilities | Derive the alternate-palette version of a single seed color: same hue, lightness moved to the other side so it keeps its contrast against the alternate surface |
 | [`bw.contrastRatio(a, b)`](#bwcontrastratioab) | Color Utilities | WCAG 2.x contrast ratio between two colours, 1 (identical) to 21 (black on white) |
 | [`bw.isLightPalette(config)`](#bwislightpaletteconfig) | Color Utilities | Determine whether a palette config is "light-flavored" based on the average luminance of its seed colors |
@@ -212,6 +213,7 @@ full entry: parameters, return value and an example.
 | [`bw.jsonPatch(obj, ops)`](#bwjsonpatchobjops) | Data Utilities | Apply RFC 6902 JSON Patch operations to a plain object |
 | [`bw.actions`](#bwactions) | Server (bwserve) | Delegated dispatcher for `bw_act_*` class tokens: `{ enable, disable }` |
 | [`bw.registerRemote(name, fn)`](#bwregisterremotenamefn) | Server (bwserve) | Register a function the server may invoke by name over bwserve |
+| [`bw.capture`](#bwcapture) | Server (bwserve) | Capture hook for `client.screenshot()` |
 | [`bw.connect(url)`](#bwconnecturl) | Server (bwserve) | Connect this page to a bwserve endpoint over Server-Sent Events |
 | [`bw.apply(msg)`](#bwapplymsg) | Server (bwserve) | Apply one bwserve protocol message to the DOM |
 
@@ -247,6 +249,12 @@ if (bw.isNodeJS()) {
 ### `bw.debug`
 
 Debug flag. When true, emits console.warn for silent binding failures (missing paths, null refs, auto-created intermediate objects).
+
+---
+
+### `bw.strictTargets`
+
+Strict targets. When true, a verb that acts on one target and cannot resolve it throws `Error("bw.<verb>: target not found")` instead of warning and returning null. Queries (`bw.el`, `bw.$`) and set verbs (`bw.addClass`, `bw.toggleClass`) are unchanged: a miss is a legitimate answer there. Off by default in 2.x; the throwing form is the 3.0 default (#127).
 
 ---
 
@@ -2267,7 +2275,7 @@ const features = bw.makeFeatureGrid({
   columns: 3,
   features: [
     { icon: "⚡", title: "Fast", description: "Zero build step" },
-    { icon: "📦", title: "Small", description: "Under 45KB gzipped" },
+    { icon: "📦", title: "Small", description: "Under 47KB gzipped" },
     { icon: "🔧", title: "Flexible", description: "Pure JS objects" }
   ]
 });
@@ -3314,17 +3322,20 @@ Shift a color's hue toward a target hue by a given amount. Uses shortest-arc int
 
 ---
 
-### `bw.deriveShades(hex)`
+### `bw.deriveShades(hex, ctx)`
 
-Derive a full shade palette for a single semantic color.
+Derive a full shade palette for a single semantic color. `text` is the seed usable as text: moved toward the ink colour (black on a light palette, white on a dark one) only as far as WCAG AA (4.5:1) needs against the palette's surfaces. `darkText` reads at 4.5:1 on `light`. In the alternate (dark) palette `light` is a tint toward the background and `darkText` is a light colour, so an alert stays an alert in dark mode.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
 | `hex` | `string` | - Base color hex |
+| `ctx` | `Object` | - Palette context; omitted means a white page |
+| `ctx.surfaces` | `string[]` | - Surfaces the text shade must read on |
+| `ctx.dark` | `boolean` | - True for a dark palette |
 
-**Returns:** `Object` — base, hover, active, light, darkText, border, focus, textOn }
+**Returns:** `Object` — base, hover, active, light, darkText, text, border, focus, textOn }
 
 ---
 
@@ -4098,6 +4109,18 @@ Register a function the server may invoke by name over bwserve. The wire protoco
 **Example:**
 ```javascript
 bw.registerRemote('refreshChart', function(opts) { drawChart(opts.data); });
+```
+
+---
+
+### `bw.capture`
+
+Capture hook for `client.screenshot()`. Null by default, so the builtin loads the vendored html2canvas. A page may set it to a function `(el, { scale }) => Promise<HTMLCanvasElement>` and the screenshot path uses that instead; `domToCanvas` from modern-screenshot and `toCanvas` from html-to-image fit as they are. Added because html2canvas 1.4.1 cannot parse CSS Color 4 functions such as `color-mix()` (#125).
+
+**Example:**
+```javascript
+// domToCanvas is modern-screenshot, loaded by the page
+bw.capture = function(el, o) { return window.domToCanvas(el, { scale: o.scale }); };
 ```
 
 ---

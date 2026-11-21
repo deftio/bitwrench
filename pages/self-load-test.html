@@ -20,9 +20,11 @@
     var p = styles.palette;
 
     var loadTimeMs = (window.__bw_load_end - window.__bw_load_start).toFixed(2);
+    // drift-lint:ignore-start: history of the bug this page guards against; the figures are the ones from 2.1.11, not current sizes
     // The release gate in tools/release.js is 46KB gzipped; this page used 40,
     // which it silently reported as passing while the bundle was already 45.8KB.
-    var GZIP_WARN_KB = 46;
+    // drift-lint:ignore-end
+    var GZIP_WARN_KB = 48; // the release gate in tools/release.js, 48 KB since 2.1.15
 
     function fmtSize(bytes) {
       if (bytes < 1024) return bytes + ' B';

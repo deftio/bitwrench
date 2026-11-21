@@ -498,8 +498,8 @@ Copy `bitwrench.h` and `bwserve.h` from `embedded_c/` into your sketch folder.
 | File | Size |
 |------|------|
 | `dashboard.html` | ~8 KB |
-| `bitwrench.umd.min.js.gz` | ~45 KB |
-| **Total** | **~53 KB** |
+| `bitwrench.umd.min.js.gz` | ~47 KB |
+| **Total** | **~55 KB** |
 
 ---
 

@@ -71,14 +71,20 @@ cannot do:
   `bw.$`, `bw.DOM` and `bw.router`. Values and removed stubs are allowlisted in
   the rule, mirroring `test/bitwrench_test_meta.js`.
 - **`stale-size`** compares every `NN KB` claim in prose against the real
-  `raw`/`gzipped` numbers in `dist/builds.json`, with 1 KB of slack. Lines about
-  RAM, flash, images or another library's bundle are skipped -- and the skip is
-  tested against a window around the number, not the whole line, because a
-  sentence ending "from a microcontroller's flash" hid a stale bundle size for a
-  release. Size claims in `CHANGELOG.md` and `releases/` are exempt: history
+  `raw`/`gzipped` numbers in `dist/builds.json`. A claim passes if it is the
+  artifact's size rounded or truncated to whole KB, nothing looser: 1 KB of
+  slack let "46 KB" stand for a 47.2 KB file in nine documents through 2.1.15.
+  Numbers about RAM, flash, images or another library's bundle are skipped --
+  and every skip is tested against a window around the number, not the whole
+  line, because a sentence ending "from a microcontroller's flash" hid a stale
+  bundle size for a release, and a comparison row naming React hid the
+  bitwrench cell beside it. Size claims in `CHANGELOG.md` and `releases/` are exempt: history
   should stay historical. A pin may name either the current version or the last
   released one, since a dev cycle bumps `package.json` before anything is
   published.
+- **`stale-count`** compares every `NN components` claim against
+  `bw.catalog().length`, in the same files `stale-size` scans. Added in 2.1.15
+  after three documents disagreed with each other and with the catalog.
 - **`taco-options-drift`** compares the `TacoOptions` keys declared in
   `src/bitwrench.d.ts` against the keys the renderer actually reads
   (`opts.x` / `o.x` in `src/bitwrench.js`). Added in 2.1.12 after review found
@@ -291,7 +297,8 @@ When you remove, rename, or re-decide something user-facing:
 | `css-var-bw` | `var(--bw_*)` / `var(--bw-*)` as theming path | `styles.palette` / `styles.layout` (or `.bw_bg_*` / `.bw_text_*`) |
 | `stale-api` | `bw.XXX()` in docs where XXX is not in the public API | auto-detected from `src/` -- no manual rule needed |
 | `undocumented-api` | a public `bw.*` with no JSDoc block at its assignment, so it never reaches `docs/bitwrench_api.md` | write the block (`@param`, `@returns`, `@category`), or allowlist it with a reason |
-| `stale-size` | a `NN KB` claim about a bitwrench artifact that matches nothing in `dist/builds.json` | quote a real size; lines comparing other libraries are skipped |
+| `stale-size` | a `NN KB` claim about a bitwrench artifact that matches nothing in `dist/builds.json` | quote a real size; a number next to another library's name is skipped, the rest of the line is not |
+| `stale-count` | an `NN components` claim that is not `bw.catalog().length` | quote the catalog's count, or drop the number |
 | `taco-options-drift` | a `TacoOptions` key in `bitwrench.d.ts` that no renderer path reads | wire it in `_createNode`/`_hydrateElement`, or remove it from the interface |
 | `bw_list_item` | a class that never existed | `bw_list_group_item` |
 | `src-data-attr` | `data-*` attributes read or written by library source (`src/` only) | `bw_*` class, closure, DOM property, or `o.state` |

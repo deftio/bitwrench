@@ -19,6 +19,7 @@ const { JSDOM } = jsdom;
 import bwserve from "../src/bwserve/index.js";
 const { BwServeApp, BwServeClient } = bwserve;
 import { generateAttachScript } from "../src/bwserve/attach.js";
+import { getBwClientSource } from "../src/bwserve/bwclient.js";
 import { printTree, printHelp, handleSlashCommand, startAttach, runAttach } from "../src/cli/attach.js";
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
@@ -417,6 +418,69 @@ describe("_bw_tree builtin", function() {
     assert.ok(tree.children.length >= 2, 'should have at least h1 and ul');
     assert.strictEqual(tree.children[0].tag, 'h1');
     assert.strictEqual(tree.children[0].id, 'title');
+  });
+});
+
+
+// ===================================================================================
+// _bw_screenshot builtin: a page-supplied capturer (#125)
+//
+// The vendored engine (html2canvas-pro since 2.1.15) parses CSS Color 4, but no
+// one engine suits every page, so the builtin asks the page first: bw.capture(el, { scale }) returning a Promise of a canvas. The
+// real client source is evaluated here, not a copy of it.
+// ===================================================================================
+
+describe("_bw_screenshot builtin honours bw.capture (#125)", function() {
+  var responses;
+  function flush() { return new Promise(function(r) { setTimeout(r, 0); }); }
+  function fakeCanvas(w, h) {
+    return { width: w, height: h, toDataURL: function(fmt) { return "data:" + fmt + ";base64,QUJD"; } };
+  }
+  beforeEach(function() {
+    resetApp();
+    bw._clientRemotes = {};
+    responses = [];
+    window.bw = bw;
+    new Function('window', 'document', getBwClientSource())(window, document);
+    bw._bwClient._registerBuiltins();
+    bw._bwClient.id = 'c1';
+    bw._bwClient.respond = function(route, id, result, error) {
+      responses.push({ route: route, id: id, result: result, error: error || null });
+    };
+  });
+  afterEach(function() {
+    bw.capture = null;
+    var s = document.querySelector('script[src*="html2canvas"]');
+    if (s) s.parentNode.removeChild(s);
+  });
+
+  it("calls the page's capturer with the element and never loads html2canvas", async function() {
+    var seen = null;
+    bw.capture = function(el, opts) { seen = { el: el, opts: opts }; return Promise.resolve(fakeCanvas(12, 7)); };
+    bw._clientRemotes._bw_screenshot({ requestId: 'r1', selector: '#app', scale: 2 });
+    await flush();
+    assert.ok(seen, 'capturer was called');
+    assert.strictEqual(seen.el, document.getElementById('app'));
+    assert.strictEqual(seen.opts.scale, 2);
+    assert.strictEqual(document.querySelector('script[src*="html2canvas"]'), null, 'html2canvas must not be loaded');
+    assert.deepStrictEqual(responses, [{ route: 'screenshot', id: 'r1', error: null,
+      result: { data: 'data:image/png;base64,QUJD', width: 12, height: 7, format: 'png' } }]);
+  });
+
+  it("reports a capturer rejection the same way as a html2canvas failure", async function() {
+    bw.capture = function() { return Promise.reject(new Error('no foreignObject here')); };
+    bw._clientRemotes._bw_screenshot({ requestId: 'r2', selector: '#app' });
+    await flush();
+    assert.deepStrictEqual(responses, [{ route: 'screenshot', id: 'r2', result: null, error: 'no foreignObject here' }]);
+  });
+
+  it("falls back to the vendored html2canvas when no capturer is set", async function() {
+    bw.capture = null;
+    bw._clientRemotes._bw_screenshot({ requestId: 'r3', selector: '#app' });
+    await flush();
+    var s = document.querySelector('script[src*="html2canvas"]');
+    assert.ok(s, 'loads /bw/lib/vendor/html2canvas.min.js');
+    assert.ok(/\/bw\/lib\/vendor\/html2canvas\.min\.js$/.test(s.getAttribute('src')), s.getAttribute('src'));
   });
 });
 

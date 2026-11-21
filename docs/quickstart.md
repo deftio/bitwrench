@@ -6,7 +6,7 @@ A complete working app in ~100 lines, annotated.
 
 bitwrench is a UI library where every element is a plain JS object called
 a TACO: `{t, a, c, o}` (Tag, Attributes, Content, Options). No compiler,
-no virtual DOM, no JSX. One script tag, 46 KB gzipped, zero dependencies.
+no virtual DOM, no JSX. One script tag, 47 KB gzipped, zero dependencies.
 Started in 2011 -- by an author who'd previously co-founded the Lampdesk
 webVM that became Palm/HP webOS -- with a simple premise: JavaScript
 objects should be the UI primitive, not markup strings. Where Bootstrap
@@ -127,7 +127,7 @@ for a list, `bw.clear` to empty a container. The
 | You want | Load | Size (gzip) |
 |----------|------|-------------|
 | A `<script>` tag, everything included | `dist/bitwrench.umd.min.js` | ~47 KB |
-| Your own design, no built-in components | `dist/bitwrench-lean.umd.min.js` | ~29 KB |
+| Your own design, no built-in components | `dist/bitwrench-lean.umd.min.js` | ~30 KB |
 | Lean, plus the components as a second file | `dist/bitwrench-bccl.umd.min.js` after lean | ~19 KB |
 | Readable stack traces while debugging | `dist/bitwrench.umd.js` (unminified) | see `builds.json` |
 | `import bw from ...` without npm | `dist/bitwrench.esm.min.js` (or `-lean.esm.min.js`) | ~47 KB |
@@ -307,6 +307,6 @@ function addTask() {
 - **docs/verify.md** -- `bitwrench/verify`: an opt-in checker for TACO. Not needed to render, and never in production -- reach for it when TACOs are generated, numerous, or leaving your hands (a test, a wire frame, a CI pipe)
 - **docs/bw-attach.md** -- `bwcli attach`: drive a live page from a terminal (REPL, inspect, screenshots). Useful for anything a headless browser can't do, like Web MIDI or hardware
 - **docs/component-cheatsheet.md** -- all 51 built-in components
-- **docs/llm-bitwrench-guide.md** -- compact code-first tutorial (700 lines)
+- **docs/llm-bitwrench-guide.md** -- compact code-first tutorial (about 780 lines)
 - **docs/theming.md** -- palette generation, dark mode, custom CSS
 - **docs/state-management.md** -- o.state, o.render, handles, slots, pub/sub

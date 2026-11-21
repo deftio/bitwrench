@@ -284,7 +284,7 @@ var knownConfigs = {
              'clickable', 'style', 'class'],
   makeAccordion: ['items', 'multiple', 'variant', 'style', 'class'],
   makeNav: ['items', 'variant', 'vertical', 'style', 'class']
-  // ... all 45+ components
+  // ... all 51 components
 };
 
 function validateConfig(factoryName, config) {

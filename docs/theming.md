@@ -184,19 +184,27 @@ theme.palette.primary.textOn;    // '#fff' or '#000' — readable text on base
 // Surface colors (raw hex strings):
 theme.palette.background;  // '#ffffff'
 theme.palette.surface;     // '#f8f9fa'
+theme.palette.surfaceAlt;
+
+// Text below body weight (raw hex strings). Derived from dark toward
+// background and stopped at a WCAG floor on every surface, so a pale
+// secondary seed cannot become unreadable text:
+theme.palette.textMuted;   // >= 4.5:1 -- bw_text_muted, subtitles, help text
+theme.palette.textFaint;   // >= 3:1   -- disabled items, dividers; large or decorative text only
 ```
 
 ### How shade derivation works
 
-From a single seed color, `bw.deriveShades()` produces eight coordinated variants:
+From a single seed color, `bw.deriveShades()` produces nine coordinated variants:
 
 | Shade | Derivation | Purpose |
 |-------|-----------|---------|
 | `base` | The seed color itself | Default button/badge/alert fill |
 | `hover` | 10% darker | Hover state |
 | `active` | 15% darker | Active/pressed state |
-| `light` | 85% tinted with white | Light background (alert bg, card highlight) |
-| `darkText` | 40% darker | Text color for dark-on-light layouts |
+| `light` | 85% tinted with white; in the dark palette, 80% tinted with the background | Tinted background (alert bg, open accordion, card highlight) |
+| `darkText` | 40% darker, then moved toward the ink until it reads 4.5:1 on `light`; a light colour in the dark palette | Text on `light` |
+| `text` | The seed, moved toward the ink only as far as 4.5:1 on background, surface and surfaceAlt needs | The role used as text: links, `.bw_text_*`, stat deltas |
 | `border` | 60% tinted with white | Border color |
 | `focus` | 25% opacity of seed | Focus ring |
 | `textOn` | `#fff` or `#000` | Readable text on the base color (WCAG contrast) |

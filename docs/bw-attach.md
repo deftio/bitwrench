@@ -163,9 +163,17 @@ Capturing .bw_bccl_card ...
 Saved: card.png (400x300, 48291 bytes)
 ```
 
-On the first screenshot, html2canvas (vendored, ~194KB) is lazy-loaded in the browser. Subsequent screenshots are fast.
+On the first screenshot the capture engine is lazy-loaded in the browser from the attach server; subsequent screenshots are fast. The engine is [html2canvas-pro](https://github.com/yorickshan/html2canvas-pro) 2.6.4 (MIT, ~215 KB, vendored in `src/vendor/` with its license), a maintained fork of html2canvas that parses the CSS Color 4 functions (`color-mix()`, `oklch()`, `color()`, `light-dark()`) the original could not. If a page still uses a colour function the engine does not know, the REPL reports `Screenshot failed: Attempting to parse an unsupported color function ...` with a note, and `client.screenshot()` rejects with the same message.
 
-html2canvas 1.4.1 cannot parse the CSS Color 4 functions (`color-mix()`, `oklch()`, `color()`, `light-dark()`); one such value anywhere in the page's computed styles aborts the capture. The REPL reports this as `Screenshot failed: Attempting to parse an unsupported color function ...` with a note naming the limit, and `client.screenshot()` rejects with the same message. Pages built on those functions need a different capturer; see #125 and #80.
+A page can supply its own engine by setting `bw.capture` to a function `(el, { scale }) => Promise<HTMLCanvasElement>` before the first `/screenshot`. The builtin then calls it instead of loading html2canvas, and a rejection is reported the same way. `domToCanvas` from modern-screenshot and `toCanvas` from html-to-image fit without a wrapper:
+
+<!-- doc-test: skip (loads the modern-screenshot module from a CDN) -->
+```html
+<script type="module">
+  import { domToCanvas } from "https://esm.sh/modern-screenshot";
+  bw.capture = (el, o) => domToCanvas(el, { scale: o.scale });
+</script>
+```
 
 ### `/mount <selector> <component> [json-props]`
 

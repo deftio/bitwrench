@@ -1640,7 +1640,7 @@ export function makeHero(props = {}) {
  *   columns: 3,
  *   features: [
  *     { icon: "⚡", title: "Fast", description: "Zero build step" },
- *     { icon: "📦", title: "Small", description: "Under 45KB gzipped" },
+ *     { icon: "📦", title: "Small", description: "Under 47KB gzipped" },
  *     { icon: "🔧", title: "Flexible", description: "Pure JS objects" }
  *   ]
  * });

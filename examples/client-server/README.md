@@ -60,8 +60,8 @@ to the browser for display.
 ### How Screenshot Works
 
 1. Server calls `client.screenshot(selector, options)` — returns a Promise
-2. Client lazy-loads html2canvas (vendored, ~194 KB)
-3. html2canvas renders the DOM element to a `<canvas>`
+2. Client lazy-loads html2canvas-pro (vendored, ~215 KB)
+3. html2canvas-pro renders the DOM element to a `<canvas>`
 4. Client POSTs the image data URL back to `/bw/return/screenshot/:clientId`
 5. Server resolves the Promise with `{ data: Buffer, width, height, format }`
 

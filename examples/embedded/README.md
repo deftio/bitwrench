@@ -116,8 +116,8 @@ browser.
 | Item | On-disk (SPIFFS) |
 |------|-----------------|
 | index.html | ~5 KB |
-| bitwrench.umd.min.js.gz | ~45 KB |
-| **Total SPIFFS** | **~45 KB** |
+| bitwrench.umd.min.js.gz | ~47 KB |
+| **Total SPIFFS** | **~52 KB** |
 | ESP32 SPIFFS partition | 1.5 MB |
 | Free heap (runtime) | ~240 KB |
 

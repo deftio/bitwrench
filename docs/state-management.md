@@ -634,9 +634,12 @@ practice app that re-mounts on every note on/off never notices. It stops being f
 view holds something the user is in the middle of using, because a re-mount
 replaces those elements:
 
-- **An input being edited or dragged** loses focus, caret or drag. Re-mounting
-  a settings panel from a range slider's `input` event ends the drag after one
-  step.
+- **An input being edited or dragged.** Since 2.1.15 a rebuild puts focus,
+  caret and the container's scroll offset back when the new tree has an
+  element with the same id or at the same position (#108). A half-typed value
+  the state does not model is still gone, and a drag cannot survive: it belongs
+  to the old node, so re-mounting a settings panel from a range slider's
+  `input` event still ends the drag after one step.
 - **A long list** rebuilds every row to change one.
 
 Two tools cover those cases.

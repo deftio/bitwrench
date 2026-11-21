@@ -1,4 +1,4 @@
-/*! bitwrench v2.1.14 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -190,10 +190,10 @@
    */
 
   var VERSION_INFO = {
-    version: '2.1.14',
+    version: '2.1.15',
     name: 'bitwrench',
     license: 'BSD-2-Clause',
-    buildDate: '2026-11-08'
+    buildDate: '2026-11-21'
   };
 
   /**
@@ -542,19 +542,53 @@
   }
 
   /**
-   * Derive a full shade palette for a single semantic color.
-   * @param {string} hex - Base color hex
-   * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
+   * Move `color` toward `toward` in 2% steps until it reads at `floor` or
+   * better against every background in `bgs`. Returns the first colour that
+   * passes, which is `color` itself when it already does, or `toward` when
+   * nothing short of it passes.
+   * @private
    */
-  function deriveShades(hex) {
+  function ensureContrast(color, toward, bgs, floor) {
+    for (var t = 0; t < 1; t += 0.02) {
+      var c = t ? mixColor(color, toward, t) : color;
+      var ok = true;
+      for (var i = 0; i < bgs.length; i++) if (contrastRatio(c, bgs[i]) < floor) {
+        ok = false;
+        break;
+      }
+      if (ok) return c;
+    }
+    return toward;
+  }
+
+  /**
+   * Derive a full shade palette for a single semantic color.
+   *
+   * `text` is the seed usable as text: moved toward the ink colour (black on a
+   * light palette, white on a dark one) only as far as WCAG AA (4.5:1) needs
+   * against the palette's surfaces. `darkText` reads at 4.5:1 on `light`. In
+   * the alternate (dark) palette `light` is a tint toward the background and
+   * `darkText` is a light colour, so an alert stays an alert in dark mode.
+   * @param {string} hex - Base color hex
+   * @param {Object} [ctx] - Palette context; omitted means a white page
+   * @param {string[]} [ctx.surfaces] - Surfaces the text shade must read on
+   * @param {boolean} [ctx.dark] - True for a dark palette
+   * @returns {Object} { base, hover, active, light, darkText, text, border, focus, textOn }
+   */
+  function deriveShades(hex, ctx) {
     var rgb = _ph(hex);
+    var dark = !!(ctx && ctx.dark);
+    var surfaces = ctx && ctx.surfaces || ['#ffffff'];
+    var ink = dark ? '#ffffff' : '#000000';
+    var light = dark ? mixColor(hex, surfaces[0], 0.80) : mixColor(hex, '#ffffff', 0.85);
     var borderColor = hexToHsl(hex)[2] > 75 ? adjustLightness(hex, -18) : mixColor(hex, '#ffffff', 0.60);
     return {
       base: hex,
       hover: adjustLightness(hex, -10),
       active: adjustLightness(hex, -15),
-      light: mixColor(hex, '#ffffff', 0.85),
-      darkText: adjustLightness(hex, -40),
+      light: light,
+      darkText: ensureContrast(dark ? hex : adjustLightness(hex, -40), ink, [light], 4.5),
+      text: ensureContrast(hex, ink, surfaces, 4.5),
       border: borderColor,
       focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
       textOn: textOnColor(hex)
@@ -668,6 +702,25 @@
   }
 
   /**
+   * Lightest mix of `from` toward `toward` whose contrast against every surface
+   * stays at or above `floor`. Steps of 2%; returns `from` itself when nothing
+   * softer passes. Used for the text roles below body weight (#121).
+   * @private
+   */
+  function softenText(from, toward, surfaces, floor) {
+    var best = from;
+    for (var t = 0.02; t <= 1; t += 0.02) {
+      var c = mixColor(from, toward, t);
+      var ok = surfaces.every(function (s) {
+        return contrastRatio(c, s) >= floor;
+      });
+      if (!ok) break;
+      best = c;
+    }
+    return best;
+  }
+
+  /**
    * Derive complete palette from a theme config object.
    * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
    * @param {number} [config.harmonize=0.20] - Hue shift amount for semantic colors (0-1)
@@ -692,19 +745,37 @@
     // A given surfaceAlt wins; StyleConfig declared it for releases while this
     // line ignored it (found by the bccl-config-drift rule, 2.1.13).
     var surfAlt = config.surfaceAlt || (surfHsl[2] <= 50 ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)]) : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]));
+
+    // Text below body weight (#121). Derived from dark (body text) toward the
+    // background and stopped at a WCAG floor measured against every surface, so
+    // a pale accent seed can no longer become unreadable text. textMuted clears
+    // AA for body-size text (4.5:1); textFaint clears 3:1, for large or
+    // decorative text only.
+    var surfaces = [bgBase, surfBase, surfAlt];
+    var textMuted = softenText(darkBase, bgBase, surfaces, 4.5);
+    var textFaint = softenText(darkBase, bgBase, surfaces, 3.0);
+
+    // Shades know which way is ink: a dark palette has light text on dark
+    // surfaces, so role.text and role.darkText move toward white there.
+    var ctx = {
+      surfaces: surfaces,
+      dark: relativeLuminance(bgBase) < relativeLuminance(darkBase)
+    };
     var palette = {
-      primary: deriveShades(pri),
-      secondary: deriveShades(sec),
-      tertiary: deriveShades(ter),
-      success: deriveShades(successBase),
-      danger: deriveShades(dangerBase),
-      warning: deriveShades(warningBase),
-      info: deriveShades(infoBase),
-      light: deriveShades(lightBase),
-      dark: deriveShades(darkBase),
+      primary: deriveShades(pri, ctx),
+      secondary: deriveShades(sec, ctx),
+      tertiary: deriveShades(ter, ctx),
+      success: deriveShades(successBase, ctx),
+      danger: deriveShades(dangerBase, ctx),
+      warning: deriveShades(warningBase, ctx),
+      info: deriveShades(infoBase, ctx),
+      light: deriveShades(lightBase, ctx),
+      dark: deriveShades(darkBase, ctx),
       background: bgBase,
       surface: surfBase,
-      surfaceAlt: surfAlt
+      surfaceAlt: surfAlt,
+      textMuted: textMuted,
+      textFaint: textFaint
     };
     return palette;
   }
@@ -969,13 +1040,13 @@
     var mot = layout.motion;
     var rules = {};
     rules[_sx$1(scope, 'a')] = {
-      'color': palette.primary.base,
-      'text-decoration': 'none',
+      'color': palette.primary.text,
+      textDecoration: 'none',
       'transition': _tr$1('color', mot)
     };
     rules[_sx$1(scope, 'a:hover')] = {
-      'color': palette.tertiary.hover,
-      'text-decoration': 'underline'
+      'color': palette.tertiary.text,
+      textDecoration: 'underline'
     };
     return rules;
   }
@@ -986,39 +1057,39 @@
     var rdBtn = layout.radius.btn;
     rules[_sx$1(scope, '.bw_bccl_table_pagination .bw_bccl_btn_sm')] = {
       'padding': '0.25rem 0.75rem',
-      'border-radius': rdBtn === '50rem' ? '50rem' : Math.max(parseInt(rdBtn) - 1, 0) + 'px'
+      borderRadius: rdBtn === '50rem' ? '50rem' : Math.max(parseInt(rdBtn) - 1, 0) + 'px'
     };
     var sp = layout.spacing;
     rules[_sx$1(scope, '.bw_bccl_table')] = {
       'color': palette.dark.base,
-      'border-color': palette.light.border
+      borderColor: palette.light.border
     };
     rules[_sx$1(scope, '.bw_bccl_table > :not(caption) > * > *')] = {
       'padding': sp.cell,
-      'border-bottom-color': palette.light.border
+      borderBottomColor: palette.light.border
     };
     rules[_sx$1(scope, '.bw_bccl_table > thead > tr > *')] = {
-      'color': palette.secondary.base,
-      'border-bottom-color': palette.light.border,
-      'background-color': palette.surfaceAlt
+      'color': palette.textMuted,
+      borderBottomColor: palette.light.border,
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx$1(scope, '.bw_bccl_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
-      'background-color': palette.surfaceAlt
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx$1(scope, '.bw_bccl_table_hover > tbody > tr:hover > *')] = {
-      'background-color': palette.primary.focus
+      backgroundColor: palette.primary.focus
     };
     rules[_sx$1(scope, '.bw_bccl_table_selectable > tbody > tr')] = {
       'cursor': 'pointer'
     };
     rules[_sx$1(scope, '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *')] = {
-      'background-color': palette.primary.light
+      backgroundColor: palette.primary.light
     };
     rules[_sx$1(scope, '.bw_bccl_table_bordered')] = {
-      'border-color': palette.light.border
+      borderColor: palette.light.border
     };
     rules[_sx$1(scope, '.bw_bccl_table caption')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     return rules;
   }
@@ -1037,11 +1108,11 @@
     var bg = palette.background || '#f5f5f5';
     var baseReset = {
       'color': palette.dark.base,
-      'background-color': bg,
+      backgroundColor: bg,
       // Tell the browser which scheme this palette is, so native parts (select
       // popups, scrollbars, date/number spinners, autofill) follow it instead
       // of staying light inside a dark theme (#120).
-      'color-scheme': colorScheme(palette)
+      colorScheme: colorScheme(palette)
     };
     rules[_sx$1(scope, 'body')] = baseReset;
     return rules;
@@ -1051,15 +1122,15 @@
     // Bare hr draws a rule now (see structuralRules.base), so it needs the
     // palette colour too -- otherwise it falls back to the UA's grey currentColor.
     rules[_sx$1(scope, 'hr, .bw_hr')] = {
-      'border-top-color': palette.light.border
+      borderTopColor: palette.light.border
     };
     rules[_sx$1(scope, '.bw_quote')] = {
-      'border-left-color': palette.primary.base,
+      borderLeftColor: palette.primary.base,
       'color': palette.dark.base
     };
     rules[_sx$1(scope, '.bw_code')] = {
-      'background-color': palette.surfaceAlt,
-      'color': palette.danger.darkText
+      backgroundColor: palette.surfaceAlt,
+      'color': palette.danger.text
     };
     return rules;
   }
@@ -1083,21 +1154,21 @@
 
       // --- Root palette class: sets default bg/color/border ---
       rules[_sx$1(scope, '.bw_' + k)] = {
-        'background-color': s.base,
+        backgroundColor: s.base,
         'color': s.textOn,
-        'border-color': s.base
+        borderColor: s.base
       };
 
       // --- Pseudo-states (shared across all components) ---
       rules[_sx$1(scope, '.bw_' + k + ':hover')] = {
-        'background-color': s.hover,
-        'border-color': s.active
+        backgroundColor: s.hover,
+        borderColor: s.active
       };
       rules[_sx$1(scope, '.bw_' + k + ':active')] = {
-        'background-color': s.active
+        backgroundColor: s.active
       };
       rules[_sx$1(scope, '.bw_' + k + ':focus-visible')] = {
-        'box-shadow': '0 0 0 3px ' + s.focus,
+        boxShadow: '0 0 0 3px ' + s.focus,
         'outline': 'none'
       };
 
@@ -1106,28 +1177,28 @@
 
       // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
       rules[_sx$1(scope, '.bw_bg_' + k)] = {
-        'background-color': s.base,
+        backgroundColor: s.base,
         'color': s.textOn
       };
 
       // Text color utility: .bw_text_primary, .bw_text_secondary, etc.
       rules[_sx$1(scope, '.bw_text_' + k)] = {
-        'color': s.base
+        'color': s.text
       };
     });
 
     // Text muted — uses palette secondary for theme-aware muted text
     rules[_sx$1(scope, '.bw_text_muted')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
 
     // Common bg/text utilities — derive from palette for theme awareness
     rules[_sx$1(scope, '.bw_bg_dark')] = {
-      'background-color': palette.dark.base,
+      backgroundColor: palette.dark.base,
       'color': palette.dark.textOn
     };
     rules[_sx$1(scope, '.bw_bg_light')] = {
-      'background-color': palette.light.base,
+      backgroundColor: palette.light.base,
       'color': palette.light.textOn
     };
     rules[_sx$1(scope, '.bw_text_light')] = {
@@ -1201,7 +1272,7 @@
       var pct = +(100 * i / 12).toFixed(6) + '%';
       r['.' + prefix + '_' + i] = {
         'flex': '0 0 ' + pct,
-        'max-width': pct
+        maxWidth: pct
       };
     }
     return r;
@@ -1210,7 +1281,7 @@
     // ---- Reset ----
     base: {
       '*': {
-        'box-sizing': 'border-box',
+        boxSizing: 'border-box',
         'margin': '0',
         'padding': '0'
       },
@@ -1239,11 +1310,11 @@
       // nobody reported it, which is exactly why it belongs here rather than in
       // whatever example trips over it next.
       'ul, ol, menu': {
-        'padding-left': '1.5em',
-        'margin-bottom': '1rem'
+        paddingLeft: '1.5em',
+        marginBottom: '1rem'
       },
       'ul ul, ul ol, ol ol, ol ul': {
-        'margin-bottom': '0'
+        marginBottom: '0'
       },
       // The same repair for the other two things `* { margin: 0 }` flattens.
       // A UA gives blockquote margin: 1em 40px and dd margin-left: 40px; the
@@ -1264,29 +1335,29 @@
         'margin': '0 0 1rem 1.5em'
       },
       'dd': {
-        'margin-left': '1.5em'
+        marginLeft: '1.5em'
       },
       'html': {
-        'font-size': '16px',
-        'line-height': '1.5',
+        fontSize: '16px',
+        lineHeight: '1.5',
         '-webkit-text-size-adjust': '100%',
         '-webkit-font-smoothing': 'antialiased',
         '-moz-osx-font-smoothing': 'grayscale'
       },
       'body': {
-        'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        'font-size': '1rem',
-        'font-weight': '400',
-        'line-height': '1.6',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        fontSize: '1rem',
+        fontWeight: '400',
+        lineHeight: '1.6',
         'margin': '0',
         'padding': '0',
         '-webkit-font-smoothing': 'antialiased',
         '-moz-osx-font-smoothing': 'grayscale'
       },
       '.bw_page': {
-        'min-height': '100vh',
+        minHeight: '100vh',
         'display': 'flex',
-        'flex-direction': 'column'
+        flexDirection: 'column'
       },
       '.bw_page_content': {
         'flex': '1',
@@ -1300,13 +1371,13 @@
       // and no background -- it occupies space and paints nothing. The longhands
       // follow the shorthand so they win; colour comes from generateProseThemed.
       'hr': {
-        'box-sizing': 'content-box',
+        boxSizing: 'content-box',
         'height': '0',
         'overflow': 'visible',
         'margin': '1rem 0',
         'border': '0',
-        'border-top-width': '1px',
-        'border-top-style': 'solid'
+        borderTopWidth: '1px',
+        borderTopStyle: 'solid'
       },
       'hr:not([size])': {
         'height': '1px'
@@ -1315,33 +1386,33 @@
     // ---- Typography ----
     typography: {
       'h1, h2, h3, h4, h5, h6': {
-        'margin-top': '0',
-        'margin-bottom': '.5rem',
-        'font-weight': '600',
-        'line-height': '1.25',
-        'letter-spacing': '-0.01em'
+        marginTop: '0',
+        marginBottom: '.5rem',
+        fontWeight: '600',
+        lineHeight: '1.25',
+        letterSpacing: '-0.01em'
       },
       'h1': {
-        'font-size': 'calc(1.375rem + 1.5vw)'
+        fontSize: 'calc(1.375rem + 1.5vw)'
       },
       'h2': {
-        'font-size': 'calc(1.325rem + .9vw)'
+        fontSize: 'calc(1.325rem + .9vw)'
       },
       'h3': {
-        'font-size': 'calc(1.3rem + .6vw)'
+        fontSize: 'calc(1.3rem + .6vw)'
       },
       'h4': {
-        'font-size': 'calc(1.275rem + .3vw)'
+        fontSize: 'calc(1.275rem + .3vw)'
       },
       'h5': {
-        'font-size': '1.25rem'
+        fontSize: '1.25rem'
       },
       'h6': {
-        'font-size': '1rem'
+        fontSize: '1rem'
       },
       'p, dl': {
-        'margin-top': '0',
-        'margin-bottom': '1rem'
+        marginTop: '0',
+        marginBottom: '1rem'
       },
       // ---- Prose elements ----
       // ul/ol and hr are repaired in structuralRules.base, where the reset that
@@ -1352,105 +1423,105 @@
       // the reset never touched at all -- it simply has no opinion, so it stays
       // opt-in.
       '.bw_list': {
-        'padding-left': '1.5em',
-        'margin-bottom': '1rem'
+        paddingLeft: '1.5em',
+        marginBottom: '1rem'
       },
       '.bw_list .bw_list': {
-        'margin-bottom': '0'
+        marginBottom: '0'
       },
       '.bw_hr': {
         'height': '0',
         'margin': '1.5rem 0',
         'border': '0',
-        'border-top-width': '1px',
-        'border-top-style': 'solid'
+        borderTopWidth: '1px',
+        borderTopStyle: 'solid'
       },
       '.bw_quote': {
         'margin': '0 0 1rem',
         'padding': '0.5rem 0 0.5rem 1rem',
-        'border-left-width': '3px',
-        'border-left-style': 'solid'
+        borderLeftWidth: '3px',
+        borderLeftStyle: 'solid'
       },
       '.bw_code': {
-        'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-        'font-size': '0.875em',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+        fontSize: '0.875em',
         'padding': '0.15em 0.4em',
-        'border-radius': '4px'
+        borderRadius: '4px'
       },
       'small': {
-        'font-size': '0.875rem'
+        fontSize: '0.875rem'
       },
       'a': {
-        'text-decoration': 'none'
+        textDecoration: 'none'
       },
       '.bw_display_4': {
-        'font-size': 'calc(1.475rem + 2.7vw)',
-        'font-weight': '300',
-        'line-height': '1.2'
+        fontSize: 'calc(1.475rem + 2.7vw)',
+        fontWeight: '300',
+        lineHeight: '1.2'
       },
       '.bw_lead': {
-        'font-size': '1.25rem',
-        'font-weight': '300'
+        fontSize: '1.25rem',
+        fontWeight: '300'
       },
       '.bw_h5': {
-        'font-size': '1.25rem'
+        fontSize: '1.25rem'
       },
       '.bw_h6': {
-        'font-size': '1rem'
+        fontSize: '1rem'
       }
     },
     // ---- Grid ----
     grid: _objectSpread2({
       '.bw_bccl_container, .bw_container': {
         'width': '100%',
-        'padding-right': '0.75rem',
-        'padding-left': '0.75rem',
-        'margin-right': 'auto',
-        'margin-left': 'auto'
+        paddingRight: '0.75rem',
+        paddingLeft: '0.75rem',
+        marginRight: 'auto',
+        marginLeft: 'auto'
       },
       '@media (min-width: 576px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '540px'
+          maxWidth: '540px'
         }
       },
       '@media (min-width: 768px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '720px'
+          maxWidth: '720px'
         }
       },
       '@media (min-width: 992px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '960px'
+          maxWidth: '960px'
         }
       },
       '@media (min-width: 1200px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '1140px'
+          maxWidth: '1140px'
         }
       },
       '.bw_bccl_container_fluid': {
         'width': '100%',
-        'padding-right': '0.75rem',
-        'padding-left': '0.75rem',
-        'margin-right': 'auto',
-        'margin-left': 'auto'
+        paddingRight: '0.75rem',
+        paddingLeft: '0.75rem',
+        marginRight: 'auto',
+        marginLeft: 'auto'
       },
       '.bw_row': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'margin-right': '-0.375rem',
-        'margin-left': '-0.375rem'
+        flexWrap: 'wrap',
+        marginRight: '-0.375rem',
+        marginLeft: '-0.375rem'
       },
       '.bw_col, [class*="bw_col_"]': {
         'position': 'relative',
         'width': '100%',
-        'padding-right': '0.375rem',
-        'padding-left': '0.375rem'
+        paddingRight: '0.375rem',
+        paddingLeft: '0.375rem'
       },
       '.bw_col': {
-        'flex-basis': '0',
-        'flex-grow': '1',
-        'max-width': '100%'
+        flexBasis: '0',
+        flexGrow: '1',
+        maxWidth: '100%'
       }
     }, _gridCols('bw_col')),
     // ---- Tables ----
@@ -1462,67 +1533,67 @@
       // under the pager, so full and lean render the pager identically.
       '.bw_bccl_table_pagination .bw_bccl_btn': {
         'display': 'inline-flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'font-weight': '500',
-        'line-height': '1.5',
-        'text-align': 'center',
-        'text-decoration': 'none',
-        'vertical-align': 'middle',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: '500',
+        lineHeight: '1.5',
+        textAlign: 'center',
+        textDecoration: 'none',
+        verticalAlign: 'middle',
         'cursor': 'pointer',
-        'user-select': 'none',
+        userSelect: 'none',
         'border': '1px solid transparent',
-        'font-family': 'inherit',
+        fontFamily: 'inherit',
         'gap': '0.5rem',
-        'font-size': '0.8125rem'
+        fontSize: '0.8125rem'
       },
       '.bw_bccl_table_pagination .bw_bccl_btn:disabled': {
         'opacity': '0.5',
         'cursor': 'not-allowed',
-        'pointer-events': 'none'
+        pointerEvents: 'none'
       },
       '.bw_bccl_table': {
         'width': '100%',
-        'margin-bottom': '1.5rem',
-        'vertical-align': 'top',
-        'border-collapse': 'collapse',
-        'font-size': '0.9375rem',
-        'line-height': '1.5'
+        marginBottom: '1.5rem',
+        verticalAlign: 'top',
+        borderCollapse: 'collapse',
+        fontSize: '0.9375rem',
+        lineHeight: '1.5'
       },
       '.bw_bccl_table > :not(caption) > * > *': {
-        'background-color': 'transparent',
-        'border-bottom-width': '1px',
-        'border-bottom-style': 'solid'
+        backgroundColor: 'transparent',
+        borderBottomWidth: '1px',
+        borderBottomStyle: 'solid'
       },
       '.bw_bccl_table > tbody': {
-        'vertical-align': 'inherit'
+        verticalAlign: 'inherit'
       },
       '.bw_bccl_table > thead': {
-        'vertical-align': 'bottom'
+        verticalAlign: 'bottom'
       },
       '.bw_bccl_table > thead > tr > *': {
-        'font-size': '0.8125rem',
-        'font-weight': '600',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.04em',
-        'border-bottom-width': '2px'
+        fontSize: '0.8125rem',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        borderBottomWidth: '2px'
       },
       '.bw_bccl_table caption': {
-        'font-size': '0.875rem',
-        'caption-side': 'bottom'
+        fontSize: '0.875rem',
+        captionSide: 'bottom'
       },
       '.bw_bccl_table_bordered > :not(caption) > * > *': {
-        'border-width': '1px',
-        'border-style': 'solid'
+        borderWidth: '1px',
+        borderStyle: 'solid'
       },
       '.bw_bccl_table_selectable > tbody > tr': {
         'cursor': 'pointer'
       },
       '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *': {
-        'background-color': 'rgba(0, 102, 102, 0.1)'
+        backgroundColor: 'rgba(0, 102, 102, 0.1)'
       },
       '.bw_bccl_table_responsive': {
-        'overflow-x': 'auto',
+        overflowX: 'auto',
         '-webkit-overflow-scrolling': 'touch'
       }
     },
@@ -1530,12 +1601,12 @@
     stacks: {
       '.bw_vstack': {
         'display': 'flex',
-        'flex-direction': 'column'
+        flexDirection: 'column'
       },
       '.bw_hstack': {
         'display': 'flex',
-        'flex-direction': 'row',
-        'align-items': 'center'
+        flexDirection: 'row',
+        alignItems: 'center'
       },
       '.bw_gap_0': {
         'gap': '0'
@@ -1559,37 +1630,37 @@
     // ---- Offsets ----
     offsets: {
       '.bw_offset_1': {
-        'margin-left': '8.333333%'
+        marginLeft: '8.333333%'
       },
       '.bw_offset_2': {
-        'margin-left': '16.666667%'
+        marginLeft: '16.666667%'
       },
       '.bw_offset_3': {
-        'margin-left': '25%'
+        marginLeft: '25%'
       },
       '.bw_offset_4': {
-        'margin-left': '33.333333%'
+        marginLeft: '33.333333%'
       },
       '.bw_offset_5': {
-        'margin-left': '41.666667%'
+        marginLeft: '41.666667%'
       },
       '.bw_offset_6': {
-        'margin-left': '50%'
+        marginLeft: '50%'
       },
       '.bw_offset_7': {
-        'margin-left': '58.333333%'
+        marginLeft: '58.333333%'
       },
       '.bw_offset_8': {
-        'margin-left': '66.666667%'
+        marginLeft: '66.666667%'
       },
       '.bw_offset_9': {
-        'margin-left': '75%'
+        marginLeft: '75%'
       },
       '.bw_offset_10': {
-        'margin-left': '83.333333%'
+        marginLeft: '83.333333%'
       },
       '.bw_offset_11': {
-        'margin-left': '91.666667%'
+        marginLeft: '91.666667%'
       }
     },
     // ---- Bar chart ----
@@ -1600,40 +1671,40 @@
       },
       '.bw_bar_chart': {
         'display': 'flex',
-        'align-items': 'flex-end',
+        alignItems: 'flex-end',
         'gap': '6px',
         'padding': '0 0.5rem'
       },
       '.bw_bar_group': {
         'flex': '1',
         'display': 'flex',
-        'flex-direction': 'column',
-        'align-items': 'center',
+        flexDirection: 'column',
+        alignItems: 'center',
         'height': '100%',
-        'justify-content': 'flex-end'
+        justifyContent: 'flex-end'
       },
       '.bw_bar': {
         'width': '100%',
-        'border-radius': '3px 3px 0 0',
-        'min-height': '4px'
+        borderRadius: '3px 3px 0 0',
+        minHeight: '4px'
       },
       '.bw_bar:hover': {
         'opacity': '0.85'
       },
       '.bw_bar_value': {
-        'font-size': '0.65rem',
-        'font-weight': '600',
-        'margin-bottom': '2px',
-        'text-align': 'center'
+        fontSize: '0.65rem',
+        fontWeight: '600',
+        marginBottom: '2px',
+        textAlign: 'center'
       },
       '.bw_bar_label': {
-        'font-size': '0.7rem',
-        'margin-top': '4px',
-        'text-align': 'center'
+        fontSize: '0.7rem',
+        marginTop: '4px',
+        textAlign: 'center'
       },
       '.bw_bar_chart_title': {
-        'font-size': '1.1rem',
-        'font-weight': '600',
+        fontSize: '1.1rem',
+        fontWeight: '600',
         'margin': '0 0 0.75rem 0'
       }
     },
@@ -1645,24 +1716,24 @@
       '@media (min-width: 1200px)': _gridCols('bw_col_xl'),
       '@media (max-width: 575px)': {
         '.bw_hstack, .bw_hstack': {
-          'flex-direction': 'column'
+          flexDirection: 'column'
         },
         '.bw_bccl_table': {
           'display': 'block',
-          'overflow-x': 'auto',
+          overflowX: 'auto',
           '-webkit-overflow-scrolling': 'touch'
         },
         '.bw_col, .bw_col_1, .bw_col_2, .bw_col_3, .bw_col_4, .bw_col_5, .bw_col_6, .bw_col_7, .bw_col_8, .bw_col_9, .bw_col_10, .bw_col_11, .bw_col_12': {
           'flex': '0 0 100%',
-          'max-width': '100%'
+          maxWidth: '100%'
         },
         '.bw_bccl_container': {
-          'padding-right': '0.5rem',
-          'padding-left': '0.5rem'
+          paddingRight: '0.5rem',
+          paddingLeft: '0.5rem'
         },
         '.bw_bccl_container_fluid': {
-          'padding-right': '0.5rem',
-          'padding-left': '0.5rem'
+          paddingRight: '0.5rem',
+          paddingLeft: '0.5rem'
         }
       }
     }
@@ -1690,62 +1761,62 @@
         'margin': v + ' !important'
       };
       rules['.bw_mt_' + k] = {
-        'margin-top': v + ' !important'
+        marginTop: v + ' !important'
       };
       rules['.bw_mb_' + k] = {
-        'margin-bottom': v + ' !important'
+        marginBottom: v + ' !important'
       };
       rules['.bw_ms_' + k] = {
-        'margin-left': v + ' !important'
+        marginLeft: v + ' !important'
       };
       rules['.bw_me_' + k] = {
-        'margin-right': v + ' !important'
+        marginRight: v + ' !important'
       };
       rules['.bw_p_' + k] = {
         'padding': v + ' !important'
       };
       rules['.bw_pt_' + k] = {
-        'padding-top': v + ' !important'
+        paddingTop: v + ' !important'
       };
       rules['.bw_pb_' + k] = {
-        'padding-bottom': v + ' !important'
+        paddingBottom: v + ' !important'
       };
       rules['.bw_ps_' + k] = {
-        'padding-left': v + ' !important'
+        paddingLeft: v + ' !important'
       };
       rules['.bw_pe_' + k] = {
-        'padding-right': v + ' !important'
+        paddingRight: v + ' !important'
       };
       // Gutter k: half on each side of every column, pulled back by the row
       var h = parseFloat(v) / 2 + 'rem';
       rules['.bw_g_' + k] = {
-        'margin-left': '-' + h,
-        'margin-right': '-' + h,
-        'row-gap': v
+        marginLeft: '-' + h,
+        marginRight: '-' + h,
+        rowGap: v
       };
       rules['.bw_g_' + k + ' > *'] = {
-        'padding-left': h,
-        'padding-right': h
+        paddingLeft: h,
+        paddingRight: h
       };
     }
     rules['.bw_m_auto'] = {
       'margin': 'auto !important'
     };
     rules['.bw_py_3'] = {
-      'padding-top': '1rem !important',
-      'padding-bottom': '1rem !important'
+      paddingTop: '1rem !important',
+      paddingBottom: '1rem !important'
     };
     rules['.bw_py_4'] = {
-      'padding-top': '1.5rem !important',
-      'padding-bottom': '1.5rem !important'
+      paddingTop: '1.5rem !important',
+      paddingBottom: '1.5rem !important'
     };
     rules['.bw_py_5'] = {
-      'padding-top': '3rem !important',
-      'padding-bottom': '3rem !important'
+      paddingTop: '3rem !important',
+      paddingBottom: '3rem !important'
     };
     rules['.bw_py_6'] = {
-      'padding-top': '4rem !important',
-      'padding-bottom': '4rem !important'
+      paddingTop: '4rem !important',
+      paddingBottom: '4rem !important'
     };
 
     // Display
@@ -1767,82 +1838,82 @@
 
     // Text alignment
     rules['.bw_text_left'] = {
-      'text-align': 'left'
+      textAlign: 'left'
     };
     rules['.bw_text_right'] = {
-      'text-align': 'right'
+      textAlign: 'right'
     };
     rules['.bw_text_center'] = {
-      'text-align': 'center'
+      textAlign: 'center'
     };
     rules['.bw_text_justify'] = {
-      'text-align': 'justify'
+      textAlign: 'justify'
     };
 
     // Font weight
     rules['.bw_fw_bold'] = {
-      'font-weight': '700'
+      fontWeight: '700'
     };
     rules['.bw_fw_semibold'] = {
-      'font-weight': '600'
+      fontWeight: '600'
     };
     rules['.bw_fw_normal'] = {
-      'font-weight': '400'
+      fontWeight: '400'
     };
     rules['.bw_fw_light'] = {
-      'font-weight': '300'
+      fontWeight: '300'
     };
 
     // Font style
     rules['.bw_fst_italic'] = {
-      'font-style': 'italic'
+      fontStyle: 'italic'
     };
     rules['.bw_fst_normal'] = {
-      'font-style': 'normal'
+      fontStyle: 'normal'
     };
 
     // Text decoration
     rules['.bw_text_underline'] = {
-      'text-decoration': 'underline'
+      textDecoration: 'underline'
     };
     rules['.bw_text_line_through'] = {
-      'text-decoration': 'line-through'
+      textDecoration: 'line-through'
     };
     rules['.bw_text_decoration_none'] = {
-      'text-decoration': 'none'
+      textDecoration: 'none'
     };
 
     // Text transform
     rules['.bw_text_uppercase'] = {
-      'text-transform': 'uppercase'
+      textTransform: 'uppercase'
     };
     rules['.bw_text_lowercase'] = {
-      'text-transform': 'lowercase'
+      textTransform: 'lowercase'
     };
     rules['.bw_text_capitalize'] = {
-      'text-transform': 'capitalize'
+      textTransform: 'capitalize'
     };
 
     // White-space
     rules['.bw_text_wrap'] = {
-      'white-space': 'normal'
+      whiteSpace: 'normal'
     };
     rules['.bw_text_nowrap'] = {
-      'white-space': 'nowrap'
+      whiteSpace: 'nowrap'
     };
 
     // Font size
     rules['.bw_fs_sm'] = {
-      'font-size': '0.875rem'
+      fontSize: '0.875rem'
     };
     rules['.bw_fs_base'] = {
-      'font-size': '1rem'
+      fontSize: '1rem'
     };
     rules['.bw_fs_lg'] = {
-      'font-size': '1.25rem'
+      fontSize: '1.25rem'
     };
     rules['.bw_fs_xl'] = {
-      'font-size': '1.5rem'
+      fontSize: '1.5rem'
     };
 
     // Flexbox
@@ -1855,7 +1926,7 @@
     };
     for (var jk in jc) {
       rules['.bw_justify_content_' + jk] = {
-        'justify-content': jc[jk]
+        justifyContent: jc[jk]
       };
     }
     var ai = {
@@ -1865,7 +1936,7 @@
     };
     for (var ak in ai) {
       rules['.bw_align_items_' + ak] = {
-        'align-items': ai[ak]
+        alignItems: ai[ak]
       };
     }
 
@@ -1877,53 +1948,53 @@
       'border': '0 !important'
     };
     rules['.bw_border_top_0'] = {
-      'border-top': '0 !important'
+      borderTop: '0 !important'
     };
     rules['.bw_border_end_0'] = {
-      'border-right': '0 !important'
+      borderRight: '0 !important'
     };
     rules['.bw_border_bottom_0'] = {
-      'border-bottom': '0 !important'
+      borderBottom: '0 !important'
     };
     rules['.bw_border_start_0'] = {
-      'border-left': '0 !important'
+      borderLeft: '0 !important'
     };
 
     // Rounded
     rules['.bw_rounded'] = {
-      'border-radius': '.375rem !important'
+      borderRadius: '.375rem !important'
     };
     rules['.bw_rounded_0'] = {
-      'border-radius': '0 !important'
+      borderRadius: '0 !important'
     };
     rules['.bw_rounded_1'] = {
-      'border-radius': '.25rem !important'
+      borderRadius: '.25rem !important'
     };
     rules['.bw_rounded_2'] = {
-      'border-radius': '.375rem !important'
+      borderRadius: '.375rem !important'
     };
     rules['.bw_rounded_3'] = {
-      'border-radius': '.5rem !important'
+      borderRadius: '.5rem !important'
     };
     rules['.bw_rounded_circle'] = {
-      'border-radius': '50% !important'
+      borderRadius: '50% !important'
     };
     rules['.bw_rounded_pill'] = {
-      'border-radius': '50rem !important'
+      borderRadius: '50rem !important'
     };
 
     // Shadows
     rules['.bw_shadow'] = {
-      'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important'
+      boxShadow: '0 .5rem 1rem rgba(0,0,0,.15) !important'
     };
     rules['.bw_shadow_sm'] = {
-      'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important'
+      boxShadow: '0 .125rem .25rem rgba(0,0,0,.075) !important'
     };
     rules['.bw_shadow_lg'] = {
-      'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important'
+      boxShadow: '0 1rem 3rem rgba(0,0,0,.175) !important'
     };
     rules['.bw_shadow_none'] = {
-      'box-shadow': 'none !important'
+      boxShadow: 'none !important'
     };
 
     // Width/Height
@@ -1942,10 +2013,10 @@
       'height': 'auto !important'
     };
     rules['.bw_mw_100'] = {
-      'max-width': '100% !important'
+      maxWidth: '100% !important'
     };
     rules['.bw_mh_100'] = {
-      'max-height': '100% !important'
+      maxHeight: '100% !important'
     };
 
     // Positioning
@@ -2030,18 +2101,18 @@
 
     // List utilities
     rules['.bw_list_unstyled'] = {
-      'padding-left': '0',
-      'list-style': 'none'
+      paddingLeft: '0',
+      listStyle: 'none'
     };
     rules['.bw_list_inline'] = {
-      'padding-left': '0',
-      'list-style': 'none'
+      paddingLeft: '0',
+      listStyle: 'none'
     };
     rules['.bw_list_inline_item'] = {
       'display': 'inline-block'
     };
     rules['.bw_list_inline_item:not(:last-child)'] = {
-      'margin-right': '.5rem'
+      marginRight: '.5rem'
     };
 
     // Flex utilities
@@ -2049,15 +2120,15 @@
       'display': 'flex'
     };
     rules['.bw_flex_column'] = {
-      'flex-direction': 'column'
+      flexDirection: 'column'
     };
     rules['.bw_flex_wrap'] = {
-      'flex-wrap': 'wrap'
+      flexWrap: 'wrap'
     };
     rules['.bw_flex_center'] = {
       'display': 'flex',
-      'align-items': 'center',
-      'justify-content': 'center'
+      alignItems: 'center',
+      justifyContent: 'center'
     };
     for (var gk in spacingValues) rules['.bw_gap_' + gk] = {
       'gap': spacingValues[gk] + ' !important'
@@ -2074,16 +2145,16 @@
     // User select
     ['all', 'auto', 'none'].forEach(function (u) {
       rules['.bw_user_select_' + u] = {
-        'user-select': u + ' !important'
+        userSelect: u + ' !important'
       };
     });
 
     // Pointer events
     rules['.bw_pe_none'] = {
-      'pointer-events': 'none !important'
+      pointerEvents: 'none !important'
     };
     rules['.bw_pe_auto'] = {
-      'pointer-events': 'auto !important'
+      pointerEvents: 'auto !important'
     };
 
     // Opacity
@@ -2139,10 +2210,10 @@
     // Accessibility: reduce motion
     result['@media (prefers-reduced-motion: reduce)'] = {
       '*, *::before, *::after': {
-        'animation-duration': '0.01ms !important',
-        'animation-iteration-count': '1 !important',
-        'transition-duration': '0.01ms !important',
-        'scroll-behavior': 'auto !important'
+        animationDuration: '0.01ms !important',
+        animationIterationCount: '1 !important',
+        transitionDuration: '0.01ms !important',
+        scrollBehavior: 'auto !important'
       }
     };
     return result;
@@ -2171,10 +2242,10 @@
     // Include reduced-motion preference
     rules['@media (prefers-reduced-motion: reduce)'] = {
       '*, *::before, *::after': {
-        'animation-duration': '0.01ms !important',
-        'animation-iteration-count': '1 !important',
-        'transition-duration': '0.01ms !important',
-        'scroll-behavior': 'auto !important'
+        animationDuration: '0.01ms !important',
+        animationIterationCount: '1 !important',
+        transitionDuration: '0.01ms !important',
+        scrollBehavior: 'auto !important'
       }
     };
     return rules;
@@ -2195,7 +2266,7 @@
     reset: structuralRules.base,
     tableResponsive: {
       '.bw_bccl_table_responsive': {
-        'overflow-x': 'auto',
+        overflowX: 'auto',
         '-webkit-overflow-scrolling': 'touch'
       }
     },
@@ -3303,29 +3374,6 @@
     };
   }
 
-  /**
-   * bitwrench-bccl-styles.js -- the widget stylesheet.
-   *
-   * Every rule here styles something a BCCL factory emits (bw_bccl_btn,
-   * bw_bccl_card, bw_bccl_modal, ...). A widget rule ships with its factory and
-   * a factory ships with its rule, so this file is imported only by
-   * bitwrench-bccl.js and is absent from the lean build, which has no factories
-   * to use it. Core (bitwrench-styles.js) keeps the reset, typography, the role
-   * colours and utilities, the grid, and the table and bar-chart rules.
-   *
-   * No imports, on purpose: the standalone BCCL bundle has no external for the
-   * style engine, so an import of bitwrench-styles.js would copy the engine into
-   * that artifact. Core hands the four selector helpers in at call time.
-   *
-   * Two exports, read by bw.loadStructural and bw.makeStyles through the list
-   * bw._installStyleSheet() maintains:
-   *   bcclStructural()                      -> { category: { selector: decls } }
-   *   bcclThemed(scope, palette, layout, h) -> { selector: decls }
-   *
-   * @module bitwrench-bccl-styles
-   * @license BSD-2-Clause
-   */
-
   // Selector helpers, assigned from the `h` argument of bcclThemed() before any
   // generator runs. Same names as in bitwrench-styles.js so the generator
   // bodies below are the ones that lived there through 2.1.13.
@@ -3343,12 +3391,12 @@
     // Base button (only when scoped — unscoped uses defaultStyles)
     rules[_sx(scope, '.bw_bccl_btn')] = {
       'padding': sp.btn,
-      'border-radius': rd.btn
+      borderRadius: rd.btn
     };
     rules[_sx(scope, '.bw_bccl_btn:focus-visible')] = {
       'outline': '2px solid currentColor',
-      'outline-offset': '2px',
-      'box-shadow': _fr(palette.primary.focus, '3px')
+      outlineOffset: '2px',
+      boxShadow: _fr(palette.primary.focus, '3px')
     };
 
     // Variant colors handled by palette class on component root
@@ -3357,21 +3405,21 @@
     // reads in both palettes (the accent fill with textOn was the low-contrast
     // case for the app that asked, #119).
     rules[_sx(scope, '.bw_bccl_btn_toggle[aria-pressed="true"]')] = {
-      'background-color': palette.dark.base,
-      'border-color': palette.dark.base,
+      backgroundColor: palette.dark.base,
+      borderColor: palette.dark.base,
       'color': palette.background
     };
 
     // Size variants (structural, reuse layout radius)
     rules[_sx(scope, '.bw_bccl_btn_lg')] = {
       'padding': '0.625rem 1.5rem',
-      'font-size': '1rem',
-      'border-radius': rd.btn === '50rem' ? '50rem' : parseInt(rd.btn) + 2 + 'px'
+      fontSize: '1rem',
+      borderRadius: rd.btn === '50rem' ? '50rem' : parseInt(rd.btn) + 2 + 'px'
     };
     rules[_sx(scope, '.bw_bccl_btn_sm')] = {
       'padding': '0.25rem 0.75rem',
-      'font-size': '0.8125rem',
-      'border-radius': rd.btn === '50rem' ? '50rem' : Math.max(parseInt(rd.btn) - 1, 0) + 'px'
+      fontSize: '0.8125rem',
+      borderRadius: rd.btn === '50rem' ? '50rem' : Math.max(parseInt(rd.btn) - 1, 0) + 'px'
     };
     return rules;
   }
@@ -3381,7 +3429,7 @@
     var rd = layout.radius;
     rules[_sx(scope, '.bw_bccl_alert')] = {
       'padding': sp.alert,
-      'border-radius': rd.alert
+      borderRadius: rd.alert
     };
 
     // Variant colors handled by palette class on component root
@@ -3398,20 +3446,20 @@
     var elev = layout.elevation;
     var motion = layout.motion;
     rules[_sx(scope, '.bw_bccl_card')] = {
-      'background-color': _sf(palette),
+      backgroundColor: _sf(palette),
       'border': '1px solid ' + palette.light.border,
-      'border-radius': rd.card,
-      'box-shadow': elev.sm,
+      borderRadius: rd.card,
+      boxShadow: elev.sm,
       'transition': _tr('box-shadow,transform', motion, 'normal')
     };
     rules[_sx(scope, '.bw_bccl_card:hover')] = {
-      'box-shadow': elev.md
+      boxShadow: elev.md
     };
     rules[_sx(scope, '.bw_bccl_card_hoverable')] = {
       'transition': _tr('box-shadow,transform', motion, 'slow')
     };
     rules[_sx(scope, '.bw_bccl_card_hoverable:hover')] = {
-      'box-shadow': elev.lg
+      boxShadow: elev.lg
     };
     rules[_sx(scope, '.bw_bccl_card_body')] = {
       'padding': sp.card
@@ -3420,19 +3468,19 @@
       'padding': sp.card.split(' ').map(function (v) {
         return (parseFloat(v) * 0.7).toFixed(3).replace(/\.?0+$/, '') + 'rem';
       }).join(' '),
-      'background-color': palette.surfaceAlt,
-      'border-bottom': '1px solid ' + palette.light.border
+      backgroundColor: palette.surfaceAlt,
+      borderBottom: '1px solid ' + palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_card_footer')] = {
-      'background-color': palette.surfaceAlt,
-      'border-top': '1px solid ' + palette.light.border,
-      'color': palette.secondary.base
+      backgroundColor: palette.surfaceAlt,
+      borderTop: '1px solid ' + palette.light.border,
+      'color': palette.textMuted
     };
     rules[_sx(scope, '.bw_bccl_card_title')] = {
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_bccl_card_subtitle')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
 
     // Card variant accent handled by palette class on component root
@@ -3445,105 +3493,105 @@
     var rd = layout.radius;
     rules[_sx(scope, '.bw_bccl_form_control')] = {
       'padding': sp.input,
-      'border-radius': rd.input,
+      borderRadius: rd.input,
       'color': palette.dark.base,
-      'background-color': _sf(palette),
-      'border-color': palette.light.border
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_form_control:focus')] = {
-      'border-color': palette.primary.border,
+      borderColor: palette.primary.border,
       'outline': '2px solid ' + palette.primary.base,
-      'outline-offset': '-1px',
-      'box-shadow': _fr(palette.primary.focus)
+      outlineOffset: '-1px',
+      boxShadow: _fr(palette.primary.focus)
     };
     rules[_sx(scope, '.bw_bccl_form_control::placeholder')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     rules[_sx(scope, '.bw_bccl_form_label')] = {
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_bccl_form_text')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     rules[_sx(scope, '.bw_bccl_form_check_input:checked')] = {
-      'background-color': palette.primary.base,
-      'border-color': palette.primary.base
+      backgroundColor: palette.primary.base,
+      borderColor: palette.primary.base
     };
     rules[_sx(scope, '.bw_bccl_form_check_input:focus')] = {
-      'box-shadow': _fr(palette.primary.focus)
+      boxShadow: _fr(palette.primary.focus)
     };
     // Validation states
     rules[_sx(scope, '.bw_bccl_form_control.bw_is_valid')] = {
-      'border-color': palette.success.base
+      borderColor: palette.success.base
     };
     rules[_sx(scope, '.bw_bccl_form_control.bw_is_valid:focus')] = {
-      'border-color': palette.success.base,
-      'box-shadow': _fr(palette.success.focus, '0.2rem')
+      borderColor: palette.success.base,
+      boxShadow: _fr(palette.success.focus, '0.2rem')
     };
     rules[_sx(scope, '.bw_bccl_form_control.bw_is_invalid')] = {
-      'border-color': palette.danger.base
+      borderColor: palette.danger.base
     };
     rules[_sx(scope, '.bw_bccl_form_control.bw_is_invalid:focus')] = {
-      'border-color': palette.danger.base,
-      'box-shadow': _fr(palette.danger.focus, '0.2rem')
+      borderColor: palette.danger.base,
+      boxShadow: _fr(palette.danger.focus, '0.2rem')
     };
     // Form select
     rules[_sx(scope, '.bw_bccl_form_select')] = {
       'padding': sp.input,
-      'border-radius': rd.input,
+      borderRadius: rd.input,
       'color': palette.dark.base,
-      'background-color': _sf(palette),
-      'border-color': palette.light.border
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_form_select:focus')] = {
-      'border-color': palette.primary.border,
-      'box-shadow': _fr(palette.primary.focus)
+      borderColor: palette.primary.border,
+      boxShadow: _fr(palette.primary.focus)
     };
     return rules;
   }
   function generateNavigation(scope, palette, layout) {
     var rules = {};
     rules[_sx(scope, '.bw_bccl_navbar')] = {
-      'background-color': palette.surfaceAlt,
-      'border-bottom-color': palette.light.border
+      backgroundColor: palette.surfaceAlt,
+      borderBottomColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_navbar_brand')] = {
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_bccl_navbar_nav .bw_nav_link')] = {
-      'color': palette.secondary.base,
-      'border-radius': layout.radius.btn,
+      'color': palette.textMuted,
+      borderRadius: layout.radius.btn,
       'transition': _tr('color,background-color', layout.motion)
     };
     rules[_sx(scope, '.bw_bccl_navbar_nav .bw_nav_link:hover')] = {
-      'color': palette.tertiary.base,
-      'background-color': palette.surfaceAlt
+      'color': palette.tertiary.text,
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx(scope, '.bw_bccl_navbar_nav .bw_nav_link.active')] = {
       'color': palette.primary.base,
-      'background-color': palette.primary.focus,
-      'font-weight': '600'
+      backgroundColor: palette.primary.focus,
+      fontWeight: '600'
     };
     rules[_sx(scope, '.bw_bccl_navbar_dark')] = {
-      'background-color': palette.dark.base,
-      'border-bottom-color': palette.dark.hover
+      backgroundColor: palette.dark.base,
+      borderBottomColor: palette.dark.hover
     };
     rules[_sx(scope, '.bw_bccl_navbar_dark .bw_bccl_navbar_brand')] = {
       'color': palette.light.base
     };
     rules[_sx(scope, '.bw_bccl_navbar_dark .bw_nav_link')] = {
-      'color': palette.light.border
+      'color': mixColor(palette.light.base, palette.dark.base, 0.3)
     };
     rules[_sx(scope, '.bw_bccl_navbar_dark .bw_nav_link:hover')] = {
       'color': palette.light.base
     };
     rules[_sx(scope, '.bw_bccl_navbar_dark .bw_nav_link.active')] = {
       'color': palette.light.base,
-      'font-weight': '600'
+      fontWeight: '600'
     };
     rules[_sx(scope, '.bw_nav_pills .bw_nav_link.active')] = {
       'color': palette.primary.textOn,
-      'background-color': palette.primary.base
+      backgroundColor: palette.primary.base
     };
     return rules;
   }
@@ -3551,21 +3599,21 @@
     var rules = {},
       mo = layout.motion;
     rules[_sx(scope, '.bw_nav_tabs')] = {
-      'border-bottom-color': palette.light.border
+      borderBottomColor: palette.light.border
     };
     rules[_sx(scope, '.bw_nav_link')] = {
-      'color': palette.secondary.base,
+      'color': palette.textMuted,
       'transition': _tr('color,border-color,background-color', mo)
     };
     rules[_sx(scope, '.bw_nav_tabs .bw_nav_link:hover')] = {
-      'color': palette.tertiary.base,
-      'background-color': palette.surfaceAlt,
-      'border-bottom-color': palette.light.border
+      'color': palette.tertiary.text,
+      backgroundColor: palette.surfaceAlt,
+      borderBottomColor: palette.light.border
     };
     rules[_sx(scope, '.bw_nav_tabs .bw_nav_link.active')] = {
       'color': palette.primary.base,
-      'background-color': palette.primary.focus,
-      'border-bottom': '2px solid ' + palette.primary.base
+      backgroundColor: palette.primary.focus,
+      borderBottom: '2px solid ' + palette.primary.base
     };
     return rules;
   }
@@ -3576,22 +3624,22 @@
     rules[_sx(scope, '.bw_list_group_item')] = {
       'padding': sp.cell,
       'color': palette.dark.base,
-      'background-color': _sf(palette),
-      'border-color': palette.light.border,
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border,
       'transition': _tr('color,background-color', mo)
     };
     rules[_sx(scope, 'a.bw_list_group_item:hover')] = {
-      'background-color': palette.surfaceAlt,
-      'color': palette.tertiary.base
+      backgroundColor: palette.surfaceAlt,
+      'color': palette.tertiary.text
     };
     rules[_sx(scope, '.bw_list_group_item.active')] = {
       'color': palette.primary.textOn,
-      'background-color': palette.primary.base,
-      'border-color': palette.primary.base
+      backgroundColor: palette.primary.base,
+      borderColor: palette.primary.base
     };
     rules[_sx(scope, '.bw_list_group_item.disabled')] = {
-      'color': palette.secondary.base,
-      'background-color': _sf(palette)
+      'color': palette.textFaint,
+      backgroundColor: _sf(palette)
     };
     return rules;
   }
@@ -3600,37 +3648,37 @@
       mo = layout.motion,
       rd = layout.radius;
     rules[_sx(scope, '.bw_page_item:first-child .bw_page_link')] = {
-      'border-top-left-radius': rd.btn,
-      'border-bottom-left-radius': rd.btn
+      borderTopLeftRadius: rd.btn,
+      borderBottomLeftRadius: rd.btn
     };
     rules[_sx(scope, '.bw_page_item:last-child .bw_page_link')] = {
-      'border-top-right-radius': rd.btn,
-      'border-bottom-right-radius': rd.btn
+      borderTopRightRadius: rd.btn,
+      borderBottomRightRadius: rd.btn
     };
     rules[_sx(scope, '.bw_page_link')] = {
-      'color': palette.primary.base,
-      'background-color': _sf(palette),
-      'border-color': palette.light.border,
+      'color': palette.primary.text,
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border,
       'transition': _tr('color,background-color', mo)
     };
     rules[_sx(scope, '.bw_page_link:hover')] = {
-      'color': palette.primary.hover,
-      'background-color': palette.surfaceAlt,
-      'border-color': palette.light.border
+      'color': palette.primary.text,
+      backgroundColor: palette.surfaceAlt,
+      borderColor: palette.light.border
     };
     rules[_sx(scope, '.bw_page_link:focus')] = {
       'outline': '2px solid ' + palette.primary.base,
-      'outline-offset': '-2px'
+      outlineOffset: '-2px'
     };
     rules[_sx(scope, '.bw_page_item.bw_active .bw_page_link')] = {
       'color': palette.primary.textOn,
-      'background-color': palette.primary.base,
-      'border-color': palette.primary.base
+      backgroundColor: palette.primary.base,
+      borderColor: palette.primary.base
     };
     rules[_sx(scope, '.bw_page_item.bw_disabled .bw_page_link')] = {
-      'color': palette.secondary.base,
-      'background-color': _sf(palette),
-      'border-color': palette.light.border
+      'color': palette.textFaint,
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border
     };
     return rules;
   }
@@ -3638,15 +3686,15 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_bccl_progress')] = {
-      'background-color': palette.surfaceAlt,
-      'border-radius': rd.badge,
-      'box-shadow': 'inset 0 1px 2px rgba(0,0,0,.1)'
+      backgroundColor: palette.surfaceAlt,
+      borderRadius: rd.badge,
+      boxShadow: 'inset 0 1px 2px rgba(0,0,0,.1)'
     };
     rules[_sx(scope, '.bw_bccl_progress_bar')] = {
       'color': palette.primary.textOn,
-      'background-color': palette.primary.base,
-      'border-radius': 'inherit',
-      'box-shadow': 'inset 0 -1px 0 rgba(0,0,0,.15)'
+      backgroundColor: palette.primary.base,
+      borderRadius: 'inherit',
+      boxShadow: 'inset 0 -1px 0 rgba(0,0,0,.15)'
     };
     // Variant progress bar colors handled by palette class
     return rules;
@@ -3660,20 +3708,20 @@
     var rules = {},
       mo = layout.motion;
     rules[_sx(scope, '.bw_bccl_breadcrumb')] = {
-      'background-color': palette.surfaceAlt,
+      backgroundColor: palette.surfaceAlt,
       'padding': '0.625rem 1rem',
-      'border-radius': layout.radius.btn
+      borderRadius: layout.radius.btn
     };
     rules[_sx(scope, '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item::before')] = {
-      'color': palette.secondary.base
+      'color': palette.textFaint
     };
     rules[_sx(scope, '.bw_bccl_breadcrumb_item a')] = {
-      'color': palette.tertiary.base,
+      'color': palette.tertiary.text,
       'transition': _tr('color', mo)
     };
     rules[_sx(scope, '.bw_bccl_breadcrumb_item a:hover')] = {
-      'color': palette.tertiary.hover,
-      'text-decoration': 'underline'
+      'color': palette.tertiary.text,
+      textDecoration: 'underline'
     };
     rules[_sx(scope, '.bw_bccl_breadcrumb_item.active')] = {
       'color': palette.dark.base
@@ -3690,20 +3738,20 @@
       'opacity': '0.5'
     };
     rules[_sx(scope, '.bw_close:focus')] = {
-      'box-shadow': _fr(palette.primary.focus)
+      boxShadow: _fr(palette.primary.focus)
     };
     return rules;
   }
   function generateSectionsThemed(scope, palette) {
     var rules = {};
     rules[_sx(scope, '.bw_section_subtitle')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     rules[_sx(scope, '.bw_feature_description')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     rules[_sx(scope, '.bw_cta_description')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     return rules;
   }
@@ -3711,56 +3759,56 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_bccl_accordion_item')] = {
-      'background-color': _sf(palette),
-      'border-color': palette.light.border
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_accordion_item:first-child')] = {
-      'border-top-left-radius': rd.card,
-      'border-top-right-radius': rd.card
+      borderTopLeftRadius: rd.card,
+      borderTopRightRadius: rd.card
     };
     rules[_sx(scope, '.bw_bccl_accordion_item:last-child')] = {
-      'border-bottom-left-radius': rd.card,
-      'border-bottom-right-radius': rd.card
+      borderBottomLeftRadius: rd.card,
+      borderBottomRightRadius: rd.card
     };
     rules[_sx(scope, '.bw_bccl_accordion_button')] = {
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_bccl_accordion_button:not(.bw_collapsed)')] = {
       'color': palette.primary.darkText,
-      'background-color': palette.primary.light,
-      'border-left': '3px solid ' + palette.primary.base
+      backgroundColor: palette.primary.light,
+      borderLeft: '3px solid ' + palette.primary.base
     };
     rules[_sx(scope, '.bw_bccl_accordion_button:hover')] = {
-      'background-color': palette.surfaceAlt
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx(scope, '.bw_bccl_accordion_button:not(.bw_collapsed):hover')] = {
-      'background-color': palette.primary.base,
+      backgroundColor: palette.primary.base,
       'color': palette.primary.textOn
     };
     rules[_sx(scope, '.bw_bccl_accordion_button:focus-visible')] = {
-      'box-shadow': _fr(palette.primary.focus, '0.2rem')
+      boxShadow: _fr(palette.primary.focus, '0.2rem')
     };
     rules[_sx(scope, '.bw_bccl_accordion_body')] = {
-      'border-top': '1px solid ' + palette.light.border,
-      'background-color': palette.surfaceAlt
+      borderTop: '1px solid ' + palette.light.border,
+      backgroundColor: palette.surfaceAlt
     };
     return rules;
   }
   function generateCarouselThemed(scope, palette) {
     var rules = {};
     rules[_sx(scope, '.bw_bccl_carousel')] = {
-      'background-color': palette.surfaceAlt
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx(scope, '.bw_bccl_carousel_indicator.active')] = {
-      'background-color': palette.primary.base
+      backgroundColor: palette.primary.base
     };
     rules[_sx(scope, '.bw_bccl_carousel_control')] = {
-      'background-color': palette.dark.base,
+      backgroundColor: palette.dark.base,
       'color': palette.dark.textOn,
       'transition': 'background-color 0.15s ease-out'
     };
     rules[_sx(scope, '.bw_bccl_carousel_control:hover')] = {
-      'background-color': palette.dark.hover
+      backgroundColor: palette.dark.hover
     };
     rules[_sx(scope, '.bw_bccl_carousel_caption')] = {
       'background': 'linear-gradient(transparent, ' + palette.dark.base + ')',
@@ -3772,16 +3820,16 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_bccl_modal_content')] = {
-      'background-color': _sf(palette),
-      'border-color': palette.light.border,
-      'border-radius': rd.card,
-      'box-shadow': layout.elevation.lg
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border,
+      borderRadius: rd.card,
+      boxShadow: layout.elevation.lg
     };
     rules[_sx(scope, '.bw_bccl_modal_header')] = {
-      'border-bottom-color': palette.light.border
+      borderBottomColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_modal_footer')] = {
-      'border-top-color': palette.light.border
+      borderTopColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_modal_title')] = {
       'color': palette.dark.base
@@ -3792,13 +3840,13 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_bccl_toast')] = {
-      'background-color': _sf(palette),
-      'border-color': palette.light.border,
-      'border-radius': rd.card,
-      'box-shadow': layout.elevation.lg
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border,
+      borderRadius: rd.card,
+      boxShadow: layout.elevation.lg
     };
     rules[_sx(scope, '.bw_bccl_toast_header')] = {
-      'border-bottom-color': palette.light.border
+      borderBottomColor: palette.light.border
     };
     // Variant toast borders handled by palette class
     return rules;
@@ -3807,10 +3855,10 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_bccl_dropdown_menu')] = {
-      'background-color': _sf(palette),
-      'border-color': palette.light.border,
-      'border-radius': rd.card,
-      'box-shadow': layout.elevation.md
+      backgroundColor: _sf(palette),
+      borderColor: palette.light.border,
+      borderRadius: rd.card,
+      boxShadow: layout.elevation.md
     };
     rules[_sx(scope, '.bw_bccl_dropdown_item')] = {
       'color': palette.dark.base,
@@ -3818,31 +3866,31 @@
     };
     rules[_sx(scope, '.bw_bccl_dropdown_item:hover')] = {
       'color': palette.dark.hover,
-      'background-color': palette.surfaceAlt
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx(scope, '.bw_bccl_dropdown_item.disabled')] = {
-      'color': palette.secondary.base
+      'color': palette.textFaint
     };
     rules[_sx(scope, '.bw_bccl_dropdown_divider')] = {
-      'border-top-color': palette.light.border
+      borderTopColor: palette.light.border
     };
     return rules;
   }
   function generateSwitchThemed(scope, palette) {
     var rules = {};
     rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input')] = {
-      'background-color': palette.secondary.base,
-      'border-color': palette.secondary.base
+      backgroundColor: palette.secondary.base,
+      borderColor: palette.secondary.base
     };
     rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input:checked')] = {
-      'background-color': palette.primary.base,
-      'border-color': palette.primary.base
+      backgroundColor: palette.primary.base,
+      borderColor: palette.primary.base
     };
     rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input:focus')] = {
-      'box-shadow': _fr(palette.primary.focus)
+      boxShadow: _fr(palette.primary.focus)
     };
     rules[_sx(scope, '.bw_bccl_form_switch .bw_switch_input:focus-visible')] = {
-      'box-shadow': _fr(palette.primary.focus),
+      boxShadow: _fr(palette.primary.focus),
       'outline': 'none'
     };
     return rules;
@@ -3863,63 +3911,63 @@
       el = layout.elevation,
       rd = layout.radius;
     rules[_sx(scope, '.bw_stat_card')] = {
-      'background-color': _sf(palette),
+      backgroundColor: _sf(palette),
       'color': palette.dark.base,
       'border': '1px solid ' + palette.light.border,
-      'border-radius': rd.card,
-      'box-shadow': el.sm,
+      borderRadius: rd.card,
+      boxShadow: el.sm,
       'transition': _tr('box-shadow,transform', mo)
     };
     rules[_sx(scope, '.bw_stat_card:hover')] = {
-      'box-shadow': el.md
+      boxShadow: el.md
     };
     // Variant border colors handled by palette class
     rules[_sx(scope, '.bw_stat_change_up')] = {
-      'color': palette.success.base
+      'color': palette.success.text
     };
     rules[_sx(scope, '.bw_stat_change_down')] = {
-      'color': palette.danger.base
+      'color': palette.danger.text
     };
     return rules;
   }
   function generateTimelineThemed(scope, palette) {
     var rules = {};
     rules[_sx(scope, '.bw_bccl_timeline::before')] = {
-      'background-color': palette.light.border
+      backgroundColor: palette.light.border
     };
     // Variant marker colors handled by palette class
     rules[_sx(scope, '.bw_bccl_timeline_date')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     return rules;
   }
   function generateStepperThemed(scope, palette) {
     var rules = {};
     rules[_sx(scope, '.bw_step_indicator')] = {
-      'background-color': palette.surfaceAlt,
+      backgroundColor: palette.surfaceAlt,
       'border': '2px solid ' + palette.light.border,
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     rules[_sx(scope, '.bw_step + .bw_step::before')] = {
-      'background-color': palette.light.border
+      backgroundColor: palette.light.border
     };
     rules[_sx(scope, '.bw_step_active .bw_step_indicator')] = {
-      'background-color': palette.primary.base,
+      backgroundColor: palette.primary.base,
       'color': palette.primary.textOn
     };
     rules[_sx(scope, '.bw_step_active .bw_step_label')] = {
       'color': palette.dark.base,
-      'font-weight': '600'
+      fontWeight: '600'
     };
     rules[_sx(scope, '.bw_step_completed .bw_step_indicator')] = {
-      'background-color': palette.tertiary.base,
+      backgroundColor: palette.tertiary.base,
       'color': palette.tertiary.textOn
     };
     rules[_sx(scope, '.bw_step_completed .bw_step_label')] = {
-      'color': palette.tertiary.base
+      'color': palette.tertiary.text
     };
     rules[_sx(scope, '.bw_step_completed + .bw_step::before')] = {
-      'background-color': palette.tertiary.base
+      backgroundColor: palette.tertiary.base
     };
     return rules;
   }
@@ -3927,22 +3975,22 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_chip_input')] = {
-      'border-color': palette.light.border,
-      'background-color': _sf(palette),
+      borderColor: palette.light.border,
+      backgroundColor: _sf(palette),
       'color': palette.dark.base,
-      'border-radius': rd.input
+      borderRadius: rd.input
     };
     rules[_sx(scope, '.bw_chip_input:focus-within')] = {
-      'border-color': palette.primary.base,
-      'box-shadow': _fr(palette.primary.focus, '0.2rem')
+      borderColor: palette.primary.base,
+      boxShadow: _fr(palette.primary.focus, '0.2rem')
     };
     rules[_sx(scope, '.bw_chip')] = {
-      'background-color': palette.surfaceAlt,
+      backgroundColor: palette.surfaceAlt,
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_chip_remove:hover')] = {
-      'color': palette.danger.base,
-      'background-color': palette.danger.light
+      'color': palette.danger.darkText,
+      backgroundColor: palette.danger.light
     };
     return rules;
   }
@@ -3950,40 +3998,40 @@
     var rules = {},
       mo = layout.motion;
     rules[_sx(scope, '.bw_file_upload')] = {
-      'border-color': palette.light.border,
-      'background-color': palette.surfaceAlt,
+      borderColor: palette.light.border,
+      backgroundColor: palette.surfaceAlt,
       'transition': _tr('border-color,background-color', mo)
     };
     rules[_sx(scope, '.bw_file_upload:hover')] = {
-      'border-color': palette.primary.base,
-      'background-color': palette.primary.light
+      borderColor: palette.primary.base,
+      backgroundColor: palette.primary.light
     };
     rules[_sx(scope, '.bw_file_upload:focus')] = {
       'outline': '2px solid ' + palette.primary.base,
-      'outline-offset': '2px'
+      outlineOffset: '2px'
     };
     rules[_sx(scope, '.bw_file_upload.bw_file_upload_active')] = {
-      'border-color': palette.primary.base,
-      'background-color': palette.primary.light,
-      'border-style': 'solid'
+      borderColor: palette.primary.base,
+      backgroundColor: palette.primary.light,
+      borderStyle: 'solid'
     };
     return rules;
   }
   function generateRangeThemed(scope, palette) {
     var rules = {};
     rules[_sx(scope, '.bw_range')] = {
-      'background-color': palette.light.border
+      backgroundColor: palette.light.border
     };
     rules[_sx(scope, '.bw_range::-webkit-slider-thumb')] = {
-      'background-color': palette.primary.base,
-      'border-color': _sf(palette),
-      'box-shadow': '0 1px 3px rgba(0,0,0,0.2)',
+      backgroundColor: palette.primary.base,
+      borderColor: _sf(palette),
+      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
       'transition': 'background-color 0.15s ease-out, transform 0.15s ease-out'
     };
     rules[_sx(scope, '.bw_range::-moz-range-thumb')] = {
-      'background-color': palette.primary.base,
-      'border-color': _sf(palette),
-      'box-shadow': '0 1px 3px rgba(0,0,0,0.2)'
+      backgroundColor: palette.primary.base,
+      borderColor: _sf(palette),
+      boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
     };
     return rules;
   }
@@ -3994,11 +4042,11 @@
       el = layout.elevation,
       mo = layout.motion;
     rules[_sx(scope, '.bw_bccl_tooltip')] = {
-      'background-color': palette.dark.base,
+      backgroundColor: palette.dark.base,
       'color': palette.dark.textOn,
       'padding': sp.input,
-      'border-radius': rd.badge,
-      'box-shadow': el.md,
+      borderRadius: rd.badge,
+      boxShadow: el.md,
       'transition': _tr('opacity,transform', mo)
     };
     return rules;
@@ -4010,16 +4058,16 @@
       el = layout.elevation,
       mo = layout.motion;
     rules[_sx(scope, '.bw_popover')] = {
-      'background-color': _sf(palette),
+      backgroundColor: _sf(palette),
       'color': palette.dark.base,
       'border': '1px solid ' + palette.light.border,
-      'border-radius': rd.card,
-      'box-shadow': el.lg,
+      borderRadius: rd.card,
+      boxShadow: el.lg,
       'transition': _tr('opacity,transform', mo)
     };
     rules[_sx(scope, '.bw_popover_header')] = {
-      'background-color': palette.surfaceAlt,
-      'border-bottom': '1px solid ' + palette.light.border,
+      backgroundColor: palette.surfaceAlt,
+      borderBottom: '1px solid ' + palette.light.border,
       'padding': sp.input
     };
     rules[_sx(scope, '.bw_popover_body')] = {
@@ -4031,7 +4079,7 @@
     var rules = {},
       mo = layout.motion;
     rules[_sx(scope, '.bw_search_input')] = {
-      'background-color': _sf(palette),
+      backgroundColor: _sf(palette),
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_search_clear')] = {
@@ -4046,14 +4094,14 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_code_demo')] = {
-      'background-color': _sf(palette),
+      backgroundColor: _sf(palette),
       'color': palette.dark.base,
-      'border-radius': rd.card
+      borderRadius: rd.card
     };
     rules[_sx(scope, '.bw_code_copy_btn_copied')] = {
       'background': palette.success.base,
       'color': palette.success.textOn,
-      'border-color': palette.success.base
+      borderColor: palette.success.base
     };
     rules[_sx(scope, '.bw_copy_btn:hover')] = {
       'background': 'rgba(255,255,255,0.2)',
@@ -4065,7 +4113,7 @@
     var rules = {};
     var rd = layout.radius;
     rules[_sx(scope, '.bw_nav_pills .bw_nav_link')] = {
-      'border-radius': rd.btn
+      borderRadius: rd.btn
     };
     return rules;
   }
@@ -4085,64 +4133,64 @@
 
       // Alerts: light bg, dark text, subtle border
       rules[_sx(scope, '.bw_bccl_alert.bw_' + k)] = {
-        'background-color': s.light,
+        backgroundColor: s.light,
         'color': s.darkText,
-        'border-color': s.border
+        borderColor: s.border
       };
 
       // Toast: inherit bg, left border accent
       rules[_sx(scope, '.bw_bccl_toast.bw_' + k)] = {
-        'background-color': 'inherit',
+        backgroundColor: 'inherit',
         'color': 'inherit',
-        'border-left': '4px solid ' + s.base
+        borderLeft: '4px solid ' + s.base
       };
 
       // Stat card: inherit bg, left border accent
       rules[_sx(scope, '.bw_stat_card.bw_' + k)] = {
-        'background-color': 'inherit',
+        backgroundColor: 'inherit',
         'color': 'inherit',
-        'border-left-color': s.base
+        borderLeftColor: s.base
       };
 
       // Card accent: left border accent, inherit bg
       rules[_sx(scope, '.bw_bccl_card.bw_' + k)] = {
-        'background-color': 'inherit',
+        backgroundColor: 'inherit',
         'color': 'inherit',
-        'border-left': '4px solid ' + s.base
+        borderLeft: '4px solid ' + s.base
       };
 
       // Timeline marker: colored dot
       rules[_sx(scope, '.bw_bccl_timeline_marker.bw_' + k)] = {
-        'box-shadow': '0 0 0 2px ' + s.base
+        boxShadow: '0 0 0 2px ' + s.base
       };
 
       // Spinner: set color, re-apply border pattern so the root palette class
       // border-color doesn't fill in the transparent gap that makes it spin.
       // Also neutralize hover/active which would override border-right-color.
       rules[_sx(scope, '.bw_spinner_border.bw_' + k)] = {
-        'background-color': 'transparent',
+        backgroundColor: 'transparent',
         'color': s.base,
-        'border-color': s.base,
-        'border-right-color': 'transparent'
+        borderColor: s.base,
+        borderRightColor: 'transparent'
       };
       rules[_sx(scope, '.bw_spinner_border.bw_' + k + ':hover')] = {
-        'background-color': 'transparent',
-        'border-color': s.base,
-        'border-right-color': 'transparent'
+        backgroundColor: 'transparent',
+        borderColor: s.base,
+        borderRightColor: 'transparent'
       };
       rules[_sx(scope, '.bw_spinner_grow.bw_' + k)] = {
-        'background-color': s.base,
+        backgroundColor: s.base,
         'color': s.base
       };
 
       // Outline button: transparent bg, colored border+text, solid on hover
       rules[_sx(scope, '.bw_bccl_btn_outline.bw_' + k)] = {
-        'background-color': 'transparent',
+        backgroundColor: 'transparent',
         'color': s.base,
-        'border-color': s.base
+        borderColor: s.base
       };
       rules[_sx(scope, '.bw_bccl_btn_outline.bw_' + k + ':hover')] = {
-        'background-color': s.base,
+        backgroundColor: s.base,
         'color': s.textOn
       };
 
@@ -4185,22 +4233,22 @@
     buttons: {
       '.bw_bccl_btn': {
         'display': 'inline-flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'font-weight': '500',
-        'line-height': '1.5',
-        'text-align': 'center',
-        'text-decoration': 'none',
-        'vertical-align': 'middle',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: '500',
+        lineHeight: '1.5',
+        textAlign: 'center',
+        textDecoration: 'none',
+        verticalAlign: 'middle',
         'cursor': 'pointer',
-        'user-select': 'none',
+        userSelect: 'none',
         'border': '1px solid transparent',
-        'font-size': '0.875rem',
-        'font-family': 'inherit',
+        fontSize: '0.875rem',
+        fontFamily: 'inherit',
         'gap': '0.5rem'
       },
       '.bw_bccl_btn:hover': {
-        'text-decoration': 'none',
+        textDecoration: 'none',
         'transform': 'translateY(-1px)'
       },
       '.bw_bccl_btn:active': {
@@ -4208,12 +4256,12 @@
       },
       '.bw_bccl_btn:focus-visible': {
         'outline': '2px solid currentColor',
-        'outline-offset': '2px'
+        outlineOffset: '2px'
       },
       '.bw_bccl_btn:disabled': {
         'opacity': '0.5',
         'cursor': 'not-allowed',
-        'pointer-events': 'none'
+        pointerEvents: 'none'
       },
       '.bw_bccl_btn_block': {
         'display': 'block',
@@ -4225,38 +4273,38 @@
       '.bw_bccl_card': {
         'position': 'relative',
         'display': 'flex',
-        'flex-direction': 'column',
-        'min-width': '0',
+        flexDirection: 'column',
+        minWidth: '0',
         'height': '100%',
-        'word-wrap': 'break-word',
-        'background-clip': 'border-box',
-        'margin-bottom': '1.5rem',
+        wordWrap: 'break-word',
+        backgroundClip: 'border-box',
+        marginBottom: '1.5rem',
         'overflow': 'hidden'
       },
       '.bw_bccl_card_body': {
         'flex': '1 1 auto'
       },
       '.bw_bccl_card_body > *:last-child': {
-        'margin-bottom': '0'
+        marginBottom: '0'
       },
       '.bw_bccl_card_title': {
-        'margin-bottom': '0.5rem',
-        'font-size': '1.125rem',
-        'font-weight': '600',
-        'line-height': '1.3'
+        marginBottom: '0.5rem',
+        fontSize: '1.125rem',
+        fontWeight: '600',
+        lineHeight: '1.3'
       },
       '.bw_bccl_card_text': {
-        'margin-bottom': '0',
-        'font-size': '0.9375rem',
-        'line-height': '1.6'
+        marginBottom: '0',
+        fontSize: '0.9375rem',
+        lineHeight: '1.6'
       },
       '.bw_bccl_card_header': {
-        'margin-bottom': '0',
-        'font-weight': '600',
-        'font-size': '0.875rem'
+        marginBottom: '0',
+        fontWeight: '600',
+        fontSize: '0.875rem'
       },
       '.bw_bccl_card_footer': {
-        'font-size': '0.875rem'
+        fontSize: '0.875rem'
       },
       '.bw_bccl_card_hoverable': {},
       '.bw_bccl_card_hoverable:hover': {
@@ -4270,16 +4318,16 @@
       },
       '.bw_bccl_card_img_left': {
         'width': '40%',
-        'object-fit': 'cover'
+        objectFit: 'cover'
       },
       '.bw_bccl_card_img_right': {
         'width': '40%',
-        'object-fit': 'cover'
+        objectFit: 'cover'
       },
       '.bw_bccl_card_subtitle, .card-subtitle': {
-        'margin-top': '-0.25rem',
-        'margin-bottom': '0.5rem',
-        'font-size': '0.875rem'
+        marginTop: '-0.25rem',
+        marginBottom: '0.5rem',
+        fontSize: '0.875rem'
       }
     },
     // ---- Forms ----
@@ -4287,73 +4335,73 @@
       '.bw_bccl_form_control': {
         'display': 'block',
         'width': '100%',
-        'font-size': '0.9375rem',
-        'font-weight': '400',
-        'line-height': '1.5',
-        'background-clip': 'padding-box',
+        fontSize: '0.9375rem',
+        fontWeight: '400',
+        lineHeight: '1.5',
+        backgroundClip: 'padding-box',
         'appearance': 'none',
         'border': '1px solid transparent',
-        'font-family': 'inherit',
+        fontFamily: 'inherit',
         'transition': 'border-color 0.15s ease-out, box-shadow 0.15s ease-out'
       },
       '.bw_bccl_form_control:focus': {
         'outline': '2px solid currentColor',
-        'outline-offset': '-1px'
+        outlineOffset: '-1px'
       },
       '.bw_bccl_form_control::placeholder': {
         'opacity': '1'
       },
       '.bw_bccl_form_label': {
         'display': 'block',
-        'margin-bottom': '0.375rem',
-        'font-size': '0.875rem',
-        'font-weight': '600'
+        marginBottom: '0.375rem',
+        fontSize: '0.875rem',
+        fontWeight: '600'
       },
       '.bw_bccl_form_group': {
-        'margin-bottom': '1.25rem'
+        marginBottom: '1.25rem'
       },
       '.bw_bccl_form_text': {
-        'margin-top': '0.25rem',
-        'font-size': '0.8125rem'
+        marginTop: '0.25rem',
+        fontSize: '0.8125rem'
       },
       'select.bw_bccl_form_control': {
-        'padding-right': '2.25rem',
-        'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\")",
-        'background-repeat': 'no-repeat',
-        'background-position': 'right 0.75rem center',
-        'background-size': '16px 12px'
+        paddingRight: '2.25rem',
+        backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e\")",
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 0.75rem center',
+        backgroundSize: '16px 12px'
       },
       'textarea.bw_bccl_form_control': {
-        'min-height': '5rem',
+        minHeight: '5rem',
         'resize': 'vertical'
       },
       '.bw_valid_feedback': {
         'display': 'block',
-        'font-size': '0.875rem',
-        'margin-top': '0.25rem'
+        fontSize: '0.875rem',
+        marginTop: '0.25rem'
       },
       '.bw_invalid_feedback': {
         'display': 'block',
-        'font-size': '0.875rem',
-        'margin-top': '0.25rem'
+        fontSize: '0.875rem',
+        marginTop: '0.25rem'
       }
     },
     // ---- Form checks ----
     formChecks: {
       '.bw_bccl_form_check': {
         'display': 'flex',
-        'align-items': 'center',
+        alignItems: 'center',
         'gap': '0.5rem',
-        'min-height': '1.5rem',
-        'margin-bottom': '0.25rem'
+        minHeight: '1.5rem',
+        marginBottom: '0.25rem'
       },
       '.bw_bccl_form_check_input': {
         'width': '1rem',
         'height': '1rem',
         'margin': '0',
         'cursor': 'pointer',
-        'flex-shrink': '0',
-        'border-radius': '0.25rem',
+        flexShrink: '0',
+        borderRadius: '0.25rem',
         'appearance': 'auto'
       },
       '.bw_bccl_form_check_input:disabled': {
@@ -4362,8 +4410,8 @@
       },
       '.bw_bccl_form_check_label': {
         'cursor': 'pointer',
-        'user-select': 'none',
-        'font-size': '0.9375rem'
+        userSelect: 'none',
+        fontSize: '0.9375rem'
       }
     },
     // ---- Navigation ----
@@ -4371,68 +4419,68 @@
       '.bw_bccl_navbar': {
         'position': 'relative',
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'align-items': 'center',
-        'justify-content': 'space-between',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         'padding': '0.5rem 1.5rem'
       },
       '.bw_bccl_navbar > .bw_bccl_container, .bw_bccl_navbar > .bw_container': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'align-items': 'center',
-        'justify-content': 'space-between'
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       },
       '.bw_bccl_navbar_brand': {
         'display': 'inline-flex',
-        'align-items': 'center',
+        alignItems: 'center',
         'gap': '0.5rem',
-        'padding-top': '0.25rem',
-        'padding-bottom': '0.25rem',
-        'margin-right': '1.5rem',
-        'font-size': '1.125rem',
-        'font-weight': '600',
-        'line-height': 'inherit',
-        'white-space': 'nowrap',
-        'text-decoration': 'none'
+        paddingTop: '0.25rem',
+        paddingBottom: '0.25rem',
+        marginRight: '1.5rem',
+        fontSize: '1.125rem',
+        fontWeight: '600',
+        lineHeight: 'inherit',
+        whiteSpace: 'nowrap',
+        textDecoration: 'none'
       },
       '.bw_bccl_navbar_nav': {
         'display': 'flex',
-        'flex-direction': 'row',
-        'padding-left': '0',
-        'margin-bottom': '0',
-        'list-style': 'none',
+        flexDirection: 'row',
+        paddingLeft: '0',
+        marginBottom: '0',
+        listStyle: 'none',
         'gap': '0.25rem'
       },
       '.bw_bccl_navbar_nav .bw_nav_link': {
         'display': 'block',
-        'text-decoration': 'none',
-        'font-size': '0.875rem',
-        'font-weight': '500'
+        textDecoration: 'none',
+        fontSize: '0.875rem',
+        fontWeight: '500'
       }
     },
     // ---- Alerts ----
     alerts: {
       '.bw_bccl_alert': {
         'position': 'relative',
-        'margin-bottom': '1rem',
+        marginBottom: '1rem',
         'border': '1px solid transparent',
-        'font-size': '0.9375rem',
-        'line-height': '1.6'
+        fontSize: '0.9375rem',
+        lineHeight: '1.6'
       },
       '.bw_bccl_alert_heading, .alert-heading': {
         'color': 'inherit'
       },
       '.bw_bccl_alert_link, .alert-link': {
-        'font-weight': '700'
+        fontWeight: '700'
       },
       '.bw_bccl_alert_dismissible': {
-        'padding-right': '3rem'
+        paddingRight: '3rem'
       },
       '.bw_bccl_alert_dismissible .btn-close': {
         'position': 'absolute',
         'top': '0',
         'right': '0',
-        'z-index': '2',
+        zIndex: '2',
         'padding': '1.25rem 1rem'
       }
     },
@@ -4440,28 +4488,28 @@
     badges: {
       '.bw_bccl_badge': {
         'display': 'inline-block',
-        'font-size': '0.875rem',
-        'font-weight': '600',
-        'line-height': '1.3',
-        'text-align': 'center',
-        'white-space': 'nowrap',
-        'vertical-align': 'baseline',
+        fontSize: '0.875rem',
+        fontWeight: '600',
+        lineHeight: '1.3',
+        textAlign: 'center',
+        whiteSpace: 'nowrap',
+        verticalAlign: 'baseline',
         'padding': '0.35rem 0.65rem',
-        'border-radius': '0.25rem'
+        borderRadius: '0.25rem'
       },
       '.bw_bccl_badge:empty': {
         'display': 'none'
       },
       '.bw_bccl_badge_sm': {
-        'font-size': '0.75rem',
+        fontSize: '0.75rem',
         'padding': '0.25rem 0.5rem'
       },
       '.bw_bccl_badge_lg': {
-        'font-size': '1rem',
+        fontSize: '1rem',
         'padding': '0.5rem 0.875rem'
       },
       '.bw_bccl_badge_pill': {
-        'border-radius': '50rem'
+        borderRadius: '50rem'
       },
       '.btn .badge': {
         'position': 'relative',
@@ -4474,27 +4522,27 @@
         'display': 'flex',
         'height': '1.25rem',
         'overflow': 'hidden',
-        'font-size': '.875rem'
+        fontSize: '.875rem'
       },
       '.bw_bccl_progress_bar': {
         'display': 'flex',
-        'flex-direction': 'column',
-        'justify-content': 'center',
+        flexDirection: 'column',
+        justifyContent: 'center',
         'overflow': 'hidden',
-        'text-align': 'center',
-        'white-space': 'nowrap',
-        'font-weight': '600'
+        textAlign: 'center',
+        whiteSpace: 'nowrap',
+        fontWeight: '600'
       },
       '.bw_bccl_progress_bar_striped': {
-        'background-image': 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
-        'background-size': '1rem 1rem'
+        backgroundImage: 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)',
+        backgroundSize: '1rem 1rem'
       },
       '.bw_bccl_progress_bar_animated': {
         'animation': 'progress-bar-stripes 1s linear infinite'
       },
       '@keyframes progress-bar-stripes': {
         '0%': {
-          'background-position-x': '1rem'
+          backgroundPositionX: '1rem'
         }
       }
     },
@@ -4502,41 +4550,41 @@
     tabs: {
       '.bw_nav': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'padding-left': '0',
-        'margin-bottom': '0',
-        'list-style': 'none',
+        flexWrap: 'wrap',
+        paddingLeft: '0',
+        marginBottom: '0',
+        listStyle: 'none',
         'gap': '0'
       },
       '.bw_nav_item': {
         'display': 'block'
       },
       '.bw_nav_tabs .bw_nav_item': {
-        'margin-bottom': '-2px'
+        marginBottom: '-2px'
       },
       '.bw_nav_link': {
         'display': 'block',
-        'font-size': '0.875rem',
-        'font-weight': '500',
+        fontSize: '0.875rem',
+        fontWeight: '500',
         'padding': '0.625rem 1rem',
-        'text-decoration': 'none',
+        textDecoration: 'none',
         'cursor': 'pointer',
         'border': 'none',
         'background': 'transparent',
-        'font-family': 'inherit'
+        fontFamily: 'inherit'
       },
       '.bw_nav_link:focus-visible': {
         'outline': '2px solid currentColor',
-        'outline-offset': '-2px'
+        outlineOffset: '-2px'
       },
       '.bw_nav_tabs .bw_nav_link': {
         'border': 'none',
-        'border-bottom': '2px solid transparent',
-        'border-radius': '0',
-        'background-color': 'transparent'
+        borderBottom: '2px solid transparent',
+        borderRadius: '0',
+        backgroundColor: 'transparent'
       },
       '.bw_nav_vertical': {
-        'flex-direction': 'column'
+        flexDirection: 'column'
       },
       '.bw_bccl_tab_content': {
         'padding': '1.25rem 0'
@@ -4548,123 +4596,123 @@
         'display': 'block'
       },
       '.bw_nav_scrollable': {
-        'flex-wrap': 'nowrap',
-        'overflow-x': 'auto',
+        flexWrap: 'nowrap',
+        overflowX: 'auto',
         '-webkit-overflow-scrolling': 'touch',
-        'scrollbar-width': 'none'
+        scrollbarWidth: 'none'
       },
       '.bw_nav_scrollable::-webkit-scrollbar': {
         'display': 'none'
       },
       '.bw_nav_scrollable .bw_nav_link': {
-        'white-space': 'nowrap'
+        whiteSpace: 'nowrap'
       }
     },
     // ---- List groups ----
     listGroups: {
       '.bw_list_group': {
         'display': 'flex',
-        'flex-direction': 'column',
-        'padding-left': '0',
-        'margin-bottom': '0'
+        flexDirection: 'column',
+        paddingLeft: '0',
+        marginBottom: '0'
       },
       '.bw_list_group_item': {
         'position': 'relative',
         'display': 'block',
-        'text-decoration': 'none',
-        'font-size': '0.9375rem'
+        textDecoration: 'none',
+        fontSize: '0.9375rem'
       },
       '.bw_list_group_item:first-child': {
-        'border-top-left-radius': 'inherit',
-        'border-top-right-radius': 'inherit'
+        borderTopLeftRadius: 'inherit',
+        borderTopRightRadius: 'inherit'
       },
       '.bw_list_group_item:last-child': {
-        'border-bottom-right-radius': 'inherit',
-        'border-bottom-left-radius': 'inherit'
+        borderBottomRightRadius: 'inherit',
+        borderBottomLeftRadius: 'inherit'
       },
       '.bw_list_group_item + .bw_list_group_item': {
-        'border-top-width': '0'
+        borderTopWidth: '0'
       },
       '.bw_list_group_item.disabled': {
-        'pointer-events': 'none'
+        pointerEvents: 'none'
       },
       'a.bw_list_group_item': {
         'cursor': 'pointer'
       },
       'a.bw_list_group_item:focus-visible, .bw_list_group_item:focus-visible': {
-        'z-index': '2',
+        zIndex: '2',
         'outline': '2px solid currentColor',
-        'outline-offset': '-2px'
+        outlineOffset: '-2px'
       },
       '.bw_list_group_flush': {
-        'border-radius': '0'
+        borderRadius: '0'
       },
       '.bw_list_group_flush > .bw_list_group_item': {
-        'border-width': '0 0 1px',
-        'border-radius': '0'
+        borderWidth: '0 0 1px',
+        borderRadius: '0'
       },
       '.bw_list_group_flush > .bw_list_group_item:last-child': {
-        'border-bottom-width': '0'
+        borderBottomWidth: '0'
       }
     },
     // ---- Pagination ----
     pagination: {
       '.bw_bccl_pagination': {
         'display': 'flex',
-        'padding-left': '0',
-        'list-style': 'none',
-        'margin-bottom': '0'
+        paddingLeft: '0',
+        listStyle: 'none',
+        marginBottom: '0'
       },
       '.bw_page_item': {
         'display': 'list-item',
-        'list-style': 'none'
+        listStyle: 'none'
       },
       '.bw_page_link': {
         'position': 'relative',
         'display': 'block',
         'padding': '0.375rem 0.75rem',
-        'margin-left': '-1px',
-        'line-height': '1.25',
-        'text-decoration': 'none',
+        marginLeft: '-1px',
+        lineHeight: '1.25',
+        textDecoration: 'none',
         'border': '1px solid transparent',
         'cursor': 'pointer',
-        'font-family': 'inherit',
-        'font-size': 'inherit',
+        fontFamily: 'inherit',
+        fontSize: 'inherit',
         'background': 'none'
       },
       '.bw_page_item:first-child .bw_page_link': {
-        'margin-left': '0'
+        marginLeft: '0'
       },
       // makePagination({ size }) -- same steps as the button sizes
       '.bw_bccl_pagination_sm .bw_page_link': {
         'padding': '0.25rem 0.5rem',
-        'font-size': '0.8125rem'
+        fontSize: '0.8125rem'
       },
       '.bw_bccl_pagination_lg .bw_page_link': {
         'padding': '0.625rem 1.25rem',
-        'font-size': '1.125rem'
+        fontSize: '1.125rem'
       },
       '.bw_page_link:focus-visible': {
-        'z-index': '3',
+        zIndex: '3',
         'outline': '2px solid currentColor',
-        'outline-offset': '-2px'
+        outlineOffset: '-2px'
       }
     },
     // ---- Breadcrumb ----
     breadcrumb: {
       '.bw_bccl_breadcrumb': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
+        flexWrap: 'wrap',
         'padding': '0 0',
-        'margin-bottom': '1rem',
-        'list-style': 'none'
+        marginBottom: '1rem',
+        listStyle: 'none'
       },
       // The <ol> inside the <nav>. Without this it renders as a numbered list,
       // because the flex/list-style rules above land on the wrapping <nav>.
       '.bw_bccl_breadcrumb_list': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'list-style': 'none',
+        flexWrap: 'wrap',
+        listStyle: 'none',
         'margin': '0',
         'padding': '0'
       },
@@ -4672,18 +4720,18 @@
         'display': 'flex'
       },
       '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item': {
-        'padding-left': '0.5rem'
+        paddingLeft: '0.5rem'
       },
       '.bw_bccl_breadcrumb_item + .bw_bccl_breadcrumb_item::before': {
         'float': 'left',
-        'padding-right': '0.5rem',
+        paddingRight: '0.5rem',
         'content': '"/"'
       },
       '.bw_bccl_breadcrumb_item a': {
-        'text-decoration': 'none'
+        textDecoration: 'none'
       },
       '.bw_bccl_breadcrumb_item.active': {
-        'font-weight': '500'
+        fontWeight: '500'
       }
     },
     // ---- Hero ----
@@ -4698,15 +4746,15 @@
         'left': '0',
         'right': '0',
         'bottom': '0',
-        'z-index': '1'
+        zIndex: '1'
       },
       '.bw_bccl_hero_content': {
         'position': 'relative',
-        'z-index': '2'
+        zIndex: '2'
       },
       '.bw_bccl_hero_title': {
-        'font-weight': '300',
-        'letter-spacing': '-0.05rem',
+        fontWeight: '300',
+        letterSpacing: '-0.05rem',
         'color': 'inherit'
       },
       '.bw_bccl_hero_subtitle': {
@@ -4715,8 +4763,8 @@
       '.bw_bccl_hero_actions': {
         'display': 'flex',
         'gap': '1rem',
-        'justify-content': 'center',
-        'flex-wrap': 'wrap'
+        justifyContent: 'center',
+        flexWrap: 'wrap'
       }
     },
     // ---- Features ----
@@ -4726,10 +4774,10 @@
       },
       '.bw_feature_icon': {
         'display': 'inline-block',
-        'margin-bottom': '1rem'
+        marginBottom: '1rem'
       },
       '.bw_feature_title': {
-        'margin-bottom': '0.5rem'
+        marginBottom: '0.5rem'
       },
       '.bw_feature_grid': {
         'width': '100%'
@@ -4741,12 +4789,12 @@
         'position': 'relative'
       },
       '.bw_section_header': {
-        'margin-bottom': '3rem'
+        marginBottom: '3rem'
       },
       '.bw_section_title': {
-        'margin-bottom': '1rem',
-        'font-weight': '300',
-        'font-size': 'calc(1.325rem + .9vw)'
+        marginBottom: '1rem',
+        fontWeight: '300',
+        fontSize: 'calc(1.325rem + .9vw)'
       }
     },
     // ---- CTA ----
@@ -4755,17 +4803,17 @@
         'position': 'relative'
       },
       '.bw_cta_content': {
-        'max-width': '48rem',
+        maxWidth: '48rem',
         'margin': '0 auto'
       },
       '.bw_cta_title': {
-        'font-weight': '300'
+        fontWeight: '300'
       },
       '.bw_cta_actions': {
         'display': 'flex',
         'gap': '1rem',
-        'justify-content': 'center',
-        'flex-wrap': 'wrap'
+        justifyContent: 'center',
+        flexWrap: 'wrap'
       }
     },
     // ---- Spinner ----
@@ -4774,33 +4822,33 @@
         'display': 'inline-block',
         'width': '2rem',
         'height': '2rem',
-        'vertical-align': '-0.125em',
+        verticalAlign: '-0.125em',
         'border': '0.25em solid currentcolor',
-        'border-right-color': 'transparent',
-        'border-radius': '50%',
+        borderRightColor: 'transparent',
+        borderRadius: '50%',
         'animation': 'bw_spinner_border 0.75s linear infinite'
       },
       '.bw_spinner_border_sm': {
         'width': '1rem',
         'height': '1rem',
-        'border-width': '0.2em'
+        borderWidth: '0.2em'
       },
       '.bw_spinner_border_lg': {
         'width': '3rem',
         'height': '3rem',
-        'border-width': '0.3em'
+        borderWidth: '0.3em'
       },
       '.bw_spinner_border_md': {
         'width': '2rem',
         'height': '2rem',
-        'border-width': '0.25em'
+        borderWidth: '0.25em'
       },
       '.bw_spinner_grow': {
         'display': 'inline-block',
         'width': '2rem',
         'height': '2rem',
-        'vertical-align': '-0.125em',
-        'border-radius': '50%',
+        verticalAlign: '-0.125em',
+        borderRadius: '50%',
         'opacity': '0',
         'animation': 'bw_spinner_grow 0.75s linear infinite'
       },
@@ -4835,7 +4883,7 @@
         'margin': '-1px',
         'overflow': 'hidden',
         'clip': 'rect(0, 0, 0, 0)',
-        'white-space': 'nowrap',
+        whiteSpace: 'nowrap',
         'border': '0'
       }
     },
@@ -4843,17 +4891,17 @@
     closeButton: {
       '.bw_close': {
         'display': 'inline-flex',
-        'align-items': 'center',
-        'justify-content': 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
         'width': '1.5rem',
         'height': '1.5rem',
         'padding': '0',
-        'font-size': '1.25rem',
-        'font-weight': '700',
-        'line-height': '1',
+        fontSize: '1.25rem',
+        fontWeight: '700',
+        lineHeight: '1',
         'background': 'transparent',
         'border': '0',
-        'border-radius': '0.25rem',
+        borderRadius: '0.25rem',
         'cursor': 'pointer',
         'transition': 'opacity 0.15s ease-out'
       },
@@ -4862,44 +4910,44 @@
       },
       '.bw_close:focus-visible': {
         'outline': '2px solid currentColor',
-        'outline-offset': '2px'
+        outlineOffset: '2px'
       }
     },
     // ---- Code demo ----
     codeDemo: {
       '.bw_code_demo': {
-        'margin-bottom': '2rem'
+        marginBottom: '2rem'
       },
       '.bw_code_pre': {
         'margin': '0',
         'border': 'none',
-        'overflow-x': 'auto',
-        'max-width': '100%'
+        overflowX: 'auto',
+        maxWidth: '100%'
       },
       '.bw_code_block': {
         'display': 'block',
         'padding': '1.25rem',
-        'font-family': '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
-        'font-size': '0.8125rem',
-        'line-height': '1.6'
+        fontFamily: '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace',
+        fontSize: '0.8125rem',
+        lineHeight: '1.6'
       },
       '.bw_code_copy_btn': {
         'position': 'absolute',
         'top': '0.5rem',
         'right': '0.5rem',
         'padding': '0.25rem 0.625rem',
-        'font-size': '0.6875rem',
+        fontSize: '0.6875rem',
         'cursor': 'pointer',
-        'font-family': 'inherit'
+        fontFamily: 'inherit'
       },
       '.bw_copy_btn': {
         'position': 'absolute',
         'top': '0.5rem',
         'right': '0.5rem',
         'padding': '0.25rem 0.625rem',
-        'font-size': '0.6875rem',
+        fontSize: '0.6875rem',
         'cursor': 'pointer',
-        'font-family': 'inherit'
+        fontFamily: 'inherit'
       }
     },
     // ---- Button group ----
@@ -4907,38 +4955,38 @@
       '.bw_bccl_btn_group, .bw_bccl_btn_group_vertical': {
         'position': 'relative',
         'display': 'inline-flex',
-        'vertical-align': 'middle'
+        verticalAlign: 'middle'
       },
       '.bw_bccl_btn_group > .bw_bccl_btn, .bw_bccl_btn_group_vertical > .bw_bccl_btn': {
         'position': 'relative',
         'flex': '1 1 auto',
-        'border-radius': '0',
-        'margin-left': '-1px'
+        borderRadius: '0',
+        marginLeft: '-1px'
       },
       '.bw_bccl_btn_group > .bw_bccl_btn:first-child': {
-        'margin-left': '0'
+        marginLeft: '0'
       },
       '.bw_bccl_btn_group > .bw_bccl_btn:last-child': {},
       '.bw_bccl_btn_group_lg > .bw_bccl_btn': {
         'padding': '0.625rem 1.5rem',
-        'font-size': '1rem'
+        fontSize: '1rem'
       },
       '.bw_bccl_btn_group_sm > .bw_bccl_btn': {
         'padding': '0.25rem 0.75rem',
-        'font-size': '0.8125rem'
+        fontSize: '0.8125rem'
       },
       '.bw_bccl_btn_group_vertical': {
-        'flex-direction': 'column',
-        'align-items': 'flex-start',
-        'justify-content': 'center'
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'center'
       },
       '.bw_bccl_btn_group_vertical > .bw_bccl_btn': {
         'width': '100%',
-        'margin-left': '0',
-        'margin-top': '-1px'
+        marginLeft: '0',
+        marginTop: '-1px'
       },
       '.bw_bccl_btn_group_vertical > .bw_bccl_btn:first-child': {
-        'margin-top': '0'
+        marginTop: '0'
       },
       '.bw_bccl_btn_group_vertical > .bw_bccl_btn:last-child': {}
     },
@@ -4951,7 +4999,7 @@
         'border': '1px solid transparent'
       },
       '.bw_bccl_accordion_item + .bw_bccl_accordion_item': {
-        'border-top': '0'
+        borderTop: '0'
       },
       '.bw_bccl_accordion_header': {
         'margin': '0'
@@ -4959,27 +5007,27 @@
       '.bw_bccl_accordion_button': {
         'position': 'relative',
         'display': 'flex',
-        'align-items': 'center',
+        alignItems: 'center',
         'width': '100%',
         'padding': '0.875rem 1.25rem',
-        'font-size': '1rem',
-        'font-weight': '500',
-        'text-align': 'left',
-        'background-color': 'transparent',
+        fontSize: '1rem',
+        fontWeight: '500',
+        textAlign: 'left',
+        backgroundColor: 'transparent',
         'border': '0',
-        'overflow-anchor': 'none',
+        overflowAnchor: 'none',
         'cursor': 'pointer',
-        'font-family': 'inherit'
+        fontFamily: 'inherit'
       },
       '.bw_bccl_accordion_button::after': {
-        'flex-shrink': '0',
+        flexShrink: '0',
         'width': '1.25rem',
         'height': '1.25rem',
-        'margin-left': 'auto',
+        marginLeft: 'auto',
         'content': '""',
-        'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")",
-        'background-repeat': 'no-repeat',
-        'background-size': '1.25rem',
+        backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23212529'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e\")",
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: '1.25rem',
         'transition': 'transform 0.2s ease-out'
       },
       '.bw_bccl_accordion_button:not(.bw_collapsed)::after': {
@@ -4989,12 +5037,12 @@
         'padding': '1rem 1.25rem'
       },
       '.bw_bccl_accordion_collapse': {
-        'max-height': '0',
+        maxHeight: '0',
         'overflow': 'hidden',
         'transition': 'max-height 0.3s ease'
       },
       '.bw_bccl_accordion_collapse.bw_collapse_show': {
-        'max-height': 'none'
+        maxHeight: 'none'
       }
     },
     // ---- Carousel ----
@@ -5008,18 +5056,18 @@
         'height': '100%'
       },
       '.bw_bccl_carousel_slide': {
-        'min-width': '100%',
-        'flex-shrink': '0',
+        minWidth: '100%',
+        flexShrink: '0',
         'overflow': 'hidden',
         'position': 'relative',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center'
+        alignItems: 'center',
+        justifyContent: 'center'
       },
       '.bw_bccl_carousel_slide img': {
         'width': '100%',
         'height': '100%',
-        'object-fit': 'cover'
+        objectFit: 'cover'
       },
       '.bw_bccl_carousel_caption': {
         'position': 'absolute',
@@ -5027,7 +5075,7 @@
         'left': '0',
         'right': '0',
         'padding': '0.75rem 1rem',
-        'font-size': '0.875rem'
+        fontSize: '0.875rem'
       },
       '.bw_bccl_carousel_control': {
         'position': 'absolute',
@@ -5036,22 +5084,22 @@
         'width': '40px',
         'height': '40px',
         'border': 'none',
-        'border-radius': '50%',
+        borderRadius: '50%',
         'cursor': 'pointer',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'z-index': '2',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: '2',
         'padding': '0'
       },
       '.bw_bccl_carousel_control img': {
         'width': '20px',
         'height': '20px',
-        'pointer-events': 'none'
+        pointerEvents: 'none'
       },
       '.bw_bccl_carousel_control:focus-visible': {
         'outline': '2px solid currentColor',
-        'outline-offset': '2px'
+        outlineOffset: '2px'
       },
       '.bw_bccl_carousel_control_prev': {
         'left': '10px'
@@ -5066,12 +5114,12 @@
         'transform': 'translateX(-50%)',
         'display': 'flex',
         'gap': '6px',
-        'z-index': '2'
+        zIndex: '2'
       },
       '.bw_bccl_carousel_indicator': {
         'width': '10px',
         'height': '10px',
-        'border-radius': '50%',
+        borderRadius: '50%',
         'border': '2px solid transparent',
         'padding': '0',
         'cursor': 'pointer'
@@ -5084,32 +5132,32 @@
     modal: {
       '.bw_bccl_modal': {
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
         'position': 'fixed',
         'top': '0',
         'left': '0',
         'width': '100%',
         'height': '100%',
-        'z-index': '1050',
-        'overflow-x': 'hidden',
-        'overflow-y': 'auto',
+        zIndex: '1050',
+        overflowX: 'hidden',
+        overflowY: 'auto',
         'opacity': '0',
         'visibility': 'hidden',
-        'pointer-events': 'none',
+        pointerEvents: 'none',
         'transition': 'opacity 0.2s ease-out, visibility 0.2s ease-out'
       },
       '.bw_bccl_modal.bw_bccl_modal_show': {
         'opacity': '1',
         'visibility': 'visible',
-        'pointer-events': 'auto'
+        pointerEvents: 'auto'
       },
       '.bw_bccl_modal_dialog': {
         'position': 'relative',
         'width': 'calc(100% - 1rem)',
-        'max-width': '500px',
+        maxWidth: '500px',
         'margin': '1.75rem auto',
-        'pointer-events': 'none',
+        pointerEvents: 'none',
         'transform': 'translateY(-16px)',
         'transition': 'transform 0.2s ease-out'
       },
@@ -5117,35 +5165,35 @@
         'transform': 'translateY(0)'
       },
       '.bw_bccl_modal_sm': {
-        'max-width': '300px'
+        maxWidth: '300px'
       },
       '.bw_bccl_modal_lg': {
-        'max-width': '800px'
+        maxWidth: '800px'
       },
       '.bw_bccl_modal_xl': {
-        'max-width': '1140px'
+        maxWidth: '1140px'
       },
       '.bw_bccl_modal_content': {
         'position': 'relative',
         'display': 'flex',
-        'flex-direction': 'column',
-        'pointer-events': 'auto',
-        'background-clip': 'padding-box',
+        flexDirection: 'column',
+        pointerEvents: 'auto',
+        backgroundClip: 'padding-box',
         'border': '1px solid transparent',
         'outline': '0'
       },
       '.bw_bccl_modal_header': {
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'space-between',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         'padding': '1rem 1.25rem',
-        'border-bottom': '1px solid transparent'
+        borderBottom: '1px solid transparent'
       },
       '.bw_bccl_modal_title': {
         'margin': '0',
-        'font-size': '1.25rem',
-        'font-weight': '600',
-        'line-height': '1.3'
+        fontSize: '1.25rem',
+        fontWeight: '600',
+        lineHeight: '1.3'
       },
       '.bw_bccl_modal_body': {
         'position': 'relative',
@@ -5154,22 +5202,22 @@
       },
       '.bw_bccl_modal_footer': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'align-items': 'center',
-        'justify-content': 'flex-end',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
         'gap': '0.5rem',
         'padding': '0.75rem 1.25rem',
-        'border-top': '1px solid transparent'
+        borderTop: '1px solid transparent'
       }
     },
     // ---- Toast ----
     toast: {
       '.bw_bccl_toast_container': {
         'position': 'fixed',
-        'z-index': '1080',
-        'pointer-events': 'none',
+        zIndex: '1080',
+        pointerEvents: 'none',
         'display': 'flex',
-        'flex-direction': 'column',
+        flexDirection: 'column',
         'gap': '0.5rem',
         'padding': '1rem'
       },
@@ -5200,10 +5248,10 @@
         'transform': 'translateX(-50%)'
       },
       '.bw_bccl_toast': {
-        'pointer-events': 'auto',
+        pointerEvents: 'auto',
         'width': '350px',
-        'max-width': 'calc(100vw - 2rem)',
-        'background-clip': 'padding-box',
+        maxWidth: 'calc(100vw - 2rem)',
+        backgroundClip: 'padding-box',
         'opacity': '0',
         'transform': 'translateY(-8px)',
         'transition': 'opacity 0.2s ease-out, transform 0.2s ease-out'
@@ -5218,15 +5266,15 @@
       },
       '.bw_bccl_toast_header': {
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'space-between',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         'padding': '0.5rem 0.75rem',
-        'font-size': '0.875rem',
-        'border-bottom': '1px solid transparent'
+        fontSize: '0.875rem',
+        borderBottom: '1px solid transparent'
       },
       '.bw_bccl_toast_body': {
         'padding': '0.5rem 0.75rem',
-        'font-size': '0.9375rem'
+        fontSize: '0.9375rem'
       }
     },
     // ---- Dropdown ----
@@ -5237,35 +5285,35 @@
       },
       '.bw_bccl_dropdown_toggle::after': {
         'display': 'inline-block',
-        'margin-left': '0.255em',
-        'vertical-align': '0.255em',
+        marginLeft: '0.255em',
+        verticalAlign: '0.255em',
         'content': '""',
-        'border-top': '0.3em solid',
-        'border-right': '0.3em solid transparent',
-        'border-bottom': '0',
-        'border-left': '0.3em solid transparent'
+        borderTop: '0.3em solid',
+        borderRight: '0.3em solid transparent',
+        borderBottom: '0',
+        borderLeft: '0.3em solid transparent'
       },
       '.bw_bccl_dropdown_menu': {
         'position': 'absolute',
         'top': '100%',
         'left': '0',
-        'z-index': '1000',
+        zIndex: '1000',
         'display': 'block',
-        'min-width': '10rem',
+        minWidth: '10rem',
         'padding': '0.5rem 0',
         'margin': '0.125rem 0 0',
-        'background-clip': 'padding-box',
+        backgroundClip: 'padding-box',
         'border': '1px solid transparent',
         'opacity': '0',
         'visibility': 'hidden',
-        'pointer-events': 'none',
+        pointerEvents: 'none',
         'transform': 'translateY(-4px)',
         'transition': 'opacity 0.15s ease-out, transform 0.15s ease-out, visibility 0.15s ease-out'
       },
       '.bw_bccl_dropdown_menu.bw_bccl_dropdown_show': {
         'opacity': '1',
         'visibility': 'visible',
-        'pointer-events': 'auto',
+        pointerEvents: 'auto',
         'transform': 'translateY(0)'
       },
       '.bw_bccl_dropdown_menu_end': {
@@ -5277,18 +5325,18 @@
         'width': '100%',
         'padding': '0.4rem 1rem',
         'clear': 'both',
-        'font-weight': '400',
-        'text-align': 'inherit',
-        'text-decoration': 'none',
-        'white-space': 'nowrap',
-        'background-color': 'transparent',
+        fontWeight: '400',
+        textAlign: 'inherit',
+        textDecoration: 'none',
+        whiteSpace: 'nowrap',
+        backgroundColor: 'transparent',
         'border': '0',
-        'font-size': '0.9375rem',
+        fontSize: '0.9375rem',
         'cursor': 'pointer'
       },
       '.bw_bccl_dropdown_item:focus-visible': {
         'outline': '2px solid currentColor',
-        'outline-offset': '-2px'
+        outlineOffset: '-2px'
       },
       '.bw_bccl_dropdown_divider': {
         'height': '0',
@@ -5300,23 +5348,23 @@
     // ---- Form switch ----
     formSwitch: {
       '.bw_bccl_form_switch': {
-        'padding-left': '2.5em'
+        paddingLeft: '2.5em'
       },
       '.bw_bccl_form_switch .bw_switch_input': {
         'width': '2em',
         'height': '1.125em',
-        'margin-left': '-2.5em',
-        'border-radius': '2em',
+        marginLeft: '-2.5em',
+        borderRadius: '2em',
         'appearance': 'none',
-        'background-image': "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,1)'/%3e%3c/svg%3e\")",
-        'background-position': 'left center',
-        'background-repeat': 'no-repeat',
-        'background-size': 'contain',
+        backgroundImage: "url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba(255,255,255,1)'/%3e%3c/svg%3e\")",
+        backgroundPosition: 'left center',
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'contain',
         'cursor': 'pointer',
         'transition': 'background-color 0.15s ease-out, background-position 0.15s ease-out, border-color 0.15s ease-out'
       },
       '.bw_bccl_form_switch .bw_switch_input:checked': {
-        'background-position': 'right center'
+        backgroundPosition: 'right center'
       },
       '.bw_bccl_form_switch .bw_switch_input:disabled': {
         'opacity': '0.5',
@@ -5326,27 +5374,27 @@
     // ---- Skeleton ----
     skeleton: {
       '.bw_skeleton': {
-        'background-size': '400% 100%',
+        backgroundSize: '400% 100%',
         'animation': 'bw_skeleton_shimmer 1.4s ease infinite'
       },
       '.bw_skeleton_text': {
         'height': '1em',
-        'margin-bottom': '0.5rem'
+        marginBottom: '0.5rem'
       },
       '.bw_skeleton_circle': {
-        'border-radius': '50%'
+        borderRadius: '50%'
       },
       '.bw_skeleton_rect': {},
       '.bw_skeleton_group': {
         'display': 'flex',
-        'flex-direction': 'column'
+        flexDirection: 'column'
       },
       '@keyframes bw_skeleton_shimmer': {
         '0%': {
-          'background-position': '100% 50%'
+          backgroundPosition: '100% 50%'
         },
         '100%': {
-          'background-position': '0 50%'
+          backgroundPosition: '0 50%'
         }
       }
     },
@@ -5354,63 +5402,63 @@
     avatar: {
       '.bw_avatar': {
         'display': 'inline-flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'border-radius': '50%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '50%',
         'overflow': 'hidden',
-        'font-weight': '600',
-        'text-transform': 'uppercase',
-        'vertical-align': 'middle',
-        'object-fit': 'cover'
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        verticalAlign: 'middle',
+        objectFit: 'cover'
       },
       '.bw_avatar_sm': {
         'width': '2rem',
         'height': '2rem',
-        'font-size': '0.75rem'
+        fontSize: '0.75rem'
       },
       '.bw_avatar_md': {
         'width': '3rem',
         'height': '3rem',
-        'font-size': '1rem'
+        fontSize: '1rem'
       },
       '.bw_avatar_lg': {
         'width': '4rem',
         'height': '4rem',
-        'font-size': '1.25rem'
+        fontSize: '1.25rem'
       },
       '.bw_avatar_xl': {
         'width': '5rem',
         'height': '5rem',
-        'font-size': '1.5rem'
+        fontSize: '1.5rem'
       }
     },
     // ---- Stat card ----
     statCard: {
       '.bw_stat_card': {
         'padding': '1.25rem',
-        'border-left': '4px solid transparent',
-        'background-color': 'inherit'
+        borderLeft: '4px solid transparent',
+        backgroundColor: 'inherit'
       },
       '.bw_stat_card:hover': {
         'transform': 'translateY(-1px)'
       },
       '.bw_stat_icon': {
-        'font-size': '1.5rem',
-        'margin-bottom': '0.5rem'
+        fontSize: '1.5rem',
+        marginBottom: '0.5rem'
       },
       '.bw_stat_value': {
-        'font-size': '2rem',
-        'font-weight': '700',
-        'line-height': '1.2'
+        fontSize: '2rem',
+        fontWeight: '700',
+        lineHeight: '1.2'
       },
       '.bw_stat_label': {
-        'font-size': '0.875rem',
-        'margin-top': '0.25rem'
+        fontSize: '0.875rem',
+        marginTop: '0.25rem'
       },
       '.bw_stat_change': {
-        'font-size': '0.875rem',
-        'font-weight': '500',
-        'margin-top': '0.5rem'
+        fontSize: '0.875rem',
+        fontWeight: '500',
+        marginTop: '0.5rem'
       }
     },
     // ---- Tooltip ----
@@ -5421,11 +5469,11 @@
       },
       '.bw_bccl_tooltip': {
         'position': 'absolute',
-        'z-index': '999',
-        'font-size': '0.875rem',
-        'white-space': 'nowrap',
-        'max-width': 'min(300px, calc(100vw - 1rem))',
-        'pointer-events': 'none',
+        zIndex: '999',
+        fontSize: '0.875rem',
+        whiteSpace: 'nowrap',
+        maxWidth: 'min(300px, calc(100vw - 1rem))',
+        pointerEvents: 'none',
         'opacity': '0',
         'visibility': 'hidden'
       },
@@ -5437,7 +5485,7 @@
         'bottom': '100%',
         'left': '50%',
         'transform': 'translateX(-50%) translateY(-4px)',
-        'margin-bottom': '4px'
+        marginBottom: '4px'
       },
       '.bw_bccl_tooltip_top.bw_bccl_tooltip_show': {
         'transform': 'translateX(-50%) translateY(0)'
@@ -5446,7 +5494,7 @@
         'top': '100%',
         'left': '50%',
         'transform': 'translateX(-50%) translateY(4px)',
-        'margin-top': '4px'
+        marginTop: '4px'
       },
       '.bw_bccl_tooltip_bottom.bw_bccl_tooltip_show': {
         'transform': 'translateX(-50%) translateY(0)'
@@ -5455,7 +5503,7 @@
         'right': '100%',
         'top': '50%',
         'transform': 'translateY(-50%) translateX(-4px)',
-        'margin-right': '4px'
+        marginRight: '4px'
       },
       '.bw_bccl_tooltip_left.bw_bccl_tooltip_show': {
         'transform': 'translateY(-50%) translateX(0)'
@@ -5464,7 +5512,7 @@
         'left': '100%',
         'top': '50%',
         'transform': 'translateY(-50%) translateX(4px)',
-        'margin-left': '4px'
+        marginLeft: '4px'
       },
       '.bw_bccl_tooltip_right.bw_bccl_tooltip_show': {
         'transform': 'translateY(-50%) translateX(0)'
@@ -5481,31 +5529,31 @@
       },
       '.bw_popover': {
         'position': 'absolute',
-        'z-index': '1000',
-        'min-width': '200px',
-        'max-width': 'min(320px, calc(100vw - 2rem))',
-        'pointer-events': 'none',
+        zIndex: '1000',
+        minWidth: '200px',
+        maxWidth: 'min(320px, calc(100vw - 2rem))',
+        pointerEvents: 'none',
         'opacity': '0',
         'visibility': 'hidden'
       },
       '.bw_popover.bw_popover_show': {
         'opacity': '1',
         'visibility': 'visible',
-        'pointer-events': 'auto'
+        pointerEvents: 'auto'
       },
       '.bw_popover_header': {
-        'font-weight': '600',
-        'font-size': '0.9375rem'
+        fontWeight: '600',
+        fontSize: '0.9375rem'
       },
       '.bw_popover_body': {
-        'font-size': '0.875rem',
-        'line-height': '1.5'
+        fontSize: '0.875rem',
+        lineHeight: '1.5'
       },
       '.bw_popover_top': {
         'bottom': '100%',
         'left': '50%',
         'transform': 'translateX(-50%) translateY(-8px)',
-        'margin-bottom': '8px'
+        marginBottom: '8px'
       },
       '.bw_popover_top.bw_popover_show': {
         'transform': 'translateX(-50%) translateY(0)'
@@ -5514,7 +5562,7 @@
         'top': '100%',
         'left': '50%',
         'transform': 'translateX(-50%) translateY(8px)',
-        'margin-top': '8px'
+        marginTop: '8px'
       },
       '.bw_popover_bottom.bw_popover_show': {
         'transform': 'translateX(-50%) translateY(0)'
@@ -5523,7 +5571,7 @@
         'right': '100%',
         'top': '50%',
         'transform': 'translateY(-50%) translateX(-8px)',
-        'margin-right': '8px'
+        marginRight: '8px'
       },
       '.bw_popover_left.bw_popover_show': {
         'transform': 'translateY(-50%) translateX(0)'
@@ -5532,7 +5580,7 @@
         'left': '100%',
         'top': '50%',
         'transform': 'translateY(-50%) translateX(8px)',
-        'margin-left': '8px'
+        marginLeft: '8px'
       },
       '.bw_popover_right.bw_popover_show': {
         'transform': 'translateY(-50%) translateX(0)'
@@ -5543,46 +5591,46 @@
       '.bw_search_input': {
         'position': 'relative',
         'display': 'flex',
-        'align-items': 'center'
+        alignItems: 'center'
       },
       '.bw_search_input .bw_search_field': {
-        'padding-right': '2.5rem'
+        paddingRight: '2.5rem'
       },
       '.bw_search_clear': {
         'position': 'absolute',
         'right': '0.5rem',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
         'width': '1.5rem',
         'height': '1.5rem',
         'border': 'none',
         'background': 'none',
-        'font-size': '1.25rem',
+        fontSize: '1.25rem',
         'cursor': 'pointer',
         'padding': '0',
-        'border-radius': '50%'
+        borderRadius: '50%'
       },
       '.bw_search_clear:focus-visible': {
         'outline': '2px solid currentColor',
-        'outline-offset': '2px'
+        outlineOffset: '2px'
       }
     },
     // ---- Range ----
     range: {
       '.bw_range_wrapper': {
-        'margin-bottom': '1rem'
+        marginBottom: '1rem'
       },
       '.bw_range_label': {
         'display': 'flex',
-        'justify-content': 'space-between',
-        'align-items': 'center',
-        'margin-bottom': '0.5rem',
-        'font-size': '0.875rem',
-        'font-weight': '500'
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '0.5rem',
+        fontSize: '0.875rem',
+        fontWeight: '500'
       },
       '.bw_range_value': {
-        'font-weight': '600'
+        fontWeight: '600'
       },
       '.bw_range': {
         'width': '100%',
@@ -5590,7 +5638,7 @@
         'padding': '0',
         'appearance': 'none',
         'border': 'none',
-        'border-radius': '0.25rem',
+        borderRadius: '0.25rem',
         'cursor': 'pointer',
         'outline': 'none'
       },
@@ -5601,17 +5649,17 @@
         'appearance': 'none',
         'width': '1.25rem',
         'height': '1.25rem',
-        'border-radius': '50%',
-        'border-width': '2px',
-        'border-style': 'solid',
+        borderRadius: '50%',
+        borderWidth: '2px',
+        borderStyle: 'solid',
         'cursor': 'pointer'
       },
       '.bw_range::-moz-range-thumb': {
         'width': '1.25rem',
         'height': '1.25rem',
-        'border-radius': '50%',
-        'border-width': '2px',
-        'border-style': 'solid',
+        borderRadius: '50%',
+        borderWidth: '2px',
+        borderStyle: 'solid',
         'cursor': 'pointer'
       },
       '.bw_range::-webkit-slider-thumb:hover': {
@@ -5626,46 +5674,46 @@
     mediaObject: {
       '.bw_media': {
         'display': 'flex',
-        'align-items': 'flex-start',
+        alignItems: 'flex-start',
         'gap': '1rem'
       },
       '.bw_media_reverse': {
-        'flex-direction': 'row-reverse'
+        flexDirection: 'row-reverse'
       },
       '.bw_media_img': {
-        'border-radius': '50%',
-        'object-fit': 'cover',
-        'flex-shrink': '0'
+        borderRadius: '50%',
+        objectFit: 'cover',
+        flexShrink: '0'
       },
       '.bw_media_body': {
         'flex': '1',
-        'min-width': '0'
+        minWidth: '0'
       },
       '.bw_media_title': {
         'margin': '0 0 0.25rem 0',
-        'font-size': '1rem',
-        'font-weight': '600',
-        'line-height': '1.3'
+        fontSize: '1rem',
+        fontWeight: '600',
+        lineHeight: '1.3'
       }
     },
     // ---- File upload ----
     fileUpload: {
       '.bw_file_upload': {
         'display': 'flex',
-        'flex-direction': 'column',
-        'align-items': 'center',
-        'justify-content': 'center',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
         'border': '2px dashed transparent',
         'cursor': 'pointer',
-        'text-align': 'center',
+        textAlign: 'center',
         'position': 'relative'
       },
       '.bw_file_upload_icon': {
-        'font-size': '2rem',
-        'margin-bottom': '0.5rem'
+        fontSize: '2rem',
+        marginBottom: '0.5rem'
       },
       '.bw_file_upload_text': {
-        'font-size': '0.875rem'
+        fontSize: '0.875rem'
       },
       '.bw_file_upload_input': {
         'position': 'absolute',
@@ -5682,7 +5730,7 @@
     timeline: {
       '.bw_bccl_timeline': {
         'position': 'relative',
-        'padding-left': '2rem'
+        paddingLeft: '2rem'
       },
       '.bw_bccl_timeline::before': {
         'content': '""',
@@ -5694,10 +5742,10 @@
       },
       '.bw_bccl_timeline_item': {
         'position': 'relative',
-        'padding-bottom': '1.5rem'
+        paddingBottom: '1.5rem'
       },
       '.bw_bccl_timeline_item:last-child': {
-        'padding-bottom': '0'
+        paddingBottom: '0'
       },
       '.bw_bccl_timeline_marker': {
         'position': 'absolute',
@@ -5705,26 +5753,26 @@
         'top': '0.25rem',
         'width': '0.75rem',
         'height': '0.75rem',
-        'border-radius': '50%'
+        borderRadius: '50%'
       },
       '.bw_bccl_timeline_content': {
-        'padding-left': '0.5rem'
+        paddingLeft: '0.5rem'
       },
       '.bw_bccl_timeline_date': {
-        'font-size': '0.75rem',
-        'margin-bottom': '0.25rem',
-        'font-weight': '500'
+        fontSize: '0.75rem',
+        marginBottom: '0.25rem',
+        fontWeight: '500'
       },
       '.bw_bccl_timeline_title': {
-        'font-size': '1rem',
-        'font-weight': '600',
+        fontSize: '1rem',
+        fontWeight: '600',
         'margin': '0 0 0.25rem 0',
-        'line-height': '1.3'
+        lineHeight: '1.3'
       },
       '.bw_bccl_timeline_text': {
-        'font-size': '0.875rem',
+        fontSize: '0.875rem',
         'margin': '0',
-        'line-height': '1.5'
+        lineHeight: '1.5'
       }
     },
     // ---- Stepper ----
@@ -5732,14 +5780,14 @@
       '.bw_stepper': {
         'display': 'flex',
         'gap': '0',
-        'counter-reset': 'step'
+        counterReset: 'step'
       },
       '.bw_step': {
         'flex': '1',
         'display': 'flex',
-        'flex-direction': 'column',
-        'align-items': 'center',
-        'text-align': 'center',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
         'position': 'relative'
       },
       '.bw_step + .bw_step::before': {
@@ -5753,71 +5801,71 @@
       '.bw_step_indicator': {
         'width': '2rem',
         'height': '2rem',
-        'border-radius': '50%',
+        borderRadius: '50%',
         'display': 'flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'font-size': '0.875rem',
-        'font-weight': '600',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '0.875rem',
+        fontWeight: '600',
         'position': 'relative',
-        'z-index': '1'
+        zIndex: '1'
       },
       '.bw_step_body': {
-        'margin-top': '0.5rem'
+        marginTop: '0.5rem'
       },
       '.bw_step_label': {
-        'font-size': '0.875rem',
-        'font-weight': '500'
+        fontSize: '0.875rem',
+        fontWeight: '500'
       },
       '.bw_step_description': {
-        'font-size': '0.75rem',
-        'margin-top': '0.125rem'
+        fontSize: '0.75rem',
+        marginTop: '0.125rem'
       }
     },
     // ---- Chip input ----
     chipInput: {
       '.bw_chip_input': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'align-items': 'center',
+        flexWrap: 'wrap',
+        alignItems: 'center',
         'gap': '0.375rem',
         'padding': '0.375rem 0.5rem',
-        'min-height': '2.5rem',
+        minHeight: '2.5rem',
         'cursor': 'text'
       },
       '.bw_chip': {
         'display': 'inline-flex',
-        'align-items': 'center',
+        alignItems: 'center',
         'gap': '0.25rem',
         'padding': '0.125rem 0.5rem',
-        'border-radius': '1rem',
-        'font-size': '0.8125rem',
-        'line-height': '1.5',
-        'white-space': 'nowrap'
+        borderRadius: '1rem',
+        fontSize: '0.8125rem',
+        lineHeight: '1.5',
+        whiteSpace: 'nowrap'
       },
       '.bw_chip_remove': {
         'display': 'inline-flex',
-        'align-items': 'center',
-        'justify-content': 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
         'width': '1rem',
         'height': '1rem',
         'border': 'none',
         'background': 'none',
-        'font-size': '0.875rem',
+        fontSize: '0.875rem',
         'cursor': 'pointer',
         'padding': '0',
-        'border-radius': '50%'
+        borderRadius: '50%'
       },
       '.bw_chip_remove:focus-visible': {
         'outline': '2px solid currentColor',
-        'outline-offset': '1px'
+        outlineOffset: '1px'
       },
       '.bw_chip_field': {
         'flex': '1',
-        'min-width': '80px',
+        minWidth: '80px',
         'border': 'none',
         'outline': 'none',
-        'font-size': '0.875rem',
+        fontSize: '0.875rem',
         'padding': '0.125rem 0',
         'background': 'transparent'
       }
@@ -5835,29 +5883,29 @@
           'padding': '2rem 1rem'
         },
         '.bw_cta_actions, .bw_cta-actions': {
-          'flex-direction': 'column'
+          flexDirection: 'column'
         },
         '.bw_bccl_modal_dialog': {
           'margin': '0.5rem auto'
         },
         '.bw_bccl_modal_lg': {
-          'max-width': 'calc(100% - 1rem)'
+          maxWidth: 'calc(100% - 1rem)'
         },
         '.bw_bccl_modal_xl': {
-          'max-width': 'calc(100% - 1rem)'
+          maxWidth: 'calc(100% - 1rem)'
         },
         '.bw_bccl_navbar': {
           'padding': '0.5rem 0.75rem'
         },
         '.bw_bccl_navbar_brand': {
-          'margin-right': '0.5rem',
-          'font-size': '1rem'
+          marginRight: '0.5rem',
+          fontSize: '1rem'
         },
         '.bw_bccl_navbar_nav': {
-          'flex-wrap': 'wrap'
+          flexWrap: 'wrap'
         },
         '.bw_bccl_tooltip': {
-          'white-space': 'normal'
+          whiteSpace: 'normal'
         }
       }
     }
@@ -7721,7 +7769,7 @@
    *   columns: 3,
    *   features: [
    *     { icon: "⚡", title: "Fast", description: "Zero build step" },
-   *     { icon: "📦", title: "Small", description: "Under 45KB gzipped" },
+   *     { icon: "📦", title: "Small", description: "Under 47KB gzipped" },
    *     { icon: "🔧", title: "Flexible", description: "Pure JS objects" }
    *   ]
    * });
@@ -10826,6 +10874,17 @@
   bw.debug = false;
 
   /**
+   * Strict targets. When true, a verb that acts on one target and cannot
+   * resolve it throws `Error("bw.<verb>: target not found")` instead of
+   * warning and returning null. Queries (`bw.el`, `bw.$`) and set verbs
+   * (`bw.addClass`, `bw.toggleClass`) are unchanged: a miss is a legitimate
+   * answer there. Off by default in 2.x; the throwing form is the 3.0
+   * default (#127).
+   * @type {boolean}
+   */
+  bw.strictTargets = false;
+
+  /**
    * Lazy-resolve Node.js `fs` module.
    * Tries require('fs') first (available in CJS/UMD Node.js builds),
    * then falls back to dynamic import('fs') for ESM.
@@ -11045,6 +11104,76 @@
   };
 
   /**
+   * Internal: remember what the user is doing inside `container` before a verb
+   * replaces its children, so the verb can put it back (#108). The focused
+   * element is kept as the node itself (a keyed sync or a table sort moves
+   * nodes and keeps them) and, when it has no id, as its child-index path from
+   * the container (a rebuilt tree has new nodes; an id finds the stand-in
+   * directly). A text caret is kept as its selection range, and the container's
+   * scroll offset, which collapses to 0 the moment the children go, is kept
+   * too. Two property reads when nothing inside has focus.
+   * @private
+   */
+  function _focusSnap(container) {
+    if (!container || typeof document === 'undefined') return null;
+    var a = document.activeElement;
+    var snap = {
+      top: container.scrollTop,
+      node: null,
+      path: null,
+      sel: null
+    };
+    if (a && a !== container && container.contains(a)) {
+      snap.node = a;
+      if (!a.id) {
+        var path = [],
+          n = a,
+          p;
+        while (n !== container && (p = n.parentNode)) {
+          path.unshift(Array.prototype.indexOf.call(p.children, n));
+          n = p;
+        }
+        snap.path = path;
+      }
+      if (typeof a.selectionStart === 'number') snap.sel = [a.selectionStart, a.selectionEnd];
+    }
+    return snap;
+  }
+
+  /**
+   * Internal: the other half of _focusSnap. Refocuses the same node if it is
+   * still in the container, else the element with the same id, else the element
+   * at the same path; nothing happens when none resolves. The scroll offset goes
+   * back last, because focus() scrolls its element into view (preventScroll asks
+   * it not to; a browser without the option ignores the argument).
+   * @private
+   */
+  function _focusRestore(container, snap) {
+    if (!snap) return;
+    var el = snap.node,
+      i;
+    if (el && !container.contains(el)) {
+      if (el.id) el = document.getElementById(el.id);else for (el = container, i = 0; el && i < snap.path.length; i++) el = el.children[snap.path[i]];
+      if (el && !container.contains(el)) el = null;
+    }
+    if (el && el !== document.activeElement) {
+      try {
+        el.focus({
+          preventScroll: true
+        });
+      } catch (e) {
+        el = null;
+      }
+      if (el && snap.sel && typeof el.selectionStart === 'number') {
+        try {
+          el.setSelectionRange(snap.sel[0], snap.sel[1]);
+        } catch (e2) {/* not a text control */}
+      }
+    }
+    if (snap.top) container.scrollTop = snap.top;
+  }
+
+  /**
    * Internal: apply content or function to a DOM element.
    * Shared by bw.el() and bw.$().
    * @private
@@ -11060,18 +11189,16 @@
     };
     if (_is(apply, 'function')) {
       apply(el);
-    } else if (_isA(apply)) {
+    } else if (_isA(apply) || _is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
+      // One TACO is a one-item list; the array path handles both.
+      var snap = _focusSnap(el);
       bw.unmountChildren(el);
       el.innerHTML = '';
-      _flat2(apply).forEach(function (item) {
+      _flat2(_isA(apply) ? apply : [apply]).forEach(function (item) {
         if (item != null) el.appendChild(bw.create(item, _nsOptsFor(el)));
       });
       mountNow();
-    } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
-      bw.unmountChildren(el);
-      el.innerHTML = '';
-      el.appendChild(bw.create(apply, _nsOptsFor(el)));
-      mountNow();
+      _focusRestore(el, snap);
     } else {
       var text = apply == null || typeof apply === 'boolean' ? '' : String(apply);
       // Same string as the one text node already there: no write (#129). A
@@ -11111,7 +11238,11 @@
       }
       if (!el) el = bw.el(target);
     }
-    if (!el && verb) _cw('bw.' + verb + ': target not found');
+    if (!el && verb) {
+      var msg = 'bw.' + verb + ': target not found';
+      if (bw.strictTargets) throw new Error(msg);
+      _cw(msg);
+    }
     return el;
   }
 
@@ -11878,7 +12009,7 @@
       bodyEndParts.push('for(var i=0;i<els.length;i++){');
       bodyEndParts.push('(function(el,entry){el.addEventListener(entry.event,function(event){');
       bodyEndParts.push('try{entry.fn.call(el,event);}catch(e){');
-      bodyEndParts.push('console.error("bw_act handler error — if this is a ReferenceError from a closure, use bw_act_* class tokens instead:",e);}');
+      bodyEndParts.push('console.error("bw_act handler error (a closure cannot be serialized; use bw_act_* class tokens):",e);}');
       bodyEndParts.push('});})(els[i],r[k]);}}}})();');
     }
     if (runtime === 'inline' || runtime === 'cdn') {
@@ -12921,31 +13052,29 @@
     var container = _resolveTarget(target, 'mount');
     if (!container) return null;
 
-    // Teardown existing children (compound calls atomic)
+    // Teardown existing children (compound calls atomic). What the user was doing
+    // inside -- focus, caret, scroll -- comes back after the rebuild (#108).
+    var snap = _focusSnap(container);
     bw.unmountChildren(container);
     container.innerHTML = '';
     if (taco == null) return null;
     var firstEl = null;
     var created = [];
-    if (_isA(taco)) {
-      for (var i = 0; i < taco.length; i++) {
-        if (taco[i] != null) {
-          var child = bw.create(taco[i], _nsOptsFor(container, options));
-          container.appendChild(child);
-          created.push(child);
-          if (!firstEl) firstEl = child;
-        }
+    var list = _isA(taco) ? taco : [taco];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] != null) {
+        var child = bw.create(list[i], _nsOptsFor(container, options));
+        container.appendChild(child);
+        created.push(child);
+        if (!firstEl) firstEl = child;
       }
-    } else {
-      firstEl = bw.create(taco, _nsOptsFor(container, options));
-      container.appendChild(firstEl);
-      created.push(firstEl);
     }
 
     // Walk each created child to register and fire mounted (not the container itself)
     for (var ci = 0; ci < created.length; ci++) {
       bw.mountTree(created[ci]);
     }
+    _focusRestore(container, snap);
     return firstEl;
   };
 
@@ -13010,6 +13139,7 @@
     if (!ref) return null;
     var parent = ref.parentNode;
     var next = ref.nextSibling;
+    var snap = _focusSnap(parent);
     bw.unmount(ref);
     if (ref.parentNode) ref.parentNode.removeChild(ref);
     if (taco == null) return null;
@@ -13018,6 +13148,7 @@
       if (next) parent.insertBefore(neo, next);else parent.appendChild(neo);
     }
     bw.mountTree(neo);
+    _focusRestore(parent, snap);
     return neo;
   };
 
@@ -13032,6 +13163,7 @@
   bw.refresh = function (ref) {
     var el = _resolveTarget(ref, 'refresh');
     if (!el) return null;
+    var snap = _focusSnap(el);
     bw.unmountChildren(el);
     el.innerHTML = '';
     // Invalidate slot cache so slots re-resolve after rebuild
@@ -13042,6 +13174,7 @@
       // Walk newly created children
       bw.mountTree(el);
     }
+    _focusRestore(el, snap);
 
     // Emit bw:refresh
     try {
@@ -13214,10 +13347,9 @@
     var createFn = opts.create;
     var updateFn = opts.update;
 
-    // Save focus to restore after reorder (insertBefore can blur in some environments)
-    /* c8 ignore next -- document is always defined in jsdom test env */
-    var focused = typeof document !== 'undefined' ? document.activeElement : null;
-    if (focused && !parentEl.contains(focused)) focused = null;
+    // insertBefore blurs the moved node in some environments; the shared snapshot
+    // puts focus back on the same node (#108).
+    var snap = _focusSnap(parentEl);
 
     // Build map of existing keyed children
     var existingByKey = {};
@@ -13277,14 +13409,7 @@
         prevNode = neo;
       }
     }
-
-    // Restore focus if it was lost during reorder
-    /* c8 ignore next 2 -- focus management not exercised in jsdom */
-    if (focused && focused.isConnected && document.activeElement !== focused) {
-      try {
-        focused.focus();
-      } catch (e) {}
-    }
+    _focusRestore(parentEl, snap);
   };
 
   /**
@@ -14355,6 +14480,22 @@
   bw.registerRemote = function (name, fn) {
     bw._clientRemotes[name] = fn;
   };
+
+  /**
+   * Capture hook for `client.screenshot()`. Null by default, so the builtin
+   * loads the vendored html2canvas. A page may set it to a function
+   * `(el, { scale }) => Promise<HTMLCanvasElement>` and the screenshot path
+   * uses that instead; `domToCanvas` from modern-screenshot and `toCanvas`
+   * from html-to-image fit as they are. Added because html2canvas 1.4.1 cannot
+   * parse CSS Color 4 functions such as `color-mix()` (#125).
+   * @type {?function(Element, {scale: number}): Promise<HTMLCanvasElement>}
+   * @category Server (bwserve)
+   * @see bw.registerRemote
+   * @example
+   * // domToCanvas is modern-screenshot, loaded by the page
+   * bw.capture = function(el, o) { return window.domToCanvas(el, { scale: o.scale }); };
+   */
+  bw.capture = null;
 
   /**
    * Connect this page to a bwserve endpoint over Server-Sent Events.
@@ -15977,10 +16118,9 @@
         }
       }
 
-      // Reattaching rows blurs whatever had focus inside them (bw.syncChildren
-      // restores focus for the same reason).
-      var focused = document.activeElement;
-      if (focused && !tbodyEl.contains(focused)) focused = null;
+      // Reattaching rows blurs whatever had focus inside them; the shared
+      // snapshot puts it back on the same (moved) node (#108).
+      var snap = _focusSnap(tbodyEl);
 
       // Detach reused rows first so unmountChildren only tears down dropped ones
       for (var n = 0; n < nextRows.length; n++) {
@@ -15990,11 +16130,7 @@
       while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
       for (var m = 0; m < nextRows.length; m++) tbodyEl.appendChild(nextRows[m]);
       bw.mountTree(tbodyEl);
-      if (focused && focused.isConnected && document.activeElement !== focused) {
-        try {
-          focused.focus();
-        } catch (e) {/* not focusable any more */}
-      }
+      _focusRestore(tbodyEl, snap);
       if (rowKey) {
         state.rowKeys = rows.map(function (row) {
           return String(row[rowKey]);

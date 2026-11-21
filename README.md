@@ -30,6 +30,10 @@ Each object has four keys: **t** (tag), **a** (attributes, including event handl
 
 A TACO is already a JavaScript object, so there is nothing to compile or transform. This makes bitwrench a good fit for situations where a build pipeline costs more than it buys: dashboards, internal tools, embedded device UIs, server-driven pages, or anything you want to ship as a single HTML file.
 
+## What ships
+
+Bitwrench has no runtime dependencies, no build step and no install-time scripts. The library is one file; a page is that file plus your own objects, and only your code runs between the two. Two third-party files live in the repository, html2canvas for screenshots and quikdown for Markdown. The tooling serves them to pages that ask for them; the bundle never includes them, and each is vendored from its upstream release and named in the changelog when it changes. Releases are published from CI with provenance, the workflows pin their actions to commits, dev dependencies install with scripts disabled, and `dist/` is committed so a build can be reproduced and diffed. [SECURITY.md](SECURITY.md) has the full list. This is a claim about surface area, not about safety: the list of things to audit is short, and it stays the same when npm changes.
+
 ## Installation
 
 ```bash
@@ -299,7 +303,7 @@ The same protocol works from Python, Go, Rust, or a shell script with `curl`. Se
 > making them a first-class library is in
 > [`dev/bw-embedded-release-plan-2.1.x.md`](dev/bw-embedded-release-plan-2.1.x.md).
 
-The library is 172KB on disk (47KB gzipped). A lean build without the component library (BCCL) and its stylesheet is 86KB (29KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
+The library is 172 KB on disk (47KB gzipped). A lean build without the component library (BCCL) and its stylesheet is 88KB (30KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
 
 ## CLI
 
@@ -402,8 +406,8 @@ The update functions (`bw.patch`, `bw.refresh`, `bw.update`, `bw.message`) form 
 
 | Format | File | Use case |
 | --- | --- | --- |
-| UMD | bitwrench.umd.min.js | Browsers and Node.js -- the `<script>` tag default (~46 KB gz) |
-| UMD, lean | bitwrench-lean.umd.min.js | Your own design: the engine, reset, utilities, grid, tables and bar chart; no component factories and no component CSS (~29 KB gz) |
+| UMD | bitwrench.umd.min.js | Browsers and Node.js -- the `<script>` tag default (~47 KB gz) |
+| UMD, lean | bitwrench-lean.umd.min.js | Your own design: the engine, reset, utilities, grid, tables and bar chart; no component factories and no component CSS (~30 KB gz) |
 | ESM | bitwrench.esm.min.js | Modern bundlers (Vite, webpack, etc.), `import` without npm |
 | ESM, lean | bitwrench-lean.esm.min.js | As above, without the built-in components |
 | CJS | bitwrench.min.cjs | Node.js require() |
@@ -422,7 +426,7 @@ its size and SRI hash.
 
 All formats include source maps. A separate CSS file (`bitwrench.css`) is also available for use without JavaScript.
 
-Every release is gated at 47KB gzipped for the UMD and ESM builds, measured against the pre-compressed `.gz` that ships. (The gate was 45KB through 2.1.6, 46KB from 2.1.7, and 47KB from 2.1.13; each raise is recorded with its reason in `tools/release.js`. The core/BCCL CSS split planned next shrinks the lean build, not this one.) If you are working on bundle size, [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output *larger*), and where the remaining headroom is.
+Every release is gated at 48KB gzipped for the UMD and ESM builds, and 30KB for the lean builds, measured against the pre-compressed `.gz` that ships. (The full gate has been raised three times, in 2.1.7, 2.1.13 and 2.1.15; each raise is recorded with its measured figures and reason in `tools/release.js`. The growth is in the engine file, not the widgets, and the 3.0 entry split is where it comes back out.) If you are working on bundle size, [Bundle size findings](dev/bitwrench-2.1.6-size-opt-findings.md) documents how to measure it correctly, which optimizations were measured and rejected (string interning makes gzipped output *larger*), and where the remaining headroom is.
 
 ## Documentation
 
@@ -477,7 +481,7 @@ Every release is gated at 47KB gzipped for the UMD and ESM builds, measured agai
 
 ## FAQ
 
-**Is this a framework?** -- No. It is a library (169KB on disk, 46KB gzipped). No lifecycle ceremony, no project structure. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
+**Is this a framework?** -- No. It is a library (172 KB on disk, 47KB gzipped). No lifecycle ceremony, no project structure. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
 
 **How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine.
 

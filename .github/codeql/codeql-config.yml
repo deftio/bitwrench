@@ -1,0 +1,12 @@
+# CodeQL configuration. Referenced from .github/workflows/codeql-analysis.yml.
+#
+# dist/ and releases/ are build output of src/ (minified, with source maps);
+# every finding there is a duplicate of a finding in src/, and the minified
+# copies drowned the signal: of 157 open alerts on 2026-11-21, 64 were in dist/
+# and 39 in releases/, against 21 in src/. dev/archive/ is retired code that is not shipped.
+name: "bitwrench"
+paths-ignore:
+  - dist
+  - releases
+  - dev/archive
+  - node_modules

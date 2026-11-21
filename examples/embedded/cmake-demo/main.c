@@ -188,7 +188,7 @@ static void dashboard(char *out, size_t out_size) {
      * turns a click into a post-back carrying this name. No onclick, and no
      * code from the device. */
     BW_TACO_ATTR(b1, "button",
-        "'class':'bw_bccl_btn bw_bccl_btn_primary bw_act_led_toggle','id':'led-btn'",
+        "'class':'bw_bccl_btn bw_primary bw_act_led_toggle','id':'led-btn'",
         led_btn_text());
     BW_TACO_ATTR(b2, "button",
         "'class':'bw_bccl_btn bw_bccl_btn_secondary bw_ml_2 bw_act_reset'", "Reset uptime");

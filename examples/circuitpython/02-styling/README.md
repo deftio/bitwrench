@@ -83,7 +83,7 @@ up a virtualenv for you.
 1. Copy `bw_board.py` and this `code.py` to the CIRCUITPY drive
 2. Copy `settings.toml.example` to the drive as `settings.toml`, fill in your WiFi
 3. `circup install adafruit_httpserver`
-4. Copy `dist/bitwrench.umd.min.js.gz` to `/www/` on the drive (44.8KB)
+4. Copy `dist/bitwrench.umd.min.js.gz` to `/www/` on the drive (47 KB)
 5. Open the serial console -- it prints the URL to visit
 
 From this example on, the board serves bitwrench itself rather than pointing at

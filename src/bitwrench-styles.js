@@ -231,13 +231,13 @@ function generateTypographyThemed(scope, palette, layout) {
   var mot = layout.motion;
   var rules = {};
   rules[_sx(scope, 'a')] = {
-    'color': palette.primary.base,
-    'text-decoration': 'none',
+    'color': palette.primary.text,
+    textDecoration: 'none',
     'transition': _tr('color', mot)
   };
   rules[_sx(scope, 'a:hover')] = {
-    'color': palette.tertiary.hover,
-    'text-decoration': 'underline'
+    'color': palette.tertiary.text,
+    textDecoration: 'underline'
   };
   return rules;
 }
@@ -249,40 +249,40 @@ function generateTables(scope, palette, layout) {
   var rdBtn = layout.radius.btn;
   rules[_sx(scope, '.bw_bccl_table_pagination .bw_bccl_btn_sm')] = {
     'padding': '0.25rem 0.75rem',
-    'border-radius': rdBtn === '50rem' ? '50rem' : (Math.max(parseInt(rdBtn) - 1, 0)) + 'px'
+    borderRadius: rdBtn === '50rem' ? '50rem' : (Math.max(parseInt(rdBtn) - 1, 0)) + 'px'
   };
   var sp = layout.spacing;
 
   rules[_sx(scope, '.bw_bccl_table')] = {
     'color': palette.dark.base,
-    'border-color': palette.light.border
+    borderColor: palette.light.border
   };
   rules[_sx(scope, '.bw_bccl_table > :not(caption) > * > *')] = {
     'padding': sp.cell,
-    'border-bottom-color': palette.light.border
+    borderBottomColor: palette.light.border
   };
   rules[_sx(scope, '.bw_bccl_table > thead > tr > *')] = {
-    'color': palette.secondary.base,
-    'border-bottom-color': palette.light.border,
-    'background-color': palette.surfaceAlt
+    'color': palette.textMuted,
+    borderBottomColor: palette.light.border,
+    backgroundColor: palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_bccl_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
-    'background-color': palette.surfaceAlt
+    backgroundColor: palette.surfaceAlt
   };
   rules[_sx(scope, '.bw_bccl_table_hover > tbody > tr:hover > *')] = {
-    'background-color': palette.primary.focus
+    backgroundColor: palette.primary.focus
   };
   rules[_sx(scope, '.bw_bccl_table_selectable > tbody > tr')] = {
     'cursor': 'pointer'
   };
   rules[_sx(scope, '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *')] = {
-    'background-color': palette.primary.light
+    backgroundColor: palette.primary.light
   };
   rules[_sx(scope, '.bw_bccl_table_bordered')] = {
-    'border-color': palette.light.border
+    borderColor: palette.light.border
   };
   rules[_sx(scope, '.bw_bccl_table caption')] = {
-    'color': palette.secondary.base
+    'color': palette.textMuted
   };
 
   return rules;
@@ -303,11 +303,11 @@ function generateResetThemed(scope, palette) {
   var bg = palette.background || '#f5f5f5';
   var baseReset = {
     'color': palette.dark.base,
-    'background-color': bg,
+    backgroundColor: bg,
     // Tell the browser which scheme this palette is, so native parts (select
     // popups, scrollbars, date/number spinners, autofill) follow it instead
     // of staying light inside a dark theme (#120).
-    'color-scheme': colorScheme(palette)
+    colorScheme: colorScheme(palette)
   };
   rules[_sx(scope, 'body')] = baseReset;
   // Also apply to the scope element itself so themes work on any container, not just body
@@ -321,14 +321,14 @@ function generateProseThemed(scope, palette) {
   var rules = {};
   // Bare hr draws a rule now (see structuralRules.base), so it needs the
   // palette colour too -- otherwise it falls back to the UA's grey currentColor.
-  rules[_sx(scope, 'hr, .bw_hr')] = { 'border-top-color': palette.light.border };
+  rules[_sx(scope, 'hr, .bw_hr')] = { borderTopColor: palette.light.border };
   rules[_sx(scope, '.bw_quote')] = {
-    'border-left-color': palette.primary.base,
+    borderLeftColor: palette.primary.base,
     'color': palette.dark.base
   };
   rules[_sx(scope, '.bw_code')] = {
-    'background-color': palette.surfaceAlt,
-    'color': palette.danger.darkText
+    backgroundColor: palette.surfaceAlt,
+    'color': palette.danger.text
   };
   return rules;
 }
@@ -352,21 +352,21 @@ function generatePaletteClasses(scope, palette) {
 
     // --- Root palette class: sets default bg/color/border ---
     rules[_sx(scope, '.bw_' + k)] = {
-      'background-color': s.base,
+      backgroundColor: s.base,
       'color': s.textOn,
-      'border-color': s.base
+      borderColor: s.base
     };
 
     // --- Pseudo-states (shared across all components) ---
     rules[_sx(scope, '.bw_' + k + ':hover')] = {
-      'background-color': s.hover,
-      'border-color': s.active
+      backgroundColor: s.hover,
+      borderColor: s.active
     };
     rules[_sx(scope, '.bw_' + k + ':active')] = {
-      'background-color': s.active
+      backgroundColor: s.active
     };
     rules[_sx(scope, '.bw_' + k + ':focus-visible')] = {
-      'box-shadow': '0 0 0 3px ' + s.focus,
+      boxShadow: '0 0 0 3px ' + s.focus,
       'outline': 'none'
     };
 
@@ -375,22 +375,22 @@ function generatePaletteClasses(scope, palette) {
 
     // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
     rules[_sx(scope, '.bw_bg_' + k)] = {
-      'background-color': s.base,
+      backgroundColor: s.base,
       'color': s.textOn
     };
 
     // Text color utility: .bw_text_primary, .bw_text_secondary, etc.
     rules[_sx(scope, '.bw_text_' + k)] = {
-      'color': s.base
+      'color': s.text
     };
   });
 
   // Text muted — uses palette secondary for theme-aware muted text
-  rules[_sx(scope, '.bw_text_muted')] = { 'color': palette.secondary.base };
+  rules[_sx(scope, '.bw_text_muted')] = { 'color': palette.textMuted };
 
   // Common bg/text utilities — derive from palette for theme awareness
-  rules[_sx(scope, '.bw_bg_dark')] = { 'background-color': palette.dark.base, 'color': palette.dark.textOn };
-  rules[_sx(scope, '.bw_bg_light')] = { 'background-color': palette.light.base, 'color': palette.light.textOn };
+  rules[_sx(scope, '.bw_bg_dark')] = { backgroundColor: palette.dark.base, 'color': palette.dark.textOn };
+  rules[_sx(scope, '.bw_bg_light')] = { backgroundColor: palette.light.base, 'color': palette.light.textOn };
   rules[_sx(scope, '.bw_text_light')] = { 'color': palette.light.base };
   rules[_sx(scope, '.bw_text_dark')] = { 'color': palette.dark.base };
 
@@ -457,7 +457,7 @@ function _gridCols(prefix) {
   var r = {};
   for (var i = 1; i <= 12; i++) {
     var pct = +(100 * i / 12).toFixed(6) + '%';
-    r['.' + prefix + '_' + i] = { 'flex': '0 0 ' + pct, 'max-width': pct };
+    r['.' + prefix + '_' + i] = { 'flex': '0 0 ' + pct, maxWidth: pct };
   }
   return r;
 }
@@ -465,7 +465,7 @@ function _gridCols(prefix) {
 var structuralRules = {
   // ---- Reset ----
   base: {
-    '*': { 'box-sizing': 'border-box', 'margin': '0', 'padding': '0' },
+    '*': { boxSizing: 'border-box', 'margin': '0', 'padding': '0' },
 
     // The reset above zeroes padding on everything, which leaves a list with
     // list-style-position: outside rendering its markers to the LEFT of its own
@@ -491,8 +491,8 @@ var structuralRules = {
     // rendering to the left of a zeroed padding box. It is rare enough that
     // nobody reported it, which is exactly why it belongs here rather than in
     // whatever example trips over it next.
-    'ul, ol, menu': { 'padding-left': '1.5em', 'margin-bottom': '1rem' },
-    'ul ul, ul ol, ol ol, ol ul': { 'margin-bottom': '0' },
+    'ul, ol, menu': { paddingLeft: '1.5em', marginBottom: '1rem' },
+    'ul ul, ul ol, ol ol, ol ul': { marginBottom: '0' },
 
     // The same repair for the other two things `* { margin: 0 }` flattens.
     // A UA gives blockquote margin: 1em 40px and dd margin-left: 40px; the
@@ -510,22 +510,22 @@ var structuralRules = {
     // margin", which is what the p rule in typography already says -- so it
     // says it there, for both, rather than as a second rule here.
     'blockquote': { 'margin': '0 0 1rem 1.5em' },
-    'dd': { 'margin-left': '1.5em' },
+    'dd': { marginLeft: '1.5em' },
 
     'html': {
-      'font-size': '16px', 'line-height': '1.5',
+      fontSize: '16px', lineHeight: '1.5',
       '-webkit-text-size-adjust': '100%',
       '-webkit-font-smoothing': 'antialiased',
       '-moz-osx-font-smoothing': 'grayscale'
     },
     'body': {
-      'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-      'font-size': '1rem', 'font-weight': '400', 'line-height': '1.6',
+      fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontSize: '1rem', fontWeight: '400', lineHeight: '1.6',
       'margin': '0', 'padding': '0',
       '-webkit-font-smoothing': 'antialiased',
       '-moz-osx-font-smoothing': 'grayscale'
     },
-    '.bw_page': { 'min-height': '100vh', 'display': 'flex', 'flex-direction': 'column' },
+    '.bw_page': { minHeight: '100vh', 'display': 'flex', flexDirection: 'column' },
     '.bw_page_content': { 'flex': '1', 'padding': '2rem 0' },
     'main': { 'display': 'block' },
     // border: 0 is a normalize-style reset that expects a border added back.
@@ -533,8 +533,8 @@ var structuralRules = {
     // and no background -- it occupies space and paints nothing. The longhands
     // follow the shorthand so they win; colour comes from generateProseThemed.
     'hr': {
-      'box-sizing': 'content-box', 'height': '0', 'overflow': 'visible', 'margin': '1rem 0',
-      'border': '0', 'border-top-width': '1px', 'border-top-style': 'solid'
+      boxSizing: 'content-box', 'height': '0', 'overflow': 'visible', 'margin': '1rem 0',
+      'border': '0', borderTopWidth: '1px', borderTopStyle: 'solid'
     },
     'hr:not([size])': { 'height': '1px' }
   },
@@ -542,16 +542,16 @@ var structuralRules = {
   // ---- Typography ----
   typography: {
     'h1, h2, h3, h4, h5, h6': {
-      'margin-top': '0', 'margin-bottom': '.5rem', 'font-weight': '600',
-      'line-height': '1.25', 'letter-spacing': '-0.01em'
+      marginTop: '0', marginBottom: '.5rem', fontWeight: '600',
+      lineHeight: '1.25', letterSpacing: '-0.01em'
     },
-    'h1': { 'font-size': 'calc(1.375rem + 1.5vw)' },
-    'h2': { 'font-size': 'calc(1.325rem + .9vw)' },
-    'h3': { 'font-size': 'calc(1.3rem + .6vw)' },
-    'h4': { 'font-size': 'calc(1.275rem + .3vw)' },
-    'h5': { 'font-size': '1.25rem' },
-    'h6': { 'font-size': '1rem' },
-    'p, dl': { 'margin-top': '0', 'margin-bottom': '1rem' },
+    'h1': { fontSize: 'calc(1.375rem + 1.5vw)' },
+    'h2': { fontSize: 'calc(1.325rem + .9vw)' },
+    'h3': { fontSize: 'calc(1.3rem + .6vw)' },
+    'h4': { fontSize: 'calc(1.275rem + .3vw)' },
+    'h5': { fontSize: '1.25rem' },
+    'h6': { fontSize: '1rem' },
+    'p, dl': { marginTop: '0', marginBottom: '1rem' },
 
     // ---- Prose elements ----
     // ul/ol and hr are repaired in structuralRules.base, where the reset that
@@ -561,51 +561,51 @@ var structuralRules = {
     // and .bw_quote is the styling (border, colour) you opt into on top. .bw_code
     // the reset never touched at all -- it simply has no opinion, so it stays
     // opt-in.
-    '.bw_list': { 'padding-left': '1.5em', 'margin-bottom': '1rem' },
-    '.bw_list .bw_list': { 'margin-bottom': '0' },
+    '.bw_list': { paddingLeft: '1.5em', marginBottom: '1rem' },
+    '.bw_list .bw_list': { marginBottom: '0' },
     '.bw_hr': {
       'height': '0', 'margin': '1.5rem 0',
-      'border': '0', 'border-top-width': '1px', 'border-top-style': 'solid'
+      'border': '0', borderTopWidth: '1px', borderTopStyle: 'solid'
     },
     '.bw_quote': {
       'margin': '0 0 1rem', 'padding': '0.5rem 0 0.5rem 1rem',
-      'border-left-width': '3px', 'border-left-style': 'solid'
+      borderLeftWidth: '3px', borderLeftStyle: 'solid'
     },
     '.bw_code': {
-      'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-      'font-size': '0.875em', 'padding': '0.15em 0.4em', 'border-radius': '4px'
+      fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+      fontSize: '0.875em', 'padding': '0.15em 0.4em', borderRadius: '4px'
     },
-    'small': { 'font-size': '0.875rem' },
-    'a': { 'text-decoration': 'none' },
-    '.bw_display_4': { 'font-size': 'calc(1.475rem + 2.7vw)', 'font-weight': '300', 'line-height': '1.2' },
-    '.bw_lead': { 'font-size': '1.25rem', 'font-weight': '300' },
-    '.bw_h5': { 'font-size': '1.25rem' },
-    '.bw_h6': { 'font-size': '1rem' }
+    'small': { fontSize: '0.875rem' },
+    'a': { textDecoration: 'none' },
+    '.bw_display_4': { fontSize: 'calc(1.475rem + 2.7vw)', fontWeight: '300', lineHeight: '1.2' },
+    '.bw_lead': { fontSize: '1.25rem', fontWeight: '300' },
+    '.bw_h5': { fontSize: '1.25rem' },
+    '.bw_h6': { fontSize: '1rem' }
   },
 
   // ---- Grid ----
   grid: {
     '.bw_bccl_container, .bw_container': {
-      'width': '100%', 'padding-right': '0.75rem', 'padding-left': '0.75rem',
-      'margin-right': 'auto', 'margin-left': 'auto'
+      'width': '100%', paddingRight: '0.75rem', paddingLeft: '0.75rem',
+      marginRight: 'auto', marginLeft: 'auto'
     },
-    '@media (min-width: 576px)': { '.bw_bccl_container, .bw_container': { 'max-width': '540px' } },
-    '@media (min-width: 768px)': { '.bw_bccl_container, .bw_container': { 'max-width': '720px' } },
-    '@media (min-width: 992px)': { '.bw_bccl_container, .bw_container': { 'max-width': '960px' } },
-    '@media (min-width: 1200px)': { '.bw_bccl_container, .bw_container': { 'max-width': '1140px' } },
+    '@media (min-width: 576px)': { '.bw_bccl_container, .bw_container': { maxWidth: '540px' } },
+    '@media (min-width: 768px)': { '.bw_bccl_container, .bw_container': { maxWidth: '720px' } },
+    '@media (min-width: 992px)': { '.bw_bccl_container, .bw_container': { maxWidth: '960px' } },
+    '@media (min-width: 1200px)': { '.bw_bccl_container, .bw_container': { maxWidth: '1140px' } },
     '.bw_bccl_container_fluid': {
-      'width': '100%', 'padding-right': '0.75rem', 'padding-left': '0.75rem',
-      'margin-right': 'auto', 'margin-left': 'auto'
+      'width': '100%', paddingRight: '0.75rem', paddingLeft: '0.75rem',
+      marginRight: 'auto', marginLeft: 'auto'
     },
     '.bw_row': {
-      'display': 'flex', 'flex-wrap': 'wrap',
-      'margin-right': '-0.375rem', 'margin-left': '-0.375rem'
+      'display': 'flex', flexWrap: 'wrap',
+      marginRight: '-0.375rem', marginLeft: '-0.375rem'
     },
     '.bw_col, [class*="bw_col_"]': {
       'position': 'relative', 'width': '100%',
-      'padding-right': '0.375rem', 'padding-left': '0.375rem'
+      paddingRight: '0.375rem', paddingLeft: '0.375rem'
     },
-    '.bw_col': { 'flex-basis': '0', 'flex-grow': '1', 'max-width': '100%' },
+    '.bw_col': { flexBasis: '0', flexGrow: '1', maxWidth: '100%' },
     ..._gridCols('bw_col')
   },
 
@@ -617,39 +617,39 @@ var structuralRules = {
     // declarations the sheet's .bw_bccl_btn / .bw_bccl_btn_sm give, scoped
     // under the pager, so full and lean render the pager identically.
     '.bw_bccl_table_pagination .bw_bccl_btn': {
-      'display': 'inline-flex', 'align-items': 'center', 'justify-content': 'center',
-      'font-weight': '500', 'line-height': '1.5', 'text-align': 'center',
-      'text-decoration': 'none', 'vertical-align': 'middle', 'cursor': 'pointer',
-      'user-select': 'none', 'border': '1px solid transparent',
-      'font-family': 'inherit', 'gap': '0.5rem', 'font-size': '0.8125rem'
+      'display': 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: '500', lineHeight: '1.5', textAlign: 'center',
+      textDecoration: 'none', verticalAlign: 'middle', 'cursor': 'pointer',
+      userSelect: 'none', 'border': '1px solid transparent',
+      fontFamily: 'inherit', 'gap': '0.5rem', fontSize: '0.8125rem'
     },
-    '.bw_bccl_table_pagination .bw_bccl_btn:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed', 'pointer-events': 'none' },
+    '.bw_bccl_table_pagination .bw_bccl_btn:disabled': { 'opacity': '0.5', 'cursor': 'not-allowed', pointerEvents: 'none' },
     '.bw_bccl_table': {
-      'width': '100%', 'margin-bottom': '1.5rem', 'vertical-align': 'top',
-      'border-collapse': 'collapse', 'font-size': '0.9375rem', 'line-height': '1.5'
+      'width': '100%', marginBottom: '1.5rem', verticalAlign: 'top',
+      borderCollapse: 'collapse', fontSize: '0.9375rem', lineHeight: '1.5'
     },
     '.bw_bccl_table > :not(caption) > * > *': {
-      'background-color': 'transparent',
-      'border-bottom-width': '1px', 'border-bottom-style': 'solid'
+      backgroundColor: 'transparent',
+      borderBottomWidth: '1px', borderBottomStyle: 'solid'
     },
-    '.bw_bccl_table > tbody': { 'vertical-align': 'inherit' },
-    '.bw_bccl_table > thead': { 'vertical-align': 'bottom' },
+    '.bw_bccl_table > tbody': { verticalAlign: 'inherit' },
+    '.bw_bccl_table > thead': { verticalAlign: 'bottom' },
     '.bw_bccl_table > thead > tr > *': {
-      'font-size': '0.8125rem', 'font-weight': '600',
-      'text-transform': 'uppercase', 'letter-spacing': '0.04em',
-      'border-bottom-width': '2px'
+      fontSize: '0.8125rem', fontWeight: '600',
+      textTransform: 'uppercase', letterSpacing: '0.04em',
+      borderBottomWidth: '2px'
     },
-    '.bw_bccl_table caption': { 'font-size': '0.875rem', 'caption-side': 'bottom' },
-    '.bw_bccl_table_bordered > :not(caption) > * > *': { 'border-width': '1px', 'border-style': 'solid' },
+    '.bw_bccl_table caption': { fontSize: '0.875rem', captionSide: 'bottom' },
+    '.bw_bccl_table_bordered > :not(caption) > * > *': { borderWidth: '1px', borderStyle: 'solid' },
     '.bw_bccl_table_selectable > tbody > tr': { 'cursor': 'pointer' },
-    '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *': { 'background-color': 'rgba(0, 102, 102, 0.1)' },
-    '.bw_bccl_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' }
+    '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *': { backgroundColor: 'rgba(0, 102, 102, 0.1)' },
+    '.bw_bccl_table_responsive': { overflowX: 'auto', '-webkit-overflow-scrolling': 'touch' }
   },
 
   // ---- Stacks ----
   stacks: {
-    '.bw_vstack': { 'display': 'flex', 'flex-direction': 'column' },
-    '.bw_hstack': { 'display': 'flex', 'flex-direction': 'row', 'align-items': 'center' },
+    '.bw_vstack': { 'display': 'flex', flexDirection: 'column' },
+    '.bw_hstack': { 'display': 'flex', flexDirection: 'row', alignItems: 'center' },
     '.bw_gap_0': { 'gap': '0' },
     '.bw_gap_1': { 'gap': '0.25rem' },
     '.bw_gap_2': { 'gap': '0.5rem' },
@@ -660,29 +660,29 @@ var structuralRules = {
 
   // ---- Offsets ----
   offsets: {
-    '.bw_offset_1': { 'margin-left': '8.333333%' },
-    '.bw_offset_2': { 'margin-left': '16.666667%' },
-    '.bw_offset_3': { 'margin-left': '25%' },
-    '.bw_offset_4': { 'margin-left': '33.333333%' },
-    '.bw_offset_5': { 'margin-left': '41.666667%' },
-    '.bw_offset_6': { 'margin-left': '50%' },
-    '.bw_offset_7': { 'margin-left': '58.333333%' },
-    '.bw_offset_8': { 'margin-left': '66.666667%' },
-    '.bw_offset_9': { 'margin-left': '75%' },
-    '.bw_offset_10': { 'margin-left': '83.333333%' },
-    '.bw_offset_11': { 'margin-left': '91.666667%' }
+    '.bw_offset_1': { marginLeft: '8.333333%' },
+    '.bw_offset_2': { marginLeft: '16.666667%' },
+    '.bw_offset_3': { marginLeft: '25%' },
+    '.bw_offset_4': { marginLeft: '33.333333%' },
+    '.bw_offset_5': { marginLeft: '41.666667%' },
+    '.bw_offset_6': { marginLeft: '50%' },
+    '.bw_offset_7': { marginLeft: '58.333333%' },
+    '.bw_offset_8': { marginLeft: '66.666667%' },
+    '.bw_offset_9': { marginLeft: '75%' },
+    '.bw_offset_10': { marginLeft: '83.333333%' },
+    '.bw_offset_11': { marginLeft: '91.666667%' }
   },
 
   // ---- Bar chart ----
   barChart: {
     '.bw_bar_chart_container': { 'padding': '1rem', 'border': '1px solid transparent' },
-    '.bw_bar_chart': { 'display': 'flex', 'align-items': 'flex-end', 'gap': '6px', 'padding': '0 0.5rem' },
-    '.bw_bar_group': { 'flex': '1', 'display': 'flex', 'flex-direction': 'column', 'align-items': 'center', 'height': '100%', 'justify-content': 'flex-end' },
-    '.bw_bar': { 'width': '100%', 'border-radius': '3px 3px 0 0', 'min-height': '4px' },
+    '.bw_bar_chart': { 'display': 'flex', alignItems: 'flex-end', 'gap': '6px', 'padding': '0 0.5rem' },
+    '.bw_bar_group': { 'flex': '1', 'display': 'flex', flexDirection: 'column', alignItems: 'center', 'height': '100%', justifyContent: 'flex-end' },
+    '.bw_bar': { 'width': '100%', borderRadius: '3px 3px 0 0', minHeight: '4px' },
     '.bw_bar:hover': { 'opacity': '0.85' },
-    '.bw_bar_value': { 'font-size': '0.65rem', 'font-weight': '600', 'margin-bottom': '2px', 'text-align': 'center' },
-    '.bw_bar_label': { 'font-size': '0.7rem', 'margin-top': '4px', 'text-align': 'center' },
-    '.bw_bar_chart_title': { 'font-size': '1.1rem', 'font-weight': '600', 'margin': '0 0 0.75rem 0' }
+    '.bw_bar_value': { fontSize: '0.65rem', fontWeight: '600', marginBottom: '2px', textAlign: 'center' },
+    '.bw_bar_label': { fontSize: '0.7rem', marginTop: '4px', textAlign: 'center' },
+    '.bw_bar_chart_title': { fontSize: '1.1rem', fontWeight: '600', 'margin': '0 0 0.75rem 0' }
   },
 
   // ---- Responsive ----
@@ -692,11 +692,11 @@ var structuralRules = {
     '@media (min-width: 992px)': _gridCols('bw_col_lg'),
     '@media (min-width: 1200px)': _gridCols('bw_col_xl'),
     '@media (max-width: 575px)': {
-      '.bw_hstack, .bw_hstack': { 'flex-direction': 'column' },
-      '.bw_bccl_table': { 'display': 'block', 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' },
-      '.bw_col, .bw_col_1, .bw_col_2, .bw_col_3, .bw_col_4, .bw_col_5, .bw_col_6, .bw_col_7, .bw_col_8, .bw_col_9, .bw_col_10, .bw_col_11, .bw_col_12': { 'flex': '0 0 100%', 'max-width': '100%' },
-      '.bw_bccl_container': { 'padding-right': '0.5rem', 'padding-left': '0.5rem' },
-      '.bw_bccl_container_fluid': { 'padding-right': '0.5rem', 'padding-left': '0.5rem' }
+      '.bw_hstack, .bw_hstack': { flexDirection: 'column' },
+      '.bw_bccl_table': { 'display': 'block', overflowX: 'auto', '-webkit-overflow-scrolling': 'touch' },
+      '.bw_col, .bw_col_1, .bw_col_2, .bw_col_3, .bw_col_4, .bw_col_5, .bw_col_6, .bw_col_7, .bw_col_8, .bw_col_9, .bw_col_10, .bw_col_11, .bw_col_12': { 'flex': '0 0 100%', maxWidth: '100%' },
+      '.bw_bccl_container': { paddingRight: '0.5rem', paddingLeft: '0.5rem' },
+      '.bw_bccl_container_fluid': { paddingRight: '0.5rem', paddingLeft: '0.5rem' }
     }
   }
 };
@@ -713,25 +713,25 @@ function generateUtilityRules() {
   for (var k in spacingValues) {
     var v = spacingValues[k];
     rules['.bw_m_' + k] = { 'margin': v + ' !important' };
-    rules['.bw_mt_' + k] = { 'margin-top': v + ' !important' };
-    rules['.bw_mb_' + k] = { 'margin-bottom': v + ' !important' };
-    rules['.bw_ms_' + k] = { 'margin-left': v + ' !important' };
-    rules['.bw_me_' + k] = { 'margin-right': v + ' !important' };
+    rules['.bw_mt_' + k] = { marginTop: v + ' !important' };
+    rules['.bw_mb_' + k] = { marginBottom: v + ' !important' };
+    rules['.bw_ms_' + k] = { marginLeft: v + ' !important' };
+    rules['.bw_me_' + k] = { marginRight: v + ' !important' };
     rules['.bw_p_' + k] = { 'padding': v + ' !important' };
-    rules['.bw_pt_' + k] = { 'padding-top': v + ' !important' };
-    rules['.bw_pb_' + k] = { 'padding-bottom': v + ' !important' };
-    rules['.bw_ps_' + k] = { 'padding-left': v + ' !important' };
-    rules['.bw_pe_' + k] = { 'padding-right': v + ' !important' };
+    rules['.bw_pt_' + k] = { paddingTop: v + ' !important' };
+    rules['.bw_pb_' + k] = { paddingBottom: v + ' !important' };
+    rules['.bw_ps_' + k] = { paddingLeft: v + ' !important' };
+    rules['.bw_pe_' + k] = { paddingRight: v + ' !important' };
     // Gutter k: half on each side of every column, pulled back by the row
     var h = parseFloat(v) / 2 + 'rem';
-    rules['.bw_g_' + k] = { 'margin-left': '-' + h, 'margin-right': '-' + h, 'row-gap': v };
-    rules['.bw_g_' + k + ' > *'] = { 'padding-left': h, 'padding-right': h };
+    rules['.bw_g_' + k] = { marginLeft: '-' + h, marginRight: '-' + h, rowGap: v };
+    rules['.bw_g_' + k + ' > *'] = { paddingLeft: h, paddingRight: h };
   }
   rules['.bw_m_auto'] = { 'margin': 'auto !important' };
-  rules['.bw_py_3'] = { 'padding-top': '1rem !important', 'padding-bottom': '1rem !important' };
-  rules['.bw_py_4'] = { 'padding-top': '1.5rem !important', 'padding-bottom': '1.5rem !important' };
-  rules['.bw_py_5'] = { 'padding-top': '3rem !important', 'padding-bottom': '3rem !important' };
-  rules['.bw_py_6'] = { 'padding-top': '4rem !important', 'padding-bottom': '4rem !important' };
+  rules['.bw_py_3'] = { paddingTop: '1rem !important', paddingBottom: '1rem !important' };
+  rules['.bw_py_4'] = { paddingTop: '1.5rem !important', paddingBottom: '1.5rem !important' };
+  rules['.bw_py_5'] = { paddingTop: '3rem !important', paddingBottom: '3rem !important' };
+  rules['.bw_py_6'] = { paddingTop: '4rem !important', paddingBottom: '4rem !important' };
 
   // Display
   rules['.bw_d_none'] = { 'display': 'none' };
@@ -741,69 +741,69 @@ function generateUtilityRules() {
   rules['.bw_d_flex'] = { 'display': 'flex' };
 
   // Text alignment
-  rules['.bw_text_left'] = { 'text-align': 'left' };
-  rules['.bw_text_right'] = { 'text-align': 'right' };
-  rules['.bw_text_center'] = { 'text-align': 'center' };
-  rules['.bw_text_justify'] = { 'text-align': 'justify' };
+  rules['.bw_text_left'] = { textAlign: 'left' };
+  rules['.bw_text_right'] = { textAlign: 'right' };
+  rules['.bw_text_center'] = { textAlign: 'center' };
+  rules['.bw_text_justify'] = { textAlign: 'justify' };
 
   // Font weight
-  rules['.bw_fw_bold'] = { 'font-weight': '700' };
-  rules['.bw_fw_semibold'] = { 'font-weight': '600' };
-  rules['.bw_fw_normal'] = { 'font-weight': '400' };
-  rules['.bw_fw_light'] = { 'font-weight': '300' };
+  rules['.bw_fw_bold'] = { fontWeight: '700' };
+  rules['.bw_fw_semibold'] = { fontWeight: '600' };
+  rules['.bw_fw_normal'] = { fontWeight: '400' };
+  rules['.bw_fw_light'] = { fontWeight: '300' };
 
   // Font style
-  rules['.bw_fst_italic'] = { 'font-style': 'italic' };
-  rules['.bw_fst_normal'] = { 'font-style': 'normal' };
+  rules['.bw_fst_italic'] = { fontStyle: 'italic' };
+  rules['.bw_fst_normal'] = { fontStyle: 'normal' };
 
   // Text decoration
-  rules['.bw_text_underline'] = { 'text-decoration': 'underline' };
-  rules['.bw_text_line_through'] = { 'text-decoration': 'line-through' };
-  rules['.bw_text_decoration_none'] = { 'text-decoration': 'none' };
+  rules['.bw_text_underline'] = { textDecoration: 'underline' };
+  rules['.bw_text_line_through'] = { textDecoration: 'line-through' };
+  rules['.bw_text_decoration_none'] = { textDecoration: 'none' };
 
   // Text transform
-  rules['.bw_text_uppercase'] = { 'text-transform': 'uppercase' };
-  rules['.bw_text_lowercase'] = { 'text-transform': 'lowercase' };
-  rules['.bw_text_capitalize'] = { 'text-transform': 'capitalize' };
+  rules['.bw_text_uppercase'] = { textTransform: 'uppercase' };
+  rules['.bw_text_lowercase'] = { textTransform: 'lowercase' };
+  rules['.bw_text_capitalize'] = { textTransform: 'capitalize' };
 
   // White-space
-  rules['.bw_text_wrap'] = { 'white-space': 'normal' };
-  rules['.bw_text_nowrap'] = { 'white-space': 'nowrap' };
+  rules['.bw_text_wrap'] = { whiteSpace: 'normal' };
+  rules['.bw_text_nowrap'] = { whiteSpace: 'nowrap' };
 
   // Font size
-  rules['.bw_fs_sm'] = { 'font-size': '0.875rem' };
-  rules['.bw_fs_base'] = { 'font-size': '1rem' };
-  rules['.bw_fs_lg'] = { 'font-size': '1.25rem' };
-  rules['.bw_fs_xl'] = { 'font-size': '1.5rem' };
+  rules['.bw_fs_sm'] = { fontSize: '0.875rem' };
+  rules['.bw_fs_base'] = { fontSize: '1rem' };
+  rules['.bw_fs_lg'] = { fontSize: '1.25rem' };
+  rules['.bw_fs_xl'] = { fontSize: '1.5rem' };
 
   // Flexbox
   var jc = { start: 'flex-start', end: 'flex-end', center: 'center', between: 'space-between', around: 'space-around' };
-  for (var jk in jc) { rules['.bw_justify_content_' + jk] = { 'justify-content': jc[jk] }; }
+  for (var jk in jc) { rules['.bw_justify_content_' + jk] = { justifyContent: jc[jk] }; }
   var ai = { start: 'flex-start', end: 'flex-end', center: 'center' };
-  for (var ak in ai) { rules['.bw_align_items_' + ak] = { 'align-items': ai[ak] }; }
+  for (var ak in ai) { rules['.bw_align_items_' + ak] = { alignItems: ai[ak] }; }
 
   // Borders
   rules['.bw_border'] = { 'border': '1px solid transparent !important' };
   rules['.bw_border_0'] = { 'border': '0 !important' };
-  rules['.bw_border_top_0'] = { 'border-top': '0 !important' };
-  rules['.bw_border_end_0'] = { 'border-right': '0 !important' };
-  rules['.bw_border_bottom_0'] = { 'border-bottom': '0 !important' };
-  rules['.bw_border_start_0'] = { 'border-left': '0 !important' };
+  rules['.bw_border_top_0'] = { borderTop: '0 !important' };
+  rules['.bw_border_end_0'] = { borderRight: '0 !important' };
+  rules['.bw_border_bottom_0'] = { borderBottom: '0 !important' };
+  rules['.bw_border_start_0'] = { borderLeft: '0 !important' };
 
   // Rounded
-  rules['.bw_rounded'] = { 'border-radius': '.375rem !important' };
-  rules['.bw_rounded_0'] = { 'border-radius': '0 !important' };
-  rules['.bw_rounded_1'] = { 'border-radius': '.25rem !important' };
-  rules['.bw_rounded_2'] = { 'border-radius': '.375rem !important' };
-  rules['.bw_rounded_3'] = { 'border-radius': '.5rem !important' };
-  rules['.bw_rounded_circle'] = { 'border-radius': '50% !important' };
-  rules['.bw_rounded_pill'] = { 'border-radius': '50rem !important' };
+  rules['.bw_rounded'] = { borderRadius: '.375rem !important' };
+  rules['.bw_rounded_0'] = { borderRadius: '0 !important' };
+  rules['.bw_rounded_1'] = { borderRadius: '.25rem !important' };
+  rules['.bw_rounded_2'] = { borderRadius: '.375rem !important' };
+  rules['.bw_rounded_3'] = { borderRadius: '.5rem !important' };
+  rules['.bw_rounded_circle'] = { borderRadius: '50% !important' };
+  rules['.bw_rounded_pill'] = { borderRadius: '50rem !important' };
 
   // Shadows
-  rules['.bw_shadow'] = { 'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important' };
-  rules['.bw_shadow_sm'] = { 'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important' };
-  rules['.bw_shadow_lg'] = { 'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important' };
-  rules['.bw_shadow_none'] = { 'box-shadow': 'none !important' };
+  rules['.bw_shadow'] = { boxShadow: '0 .5rem 1rem rgba(0,0,0,.15) !important' };
+  rules['.bw_shadow_sm'] = { boxShadow: '0 .125rem .25rem rgba(0,0,0,.075) !important' };
+  rules['.bw_shadow_lg'] = { boxShadow: '0 1rem 3rem rgba(0,0,0,.175) !important' };
+  rules['.bw_shadow_none'] = { boxShadow: 'none !important' };
 
   // Width/Height
   ['25', '50', '75', '100'].forEach(function(n) {
@@ -812,8 +812,8 @@ function generateUtilityRules() {
   });
   rules['.bw_w_auto'] = { 'width': 'auto !important' };
   rules['.bw_h_auto'] = { 'height': 'auto !important' };
-  rules['.bw_mw_100'] = { 'max-width': '100% !important' };
-  rules['.bw_mh_100'] = { 'max-height': '100% !important' };
+  rules['.bw_mw_100'] = { maxWidth: '100% !important' };
+  rules['.bw_mh_100'] = { maxHeight: '100% !important' };
 
   // Positioning
   ['static', 'relative', 'absolute', 'fixed', 'sticky'].forEach(function(p) {
@@ -846,16 +846,16 @@ function generateUtilityRules() {
   ].forEach(function(d) { for (var dk in d[1]) rules['.bw_'+d[0]+'_'+dk] = _imp(d[2], d[1][dk]); });
 
   // List utilities
-  rules['.bw_list_unstyled'] = { 'padding-left': '0', 'list-style': 'none' };
-  rules['.bw_list_inline'] = { 'padding-left': '0', 'list-style': 'none' };
+  rules['.bw_list_unstyled'] = { paddingLeft: '0', listStyle: 'none' };
+  rules['.bw_list_inline'] = { paddingLeft: '0', listStyle: 'none' };
   rules['.bw_list_inline_item'] = { 'display': 'inline-block' };
-  rules['.bw_list_inline_item:not(:last-child)'] = { 'margin-right': '.5rem' };
+  rules['.bw_list_inline_item:not(:last-child)'] = { marginRight: '.5rem' };
 
   // Flex utilities
   rules['.bw_flex'] = { 'display': 'flex' };
-  rules['.bw_flex_column'] = { 'flex-direction': 'column' };
-  rules['.bw_flex_wrap'] = { 'flex-wrap': 'wrap' };
-  rules['.bw_flex_center'] = { 'display': 'flex', 'align-items': 'center', 'justify-content': 'center' };
+  rules['.bw_flex_column'] = { flexDirection: 'column' };
+  rules['.bw_flex_wrap'] = { flexWrap: 'wrap' };
+  rules['.bw_flex_center'] = { 'display': 'flex', alignItems: 'center', justifyContent: 'center' };
   for (var gk in spacingValues) rules['.bw_gap_' + gk] = { 'gap': spacingValues[gk] + ' !important' };
 
   // Visibility
@@ -864,12 +864,12 @@ function generateUtilityRules() {
 
   // User select
   ['all', 'auto', 'none'].forEach(function(u) {
-    rules['.bw_user_select_' + u] = { 'user-select': u + ' !important' };
+    rules['.bw_user_select_' + u] = { userSelect: u + ' !important' };
   });
 
   // Pointer events
-  rules['.bw_pe_none'] = { 'pointer-events': 'none !important' };
-  rules['.bw_pe_auto'] = { 'pointer-events': 'auto !important' };
+  rules['.bw_pe_none'] = { pointerEvents: 'none !important' };
+  rules['.bw_pe_auto'] = { pointerEvents: 'auto !important' };
 
   // Opacity
   rules['.bw_opacity_0'] = { 'opacity': '0 !important' };
@@ -911,10 +911,10 @@ function getStructuralCSS(sheets) {
   // Accessibility: reduce motion
   result['@media (prefers-reduced-motion: reduce)'] = {
     '*, *::before, *::after': {
-      'animation-duration': '0.01ms !important',
-      'animation-iteration-count': '1 !important',
-      'transition-duration': '0.01ms !important',
-      'scroll-behavior': 'auto !important'
+      animationDuration: '0.01ms !important',
+      animationIterationCount: '1 !important',
+      transitionDuration: '0.01ms !important',
+      scrollBehavior: 'auto !important'
     }
   };
 
@@ -944,10 +944,10 @@ export function getResetStyles() {
   // Include reduced-motion preference
   rules['@media (prefers-reduced-motion: reduce)'] = {
     '*, *::before, *::after': {
-      'animation-duration': '0.01ms !important',
-      'animation-iteration-count': '1 !important',
-      'transition-duration': '0.01ms !important',
-      'scroll-behavior': 'auto !important'
+      animationDuration: '0.01ms !important',
+      animationIterationCount: '1 !important',
+      transitionDuration: '0.01ms !important',
+      scrollBehavior: 'auto !important'
     }
   };
   return rules;
@@ -966,7 +966,7 @@ export function getResetStyles() {
 export var defaultStyles = Object.assign({}, structuralRules, {
   // Merge utility categories for backward compat
   reset: structuralRules.base,
-  tableResponsive: { '.bw_bccl_table_responsive': { 'overflow-x': 'auto', '-webkit-overflow-scrolling': 'touch' } },
+  tableResponsive: { '.bw_bccl_table_responsive': { overflowX: 'auto', '-webkit-overflow-scrolling': 'touch' } },
   utilities: generateUtilityRules()
 });
 
@@ -1044,7 +1044,7 @@ export function generateAlternateCSS(name, altPalette, layout, sheets) {
 
   altRules[altPrefix + ' body, :root' + altPrefix + ' body'] = {
     'color': altPalette.dark.base,
-    'background-color': altPalette.light.base
+    backgroundColor: altPalette.light.base
   };
 
   return altRules;

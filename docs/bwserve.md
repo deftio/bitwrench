@@ -4,7 +4,7 @@
 
 bwserve is a server-side library that lets you build interactive web UIs entirely from Node.js. Your application state lives on the server, and the server pushes rendering commands to the browser over SSE (Server-Sent Events). User interactions are sent back as actions via HTTP POST.
 
-This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and htmx — but bwserve sends TACO objects (bitwrench's {t, a, c, o} format), not HTML strings. The browser already has bitwrench loaded (~45KB), so it renders TACO natively with no build step.
+This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and htmx — but bwserve sends TACO objects (bitwrench's {t, a, c, o} format), not HTML strings. The browser already has bitwrench loaded (~47KB), so it renders TACO natively with no build step.
 
 **Key characteristics:**
 - Zero runtime dependencies — only Node.js stdlib (`http`, `fs`, `path`)
@@ -344,7 +344,9 @@ Returns a Promise that resolves with the evaluated result. Rejects on timeout or
 
 ## Screenshots
 
-The server can capture what the client is displaying as a PNG or JPEG image. This uses html2canvas on the client side (lazy-loaded on first call, vendored at ~194 KB). html2canvas 1.4.1 does not parse the CSS Color 4 functions (`color-mix()`, `oklch()`, `color()`, `light-dark()`), and a page using them anywhere makes `client.screenshot()` reject with `Attempting to parse an unsupported color function`.
+The server can capture what the client is displaying as a PNG or JPEG image. The client side uses [html2canvas-pro](https://github.com/yorickshan/html2canvas-pro) 2.6.4 (MIT, lazy-loaded on first call, vendored at ~215 KB with its license), a maintained fork of html2canvas that parses the CSS Color 4 functions (`color-mix()`, `oklch()`, `color()`, `light-dark()`). A colour function the engine does not know makes `client.screenshot()` reject with `Attempting to parse an unsupported color function`.
+
+The page can replace the engine: set `bw.capture` to a function `(el, { scale }) => Promise<HTMLCanvasElement>` and `client.screenshot()` uses it instead of html2canvas, with the same options and the same rejection path. `domToCanvas` from modern-screenshot and `toCanvas` from html-to-image fit as they are (#125).
 
 ### `client.screenshot(selector?, options?)`
 
@@ -397,8 +399,8 @@ var feedback = await visionModel.evaluate(img.data);
 1. Server calls `client.screenshot(selector, options)` — returns a Promise
 2. On first call, a capture function is set up on the client
 3. The capture function is invoked via `call` with the selector and options
-4. Client lazy-loads html2canvas (vendored, served from `/bw/lib/vendor/html2canvas.min.js`)
-5. html2canvas renders the DOM element to a `<canvas>`
+4. Client lazy-loads html2canvas-pro (vendored, served from `/bw/lib/vendor/html2canvas.min.js`)
+5. html2canvas-pro renders the DOM element to a `<canvas>`
 6. Client POSTs the base64 image data back to `/bw/return/screenshot/:clientId`
 7. Server converts the data URL to a Buffer and resolves the Promise
 
@@ -406,7 +408,7 @@ var feedback = await visionModel.evaluate(img.data);
 
 - **Opt-in only:** `allowScreenshot: true` must be set in server options
 - **DOM-level capture:** html2canvas reads the DOM — it cannot see other tabs, OS windows, or anything outside the page
-- **No external requests:** html2canvas is vendored locally, not loaded from a CDN
+- **No external requests:** the capture engine is vendored locally, not loaded from a CDN
 
 ## Server-to-Client Operations
 

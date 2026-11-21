@@ -41,7 +41,7 @@ array). If CMake says it is missing: `npm run build && npm run build:generated`.
 ## 1. The browser loads bitwrench — from the device
 
 ```
-GET /bitwrench.js  ->  200, Content-Encoding: gzip, 46 KB
+GET /bitwrench.js  ->  200, Content-Encoding: gzip, 47 KB
 ```
 
 Straight out of the flash array in `bitwrench_embedded.h`. No CDN, no

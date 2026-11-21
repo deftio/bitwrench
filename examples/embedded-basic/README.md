@@ -43,7 +43,7 @@ Both boards use the same `dashboard.html` served from flash.
 
 The device runs an HTTP server and serves two static files from flash: a small
 HTML page (`dashboard.html`, ~6 KB) and the bitwrench library (`bitwrench.umd.min.js.gz`,
-~45 KB). When a browser loads the page, bitwrench renders the entire UI from
+~47 KB). When a browser loads the page, bitwrench renders the entire UI from
 JavaScript objects -- the device never generates HTML.
 
 Once the page is loaded, the browser opens a persistent SSE (Server-Sent Events)
@@ -695,8 +695,8 @@ Copy `bitwrench.h` and `bwserve.h` from `embedded_c/` into your sketch folder.
 | File | Size |
 |------|------|
 | `dashboard.html` | ~6 KB |
-| `bitwrench.umd.min.js.gz` | ~45 KB |
-| **Total** | **~46 KB** |
+| `bitwrench.umd.min.js.gz` | ~47 KB |
+| **Total** | **~53 KB** |
 
 ESP32-S3 Pro has 16 MB flash. Pico 2W has 4 MB. Plenty of room.
 

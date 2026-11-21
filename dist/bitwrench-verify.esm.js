@@ -1,4 +1,4 @@
-/*! bitwrench-verify v2.1.14 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-verify v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 /**
  * bitwrench-verify.js -- an opt-in checker for TACO objects.
  *

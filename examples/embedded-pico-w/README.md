@@ -423,7 +423,7 @@ mpremote mkdir :www/dist
 
 mpremote cp dashboard.html :www/index.html
 
-# Gzip saves flash space (~45KB vs ~165KB)
+# Gzip saves flash space (~47KB vs ~171 KB)
 gzip -k ../../dist/bitwrench.umd.min.js
 mpremote cp ../../dist/bitwrench.umd.min.js.gz :www/dist/bitwrench.umd.min.js.gz
 

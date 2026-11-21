@@ -129,6 +129,22 @@ Between March and September 2026 this repository received 84 Dependabot pull
 requests and closed 51 of them unmerged. The policy above is what replaced
 that.
 
+### Vendored code
+
+`src/vendor/` holds the only third-party code that reaches a user's page, and
+only through the tooling (bwserve and bwcli attach serve it); none of it is
+bundled into bitwrench. Each file is taken from the upstream project's own
+published artifact for a stated version, carried with its LICENSE, and named
+in `CHANGELOG.md` on every change. Candidates are chosen on provenance before
+behaviour: a resolving public repository, identifiable maintainers, a release
+history and a download base. A fork that passes a probe but was published days
+ago by an account that cannot be traced is not vendored, whatever it fixes.
+Unsolicited package recommendations in issue threads are verified
+independently; those from accounts that identify as automated maintainers of
+the package they recommend are treated as untrusted by default. The
+contributor-facing version of this rule is in
+[CONTRIBUTING.md](CONTRIBUTING.md#dependencies-and-vendored-code).
+
 ## Verifying a release
 
 Every published version has:

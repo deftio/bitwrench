@@ -31,8 +31,8 @@ The device does not run a UI framework. It holds a fixed HTML shell and produces
 `json.dumps()` and you are done. There is no template engine and, until the last
 example, nothing to install on the device beyond a web server.
 
-The browser loads one file -- `bitwrench.umd.min.js`, 44.8KB gzipped -- which
-contains the rendering engine, 52 UI components, and the theming system. On the
+The browser loads one file -- `bitwrench.umd.min.js`, 47 KB gzipped -- which
+contains the rendering engine, 51 components, and the theming system. On the
 device side you are writing dicts.
 
 ## The examples
@@ -92,14 +92,14 @@ cp dist/bitwrench.umd.min.js.gz  /Volumes/CIRCUITPY/www/
 ```
 
 Get that file from a release, from npm, or by running `npm run build` in this
-repository. It is served pre-compressed, so it costs 44.8KB of flash.
+repository. It is served pre-compressed, so it costs 47 KB of flash.
 
 Example 6 additionally needs `embedded_python/bwserve.py` copied to `/lib/`.
 
 ## Notes
 
 **Why not inline the library in the page?** `Response` holds its whole body in
-memory. The Pico 2 W has 520KB of RAM and no PSRAM, so a 166KB string plus HTTP
+memory. The Pico 2 W has 520KB of RAM and no PSRAM, so a 172KB string plus HTTP
 buffers is enough to run out. `FileResponse` streams from disk in 1KB chunks
 instead, which is why every example from 1b on serves it from `/www`.
 

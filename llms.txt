@@ -1,7 +1,9 @@
 # bitwrench
 
-> Build web UIs from plain JavaScript objects. ~45 KB gzipped for the
-> minified script-tag build, zero dependencies, no build step.
+> Build web UIs from plain JavaScript objects. ~47 KB gzipped for the
+> minified script-tag build, zero dependencies, no build step. Only your code
+> runs between a TACO and the DOM; the third-party files in the repo
+> (html2canvas, quikdown) are served by the tooling, never bundled.
 
 ## Read docs/thinking-in-bitwrench.md before writing code
 
@@ -261,7 +263,7 @@ CSS. `data-bw-action` existed in bwserve by mistake and was removed in v2.1.0. S
 No build step. No npm. Open the file in a browser.
 
 Which file: `dist/bitwrench.umd.min.js` for a script tag (everything, ~47 KB
-gzipped); `bitwrench-lean.umd.min.js` (~29 KB) if you bring your own design and
+gzipped); `bitwrench-lean.umd.min.js` (~30 KB) if you bring your own design and
 don't need the built-in components or their CSS; `bitwrench.umd.js` / `bitwrench.esm.js` are
 **unminified, for readable stack traces only** -- never vendor them into a page
 you ship. `dist/builds.json` lists every file.
@@ -269,7 +271,7 @@ you ship. `dist/builds.json` lists every file.
 Lean is not a stripped-down core: the router, pub/sub, `derive`, `patch`,
 `syncChildren`, the class verbs and `makeTable`/`makeDataTable`/`makeBarChart`
 are all in it. What it drops is the 47 BCCL component factories (`makeButton`,
-`makeCard`, `makeTooltip`, …) and their stylesheet (2.1.14). A page on lean
+`makeCard`, `makeTooltip`, ...) and their stylesheet (2.1.14). A page on lean
 that needs one widget loads `bitwrench-bccl.umd.min.js` after lean and calls
 `bw.loadStyles()` after both; that adds the factories and their CSS. Do not
 hand-roll a router, a DOM helper or a tooltip because you are on lean -- check
@@ -361,8 +363,9 @@ bw.injectCSS(rules, { id: 'app_css', minify: true });
 
 Palette keys: primary, secondary, tertiary, success, danger, warning, info,
 light, dark (all objects with .base, .hover, .active, .light, .darkText,
-.border, .focus, .textOn). Also: surface, surfaceAlt, background (plain
-strings, not objects).
+.text, .border, .focus, .textOn; .text is the role as readable text). Also: surface, surfaceAlt, background, textMuted,
+textFaint (plain strings, not objects). Secondary text is p.textMuted, which
+clears 4.5:1 on every surface; secondary.base is an accent, not a text colour.
 
 ## State and Updates
 
@@ -510,7 +513,7 @@ Start here:
 - docs/thinking-in-bitwrench.md -- The model, read first: common starting points, what one decision buys, progressive walkthrough
 - docs/quickstart.md -- Hello world, which dist file to load, ten calls that already exist, annotated 100-line app
 - docs/when-you-want.md -- Core API indexed by problem, one running example each
-- docs/llm-bitwrench-guide.md -- Compact code-first tutorial (700 lines)
+- docs/llm-bitwrench-guide.md -- Compact code-first tutorial (about 780 lines)
 - docs/core-api.md -- One-page core API card (bring-your-own-design path; what is in lean)
 
 Core concepts:

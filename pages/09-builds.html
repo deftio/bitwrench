@@ -300,7 +300,7 @@
                 { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: 'Addon Bundles' },
                 { t: 'p', c: [
                   'Optional addons that extend the core library. ',
-                  { t: 'strong', c: 'BCCL' }, ' (bitwrench-bccl) provides 40+ component factories (makeButton, makeCard, makeHero, etc.) as a standalone bundle for use with the lean build. ',
+                  { t: 'strong', c: 'BCCL' }, ' (bitwrench-bccl) provides 47 component factories (makeButton, makeCard, makeHero, etc.) as a standalone bundle for use with the lean build. ',
                   { t: 'strong', c: 'Code Editor' }, ' (bitwrench-code-edit) adds syntax-highlighted code editing with line numbers, read-only mode, and copy support.'
                 ]},
                 { t: 'div', a: { id: 'builds-addons', style: 'overflow-x:auto' }, c: 'Loading...' }
@@ -334,7 +334,7 @@
                   { t: 'p', c: [
                     'ESPAsyncWebServer serves ', { t: 'code', c: '.gz' },
                     ' files transparently. Store ', { t: 'code', c: 'bitwrench.umd.min.js.gz' },
-                    ' (~45KB) on flash and request ', { t: 'code', c: '/bitwrench.umd.min.js' },
+                    ' (~47KB) on flash and request ', { t: 'code', c: '/bitwrench.umd.min.js' },
                     ' from your HTML.'
                   ]}
                 ]},
@@ -417,7 +417,7 @@
                     { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Version pinning' },
                     { t: 'p', c: [
                       { t: 'code', c: '@2' }, ' \u2014 latest 2.x release (recommended)', { t: 'br' },
-                      { t: 'code', c: '@2.0.3' }, ' \u2014 exact version', { t: 'br' },
+                      { t: 'code', c: '@' + bw.getVersion().version }, ' \u2014 exact version', { t: 'br' },
                       { t: 'code', c: '@latest' }, ' \u2014 latest release (may include breaking changes across major versions)'
                     ]}
                   ]
@@ -608,7 +608,7 @@
         var bccl = renderAddonCard('builds-addon-bccl',
           'bitwrench-bccl \u2014 Component Library',
           [
-            '40+ component factories: ',
+            '47 component factories: ',
             { t: 'code', c: 'makeButton' }, ', ',
             { t: 'code', c: 'makeCard' }, ', ',
             { t: 'code', c: 'makeHero' }, ', ',

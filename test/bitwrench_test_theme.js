@@ -3,6 +3,7 @@
  */
 
 import assert from "assert";
+import { readFileSync } from "node:fs";
 import bw from "../src/bitwrench.js";
 import { getStructuralStyles, getResetStyles, generateThemedCSS, generateAlternateCSS, getAllStyles, defaultStyles, resolveLayout, scopeRulesUnder, THEME_PRESETS, generateTypeScale, deepMerge, updateTheme, theme } from "../src/bitwrench-styles.js";
 import { bcclStyles } from "../src/bitwrench-bccl.js";
@@ -181,9 +182,9 @@ describe('Color Utility Functions', function() {
 describe('Palette Derivation', function() {
 
   describe('bw.deriveShades', function() {
-    it('should return all 8 derived keys', function() {
+    it('should return all 9 derived keys', function() {
       const shades = bw.deriveShades('#006666');
-      const keys = ['base', 'hover', 'active', 'light', 'darkText', 'border', 'focus', 'textOn'];
+      const keys = ['base', 'hover', 'active', 'light', 'darkText', 'text', 'border', 'focus', 'textOn'];
       keys.forEach(function(k) {
         assert.ok(k in shades, 'should have key: ' + k);
       });
@@ -287,10 +288,10 @@ describe('Palette Derivation', function() {
         secondary: '#6c757d',
         tertiary: '#20c997'
       });
-      const shadeKeys = ['base', 'hover', 'active', 'light', 'darkText', 'border', 'focus', 'textOn'];
+      const shadeKeys = ['base', 'hover', 'active', 'light', 'darkText', 'text', 'border', 'focus', 'textOn'];
       Object.entries(palette).forEach(function([name, shades]) {
         // background and surface are plain strings, not shade objects
-        if (name === 'background' || name === 'surface' || name === 'surfaceAlt') {
+        if (name === 'background' || name === 'surface' || name === 'surfaceAlt' || name === 'textMuted' || name === 'textFaint') {
           assert.ok(typeof shades === 'string', name + ' should be a string');
           return;
         }
@@ -1533,7 +1534,7 @@ describe('getResetStyles (bitwrench-styles.js)', function() {
 
   it('should include box-sizing rule', function() {
     var rules = getResetStyles();
-    assert.strictEqual(rules['*']['box-sizing'], 'border-box');
+    assert.strictEqual(rules['*'].boxSizing, 'border-box');
   });
 
   it('should include reduced-motion media query', function() {
@@ -2288,6 +2289,143 @@ describe('Legacy Color API (restored to core)', function() {
     it('should default to black-white for null', function() {
       var r = bw.colorInterp(50, 0, 100, null);
       assert.strictEqual(r[4], "rgb");
+    });
+  });
+});
+
+// =========================================================================
+// Muted text has a contrast floor (#121)
+//
+// The palette had no text role below body text, so the library's own
+// bw_text_muted and fifteen BCCL rules coloured text with secondary.base: the
+// second accent seed, which ocean sets to a pale cyan. Measured 2026-11-20,
+// nine of the twelve presets put that text under 2:1 on their own background.
+// textMuted and textFaint are derived from dark (body text) toward background
+// until they sit just above a floor, measured against every surface.
+// =========================================================================
+
+describe('palette text roles have a contrast floor (#121)', function() {
+  var FLOOR_MUTED = 4.5, FLOOR_FAINT = 3.0;
+  var configs = Object.assign({ default: {} }, bw.THEME_PRESETS);
+
+  function minContrast(hex, p) {
+    return Math.min(bw.contrastRatio(hex, p.background), bw.contrastRatio(hex, p.surface), bw.contrastRatio(hex, p.surfaceAlt));
+  }
+
+  Object.keys(configs).forEach(function(name) {
+    it(name + ': textMuted >= 4.5 and textFaint >= 3.0 on every surface, both modes', function() {
+      var s = bw.makeStyles(Object.assign({}, configs[name]));
+      [s.palette, s.alternatePalette].forEach(function(p, i) {
+        var mode = i ? 'dark' : 'light';
+        assert.ok(typeof p.textMuted === 'string', mode + ' textMuted is a plain string');
+        assert.ok(typeof p.textFaint === 'string', mode + ' textFaint is a plain string');
+        var m = minContrast(p.textMuted, p), f = minContrast(p.textFaint, p);
+        assert.ok(m >= FLOOR_MUTED, mode + ' textMuted ' + p.textMuted + ' is ' + m.toFixed(2) + ':1');
+        assert.ok(f >= FLOOR_FAINT, mode + ' textFaint ' + p.textFaint + ' is ' + f.toFixed(2) + ':1');
+        // Muted is muted: lower contrast than body text, and faint lower still.
+        assert.ok(m < minContrast(p.dark.base, p), mode + ' textMuted is softer than body text');
+        assert.ok(f <= m, mode + ' textFaint is no stronger than textMuted');
+      });
+    });
+  });
+
+  it('bw_text_muted resolves to textMuted, not to the secondary accent', function() {
+    var s = bw.makeStyles({ primary: '#0077b6', secondary: '#90e0ef', tertiary: '#00b4d8' });  // ocean
+    var hit = s.css.match(/\.bw[_-]text[_-]muted\s*\{[^}]*color:\s*([^;}\s]+)/);
+    assert.ok(hit, 'rule present');
+    assert.strictEqual(hit[1].toLowerCase(), s.palette.textMuted.toLowerCase());
+    assert.notStrictEqual(hit[1].toLowerCase(), s.palette.secondary.base.toLowerCase());
+  });
+
+  it('no shipped rule colours text with the secondary accent', function() {
+    ['bitwrench-styles.js', 'bitwrench-bccl-styles.js'].forEach(function(f) {
+      var src = readFileSync(new URL('../src/' + f, import.meta.url), 'utf8');
+      var hits = src.split('\n').map(function(l, i) { return /'color':\s*palette\.secondary\.base/.test(l) ? (i + 1) : 0; }).filter(Boolean);
+      assert.deepStrictEqual(hits, [], f + ' colours text with secondary.base at lines ' + hits.join(', '));
+    });
+  });
+});
+
+describe('every shipped text colour meets WCAG AA in every preset (#121)', function() {
+  var configs = Object.assign({ default: {} }, bw.THEME_PRESETS);
+  var HEX = /^#[0-9a-f]{6}$/i;
+  // The grow spinner paints itself with its colour: color equals
+  // backgroundColor by design, and there is no text.
+  var NOT_TEXT = /^\.bw_spinner_grow\./;
+  // bw_text_light is light text for a dark backdrop the page supplies.
+  var OWN_BACKDROP = /^\.bw_text_light$/;
+  // Disabled, placeholder and decorative text may sit at the 3:1 floor.
+  var SOFT = /disabled|placeholder|::before|skeleton/;
+
+  // A descendant of a rule that paints its own background sits on that
+  // background, not on the page surfaces: `.bw_bccl_navbar_dark .bw_nav_link`.
+  function backdrop(sel, rules, p) {
+    var parent = rules[sel.split(' ')[0]];
+    if (parent && HEX.test(parent.backgroundColor || '')) return [parent.backgroundColor];
+    return [p.background, p.surface, p.surfaceAlt];
+  }
+  function audit(rules, p) {
+    var fails = [];
+    Object.keys(rules).forEach(function(sel) {
+      var v = rules[sel];
+      if (!v || typeof v !== 'object' || !HEX.test(v.color || '')) return;
+      if (NOT_TEXT.test(sel) || OWN_BACKDROP.test(sel)) return;
+      var bgs;
+      if (v.backgroundColor) {
+        if (!HEX.test(v.backgroundColor)) return;  // inherit, transparent, rgba
+        bgs = [v.backgroundColor];
+      } else {
+        bgs = backdrop(sel, rules, p);
+      }
+      var r = Math.min.apply(null, bgs.map(function(b) { return bw.contrastRatio(v.color, b); }));
+      var floor = SOFT.test(sel) ? 3.0 : 4.5;
+      if (r < floor) fails.push(sel + ': ' + v.color + ' on ' + bgs.join('/') + ' = ' + r.toFixed(2) + ' (floor ' + floor + ')');
+    });
+    return fails;
+  }
+
+  Object.keys(configs).forEach(function(name) {
+    it(name + ': every rule that colours text clears its floor, both modes', function() {
+      var s = bw.makeStyles(Object.assign({}, configs[name]));
+      var fails = audit(s.rules, s.palette).map(function(f) { return 'light ' + f; })
+        .concat(audit(s.alternateRules, s.alternatePalette).map(function(f) { return 'dark ' + f; }));
+      assert.deepStrictEqual(fails, [], fails.length + ' rules under the floor:\n  ' + fails.join('\n  '));
+    });
+
+    it(name + ': each role has a text shade readable on every surface and a darkText readable on its tint', function() {
+      var s = bw.makeStyles(Object.assign({}, configs[name]));
+      [s.palette, s.alternatePalette].forEach(function(p, i) {
+        var mode = i ? 'dark' : 'light';
+        var surfaces = [p.background, p.surface, p.surfaceAlt];
+        Object.keys(p).forEach(function(k) {
+          var sh = p[k];
+          if (typeof sh !== 'object') return;
+          surfaces.forEach(function(b) {
+            var r = bw.contrastRatio(sh.text, b);
+            assert.ok(r >= 4.5, mode + ' ' + k + '.text ' + sh.text + ' on ' + b + ' = ' + r.toFixed(2));
+          });
+          var t = bw.contrastRatio(sh.darkText, sh.light);
+          assert.ok(t >= 4.5, mode + ' ' + k + '.darkText ' + sh.darkText + ' on ' + k + '.light ' + sh.light + ' = ' + t.toFixed(2));
+        });
+      });
+    });
+  });
+
+  it('muted text is distinguishable from body text in both modes', function() {
+    Object.keys(configs).forEach(function(name) {
+      var s = bw.makeStyles(Object.assign({}, configs[name]));
+      [s.palette, s.alternatePalette].forEach(function(p, i) {
+        var r = bw.contrastRatio(p.dark.base, p.textMuted);
+        assert.ok(r >= 1.4, name + (i ? ' dark' : ' light') + ': body ' + p.dark.base + ' vs muted ' + p.textMuted + ' = ' + r.toFixed(2));
+      });
+    });
+  });
+
+  it('bw.deriveShades(hex) alone gives a text shade readable on white', function() {
+    ['#f0ad4e', '#8fb300', '#e76f51', '#00b4d8', '#f8f9fa'].forEach(function(seed) {
+      var sh = bw.deriveShades(seed);
+      assert.ok(bw.contrastRatio(sh.text, '#ffffff') >= 4.5, seed + '.text ' + sh.text);
+      assert.ok(bw.contrastRatio(sh.darkText, sh.light) >= 4.5, seed + '.darkText ' + sh.darkText + ' on ' + sh.light);
     });
   });
 });

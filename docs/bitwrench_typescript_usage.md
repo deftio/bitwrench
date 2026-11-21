@@ -269,10 +269,10 @@ bw.loadStyles({ primary: '#dc2626' });
 bw.loadStyles();
 ```
 
-**Palette gotcha**: `palette.background`, `palette.surface`, and
-`palette.surfaceAlt` are plain strings. All other keys (`primary`,
+**Palette gotcha**: `palette.background`, `palette.surface`,
+`palette.surfaceAlt`, `palette.textMuted` and `palette.textFaint` are plain strings. All other keys (`primary`,
 `secondary`, etc.) are `ColorShades` objects with `.base`, `.hover`,
-`.active`, `.light`, `.darkText`, `.border`, `.focus`, `.textOn`.
+`.active`, `.light`, `.darkText`, `.text`, `.border`, `.focus`, `.textOn`.
 
 ## Color Utilities
 
@@ -286,7 +286,7 @@ const lum = bw.relativeLuminance('#2563eb');  // 0.0-1.0
 const textColor = bw.textOnColor('#2563eb');  // '#fff' or '#000'
 
 const shades: ColorShades = bw.deriveShades('#2563eb');
-// { base, hover, active, light, darkText, border, focus, textOn }
+// { base, hover, active, light, darkText, text, border, focus, textOn }
 ```
 
 ## Routing

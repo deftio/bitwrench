@@ -213,6 +213,17 @@ var _ce   = function() { console.error.apply(console, arguments); };
 bw.debug = false;
 
 /**
+ * Strict targets. When true, a verb that acts on one target and cannot
+ * resolve it throws `Error("bw.<verb>: target not found")` instead of
+ * warning and returning null. Queries (`bw.el`, `bw.$`) and set verbs
+ * (`bw.addClass`, `bw.toggleClass`) are unchanged: a miss is a legitimate
+ * answer there. Off by default in 2.x; the throwing form is the 3.0
+ * default (#127).
+ * @type {boolean}
+ */
+bw.strictTargets = false;
+
+/**
  * Lazy-resolve Node.js `fs` module.
  * Tries require('fs') first (available in CJS/UMD Node.js builds),
  * then falls back to dynamic import('fs') for ESM.
@@ -431,6 +442,61 @@ bw.el = function(target, apply) {
 };
 
 /**
+ * Internal: remember what the user is doing inside `container` before a verb
+ * replaces its children, so the verb can put it back (#108). The focused
+ * element is kept as the node itself (a keyed sync or a table sort moves
+ * nodes and keeps them) and, when it has no id, as its child-index path from
+ * the container (a rebuilt tree has new nodes; an id finds the stand-in
+ * directly). A text caret is kept as its selection range, and the container's
+ * scroll offset, which collapses to 0 the moment the children go, is kept
+ * too. Two property reads when nothing inside has focus.
+ * @private
+ */
+function _focusSnap(container) {
+  if (!container || typeof document === 'undefined') return null;
+  var a = document.activeElement;
+  var snap = { top: container.scrollTop, node: null, path: null, sel: null };
+  if (a && a !== container && container.contains(a)) {
+    snap.node = a;
+    if (!a.id) {
+      var path = [], n = a, p;
+      while (n !== container && (p = n.parentNode)) {
+        path.unshift(Array.prototype.indexOf.call(p.children, n));
+        n = p;
+      }
+      snap.path = path;
+    }
+    if (typeof a.selectionStart === 'number') snap.sel = [a.selectionStart, a.selectionEnd];
+  }
+  return snap;
+}
+
+/**
+ * Internal: the other half of _focusSnap. Refocuses the same node if it is
+ * still in the container, else the element with the same id, else the element
+ * at the same path; nothing happens when none resolves. The scroll offset goes
+ * back last, because focus() scrolls its element into view (preventScroll asks
+ * it not to; a browser without the option ignores the argument).
+ * @private
+ */
+function _focusRestore(container, snap) {
+  if (!snap) return;
+  var el = snap.node, i;
+  if (el && !container.contains(el)) {
+    if (el.id) el = document.getElementById(el.id);
+    else for (el = container, i = 0; el && i < snap.path.length; i++) el = el.children[snap.path[i]];
+    if (el && !container.contains(el)) el = null;
+  }
+  if (el && el !== document.activeElement) {
+    try { el.focus({ preventScroll: true }); } catch (e) { el = null; }
+    if (el && snap.sel && typeof el.selectionStart === 'number') {
+      try { el.setSelectionRange(snap.sel[0], snap.sel[1]); } catch (e2) { /* not a text control */ }
+    }
+  }
+  if (snap.top) container.scrollTop = snap.top;
+}
+
+/**
  * Internal: apply content or function to a DOM element.
  * Shared by bw.el() and bw.$().
  * @private
@@ -444,18 +510,16 @@ function _applyTo(el, apply) {
   var mountNow = function() { if (el.isConnected) bw.mountTree(el); };
   if (_is(apply, 'function')) {
     apply(el);
-  } else if (_isA(apply)) {
+  } else if (_isA(apply) || (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw))) {
+    // One TACO is a one-item list; the array path handles both.
+    var snap = _focusSnap(el);
     bw.unmountChildren(el);
     el.innerHTML = '';
-    _flat(apply).forEach(function(item) {
+    _flat(_isA(apply) ? apply : [apply]).forEach(function(item) {
       if (item != null) el.appendChild(bw.create(item, _nsOptsFor(el)));
     });
     mountNow();
-  } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
-    bw.unmountChildren(el);
-    el.innerHTML = '';
-    el.appendChild(bw.create(apply, _nsOptsFor(el)));
-    mountNow();
+    _focusRestore(el, snap);
   } else {
     var text = (apply == null || typeof apply === 'boolean') ? '' : String(apply);
     // Same string as the one text node already there: no write (#129). A
@@ -491,7 +555,11 @@ function _resolveTarget(target, verb) {
     try { el = bw.$(target)[0]; } catch (e) { el = null; }
     if (!el) el = bw.el(target);
   }
-  if (!el && verb) _cw('bw.' + verb + ': target not found');
+  if (!el && verb) {
+    var msg = 'bw.' + verb + ': target not found';
+    if (bw.strictTargets) throw new Error(msg);
+    _cw(msg);
+  }
   return el;
 }
 
@@ -1228,7 +1296,7 @@ bw.htmlPage = function(opts) {
     bodyEndParts.push('for(var i=0;i<els.length;i++){');
     bodyEndParts.push('(function(el,entry){el.addEventListener(entry.event,function(event){');
     bodyEndParts.push('try{entry.fn.call(el,event);}catch(e){');
-    bodyEndParts.push('console.error("bw_act handler error — if this is a ReferenceError from a closure, use bw_act_* class tokens instead:",e);}');
+    bodyEndParts.push('console.error("bw_act handler error (a closure cannot be serialized; use bw_act_* class tokens):",e);}');
     bodyEndParts.push('});})(els[i],r[k]);}}}})();');
   }
   if (runtime === 'inline' || runtime === 'cdn') {
@@ -2287,7 +2355,9 @@ bw.mount = function(target, taco, options) {
   var container = _resolveTarget(target, 'mount');
   if (!container) return null;
 
-  // Teardown existing children (compound calls atomic)
+  // Teardown existing children (compound calls atomic). What the user was doing
+  // inside -- focus, caret, scroll -- comes back after the rebuild (#108).
+  var snap = _focusSnap(container);
   bw.unmountChildren(container);
   container.innerHTML = '';
 
@@ -2295,25 +2365,21 @@ bw.mount = function(target, taco, options) {
 
   var firstEl = null;
   var created = [];
-  if (_isA(taco)) {
-    for (var i = 0; i < taco.length; i++) {
-      if (taco[i] != null) {
-        var child = bw.create(taco[i], _nsOptsFor(container, options));
-        container.appendChild(child);
-        created.push(child);
-        if (!firstEl) firstEl = child;
-      }
+  var list = _isA(taco) ? taco : [taco];
+  for (var i = 0; i < list.length; i++) {
+    if (list[i] != null) {
+      var child = bw.create(list[i], _nsOptsFor(container, options));
+      container.appendChild(child);
+      created.push(child);
+      if (!firstEl) firstEl = child;
     }
-  } else {
-    firstEl = bw.create(taco, _nsOptsFor(container, options));
-    container.appendChild(firstEl);
-    created.push(firstEl);
   }
 
   // Walk each created child to register and fire mounted (not the container itself)
   for (var ci = 0; ci < created.length; ci++) {
     bw.mountTree(created[ci]);
   }
+  _focusRestore(container, snap);
 
   return firstEl;
 };
@@ -2379,6 +2445,7 @@ bw.replace = function(ref, taco) {
   if (!ref) return null;
   var parent = ref.parentNode;
   var next = ref.nextSibling;
+  var snap = _focusSnap(parent);
 
   bw.unmount(ref);
   if (ref.parentNode) ref.parentNode.removeChild(ref);
@@ -2391,6 +2458,7 @@ bw.replace = function(ref, taco) {
     else parent.appendChild(neo);
   }
   bw.mountTree(neo);
+  _focusRestore(parent, snap);
   return neo;
 };
 
@@ -2406,6 +2474,7 @@ bw.refresh = function(ref) {
   var el = _resolveTarget(ref, 'refresh');
   if (!el) return null;
 
+  var snap = _focusSnap(el);
   bw.unmountChildren(el);
   el.innerHTML = '';
   // Invalidate slot cache so slots re-resolve after rebuild
@@ -2417,6 +2486,7 @@ bw.refresh = function(ref) {
     // Walk newly created children
     bw.mountTree(el);
   }
+  _focusRestore(el, snap);
 
   // Emit bw:refresh
   try {
@@ -2578,10 +2648,9 @@ bw.syncChildren = function(parentEl, items, opts) {
   var createFn = opts.create;
   var updateFn = opts.update;
 
-  // Save focus to restore after reorder (insertBefore can blur in some environments)
-  /* c8 ignore next -- document is always defined in jsdom test env */
-  var focused = (typeof document !== 'undefined') ? document.activeElement : null;
-  if (focused && !parentEl.contains(focused)) focused = null;
+  // insertBefore blurs the moved node in some environments; the shared snapshot
+  // puts focus back on the same node (#108).
+  var snap = _focusSnap(parentEl);
 
   // Build map of existing keyed children
   var existingByKey = {};
@@ -2644,11 +2713,7 @@ bw.syncChildren = function(parentEl, items, opts) {
     }
   }
 
-  // Restore focus if it was lost during reorder
-  /* c8 ignore next 2 -- focus management not exercised in jsdom */
-  if (focused && focused.isConnected && document.activeElement !== focused) {
-    try { focused.focus(); } catch (e) {}
-  }
+  _focusRestore(parentEl, snap);
 };
 
 /**
@@ -3668,6 +3733,22 @@ bw._wireListeners = {};
  * bw.registerRemote('refreshChart', function(opts) { drawChart(opts.data); });
  */
 bw.registerRemote = function(name, fn) { bw._clientRemotes[name] = fn; };
+
+/**
+ * Capture hook for `client.screenshot()`. Null by default, so the builtin
+ * loads the vendored html2canvas. A page may set it to a function
+ * `(el, { scale }) => Promise<HTMLCanvasElement>` and the screenshot path
+ * uses that instead; `domToCanvas` from modern-screenshot and `toCanvas`
+ * from html-to-image fit as they are. Added because html2canvas 1.4.1 cannot
+ * parse CSS Color 4 functions such as `color-mix()` (#125).
+ * @type {?function(Element, {scale: number}): Promise<HTMLCanvasElement>}
+ * @category Server (bwserve)
+ * @see bw.registerRemote
+ * @example
+ * // domToCanvas is modern-screenshot, loaded by the page
+ * bw.capture = function(el, o) { return window.domToCanvas(el, { scale: o.scale }); };
+ */
+bw.capture = null;
 
 /**
  * Connect this page to a bwserve endpoint over Server-Sent Events.
@@ -5141,10 +5222,9 @@ bw.makeTable = function(config) {
       }
     }
 
-    // Reattaching rows blurs whatever had focus inside them (bw.syncChildren
-    // restores focus for the same reason).
-    var focused = document.activeElement;
-    if (focused && !tbodyEl.contains(focused)) focused = null;
+    // Reattaching rows blurs whatever had focus inside them; the shared
+    // snapshot puts it back on the same (moved) node (#108).
+    var snap = _focusSnap(tbodyEl);
 
     // Detach reused rows first so unmountChildren only tears down dropped ones
     for (var n = 0; n < nextRows.length; n++) {
@@ -5154,9 +5234,7 @@ bw.makeTable = function(config) {
     while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
     for (var m = 0; m < nextRows.length; m++) tbodyEl.appendChild(nextRows[m]);
     bw.mountTree(tbodyEl);
-    if (focused && focused.isConnected && document.activeElement !== focused) {
-      try { focused.focus(); } catch (e) { /* not focusable any more */ }
-    }
+    _focusRestore(tbodyEl, snap);
     if (rowKey) {
       state.rowKeys = rows.map(function(row) { return String(row[rowKey]); });
       var live = {};

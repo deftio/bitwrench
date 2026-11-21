@@ -34,7 +34,7 @@ Prerequisites: CMake 3.10+, a C99 compiler, POSIX threads (Linux, macOS, WSL).
 
 | Route | Purpose |
 |-------|---------|
-| `GET /bitwrench.js` | The gzipped bundle straight out of the flash array, `Content-Encoding: gzip`. ~46 KB, no filesystem, works air-gapped. |
+| `GET /bitwrench.js` | The gzipped bundle straight out of the flash array, `Content-Encoding: gzip`. ~47 KB, no filesystem, works air-gapped. |
 | `GET /` | A bootstrap page with no markup, no CSS and no DOM code. |
 | `GET /events` | SSE. Mounts the whole UI on connect, then patches readings every 2 s. |
 | `POST /bw/events` | What `bw.actions` sends when a `bw_act_*` element is clicked. |

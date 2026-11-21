@@ -41,9 +41,9 @@ rules, and adding the BCCL script adds them. Load lean, then BCCL, then call
 
 | Call | Does |
 |------|------|
-| `bw.mount(target, taco)` | Replace target's content; returns the new root element (`bw.DOM` is the same) |
+| `bw.mount(target, taco)` | Replace target's content; returns the new root element (`bw.DOM` is the same). Focus, caret and the target's scroll offset come back when the new tree has an element with the same id or at the same position |
 | `bw.append(target, taco, {before})` | Add a child; returns it |
-| `bw.replace(ref, taco)` | Swap one element for a new one (old one is unmounted) |
+| `bw.replace(ref, taco)` | Swap one element for a new one (old one is unmounted); focus inside it returns by id or position |
 | `bw.remove(ref)` | Unmount and remove |
 | `bw.html(taco)` | HTML string -- works in Node, for SSR and static files |
 | `bw.create(taco)` | Detached DOM element, not yet in the page |
@@ -51,7 +51,8 @@ rules, and adding the BCCL script adds them. Load lean, then BCCL, then call
 **One vocabulary.** Every `target`/`ref` above, and in every verb on this page,
 is the same thing: a live element, an element id (`'status'`), a CSS selector
 (`'#status'`, `'.card'`), or a `bw_uuid_*` token. A verb that acts and cannot
-find its target warns `bw.<verb>: target not found` and returns null; the
+find its target warns `bw.<verb>: target not found` and returns null, or throws
+the same message when `bw.strictTargets` is `true`; the
 queries (`bw.el`, `bw.$`, `bw.hasClass`, `bw.inspect`) and the class verbs
 stay silent on a miss. Every `content` is the same thing too: text, a TACO, an
 array of either, or `bw.raw()` -- in `bw.patch`, slot setters,
@@ -69,7 +70,7 @@ Cheapest first -- see [Names carry cost](bitwrench-northstar-principles.md#10-na
 | `bw.toggleClass(ref, names, force?)` | Flip classes, or force them on/off. Touches no node, so focus and transitions survive |
 | `bw.addClass(ref, names)` / `bw.removeClass(ref, names)` / `bw.hasClass(ref, name)` | The rest of the class verbs; `names` is a string, space-separated list, or array |
 | `bw.clear(ref)` | Empty a container: unmount hooks fire, then children go. Use instead of `innerHTML = ''` |
-| `bw.refresh(ref)` | Re-run a component's `o.render` |
+| `bw.refresh(ref)` | Re-run a component's `o.render`; focus, caret and scroll are kept, typed values the state does not model are not |
 
 ## Find
 
@@ -106,5 +107,6 @@ passes them through. See [Bring your own design](theming.md#bring-your-own-desig
 |------|------|
 | `bw.inspect(ref, depth)` | Component tree as an object: `{ tag, id, class, uuid, type, handles, state, children }`. `bwcli attach` prints it with `/tree` |
 | `bw.warnUnknownProps` | `true` by default: a `make*()` factory warns once when handed an option it does not read. Set `false` to silence |
+| `bw.strictTargets` | `false` by default: an acting verb that cannot resolve its target warns and returns null. Set `true` to make it throw `bw.<verb>: target not found` instead; queries and the class verbs are unaffected (#127) |
 | `bwcli attach` | Drive a live page from a terminal: REPL, inspect, screenshot ([bw-attach.md](bw-attach.md)) |
 | `verify(taco)` / `verify.assert(taco)` | Check a TACO's shape: an array of findings, or a throw. A separate module under 3 KB gzipped (`bitwrench/verify`), not in either build, never in production ([verify.md](verify.md)) |

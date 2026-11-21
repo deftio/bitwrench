@@ -1,4 +1,4 @@
-/*! bitwrench-debug v2.1.14 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-debug v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 function getDefaultExportFromCjs (x) {
@@ -32,7 +32,7 @@ function requireBitwrenchDebug () {
 		(function() {
 
 		  var CDN_BW = 'https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js';
-		  var CDN_H2C = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+		  var CDN_H2C = 'https://cdn.jsdelivr.net/npm/html2canvas-pro@2.6.4/dist/html2canvas-pro.min.js';
 		  var _listeners = {};
 
 		  function _loadScript(url) {

@@ -28,8 +28,10 @@ bitwrench is a JavaScript UI library where every UI element is a plain JS
 object called a TACO: `{t, a, c, o}` (Tag, Attributes, Content, Options).
 bitwrench renders TACOs to live DOM or HTML strings and provides a complete
 component library (51 `make*()` components), palette-based theming, state management,
-client-side routing, and server-driven UI via SSE (bwserve). ~45 KB gzipped for
-the minified script-tag build, zero dependencies, no build step.
+client-side routing, and server-driven UI via SSE (bwserve). ~47 KB gzipped for
+the minified script-tag build, zero dependencies, no build step. Only your
+code runs between a TACO and the DOM; the two third-party files in the repo
+(html2canvas, quikdown) are served by the tooling and are never in the bundle.
 
 bitwrench started in 2011 -- by an author who'd previously co-founded the
 Lampdesk webVM that became Palm/HP webOS -- with a simple premise:
@@ -79,7 +81,7 @@ Before writing or modifying bitwrench code, read these docs in order:
 4. **docs/llm-bitwrench-guide.md** -- Compact code-first tutorial.
    Covers TACO format, rendering, events, CSS, BCCL components, state,
    handles/slots, routing, bwserve, and the #1 mistake (events in
-   o.mounted). ~700 lines -- you can read it in full.
+   o.mounted). ~780 lines -- you can read it in full.
 
 5. **docs/component-cheatsheet.md** -- Every built-in component with
    key props and handle methods. Check this BEFORE building custom
@@ -229,8 +231,11 @@ bw.injectCSS(bw.css({
 
 The palette provides: primary, secondary, tertiary, success, danger,
 warning, info, light, dark (each an object with .base, .hover, .active,
-.light, .darkText, .border, .focus, .textOn). Also surface, surfaceAlt,
-background (plain strings -- NOT objects, do not access .base on them).
+.light, .darkText, .text, .border, .focus, .textOn; .text is the role as
+readable text on every surface). Also surface, surfaceAlt,
+background, textMuted, textFaint (plain strings -- NOT objects, do not access
+.base on them). Secondary text is p.textMuted (>= 4.5:1 on every surface);
+secondary.base is an accent, not a text colour.
 
 `styles.layout` provides spacing, radius, typeScale, elevation, and motion
 tokens resolved from the same `loadStyles` / `makeStyles` config.
@@ -347,9 +352,9 @@ takes a selector and changes every match.
 ## Source layout
 
 ```
-src/bitwrench.js              Main library (~5200 lines)
-src/bitwrench-styles.js       Theme/CSS generation (~2500 lines)
-src/bitwrench-color-utils.js  Color utilities (~400 lines)
+src/bitwrench.js              Main library (~5800 lines)
+src/bitwrench-styles.js       Theme/CSS generation (~1100 lines)
+src/bitwrench-color-utils.js  Color utilities (~550 lines)
 src/bitwrench-bccl.js         Component library (BCCL)
 src/bitwrench-code-edit.js    Code editor component
 src/bitwrench-router.js       Client-side routing
@@ -522,7 +527,7 @@ by tools. Point users at them; do not reimplement them.
 - NEVER push feature branches to GitHub -- only main is pushed
 - NEVER run npm publish or create tags manually -- CI owns this
 - Run `npm run release` on feature branch, then squash-merge to main
-- Bundle budget: 47 KB gzipped for both UMD and ESM, measured on the shipped .gz (raised from 46 KB in 2.1.13; the reason is in `tools/release.js`)
+- Bundle budget: 48 KB gzipped for both UMD and ESM, 30 KB for lean, measured on the shipped .gz (raised from 47 KB in 2.1.15; each raise and its reason is in `tools/release.js`)
 
 <!-- drift-lint:ignore-start: removal documentation must name the removed APIs -->
 ## Removed APIs (will throw or silently fail)

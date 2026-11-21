@@ -111,6 +111,7 @@ export interface ColorShades {
   active: string;
   light: string;
   darkText: string;
+  text: string;
   border: string;
   focus: string;
   textOn: string;
@@ -133,6 +134,10 @@ export interface Palette {
   surface: string;
   /** Plain string, not a ColorShades object */
   surfaceAlt: string;
+  /** Text below body weight: derived from dark toward background, >= 4.5:1 on every surface. Plain string (#121). */
+  textMuted: string;
+  /** Fainter still, >= 3:1 on every surface: large or decorative text only. Plain string. */
+  textFaint: string;
 }
 
 /** Seed color config for bw.makeStyles() and bw.loadStyles() */
@@ -376,6 +381,8 @@ export interface Bitwrench {
   readonly _isBrowser: boolean;
   _isNode: boolean;
   debug: boolean;
+  /** When true, acting verbs throw on a missing target instead of warning and returning null (#127). Default false. */
+  strictTargets: boolean;
 
   // -- TACO Construction & Rendering ----------------------------------------
   /** Create TACO from positional args */
@@ -500,6 +507,8 @@ export interface Bitwrench {
   remote: { send(msg: any): void; close?(): void } | null;
   /** Register a named remote function for bw.apply({type:'call'}) */
   registerRemote(name: string, fn: Function): void;
+  /** Capture hook for client.screenshot(): null loads the vendored html2canvas; a page may supply its own (#125). */
+  capture: ((el: Element, opts: { scale: number }) => Promise<HTMLCanvasElement>) | null;
   /** Connect to a bwserve instance via SSE */
   connect(url: string, options?: Record<string, any>): { send(msg: any): void; close(): void };
   /** Set theme mode ('primary' or 'alternate') on matching elements */

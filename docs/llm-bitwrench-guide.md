@@ -292,7 +292,8 @@ bw.injectCSS(bw.css({
 CamelCase auto-converts to kebab-case. All `@`-prefix keys nest recursively.
 
 Useful palette fields: `p.primary.base` / `.hover` / `.light` / `.border` / `.textOn`,
-plus `p.surface`, `p.surfaceAlt`, `p.background` (plain strings).  
+plus `p.surface`, `p.surfaceAlt`, `p.background`, `p.textMuted`, `p.textFaint` (plain strings).
+Muted text is `p.textMuted`, which clears 4.5:1 on every surface; `p.secondary.base` is an accent.  
 Useful layout fields: `L.spacing.card|btn|alert|cell|input`, `L.radius.card|btn|…`,
 `L.elevation.sm|md|lg|xl`, `L.typeScale.sm|base|lg|xl|…` (px numbers), `L.motion`.
 
@@ -775,4 +776,4 @@ Replaced by `o.handle` + `o.slots` + `bw.mount()`. See Step 4.
 
 ---
 
-*Bitwrench: ~45KB gzipped, zero dependencies, no build step. [github.com/deftio/bitwrench](https://github.com/deftio/bitwrench)*
+*Bitwrench: ~47KB gzipped, zero dependencies, no build step. [github.com/deftio/bitwrench](https://github.com/deftio/bitwrench)*

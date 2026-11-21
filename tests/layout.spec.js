@@ -55,3 +55,34 @@ test.describe('Layout (computed geometry)', () => {
     }
   });
 });
+
+// A rebuild collapses the container while its children are gone, which resets
+// scrollTop to 0 in a real browser (jsdom never clamps, so the unit test for
+// this passes with or without the fix). Focus and caret are checked here too,
+// against the shipped build (#108).
+test.describe('Rebuild keeps focus, caret and scroll (#108)', () => {
+  test('bw.mount over a scrolled container with a focused input', async ({ page }) => {
+    await page.goto('/tests/fixtures/layout.html');
+    const out = await page.evaluate(() => {
+      const tree = () => ({ t: 'div', a: { id: 'scrolly', style: 'height:60px;overflow:auto' }, c: [
+        ...Array.from({ length: 20 }, (_, i) => ({ t: 'p', c: 'row ' + i })),
+        { t: 'input', a: { id: 'sc_in', value: 'hello world' } }
+      ] });
+      bw.mount('#app', tree());
+      const box = document.getElementById('scrolly');
+      const input = document.getElementById('sc_in');
+      input.focus(); input.setSelectionRange(2, 5);   // focus() scrolls the input into view, so scroll afterwards
+      box.scrollTop = 120;
+      const before = box.scrollTop;
+      bw.mount(box, tree().c);
+      const again = document.getElementById('sc_in');
+      return { before, after: box.scrollTop, rebuilt: again !== input, focused: document.activeElement === again,
+        sel: [again.selectionStart, again.selectionEnd] };
+    });
+    expect(out.before).toBe(120);
+    expect(out.rebuilt).toBe(true);
+    expect(out.after).toBe(120);
+    expect(out.focused).toBe(true);
+    expect(out.sel).toEqual([2, 5]);
+  });
+});

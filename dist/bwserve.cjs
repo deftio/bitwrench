@@ -1,4 +1,4 @@
-/*! bwserve v2.1.14 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bwserve v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -14,7 +14,7 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.1.14';
+const VERSION = '2.1.15';
 
 /**
  * BwServeClient — per-client connection for bwserve.
@@ -439,9 +439,15 @@ var BWCLIENT_SOURCE = '(function(bw) {\n'
   + '      // Fetched from the attach/bwserve server, like every other /bw/ URL. A\n'
   + '      // page-relative default 404s whenever the page is on another origin (#117).\n'
   + '      var base = (typeof origin !== "undefined" ? origin : "");\n'
-  + '      var p = window.html2canvas ? Promise.resolve(window.html2canvas) : _ls(opts.captureUrl || base + "/bw/lib/vendor/html2canvas.min.js");\n'
-  + '      p.then(function(h2c) { return h2c(el, { scale: opts.scale || 1, useCORS: true }); })\n'
-  + '       .then(function(canvas) {\n'
+  + '      // The page may bring its own capturer (#125): bw.capture(el, { scale }) returning a\n'
+  + '      // Promise of a canvas. The vendored default is html2canvas-pro, which parses CSS Color 4;\n'
+  + '      // modern-screenshot domToCanvas and html-to-image toCanvas fit this slot as they are.\n'
+  + '      var scale = opts.scale || 1;\n'
+  + '      var p = (typeof bw.capture === "function")\n'
+  + '        ? Promise.resolve().then(function() { return bw.capture(el, { scale: scale }); })\n'
+  + '        : (window.html2canvas ? Promise.resolve(window.html2canvas) : _ls(opts.captureUrl || base + "/bw/lib/vendor/html2canvas.min.js"))\n'
+  + '            .then(function(h2c) { return h2c(el, { scale: scale, useCORS: true }); });\n'
+  + '      p.then(function(canvas) {\n'
   + '         var out = canvas;\n'
   + '         var mw = opts.maxWidth; var mh = opts.maxHeight;\n'
   + '         if ((mw && canvas.width > mw) || (mh && canvas.height > mh)) {\n'

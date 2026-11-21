@@ -2256,6 +2256,40 @@ describe('target resolution is the same for every verb', function() {
       'should still warn');
   });
 
+  // #127 (quikleaf): an unresolvable target on a one-target verb is a
+  // programmer error, and a page should be able to say so. Opt-in in 2.x
+  // because the default (warn, return null) is what every consumer's error
+  // handling was written against; the default flips in 3.0.
+  it('bw.strictTargets makes every acting verb throw on a missing target (#127)', function() {
+    fresh();
+    // el is a query, toggleClass a set verb, and render returns a result object
+    // ({ ok, error }) by contract: none of the three throws.
+    var acting = VERBS.filter(function(v) { return v !== 'el' && v !== 'toggleClass' && v !== 'render'; });
+    var orig = console.warn;
+    var warned = [];
+    console.warn = function(m) { warned.push(String(m)); };
+    bw.strictTargets = true;
+    try {
+      acting.forEach(function(verb) {
+        assert.throws(function() { callWith(verb, 'no_such_thing'); },
+          new RegExp('^Error: bw\\.' + verb + ': target not found'),
+          'bw.' + verb + ' should throw under strictTargets');
+      });
+      assert.strictEqual(bw.el('no_such_thing'), null, 'queries still answer null');
+      assert.deepStrictEqual(bw.toggleClass('no_such_thing', 'on'), [], 'set verbs still answer an empty list');
+      assert.strictEqual(bw.render('no_such_thing', 'append', { t: 'i' }).ok, false, 'render still reports through its result object');
+      assert.deepStrictEqual(warned, [], 'a throw is not also a warning');
+    } finally {
+      bw.strictTargets = false;
+      console.warn = orig;
+    }
+  });
+
+  it('bw.strictTargets is off by default, so verbs warn and return null', function() {
+    assert.ok(Object.prototype.hasOwnProperty.call(bw, 'strictTargets'), 'flag is defined, not merely falsy');
+    assert.strictEqual(bw.strictTargets, false);
+  });
+
   it('bw.mount with a bare id actually mounts, and unmounts what was there', function() {
     fresh();
     var inner = bw.mount('status', { t: 'span', a: { id: 'inner' }, c: 'first' });
@@ -2546,8 +2580,10 @@ describe('update path: methods vs re-render', function() {
     assert.strictEqual(bw.$('#n')[0].textContent, '1', 'the counter did update');
     assert.strictEqual(bw.$('#typed')[0].value, '',
       'refresh rebuilds children, so the half-typed value is gone');
-    assert.notStrictEqual(document.activeElement, bw.$('#typed')[0],
-      'and focus goes with it');
+    // Focus is the one thing a rebuild gives back (#108): the new #typed is
+    // focused again, empty. The half-typed value is still gone.
+    assert.strictEqual(document.activeElement, bw.$('#typed')[0],
+      'focus returns to the element with the same id');
   });
 
   it('a handle method updates only what changed', function() {
@@ -2706,5 +2742,91 @@ describe('SVG namespace survives the insert verbs', function() {
     bw.append(host, { t: 'div', a: { id: 'plain' } });
     assert.notStrictEqual(nsOf('#plain'), SVG_NS,
       'the namespace must come from the parent, not be applied everywhere');
+  });
+});
+
+// =========================================================================
+// Focus, caret and scroll survive a rebuild of a matching tree (#108, item 3)
+//
+// jazzmac re-mounted a settings panel from a slider's input event and lost the
+// drag; makeTable and syncChildren each carried their own focus save. The
+// general form: before a verb replaces a target's children, remember the
+// focused element by id (or by its path from the target), its caret, and the
+// target's scroll offset; afterwards, restore whatever still resolves. A drag
+// cannot survive (it belongs to the old node) and the docs still say patch
+// the label instead; the caret and the scroll position can.
+// =========================================================================
+
+describe('focus, caret and scroll survive a rebuild (#108)', function() {
+  function panel(extra) {
+    return { t: 'div', c: [
+      { t: 'input', a: { id: 'name', value: 'hello world' } },
+      { t: 'input', a: { class: 'anon', value: 'no id' } },
+      { t: 'p', c: extra || '' }
+    ] };
+  }
+  beforeEach(function() { document.body.innerHTML = '<div id="view" style="height:40px;overflow:auto"></div><input id="outside">'; });
+
+  it('bw.mount: focus and caret return to the input with the same id', function() {
+    bw.mount('view', panel());
+    var inp = document.getElementById('name');
+    inp.focus(); inp.setSelectionRange(2, 5);
+    bw.mount('view', panel('changed'));
+    var again = document.getElementById('name');
+    assert.notStrictEqual(again, inp, 'the tree was rebuilt');
+    assert.strictEqual(document.activeElement, again, 'focus is on the new input');
+    assert.strictEqual(again.selectionStart, 2);
+    assert.strictEqual(again.selectionEnd, 5);
+  });
+
+  it('bw.mount: without an id the position in the tree is used', function() {
+    bw.mount('view', panel());
+    document.querySelector('#view .anon').focus();
+    bw.mount('view', panel('changed'));
+    assert.strictEqual(document.activeElement, document.querySelector('#view .anon'));
+  });
+
+  it('bw.mount: the container keeps its scroll offset', function() {
+    bw.mount('view', panel());
+    var view = document.getElementById('view');
+    view.scrollTop = 30;
+    bw.mount('view', panel('changed'));
+    assert.strictEqual(view.scrollTop, 30);
+  });
+
+  it('bw.mount: focus outside the container is left alone, and a vanished element is not chased', function() {
+    bw.mount('view', panel());
+    document.getElementById('outside').focus();
+    bw.mount('view', panel('changed'));
+    assert.strictEqual(document.activeElement, document.getElementById('outside'));
+    document.getElementById('name').focus();
+    bw.mount('view', { t: 'p', c: 'no inputs any more' });
+    assert.notStrictEqual(document.activeElement, null);
+    assert.strictEqual(document.querySelector('#view input'), null);
+  });
+
+  it('bw.replace: focus inside the replaced element returns by id', function() {
+    bw.mount('view', { t: 'form', a: { id: 'f' }, c: [{ t: 'input', a: { id: 'name' } }] });
+    document.getElementById('name').focus();
+    bw.replace('f', { t: 'form', a: { id: 'f' }, c: [{ t: 'label', c: 'x' }, { t: 'input', a: { id: 'name' } }] });
+    assert.strictEqual(document.activeElement, document.getElementById('name'));
+  });
+
+  it('bw.refresh: a component re-rendered from o.render keeps focus', function() {
+    var el = bw.mount('view', { t: 'div', o: { state: { n: 0 }, render: function(root, st) {
+      bw.append(root, { t: 'input', a: { id: 'name', value: String(st.n) } });
+    } } });
+    document.getElementById('name').focus();
+    el._bw_state.n = 1;
+    bw.refresh(el);
+    assert.strictEqual(document.getElementById('name').value, '1', 're-rendered');
+    assert.strictEqual(document.activeElement, document.getElementById('name'));
+  });
+
+  it('bw.el(ref, taco) and slot setters go through the same sink and keep focus', function() {
+    bw.mount('view', { t: 'div', a: { id: 'slot' }, c: [{ t: 'input', a: { id: 'name' } }] });
+    document.getElementById('name').focus();
+    bw.el('slot', [{ t: 'b', c: 'new' }, { t: 'input', a: { id: 'name' } }]);
+    assert.strictEqual(document.activeElement, document.getElementById('name'));
   });
 });

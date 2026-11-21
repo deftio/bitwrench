@@ -1,4 +1,4 @@
-/*! bitwrench-verify v2.1.14 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-verify v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
   typeof define === 'function' && define.amd ? define(['exports'], factory) :

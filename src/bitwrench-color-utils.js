@@ -307,12 +307,42 @@ export function harmonize(sourceHex, targetHex, amount) {
 }
 
 /**
- * Derive a full shade palette for a single semantic color.
- * @param {string} hex - Base color hex
- * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
+ * Move `color` toward `toward` in 2% steps until it reads at `floor` or
+ * better against every background in `bgs`. Returns the first colour that
+ * passes, which is `color` itself when it already does, or `toward` when
+ * nothing short of it passes.
+ * @private
  */
-export function deriveShades(hex) {
+function ensureContrast(color, toward, bgs, floor) {
+  for (var t = 0; t < 1; t += 0.02) {
+    var c = t ? mixColor(color, toward, t) : color;
+    var ok = true;
+    for (var i = 0; i < bgs.length; i++) if (contrastRatio(c, bgs[i]) < floor) { ok = false; break; }
+    if (ok) return c;
+  }
+  return toward;
+}
+
+/**
+ * Derive a full shade palette for a single semantic color.
+ *
+ * `text` is the seed usable as text: moved toward the ink colour (black on a
+ * light palette, white on a dark one) only as far as WCAG AA (4.5:1) needs
+ * against the palette's surfaces. `darkText` reads at 4.5:1 on `light`. In
+ * the alternate (dark) palette `light` is a tint toward the background and
+ * `darkText` is a light colour, so an alert stays an alert in dark mode.
+ * @param {string} hex - Base color hex
+ * @param {Object} [ctx] - Palette context; omitted means a white page
+ * @param {string[]} [ctx.surfaces] - Surfaces the text shade must read on
+ * @param {boolean} [ctx.dark] - True for a dark palette
+ * @returns {Object} { base, hover, active, light, darkText, text, border, focus, textOn }
+ */
+export function deriveShades(hex, ctx) {
   var rgb = _ph(hex);
+  var dark = !!(ctx && ctx.dark);
+  var surfaces = (ctx && ctx.surfaces) || ['#ffffff'];
+  var ink = dark ? '#ffffff' : '#000000';
+  var light = dark ? mixColor(hex, surfaces[0], 0.80) : mixColor(hex, '#ffffff', 0.85);
   var borderColor = hexToHsl(hex)[2] > 75
     ? adjustLightness(hex, -18)
     : mixColor(hex, '#ffffff', 0.60);
@@ -320,8 +350,9 @@ export function deriveShades(hex) {
     base: hex,
     hover: adjustLightness(hex, -10),
     active: adjustLightness(hex, -15),
-    light: mixColor(hex, '#ffffff', 0.85),
-    darkText: adjustLightness(hex, -40),
+    light: light,
+    darkText: ensureContrast(dark ? hex : adjustLightness(hex, -40), ink, [light], 4.5),
+    text: ensureContrast(hex, ink, surfaces, 4.5),
     border: borderColor,
     focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
     textOn: textOnColor(hex)
@@ -436,6 +467,23 @@ export function deriveAlternateConfig(config) {
 }
 
 /**
+ * Lightest mix of `from` toward `toward` whose contrast against every surface
+ * stays at or above `floor`. Steps of 2%; returns `from` itself when nothing
+ * softer passes. Used for the text roles below body weight (#121).
+ * @private
+ */
+function softenText(from, toward, surfaces, floor) {
+  var best = from;
+  for (var t = 0.02; t <= 1; t += 0.02) {
+    var c = mixColor(from, toward, t);
+    var ok = surfaces.every(function(s) { return contrastRatio(c, s) >= floor; });
+    if (!ok) break;
+    best = c;
+  }
+  return best;
+}
+
+/**
  * Derive complete palette from a theme config object.
  * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
  * @param {number} [config.harmonize=0.20] - Hue shift amount for semantic colors (0-1)
@@ -467,19 +515,34 @@ export function derivePalette(config) {
     ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)])
     : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]));
 
+  // Text below body weight (#121). Derived from dark (body text) toward the
+  // background and stopped at a WCAG floor measured against every surface, so
+  // a pale accent seed can no longer become unreadable text. textMuted clears
+  // AA for body-size text (4.5:1); textFaint clears 3:1, for large or
+  // decorative text only.
+  var surfaces = [bgBase, surfBase, surfAlt];
+  var textMuted = softenText(darkBase, bgBase, surfaces, 4.5);
+  var textFaint = softenText(darkBase, bgBase, surfaces, 3.0);
+
+  // Shades know which way is ink: a dark palette has light text on dark
+  // surfaces, so role.text and role.darkText move toward white there.
+  var ctx = { surfaces: surfaces, dark: relativeLuminance(bgBase) < relativeLuminance(darkBase) };
+
   var palette = {
-    primary:    deriveShades(pri),
-    secondary:  deriveShades(sec),
-    tertiary:   deriveShades(ter),
-    success:    deriveShades(successBase),
-    danger:     deriveShades(dangerBase),
-    warning:    deriveShades(warningBase),
-    info:       deriveShades(infoBase),
-    light:      deriveShades(lightBase),
-    dark:       deriveShades(darkBase),
+    primary:    deriveShades(pri, ctx),
+    secondary:  deriveShades(sec, ctx),
+    tertiary:   deriveShades(ter, ctx),
+    success:    deriveShades(successBase, ctx),
+    danger:     deriveShades(dangerBase, ctx),
+    warning:    deriveShades(warningBase, ctx),
+    info:       deriveShades(infoBase, ctx),
+    light:      deriveShades(lightBase, ctx),
+    dark:       deriveShades(darkBase, ctx),
     background: bgBase,
     surface:    surfBase,
-    surfaceAlt: surfAlt
+    surfaceAlt: surfAlt,
+    textMuted:  textMuted,
+    textFaint:  textFaint
   };
 
   return palette;

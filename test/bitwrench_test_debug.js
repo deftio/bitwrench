@@ -561,7 +561,7 @@ describe("bwd.screenshot() capture pipeline", function() {
 // =========================================================================
 
 var CDN_BW = 'https://cdn.jsdelivr.net/npm/bitwrench@2/dist/bitwrench.umd.min.js';
-var CDN_H2C = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+var CDN_H2C = 'https://cdn.jsdelivr.net/npm/html2canvas-pro@2.6.4/dist/html2canvas-pro.min.js';
 
 function lastScript(src) {
   var scripts = dom.window.document.head.querySelectorAll('script');

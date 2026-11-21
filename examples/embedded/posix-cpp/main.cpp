@@ -149,7 +149,7 @@ static std::string dashboard() {
     // No onclick, no handler shipped over the wire, no code from the device.
     std::string buttons = bw::nest("div", "bw_mt_3", bw::array({
         bw::taco_attr("button",
-            "'class':'bw_bccl_btn bw_bccl_btn_primary bw_act_led_toggle','id':'led_btn'",
+            "'class':'bw_bccl_btn bw_primary bw_act_led_toggle','id':'led_btn'",
             led_btn_text()),
         bw::taco_attr("button", "'class':'bw_bccl_btn bw_bccl_btn_secondary bw_ml_2 bw_act_reset'",
                       "Reset uptime")

@@ -3,6 +3,167 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
+## v2.1.15 (unreleased)
+
+Three documentation defects filed after 2.1.14, and four consumer follow-ups
+that had been waiting on a release. Each has a check so it stays fixed.
+
+### Added
+
+- **`bw.strictTargets`** (#127). When `true`, a verb that acts on one target
+  and cannot resolve it throws `bw.<verb>: target not found` instead of
+  warning and returning null. Off by default, and the default stays: a page
+  that mounts into a container some layouts do not have relies on the null,
+  and a consumer that wants the throw sets the flag once. Queries (`bw.el`,
+  `bw.$`), the class verbs and `bw.render`'s result object are unchanged.
+  One contract test covers every acting verb.
+- **`bw.capture`, a page-supplied screenshot engine** (#125). Set it to a
+  function `(el, { scale }) => Promise<HTMLCanvasElement>` and
+  `client.screenshot()` and `bwcli attach /screenshot` use it instead of the
+  vendored engine. `domToCanvas` from modern-screenshot and `toCanvas` from
+  html-to-image fit as they are.
+  Null by default. The tests evaluate the real client script.
+- **`palette.textMuted`, `palette.textFaint` and `role.text`** (#121). Two
+  plain-string text colours below body weight, derived from `dark` toward
+  `background` and stopped at a WCAG floor measured against background,
+  surface and surfaceAlt: 4.5:1 for `textMuted`, 3:1 for `textFaint` (large
+  or decorative text only). And a ninth shade on every colour role, `text`:
+  the seed moved toward the ink only as far as 4.5:1 on those three surfaces
+  needs, for the places a role is used as text rather than as a fill.
+- **Focus, caret and scroll survive a rebuild** (#108). `bw.mount`,
+  `bw.replace`, `bw.refresh`, `bw.el(ref, content)` and the slot setters
+  remember the focused element inside the target (by node, id and position),
+  its selection range and the target's scroll offset, and restore whatever
+  still resolves in the new tree. `bw.syncChildren` and `makeTable` had their
+  own copies of the focus save; they use the shared one now. A drag in
+  progress cannot survive, since it belongs to the old node, and the docs
+  still say patch the label. Checked in jsdom and, for the scroll reset that
+  only a layout engine performs, in Playwright.
+
+### Fixed
+
+- **Screenshots of pages that use CSS Color 4** (#125, item 1). The vendored
+  capture engine is now html2canvas-pro 2.6.4 in place of html2canvas 1.4.1,
+  a 2022 build whose colour parser threw on `color-mix()`, `oklch()`,
+  `color()` and `light-dark()`, so one such value anywhere in a page aborted
+  the capture. html2canvas-pro is a maintained MIT fork with the same global
+  and call signature, so the file name, the `/bw/lib/vendor/` route and every
+  caller are unchanged. Vendored from the npm tarball for 2.6.4 (registry
+  sha1 `687784cb...`, published by GitHub Actions with provenance from
+  `yorickshan/html2canvas-pro`); the file is byte-identical to the tarball's
+  `dist/html2canvas-pro.min.js` (sha256 `496eb74a...3cc1`, pinned by
+  `tests/screenshot-engine.spec.js`, which also captures a page using all four
+  functions and was shown failing against 1.4.1) and ships with its LICENSE
+  beside it. It is an ES2015 build, which the pages that load it
+  already require. Verified in Chromium against a page using all four
+  functions: 1.4.1 throws on three, 2.6.4 paints all four correctly.
+  `bitwrench-debug` loads the same engine from the CDN. The REPL hint that
+  named the old limit now says what the engine does parse.
+- **Muted text is readable in every preset** (#121). `bw_text_muted`, table
+  headers and captions, card subtitles and footers, form help text and
+  placeholders, nav links, section and feature descriptions and timeline
+  dates coloured text with `palette.secondary.base`: the second accent seed,
+  which ocean sets to a pale cyan. Measured on 2026-11-20, nine of the twelve
+  presets put that text under 2:1 on their own background, and the default
+  palette was at 3.95:1 on surfaceAlt. All of them use `textMuted` now;
+  disabled list, page and dropdown items and the breadcrumb divider use
+  `textFaint`. A test holds every preset, both modes, at the floor, and a
+  source check refuses `'color': palette.secondary.base`.
+- **Every text colour in the shipped stylesheets reads at WCAG AA in all
+  thirteen palettes, both modes** (#121). An audit of each rule that sets a
+  colour, against its own background or the page surfaces, found 44
+  selectors under the floor. Dark mode was the worst of it: shade derivation
+  was written for a light page, so in the alternate palette `light` was
+  still a near-white tint and `darkText` a bright accent, which put cyan on
+  white in every alert and open accordion (1.24:1 in the default palette),
+  made inline code 1.05:1 on its surface and the dark navbar's links 1.78:1.
+  In light mode links, pagination, breadcrumbs, nav hovers, stat deltas and
+  the `.bw_text_*` utilities used the accent seed itself, which a bright
+  seed (sunset's orange, 2.48:1) fails. The alternate palette now tints
+  `light` toward the background and lightens `darkText`; both are held at
+  4.5:1 on their tint; the rules above use `role.text`; the dark navbar's
+  links are mixed from its own colours. Dark-mode alerts become tinted dark
+  boxes with light text, which is what every design system does. The audit
+  is a test over all presets, both modes, with three stated exceptions: the
+  grow spinner (no text), `bw_text_light` (the page supplies the backdrop)
+  and descendants of a rule that paints its own background, which are
+  measured against that background.
+
+- **`docs/tutorial-embedded.md` teaches the current path** (#130). The ESP32
+  tutorial now serves the bundle from `bitwrench_embedded.h` with no
+  filesystem, loads a four-line page that calls `bw.actions.enable()` and
+  `bw.connect('/bw/events')`, mounts the dashboard over the stream, and reads
+  button presses with `bw_parse_action()`. The hand-opened `EventSource`, the
+  `r`-prefix stripping and the `strstr` command endpoint are gone; SPIFFS is
+  a short "if you already have a filesystem" section. The button classes in
+  the tutorial and in `embedded_c/README.md` are ones the shipped CSS defines
+  (`bw_bccl_btn bw_primary`; there is no `bw_bccl_btn_primary`).
+- **Bundle sizes agree everywhere** (#131). One convention: the size in prose
+  is the shipped file rounded to the KB, gzipped from the shipped `.gz`.
+  Full build 173 KB on disk, 47 KB gzipped; lean 87 KB and 29 KB; ES5 186 KB
+  and 50 KB. Fifty lines across README, llms.txt, agents.md, docs/, pages/,
+  examples/ and the embedded READMEs said 45, 44.8, 46, 165, 169, 172 or 184,
+  and `embedded_c/README.md` put the lean header at 36 KB. The component
+  count in prose is `bw.catalog().length`, 51; two documents said 52 and 47.
+- **GitHub detects the licence** (#132). `LICENSE.txt` begins with the
+  standard `Copyright (c)` line; the leading "bitwrench is" kept the detector
+  from reading it as BSD-2-Clause.
+
+- **The bwserve protocol page listed 10 message types; the protocol has 13.**
+  `replace`, `refresh` and `update` were handled by `bw.apply()` and
+  documented in `docs/bwserve.md` but missing from
+  `pages/12-bwserve-protocol.html` and the count on the bwcli page. Both pages
+  now say 13 and the protocol page documents the three verbs.
+- **Size and count claims audited across README, ABOUT, agents.md, llms.txt,
+  docs/, pages/ and the example READMEs.** Nineteen files said 45 or 46 KB for
+  the full build (47.2 KB), 169 KB on disk (172 KB), 29 KB for lean (29.7 KB),
+  "40+" factories (47), "~22 component styles" in `bitwrench.css` (the widget
+  CSS has lived in the BCCL bundle since 2.1.14), 5200 and 2500 source lines
+  (5800 and 1100), and the CDN pinning examples named 2.0.3 and 2.1.0; those
+  now read the running version. `self-load-test.html` warned at 46 KB and now
+  warns at the gate.
+
+### Tooling
+
+- **Property keys in the two stylesheet sources are camelCase** (`backgroundColor`,
+  not `'background-color'`), which `bw.css()` has always accepted and the
+  pages already use. The generated `dist/bitwrench.css` is byte-identical;
+  the minified full build is 2.7 KB smaller. `bw.mount` and the content sink
+  also lost a duplicated single-TACO branch each (a TACO is a one-item list).
+- **drift-lint `stale-size` is strict enough to have caught #131.** The slack
+  is 1 KB (it was 2, which let 45 stand for 47,944 bytes through two
+  releases; the rule's own documentation already said 1); a claim with a
+  decimal is held to 0.15 KiB; the "flash" exemption no longer hides a number
+  that names one of our files; and `examples/`, `embedded_c/`,
+  `embedded_python/` and `embedded_rust/` are scanned. The generated size
+  table in `embedded_c/README.md` carries its own ignore block, since its
+  "KB of C" column is a header source size, not a shipped artifact.
+- **drift-lint `stale-count`** (new) checks every "NN components" claim
+  against `bw.catalog().length`. It failed on the comparison page before the
+  fix and passes after.
+- **Full-bundle size gate raised from 47 KB to 48 KB** (49,152 bytes on the
+  shipped `.gz`). Before the raise the UMD measured 48,360 and the ESM 48,479
+  against a 48,128 ceiling. The bytes are #121, #108, #127 and #125 above;
+  the alternative was shipping without #108. The lean gate stays at 30 KB
+  (30,392 measured). The reason, and the trend it is part of (the full bundle
+  has grown 9.3 KB since 2.0.19, almost all of it in `src/bitwrench.js`
+  absorbing the wire client, router, janitor, `jsonPatch`, `htmlPage` and
+  file ops), is recorded in `tools/release.js`; the 3.0 entry split is where
+  those leave the browser bundle.
+- **drift-lint `stale-size` holds a size claim to the artifact it rounds or
+  truncates to, not to one KB either way.** The old tolerance accepted "46 KB"
+  for a 48,360-byte file in nine documents. It also tested the other-framework
+  exclusion against the whole line, so the bitwrench cell of two comparison
+  tables and a bwserve paragraph that mentions htmx were never checked. Both
+  are per-number now. Run against the 2.1.14 docs it reports 39 stale sizes
+  that the old rule passed; against this tree, none.
+- **CodeQL ran only on its weekly schedule.** The workflow's push and
+  pull-request triggers named `master`, a branch this repository has not had
+  since 2.0. They name `main`. A CodeQL config now excludes `dist/`,
+  `releases/` and `dev/archive/` from analysis: of the 157 open alerts on
+  2026-11-21, 103 were in minified build output, duplicates of the 21 in
+  `src/` that they buried.
+
 ## v2.1.14 (2026-11-07)
 
 The lean build gets lean. Through 2.1.13 `bitwrench-lean` carried the full

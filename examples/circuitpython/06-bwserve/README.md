@@ -28,7 +28,7 @@ Open the URL it prints. The same `code.py` then runs unchanged on a board.
 1. Copy `bw_board.py` and this `code.py` to the CIRCUITPY drive
 2. Copy `settings.toml.example` to the drive as `settings.toml`, fill in your WiFi
 3. `circup install adafruit_httpserver`
-4. Copy `dist/bitwrench.umd.min.js.gz` to `/www/` on the drive (44.8KB)
+4. Copy `dist/bitwrench.umd.min.js.gz` to `/www/` on the drive (47 KB)
 5. Copy `embedded_python/bwserve.py` to `/lib/` on the drive
 6. Open the serial console -- it prints the URL to visit
 

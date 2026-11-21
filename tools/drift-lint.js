@@ -439,6 +439,7 @@ if (LIST_RULES) {
   console.log('\n  Whole-project checks:');
   console.log('    undocumented-api          [api]       a public bw.* with no JSDoc at its assignment');
   console.log('    stale-size                [api]       a KB claim in prose with no matching artifact in dist/builds.json');
+  console.log('    stale-count               [api]       an "NN components" claim that is not bw.catalog().length');
   console.log('    taco-options-drift        [api]       a TacoOptions key in bitwrench.d.ts that no renderer path reads');
   console.log('\n  API rules:');
   console.log('    stale-api                 [api]       bw.XXX() in docs must match a real public API name');
@@ -947,27 +948,41 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
 
   // Every size a doc could legitimately be quoting, in KB.
   var realKB = {};
+  var realKiB = [];   // exact KiB of every artifact, for claims with a decimal
   entries.forEach(function(f) {
     [f.gzipped, f.raw].forEach(function(bytes) {
       if (!bytes) return;
-      var kb = Math.round(bytes / 1024);
-      for (var d = -2; d <= 2; d++) realKB[kb + d] = true;   // prose rounds; drift is bigger than 2KB
+      // Prose either rounds or truncates, so both are accepted and nothing
+      // else. The tolerance used to be one KB either way, which let "46 KB"
+      // stand for a 48,360-byte (47.2 KB) file in nine docs through 2.1.15;
+      // before that it was two, which let "45 KB" stand for 47,944 (#131).
+      realKB[Math.floor(bytes / 1024)] = true;
+      realKB[Math.round(bytes / 1024)] = true;
+      realKiB.push(bytes / 1024);
     });
   });
-  realKB[46] = true;   // the 2.1.7-2.1.12 bundle budget, still quoted in history notes
-  realKB[47] = true;   // the bundle budget since 2.1.13, quoted as a ceiling in several docs
+  realKB[47] = true;   // the bundle budget 2.1.13 - 2.1.14, still quoted in older prose
+  realKB[48] = true;   // the bundle budget since 2.1.15, quoted as a ceiling in several docs
 
-  var SIZE = /(?:~|about\s+)?(\d{2,3})\s?KB\b/gi;
+  // A decimal claim ("44.8KB") says it is exact, so it is held to the nearest
+  // artifact within 0.15 KiB rather than the rounded-KB table.
+  var SIZE = /(?:~|about\s+)?(\d{2,3}(?:\.\d)?)\s?KB\b/gi;
   // Only claims about bitwrench's own artifacts, and never a line that is
   // comparing against another library.
-  var OURS = /bitwrench|dist\/|\bgz|gzip|minif|lean|bundle budget|on disk/i;
+  var OURS = /bitwrench|dist\/|\bgz|gzip|minif|lean|\bbundle\b|on disk/i;
   var THEIRS = /react|vue|svelte|angular|preact|alpine|jquery|htmx|lit\b|solid|\bframework\b/i;
   // A size that is a memory or third-party-asset cost rather than a claim about
   // one of our bundles. Tested against a window around the number, not the
   // whole line -- see the note at the skip below.
   var NOT_A_BUNDLE = /\b(RAM|flash|heap|PSRAM|image|photo|screenshot|html2canvas|Playwright|Tauri|Electron|node_modules|download)\b/i;
+  // ...unless the same window names one of our files: "29.2 KB in flash" for
+  // bitwrench_embedded_lean.h IS a bundle size (the gz is what goes in flash).
+  var STILL_OURS = /\.gz|gzip|_embedded|\.h\b|lean|full build|umd|esm/i;
+  // examples/ and the embedded_* READMEs quote sizes to people choosing a
+  // flash partition; they were outside this scan until 2.1.15 (#131).
   var scanned = SCAN_ROOT_FILES.map(function(f) { return resolve(ROOT, f); })
-    .concat(['docs', 'pages'].reduce(function(acc, d) { return acc.concat(collectFiles(resolve(ROOT, d))); }, []));
+    .concat(['docs', 'pages', 'examples', 'embedded_c', 'embedded_python', 'embedded_rust']
+      .reduce(function(acc, d) { return acc.concat(collectFiles(resolve(ROOT, d))); }, []));
 
   scanned.forEach(function(full) {
     var relPath = relative(ROOT, full);
@@ -978,19 +993,26 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
     var ig = computeIgnores(lines, relPath);
     lines.forEach(function(line, i) {
       if (ig.ignored[i]) return;
-      if (!OURS.test(line) || THEIRS.test(line)) return;
+      if (!OURS.test(line)) return;
       SIZE.lastIndex = 0;
       var m;
       while ((m = SIZE.exec(line))) {
         var claimed = Number(m[1]);
-        if (realKB[claimed]) continue;
+        var isDecimal = m[1].indexOf('.') !== -1;
+        if (!isDecimal && realKB[claimed]) continue;
+        if (isDecimal && realKiB.some(function(k) { return Math.abs(k - claimed) <= 0.15; })) continue;
         // Skip only when THIS size is about a memory/asset cost, not whenever
         // one of those words appears somewhere on the line. The README's
         // "165KB on disk ... from a microcontroller's flash" hid behind a
         // whole-line test for a year: the number was a bundle size and only
         // the trailing clause mentioned flash.
-        if (NOT_A_BUNDLE.test(line.slice(Math.max(0, m.index - 28),
-                                         m.index + m[0].length + 28))) continue;
+        var window = line.slice(Math.max(0, m.index - 28), m.index + m[0].length + 28);
+        if (NOT_A_BUNDLE.test(window) && !STILL_OURS.test(window)) continue;
+        // Likewise for another library's size: skip the cell that names React,
+        // not the whole comparison row. A whole-line test let the bitwrench
+        // cell of two comparison tables and a bwserve paragraph that mentions
+        // htmx say 45 KB for a 47 KB file (2.1.15).
+        if (THEIRS.test(window) && !/bitwrench|dist\/|lean|\.gz|umd|esm/i.test(window)) continue;
         allHits.push({
           file: relPath,
           line: i + 1,
@@ -999,6 +1021,48 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
             ' (nearest: ' + Object.keys(realKB).map(Number).sort(function(a, b) {
               return Math.abs(a - claimed) - Math.abs(b - claimed);
             }).slice(0, 3).join('KB, ') + 'KB)',
+          text: line.trim().substring(0, 120)
+        });
+      }
+    });
+  });
+})();
+
+// 3. stale-count -- "NN components" in prose must be what bw.catalog() says.
+// The circuitpython README said 52 and the comparison page 47 while the
+// catalog had 51; nothing checked a count until 2.1.15 (#131).
+(function checkComponentCounts() {
+  var rule = { id: 'stale-count', fileFilter: null, fileExclude: null };
+  var expected;
+  try { expected = bwLib.catalog().length; } catch (_) { return; }
+  if (!expected) return;
+  // Not "10,000 components" (a comma or digit before the number), and only on
+  // a line that is talking about what bitwrench ships, not about how many
+  // components one example uses.
+  var COUNT = /(?<![\d,])\b(\d{2,3})\s+(?:UI |ready-made |built-in |make\*\(\) )?components\b/gi;
+  var ABOUT_THE_LIBRARY = /bitwrench|ships|includes|comes with|library|catalog|engine/i;
+  var scanned = SCAN_ROOT_FILES.map(function(f) { return resolve(ROOT, f); })
+    .concat(['docs', 'pages', 'examples', 'embedded_c', 'embedded_python', 'embedded_rust']
+      .reduce(function(acc, d) { return acc.concat(collectFiles(resolve(ROOT, d))); }, []));
+  scanned.forEach(function(full) {
+    var relPath = relative(ROOT, full);
+    if (!/\.(md|txt|html)$/.test(relPath) || !ruleApplies(rule, relPath)) return;
+    if (/CHANGELOG|releases\//.test(relPath)) return;
+    var lines;
+    try { lines = readFileSync(full, 'utf8').split('\n'); } catch (_) { return; }
+    var ig = computeIgnores(lines, relPath);
+    lines.forEach(function(line, i) {
+      if (ig.ignored[i]) return;
+      if (!ABOUT_THE_LIBRARY.test(line)) return;
+      COUNT.lastIndex = 0;
+      var m;
+      while ((m = COUNT.exec(line))) {
+        if (Number(m[1]) === expected) continue;
+        allHits.push({
+          file: relPath,
+          line: i + 1,
+          rule: 'stale-count',
+          message: m[1] + ' components, but bw.catalog() lists ' + expected,
           text: line.trim().substring(0, 120)
         });
       }

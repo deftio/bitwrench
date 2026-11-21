@@ -106,7 +106,7 @@ export declare class BwServeClient {
   /** Run JavaScript on the client and return the result. */
   query(code: string, opts?: { timeout?: number }): Promise<any>;
 
-  /** Capture a screenshot via html2canvas in the browser. Requires allowScreenshot. */
+  /** Capture a screenshot in the browser: bw.capture if the page set one, else the vendored html2canvas. Requires allowScreenshot. */
   screenshot(selector?: string, opts?: {
     format?: 'png' | 'jpeg'; quality?: number; maxWidth?: number; maxHeight?: number;
     scale?: number; timeout?: number;

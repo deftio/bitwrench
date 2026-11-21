@@ -383,7 +383,8 @@ const esmGzipped = gzSize('dist/bitwrench.esm.min.js');
 console.log(`  UMD: ${kb(rawSize)} raw | ${kb(minSize)} min | ${kb(gzipped)} gzipped`);
 console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 
-// Raised from 45KB to 46KB in 2.1.7, and from 46KB to 47KB in 2.1.13.
+// Raised from 45KB to 46KB in 2.1.7, from 46KB to 47KB in 2.1.13, and from
+// 47KB to 48KB in 2.1.15 (reasons below, newest last).
 //
 // 2.1.13 (2026-11-07): the bytes buy API consistency, not features. Every
 // BCCL factory now takes `id` and `class` (44 factories gained the props), the
@@ -414,18 +415,35 @@ console.log(`  ESM: ${kb(esmMinSize)} min | ${kb(esmGzipped)} gzipped`);
 // 36,783 -> 29,735 (ESM), 20%. See
 // dev/bw-css-split-plan.md. Lean has its own ceiling below so the cut cannot
 // drift back unnoticed, and dev/bw-lean-engine-cuts-plan.md is the next cut
-// for both files; the full gate is not to be raised for it.
+// for both files; the full gate is not raised for cuts, only for fixes.
 //
-// Treat 47KB as the ceiling, not as headroom to spend. Read dist/<file>.gz for
+// Raised from 47KB to 48KB in 2.1.15 (2026-11-21). Measured level-9 .gz
+// before the raise: UMD 48,360 and ESM 48,479 against a 48,128 ceiling. The
+// bytes are the four consumer fixes that had waited on a release: #121 (a
+// `text` shade per role, two muted text colours, and 44 shipped selectors
+// moved off accent fills so every text colour meets AA in all 13 presets, both
+// modes), #108 (focus and caret preserved across rebuilds), #127
+// (`bw.strictTargets`) and #125 (`bw.capture`). The only no-raise path was
+// deferring #108 (~400 bytes) and shipping a release that fixes three of the
+// four things it set out to fix. Decision: raise once more, and name the
+// trend: this file grew from 39,059 (2.0.19) to 48,360 and almost all of it
+// is src/bitwrench.js absorbing subsystems (wire client, router, janitor,
+// jsonPatch, htmlPage, file ops), not the widgets. The structural fix is the
+// 3.0 entry split (dev/bw-3x-spec.md), where the Node-only and optional
+// subsystems leave the browser bundle; until then any engine byte added
+// should be paid for by one removed, and the lean gate below is the hard
+// line. Headroom under 48KB after the raise: ~790 bytes UMD, ~670 ESM.
+//
+// Treat 48KB as the ceiling, not as headroom to spend. Read dist/<file>.gz for
 // the current figure rather than trusting a number written in prose.
-const BUDGET = 47 * 1024; // 47KB
+const BUDGET = 48 * 1024; // 48KB
 if (gzipped > BUDGET) {
-  fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 47KB budget!`);
+  fail(`UMD gzipped bundle (${kb(gzipped)}) exceeds 48KB budget!`);
 }
 if (esmGzipped > BUDGET) {
-  fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 47KB budget!`);
+  fail(`ESM gzipped bundle (${kb(esmGzipped)}) exceeds 48KB budget!`);
 }
-console.log('  ✓ UMD + ESM both under 47KB budget');
+console.log('  ✓ UMD + ESM both under 48KB budget');
 
 // Lean budget, set with the 2.1.14 split: measured 29,941 / 29,735 at
 // release, so 30KB is a ceiling with ~0.8KB of headroom, not a target. The

@@ -95,7 +95,7 @@ var features = bw.makeFeatureGrid({
   features: [
     { icon: 'bolt',   title: 'Fast',      desc: 'No build step, no virtual DOM. Just objects and functions.' },
     { icon: 'shield', title: 'Reliable',   desc: '100% test coverage. Works in IE11 through modern browsers.' },
-    { icon: 'code',   title: 'Simple',     desc: 'One file, ~45KB gzipped. Zero dependencies. Learn in an afternoon.' }
+    { icon: 'code',   title: 'Simple',     desc: 'One file, ~47KB gzipped. Zero dependencies. Learn in an afternoon.' }
   ]
 });
 ```

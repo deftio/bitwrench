@@ -1124,7 +1124,7 @@ bw.hslToHex([210, 50, 40]);         // '#336699'
 bw.adjustLightness('#336699', 20);   // lighten by 20%
 bw.mixColor('#336699', '#cc6633', 0.5); // blend two colors
 bw.textOnColor('#336699');           // '#fff' (contrast-safe text color)
-bw.deriveShades('#336699');          // { base, hover, active, light, darkText, border, focus, textOn }
+bw.deriveShades('#336699');          // { base, hover, active, light, darkText, text, border, focus, textOn }
 bw.derivePalette({ primary: '#336699', secondary: '#cc6633' }); // full palette
 ```
 

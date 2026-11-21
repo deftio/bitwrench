@@ -3,10 +3,10 @@
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-export const VERSION = '2.1.14';
+export const VERSION = '2.1.15';
 export const VERSION_INFO = {
-  version: '2.1.14',
+  version: '2.1.15',
   name: 'bitwrench',
   license: 'BSD-2-Clause',
-  buildDate: '2026-11-08'
+  buildDate: '2026-11-21'
 };

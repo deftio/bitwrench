@@ -67,6 +67,41 @@ CI tests enforce that `bw.getVersion().version === package.json.version`.
 - **CSS classes**: All bitwrench classes use underscores (`bw_bccl_btn`, `bw_bccl_card`, `bw_mb_3`, etc.). This is the only supported form; there is no hyphen spelling.
 - **Content escaping**: On by default. Use `bw.raw()` or `o: { raw: true }` to opt out.
 
+## Dependencies and Vendored Code
+
+Bitwrench ships with no runtime dependencies. The UI is your JSON; nothing
+sits between it and the DOM. Keep it that way: no shipped bundle gains a
+runtime dependency, and a PR that adds one will be asked to inline or drop it.
+
+Third-party code enters the repository in two ways only, and both are
+deliberate decisions, not conveniences:
+
+- **Dev dependencies** (build, test, lint). Refreshed at the start of each
+  release cycle, never ad hoc. See the dependency policy in
+  [SECURITY.md](SECURITY.md).
+- **Vendored files** under `src/vendor/`. These are served to pages by the
+  tooling (bwserve, bwcli attach) and never bundled into bitwrench itself.
+
+Before proposing a new or replacement vendored file, or a dev dependency,
+check and state in the PR:
+
+1. **Provenance.** A public source repository that resolves, identifiable
+   maintainers, a release history longer than a few weeks, and a download base
+   that shows other people depend on it too.
+2. **Artifact matches source.** The minified file you vendor is the one the
+   project publishes for that version, from its registry or release page, and
+   it is accompanied by the project's LICENSE.
+3. **The established project over the drop-in.** When two forks solve the same
+   problem, take the one with the track record, even if the newer one also
+   passes your test.
+4. **Recommendations are claims.** A package suggested in an issue or PR
+   thread, however well argued, is verified independently before it is used.
+   This applies with extra force to accounts that recommend their own
+   packages, and to accounts that identify as automated or AI maintainers.
+
+Every change under `src/vendor/` is named in `CHANGELOG.md` with the upstream
+project, the version, and the reason.
+
 ## Build Commands
 
 | Command | Description |

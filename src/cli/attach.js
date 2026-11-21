@@ -351,7 +351,7 @@ export function handleSlashCommand(line, activeClient, clients, opts, rl) {
         // relayed console line and the missing file went unexplained (#125).
         console.error('Screenshot failed: ' + err.message);
         if (/unsupported color function/i.test(err.message)) {
-          console.error('  The bundled html2canvas 1.4.1 cannot parse CSS Color 4 (color-mix, oklch, color, light-dark); a page using them cannot be captured yet.');
+          console.error('  The bundled html2canvas-pro 2.6.4 parses CSS Color 4 (color-mix, oklch, color, light-dark); this page uses a colour function it does not know. Set bw.capture to supply another engine.');
         }
         rl.prompt();
       });

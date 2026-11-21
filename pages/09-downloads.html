@@ -254,7 +254,7 @@
 
                   // -- CDN --
                   { t: 'h3', c: 'CDN' },
-                  { t: 'p', a: { style: 'font-size:0.875rem;color:#444' }, c: 'No install, no build step. CDNs gzip automatically (~45KB transfer).' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:#444' }, c: 'No install, no build step. CDNs gzip automatically (~47KB transfer).' },
                   {
                     t: 'div', a: { class: 'install-grid' },
                     c: [
@@ -282,7 +282,7 @@
                       { t: 'h4', a: { class: 'bw_site_pages_callout_title' }, c: 'Version pinning' },
                       { t: 'p', c: [
                         { t: 'code', c: '@2' }, ' -- latest 2.x (recommended)', { t: 'br' },
-                        { t: 'code', c: '@2.1.0' }, ' -- exact version', { t: 'br' },
+                        { t: 'code', c: '@' + bw.getVersion().version }, ' -- exact version', { t: 'br' },
                         { t: 'code', c: '@latest' }, ' -- latest (may include breaking changes)'
                       ]}
                     ]
@@ -313,7 +313,7 @@
                         c: [
                           { t: 'h3', c: 'Legacy browsers (IE11+)' },
                           codeSnippet(null, '<script src="bitwrench.es5.min.js"><\/script>', 'html'),
-                          { t: 'p', a: { style: 'font-size:0.85rem;color:#444;margin:0' }, c: '~184 KB on disk, ~49 KB gzipped. Transpiled to ES5 syntax for older webviews.' }
+                          { t: 'p', a: { style: 'font-size:0.85rem;color:#444;margin:0' }, c: '~184 KB on disk, ~50 KB gzipped. Transpiled to ES5 syntax for older webviews.' }
                         ]
                       }
                     ]
@@ -361,7 +361,7 @@
 
                   // ---- Lean builds ----
                   { t: 'h3', c: 'Lean Builds' },
-                  { t: 'p', a: { style: 'font-size:0.875rem;color:#444' }, c: 'Core engine, state management, color utils, and router -- without the UI components. ~29 KB gzipped. Use when you only need HTML generation.' },
+                  { t: 'p', a: { style: 'font-size:0.875rem;color:#444' }, c: 'Core engine, state management, color utils, and router -- without the UI components. ~30 KB gzipped. Use when you only need HTML generation.' },
                   { t: 'div', a: { id: 'lean-table' }, c: 'Loading...' },
 
                   // ---- BCCL standalone ----
@@ -523,7 +523,7 @@
               c: [
                 { t: 'h2', a: { class: 'bw_site_pages_demo_title' }, c: { t: 'a', a: { href: '#section-embedded' }, c: 'Embedded / IoT' } },
                 { t: 'div', a: { class: 'bw_site_pages_demo_body' }, c: [
-                  { t: 'p', c: 'Bitwrench runs on any device that can serve HTTP. The full library is ~45KB gzipped -- fits easily on ESP32 SPIFFS (3% of 1.5MB), Pico W flash (~2% of 2MB), or any microcontroller with a few hundred KB of storage.' },
+                  { t: 'p', c: 'Bitwrench runs on any device that can serve HTTP. The full library is ~47KB gzipped -- fits easily on ESP32 SPIFFS (3% of 1.5MB), Pico W flash (~2% of 2MB), or any microcontroller with a few hundred KB of storage.' },
 
                   // How .gz serving works
                   {
@@ -533,9 +533,9 @@
                       { t: 'p', c: [
                         'Your HTML references the normal filename: ',
                         { t: 'code', c: '<script src="/bitwrench.umd.min.js"><\/script>' },
-                        '. Your server stores the .gz file (~45KB on flash) and sends it with a ',
+                        '. Your server stores the .gz file (~47KB on flash) and sends it with a ',
                         { t: 'code', c: 'Content-Encoding: gzip' },
-                        ' header. The browser decompresses transparently -- the 169KB uncompressed size is only in browser memory.'
+                        ' header. The browser decompresses transparently -- the 172KB uncompressed size is only in browser memory.'
                       ]},
                       { t: 'p', a: { style: 'margin-top:0.5rem;font-size:0.85rem' }, c: [
                         { t: 'strong', c: 'Troubleshooting: ' },
@@ -680,8 +680,8 @@
 
       // ---- Hero metadata ----
       var umdEntry = manifest.files.filter(function(f) { return /^bitwrench\./.test(f.file) && f.format === 'UMD' && f.minified; })[0];
-      var gzKB = umdEntry ? fmtSize(umdEntry.gzipped) : '~45 KB';
-      var rawKB = umdEntry ? fmtSize(umdEntry.raw) : '169 KB';
+      var gzKB = umdEntry ? fmtSize(umdEntry.gzipped) : '~47 KB';
+      var rawKB = umdEntry ? fmtSize(umdEntry.raw) : '172 KB';
       bw.DOM('#hero-subtitle', {
         t: 'span',
         c: 'v' + manifest.version + ' \u00B7 ' + rawKB + ' (' + gzKB + ' gzipped) \u00B7 zero dependencies \u00B7 ' + manifest.files.length + ' dist files'

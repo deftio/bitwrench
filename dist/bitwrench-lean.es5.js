@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.1.14 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-lean v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
   typeof define === 'function' && define.amd ? define(factory) :
@@ -178,10 +178,10 @@
    */
 
   var VERSION_INFO = {
-    version: '2.1.14',
+    version: '2.1.15',
     name: 'bitwrench',
     license: 'BSD-2-Clause',
-    buildDate: '2026-11-08'
+    buildDate: '2026-11-21'
   };
 
   /**
@@ -530,19 +530,53 @@
   }
 
   /**
-   * Derive a full shade palette for a single semantic color.
-   * @param {string} hex - Base color hex
-   * @returns {Object} { base, hover, active, light, darkText, border, focus, textOn }
+   * Move `color` toward `toward` in 2% steps until it reads at `floor` or
+   * better against every background in `bgs`. Returns the first colour that
+   * passes, which is `color` itself when it already does, or `toward` when
+   * nothing short of it passes.
+   * @private
    */
-  function deriveShades(hex) {
+  function ensureContrast(color, toward, bgs, floor) {
+    for (var t = 0; t < 1; t += 0.02) {
+      var c = t ? mixColor(color, toward, t) : color;
+      var ok = true;
+      for (var i = 0; i < bgs.length; i++) if (contrastRatio(c, bgs[i]) < floor) {
+        ok = false;
+        break;
+      }
+      if (ok) return c;
+    }
+    return toward;
+  }
+
+  /**
+   * Derive a full shade palette for a single semantic color.
+   *
+   * `text` is the seed usable as text: moved toward the ink colour (black on a
+   * light palette, white on a dark one) only as far as WCAG AA (4.5:1) needs
+   * against the palette's surfaces. `darkText` reads at 4.5:1 on `light`. In
+   * the alternate (dark) palette `light` is a tint toward the background and
+   * `darkText` is a light colour, so an alert stays an alert in dark mode.
+   * @param {string} hex - Base color hex
+   * @param {Object} [ctx] - Palette context; omitted means a white page
+   * @param {string[]} [ctx.surfaces] - Surfaces the text shade must read on
+   * @param {boolean} [ctx.dark] - True for a dark palette
+   * @returns {Object} { base, hover, active, light, darkText, text, border, focus, textOn }
+   */
+  function deriveShades(hex, ctx) {
     var rgb = _ph(hex);
+    var dark = !!(ctx && ctx.dark);
+    var surfaces = ctx && ctx.surfaces || ['#ffffff'];
+    var ink = dark ? '#ffffff' : '#000000';
+    var light = dark ? mixColor(hex, surfaces[0], 0.80) : mixColor(hex, '#ffffff', 0.85);
     var borderColor = hexToHsl(hex)[2] > 75 ? adjustLightness(hex, -18) : mixColor(hex, '#ffffff', 0.60);
     return {
       base: hex,
       hover: adjustLightness(hex, -10),
       active: adjustLightness(hex, -15),
-      light: mixColor(hex, '#ffffff', 0.85),
-      darkText: adjustLightness(hex, -40),
+      light: light,
+      darkText: ensureContrast(dark ? hex : adjustLightness(hex, -40), ink, [light], 4.5),
+      text: ensureContrast(hex, ink, surfaces, 4.5),
       border: borderColor,
       focus: 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',0.25)',
       textOn: textOnColor(hex)
@@ -656,6 +690,25 @@
   }
 
   /**
+   * Lightest mix of `from` toward `toward` whose contrast against every surface
+   * stays at or above `floor`. Steps of 2%; returns `from` itself when nothing
+   * softer passes. Used for the text roles below body weight (#121).
+   * @private
+   */
+  function softenText(from, toward, surfaces, floor) {
+    var best = from;
+    for (var t = 0.02; t <= 1; t += 0.02) {
+      var c = mixColor(from, toward, t);
+      var ok = surfaces.every(function (s) {
+        return contrastRatio(c, s) >= floor;
+      });
+      if (!ok) break;
+      best = c;
+    }
+    return best;
+  }
+
+  /**
    * Derive complete palette from a theme config object.
    * @param {Object} config - Theme config with primary, secondary, tertiary, etc.
    * @param {number} [config.harmonize=0.20] - Hue shift amount for semantic colors (0-1)
@@ -680,19 +733,37 @@
     // A given surfaceAlt wins; StyleConfig declared it for releases while this
     // line ignored it (found by the bccl-config-drift rule, 2.1.13).
     var surfAlt = config.surfaceAlt || (surfHsl[2] <= 50 ? hslToHex([surfHsl[0], surfHsl[1], Math.min(surfHsl[2] + 8, 100)]) : hslToHex([surfHsl[0], surfHsl[1], Math.max(surfHsl[2] - 3, 0)]));
+
+    // Text below body weight (#121). Derived from dark (body text) toward the
+    // background and stopped at a WCAG floor measured against every surface, so
+    // a pale accent seed can no longer become unreadable text. textMuted clears
+    // AA for body-size text (4.5:1); textFaint clears 3:1, for large or
+    // decorative text only.
+    var surfaces = [bgBase, surfBase, surfAlt];
+    var textMuted = softenText(darkBase, bgBase, surfaces, 4.5);
+    var textFaint = softenText(darkBase, bgBase, surfaces, 3.0);
+
+    // Shades know which way is ink: a dark palette has light text on dark
+    // surfaces, so role.text and role.darkText move toward white there.
+    var ctx = {
+      surfaces: surfaces,
+      dark: relativeLuminance(bgBase) < relativeLuminance(darkBase)
+    };
     var palette = {
-      primary: deriveShades(pri),
-      secondary: deriveShades(sec),
-      tertiary: deriveShades(ter),
-      success: deriveShades(successBase),
-      danger: deriveShades(dangerBase),
-      warning: deriveShades(warningBase),
-      info: deriveShades(infoBase),
-      light: deriveShades(lightBase),
-      dark: deriveShades(darkBase),
+      primary: deriveShades(pri, ctx),
+      secondary: deriveShades(sec, ctx),
+      tertiary: deriveShades(ter, ctx),
+      success: deriveShades(successBase, ctx),
+      danger: deriveShades(dangerBase, ctx),
+      warning: deriveShades(warningBase, ctx),
+      info: deriveShades(infoBase, ctx),
+      light: deriveShades(lightBase, ctx),
+      dark: deriveShades(darkBase, ctx),
       background: bgBase,
       surface: surfBase,
-      surfaceAlt: surfAlt
+      surfaceAlt: surfAlt,
+      textMuted: textMuted,
+      textFaint: textFaint
     };
     return palette;
   }
@@ -957,13 +1028,13 @@
     var mot = layout.motion;
     var rules = {};
     rules[_sx(scope, 'a')] = {
-      'color': palette.primary.base,
-      'text-decoration': 'none',
+      'color': palette.primary.text,
+      textDecoration: 'none',
       'transition': _tr('color', mot)
     };
     rules[_sx(scope, 'a:hover')] = {
-      'color': palette.tertiary.hover,
-      'text-decoration': 'underline'
+      'color': palette.tertiary.text,
+      textDecoration: 'underline'
     };
     return rules;
   }
@@ -974,39 +1045,39 @@
     var rdBtn = layout.radius.btn;
     rules[_sx(scope, '.bw_bccl_table_pagination .bw_bccl_btn_sm')] = {
       'padding': '0.25rem 0.75rem',
-      'border-radius': rdBtn === '50rem' ? '50rem' : Math.max(parseInt(rdBtn) - 1, 0) + 'px'
+      borderRadius: rdBtn === '50rem' ? '50rem' : Math.max(parseInt(rdBtn) - 1, 0) + 'px'
     };
     var sp = layout.spacing;
     rules[_sx(scope, '.bw_bccl_table')] = {
       'color': palette.dark.base,
-      'border-color': palette.light.border
+      borderColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_table > :not(caption) > * > *')] = {
       'padding': sp.cell,
-      'border-bottom-color': palette.light.border
+      borderBottomColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_table > thead > tr > *')] = {
-      'color': palette.secondary.base,
-      'border-bottom-color': palette.light.border,
-      'background-color': palette.surfaceAlt
+      'color': palette.textMuted,
+      borderBottomColor: palette.light.border,
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx(scope, '.bw_bccl_table_striped > tbody > tr:nth-of-type(odd) > *')] = {
-      'background-color': palette.surfaceAlt
+      backgroundColor: palette.surfaceAlt
     };
     rules[_sx(scope, '.bw_bccl_table_hover > tbody > tr:hover > *')] = {
-      'background-color': palette.primary.focus
+      backgroundColor: palette.primary.focus
     };
     rules[_sx(scope, '.bw_bccl_table_selectable > tbody > tr')] = {
       'cursor': 'pointer'
     };
     rules[_sx(scope, '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *')] = {
-      'background-color': palette.primary.light
+      backgroundColor: palette.primary.light
     };
     rules[_sx(scope, '.bw_bccl_table_bordered')] = {
-      'border-color': palette.light.border
+      borderColor: palette.light.border
     };
     rules[_sx(scope, '.bw_bccl_table caption')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
     return rules;
   }
@@ -1025,11 +1096,11 @@
     var bg = palette.background || '#f5f5f5';
     var baseReset = {
       'color': palette.dark.base,
-      'background-color': bg,
+      backgroundColor: bg,
       // Tell the browser which scheme this palette is, so native parts (select
       // popups, scrollbars, date/number spinners, autofill) follow it instead
       // of staying light inside a dark theme (#120).
-      'color-scheme': colorScheme(palette)
+      colorScheme: colorScheme(palette)
     };
     rules[_sx(scope, 'body')] = baseReset;
     return rules;
@@ -1039,15 +1110,15 @@
     // Bare hr draws a rule now (see structuralRules.base), so it needs the
     // palette colour too -- otherwise it falls back to the UA's grey currentColor.
     rules[_sx(scope, 'hr, .bw_hr')] = {
-      'border-top-color': palette.light.border
+      borderTopColor: palette.light.border
     };
     rules[_sx(scope, '.bw_quote')] = {
-      'border-left-color': palette.primary.base,
+      borderLeftColor: palette.primary.base,
       'color': palette.dark.base
     };
     rules[_sx(scope, '.bw_code')] = {
-      'background-color': palette.surfaceAlt,
-      'color': palette.danger.darkText
+      backgroundColor: palette.surfaceAlt,
+      'color': palette.danger.text
     };
     return rules;
   }
@@ -1071,21 +1142,21 @@
 
       // --- Root palette class: sets default bg/color/border ---
       rules[_sx(scope, '.bw_' + k)] = {
-        'background-color': s.base,
+        backgroundColor: s.base,
         'color': s.textOn,
-        'border-color': s.base
+        borderColor: s.base
       };
 
       // --- Pseudo-states (shared across all components) ---
       rules[_sx(scope, '.bw_' + k + ':hover')] = {
-        'background-color': s.hover,
-        'border-color': s.active
+        backgroundColor: s.hover,
+        borderColor: s.active
       };
       rules[_sx(scope, '.bw_' + k + ':active')] = {
-        'background-color': s.active
+        backgroundColor: s.active
       };
       rules[_sx(scope, '.bw_' + k + ':focus-visible')] = {
-        'box-shadow': '0 0 0 3px ' + s.focus,
+        boxShadow: '0 0 0 3px ' + s.focus,
         'outline': 'none'
       };
 
@@ -1094,28 +1165,28 @@
 
       // Background utility: .bw_bg_primary, .bw_bg_secondary, etc.
       rules[_sx(scope, '.bw_bg_' + k)] = {
-        'background-color': s.base,
+        backgroundColor: s.base,
         'color': s.textOn
       };
 
       // Text color utility: .bw_text_primary, .bw_text_secondary, etc.
       rules[_sx(scope, '.bw_text_' + k)] = {
-        'color': s.base
+        'color': s.text
       };
     });
 
     // Text muted — uses palette secondary for theme-aware muted text
     rules[_sx(scope, '.bw_text_muted')] = {
-      'color': palette.secondary.base
+      'color': palette.textMuted
     };
 
     // Common bg/text utilities — derive from palette for theme awareness
     rules[_sx(scope, '.bw_bg_dark')] = {
-      'background-color': palette.dark.base,
+      backgroundColor: palette.dark.base,
       'color': palette.dark.textOn
     };
     rules[_sx(scope, '.bw_bg_light')] = {
-      'background-color': palette.light.base,
+      backgroundColor: palette.light.base,
       'color': palette.light.textOn
     };
     rules[_sx(scope, '.bw_text_light')] = {
@@ -1189,7 +1260,7 @@
       var pct = +(100 * i / 12).toFixed(6) + '%';
       r['.' + prefix + '_' + i] = {
         'flex': '0 0 ' + pct,
-        'max-width': pct
+        maxWidth: pct
       };
     }
     return r;
@@ -1198,7 +1269,7 @@
     // ---- Reset ----
     base: {
       '*': {
-        'box-sizing': 'border-box',
+        boxSizing: 'border-box',
         'margin': '0',
         'padding': '0'
       },
@@ -1227,11 +1298,11 @@
       // nobody reported it, which is exactly why it belongs here rather than in
       // whatever example trips over it next.
       'ul, ol, menu': {
-        'padding-left': '1.5em',
-        'margin-bottom': '1rem'
+        paddingLeft: '1.5em',
+        marginBottom: '1rem'
       },
       'ul ul, ul ol, ol ol, ol ul': {
-        'margin-bottom': '0'
+        marginBottom: '0'
       },
       // The same repair for the other two things `* { margin: 0 }` flattens.
       // A UA gives blockquote margin: 1em 40px and dd margin-left: 40px; the
@@ -1252,29 +1323,29 @@
         'margin': '0 0 1rem 1.5em'
       },
       'dd': {
-        'margin-left': '1.5em'
+        marginLeft: '1.5em'
       },
       'html': {
-        'font-size': '16px',
-        'line-height': '1.5',
+        fontSize: '16px',
+        lineHeight: '1.5',
         '-webkit-text-size-adjust': '100%',
         '-webkit-font-smoothing': 'antialiased',
         '-moz-osx-font-smoothing': 'grayscale'
       },
       'body': {
-        'font-family': 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-        'font-size': '1rem',
-        'font-weight': '400',
-        'line-height': '1.6',
+        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        fontSize: '1rem',
+        fontWeight: '400',
+        lineHeight: '1.6',
         'margin': '0',
         'padding': '0',
         '-webkit-font-smoothing': 'antialiased',
         '-moz-osx-font-smoothing': 'grayscale'
       },
       '.bw_page': {
-        'min-height': '100vh',
+        minHeight: '100vh',
         'display': 'flex',
-        'flex-direction': 'column'
+        flexDirection: 'column'
       },
       '.bw_page_content': {
         'flex': '1',
@@ -1288,13 +1359,13 @@
       // and no background -- it occupies space and paints nothing. The longhands
       // follow the shorthand so they win; colour comes from generateProseThemed.
       'hr': {
-        'box-sizing': 'content-box',
+        boxSizing: 'content-box',
         'height': '0',
         'overflow': 'visible',
         'margin': '1rem 0',
         'border': '0',
-        'border-top-width': '1px',
-        'border-top-style': 'solid'
+        borderTopWidth: '1px',
+        borderTopStyle: 'solid'
       },
       'hr:not([size])': {
         'height': '1px'
@@ -1303,33 +1374,33 @@
     // ---- Typography ----
     typography: {
       'h1, h2, h3, h4, h5, h6': {
-        'margin-top': '0',
-        'margin-bottom': '.5rem',
-        'font-weight': '600',
-        'line-height': '1.25',
-        'letter-spacing': '-0.01em'
+        marginTop: '0',
+        marginBottom: '.5rem',
+        fontWeight: '600',
+        lineHeight: '1.25',
+        letterSpacing: '-0.01em'
       },
       'h1': {
-        'font-size': 'calc(1.375rem + 1.5vw)'
+        fontSize: 'calc(1.375rem + 1.5vw)'
       },
       'h2': {
-        'font-size': 'calc(1.325rem + .9vw)'
+        fontSize: 'calc(1.325rem + .9vw)'
       },
       'h3': {
-        'font-size': 'calc(1.3rem + .6vw)'
+        fontSize: 'calc(1.3rem + .6vw)'
       },
       'h4': {
-        'font-size': 'calc(1.275rem + .3vw)'
+        fontSize: 'calc(1.275rem + .3vw)'
       },
       'h5': {
-        'font-size': '1.25rem'
+        fontSize: '1.25rem'
       },
       'h6': {
-        'font-size': '1rem'
+        fontSize: '1rem'
       },
       'p, dl': {
-        'margin-top': '0',
-        'margin-bottom': '1rem'
+        marginTop: '0',
+        marginBottom: '1rem'
       },
       // ---- Prose elements ----
       // ul/ol and hr are repaired in structuralRules.base, where the reset that
@@ -1340,105 +1411,105 @@
       // the reset never touched at all -- it simply has no opinion, so it stays
       // opt-in.
       '.bw_list': {
-        'padding-left': '1.5em',
-        'margin-bottom': '1rem'
+        paddingLeft: '1.5em',
+        marginBottom: '1rem'
       },
       '.bw_list .bw_list': {
-        'margin-bottom': '0'
+        marginBottom: '0'
       },
       '.bw_hr': {
         'height': '0',
         'margin': '1.5rem 0',
         'border': '0',
-        'border-top-width': '1px',
-        'border-top-style': 'solid'
+        borderTopWidth: '1px',
+        borderTopStyle: 'solid'
       },
       '.bw_quote': {
         'margin': '0 0 1rem',
         'padding': '0.5rem 0 0.5rem 1rem',
-        'border-left-width': '3px',
-        'border-left-style': 'solid'
+        borderLeftWidth: '3px',
+        borderLeftStyle: 'solid'
       },
       '.bw_code': {
-        'font-family': 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
-        'font-size': '0.875em',
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+        fontSize: '0.875em',
         'padding': '0.15em 0.4em',
-        'border-radius': '4px'
+        borderRadius: '4px'
       },
       'small': {
-        'font-size': '0.875rem'
+        fontSize: '0.875rem'
       },
       'a': {
-        'text-decoration': 'none'
+        textDecoration: 'none'
       },
       '.bw_display_4': {
-        'font-size': 'calc(1.475rem + 2.7vw)',
-        'font-weight': '300',
-        'line-height': '1.2'
+        fontSize: 'calc(1.475rem + 2.7vw)',
+        fontWeight: '300',
+        lineHeight: '1.2'
       },
       '.bw_lead': {
-        'font-size': '1.25rem',
-        'font-weight': '300'
+        fontSize: '1.25rem',
+        fontWeight: '300'
       },
       '.bw_h5': {
-        'font-size': '1.25rem'
+        fontSize: '1.25rem'
       },
       '.bw_h6': {
-        'font-size': '1rem'
+        fontSize: '1rem'
       }
     },
     // ---- Grid ----
     grid: _objectSpread2({
       '.bw_bccl_container, .bw_container': {
         'width': '100%',
-        'padding-right': '0.75rem',
-        'padding-left': '0.75rem',
-        'margin-right': 'auto',
-        'margin-left': 'auto'
+        paddingRight: '0.75rem',
+        paddingLeft: '0.75rem',
+        marginRight: 'auto',
+        marginLeft: 'auto'
       },
       '@media (min-width: 576px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '540px'
+          maxWidth: '540px'
         }
       },
       '@media (min-width: 768px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '720px'
+          maxWidth: '720px'
         }
       },
       '@media (min-width: 992px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '960px'
+          maxWidth: '960px'
         }
       },
       '@media (min-width: 1200px)': {
         '.bw_bccl_container, .bw_container': {
-          'max-width': '1140px'
+          maxWidth: '1140px'
         }
       },
       '.bw_bccl_container_fluid': {
         'width': '100%',
-        'padding-right': '0.75rem',
-        'padding-left': '0.75rem',
-        'margin-right': 'auto',
-        'margin-left': 'auto'
+        paddingRight: '0.75rem',
+        paddingLeft: '0.75rem',
+        marginRight: 'auto',
+        marginLeft: 'auto'
       },
       '.bw_row': {
         'display': 'flex',
-        'flex-wrap': 'wrap',
-        'margin-right': '-0.375rem',
-        'margin-left': '-0.375rem'
+        flexWrap: 'wrap',
+        marginRight: '-0.375rem',
+        marginLeft: '-0.375rem'
       },
       '.bw_col, [class*="bw_col_"]': {
         'position': 'relative',
         'width': '100%',
-        'padding-right': '0.375rem',
-        'padding-left': '0.375rem'
+        paddingRight: '0.375rem',
+        paddingLeft: '0.375rem'
       },
       '.bw_col': {
-        'flex-basis': '0',
-        'flex-grow': '1',
-        'max-width': '100%'
+        flexBasis: '0',
+        flexGrow: '1',
+        maxWidth: '100%'
       }
     }, _gridCols('bw_col')),
     // ---- Tables ----
@@ -1450,67 +1521,67 @@
       // under the pager, so full and lean render the pager identically.
       '.bw_bccl_table_pagination .bw_bccl_btn': {
         'display': 'inline-flex',
-        'align-items': 'center',
-        'justify-content': 'center',
-        'font-weight': '500',
-        'line-height': '1.5',
-        'text-align': 'center',
-        'text-decoration': 'none',
-        'vertical-align': 'middle',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontWeight: '500',
+        lineHeight: '1.5',
+        textAlign: 'center',
+        textDecoration: 'none',
+        verticalAlign: 'middle',
         'cursor': 'pointer',
-        'user-select': 'none',
+        userSelect: 'none',
         'border': '1px solid transparent',
-        'font-family': 'inherit',
+        fontFamily: 'inherit',
         'gap': '0.5rem',
-        'font-size': '0.8125rem'
+        fontSize: '0.8125rem'
       },
       '.bw_bccl_table_pagination .bw_bccl_btn:disabled': {
         'opacity': '0.5',
         'cursor': 'not-allowed',
-        'pointer-events': 'none'
+        pointerEvents: 'none'
       },
       '.bw_bccl_table': {
         'width': '100%',
-        'margin-bottom': '1.5rem',
-        'vertical-align': 'top',
-        'border-collapse': 'collapse',
-        'font-size': '0.9375rem',
-        'line-height': '1.5'
+        marginBottom: '1.5rem',
+        verticalAlign: 'top',
+        borderCollapse: 'collapse',
+        fontSize: '0.9375rem',
+        lineHeight: '1.5'
       },
       '.bw_bccl_table > :not(caption) > * > *': {
-        'background-color': 'transparent',
-        'border-bottom-width': '1px',
-        'border-bottom-style': 'solid'
+        backgroundColor: 'transparent',
+        borderBottomWidth: '1px',
+        borderBottomStyle: 'solid'
       },
       '.bw_bccl_table > tbody': {
-        'vertical-align': 'inherit'
+        verticalAlign: 'inherit'
       },
       '.bw_bccl_table > thead': {
-        'vertical-align': 'bottom'
+        verticalAlign: 'bottom'
       },
       '.bw_bccl_table > thead > tr > *': {
-        'font-size': '0.8125rem',
-        'font-weight': '600',
-        'text-transform': 'uppercase',
-        'letter-spacing': '0.04em',
-        'border-bottom-width': '2px'
+        fontSize: '0.8125rem',
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: '0.04em',
+        borderBottomWidth: '2px'
       },
       '.bw_bccl_table caption': {
-        'font-size': '0.875rem',
-        'caption-side': 'bottom'
+        fontSize: '0.875rem',
+        captionSide: 'bottom'
       },
       '.bw_bccl_table_bordered > :not(caption) > * > *': {
-        'border-width': '1px',
-        'border-style': 'solid'
+        borderWidth: '1px',
+        borderStyle: 'solid'
       },
       '.bw_bccl_table_selectable > tbody > tr': {
         'cursor': 'pointer'
       },
       '.bw_bccl_table > tbody > tr.bw_bccl_table_row_selected > *': {
-        'background-color': 'rgba(0, 102, 102, 0.1)'
+        backgroundColor: 'rgba(0, 102, 102, 0.1)'
       },
       '.bw_bccl_table_responsive': {
-        'overflow-x': 'auto',
+        overflowX: 'auto',
         '-webkit-overflow-scrolling': 'touch'
       }
     },
@@ -1518,12 +1589,12 @@
     stacks: {
       '.bw_vstack': {
         'display': 'flex',
-        'flex-direction': 'column'
+        flexDirection: 'column'
       },
       '.bw_hstack': {
         'display': 'flex',
-        'flex-direction': 'row',
-        'align-items': 'center'
+        flexDirection: 'row',
+        alignItems: 'center'
       },
       '.bw_gap_0': {
         'gap': '0'
@@ -1547,37 +1618,37 @@
     // ---- Offsets ----
     offsets: {
       '.bw_offset_1': {
-        'margin-left': '8.333333%'
+        marginLeft: '8.333333%'
       },
       '.bw_offset_2': {
-        'margin-left': '16.666667%'
+        marginLeft: '16.666667%'
       },
       '.bw_offset_3': {
-        'margin-left': '25%'
+        marginLeft: '25%'
       },
       '.bw_offset_4': {
-        'margin-left': '33.333333%'
+        marginLeft: '33.333333%'
       },
       '.bw_offset_5': {
-        'margin-left': '41.666667%'
+        marginLeft: '41.666667%'
       },
       '.bw_offset_6': {
-        'margin-left': '50%'
+        marginLeft: '50%'
       },
       '.bw_offset_7': {
-        'margin-left': '58.333333%'
+        marginLeft: '58.333333%'
       },
       '.bw_offset_8': {
-        'margin-left': '66.666667%'
+        marginLeft: '66.666667%'
       },
       '.bw_offset_9': {
-        'margin-left': '75%'
+        marginLeft: '75%'
       },
       '.bw_offset_10': {
-        'margin-left': '83.333333%'
+        marginLeft: '83.333333%'
       },
       '.bw_offset_11': {
-        'margin-left': '91.666667%'
+        marginLeft: '91.666667%'
       }
     },
     // ---- Bar chart ----
@@ -1588,40 +1659,40 @@
       },
       '.bw_bar_chart': {
         'display': 'flex',
-        'align-items': 'flex-end',
+        alignItems: 'flex-end',
         'gap': '6px',
         'padding': '0 0.5rem'
       },
       '.bw_bar_group': {
         'flex': '1',
         'display': 'flex',
-        'flex-direction': 'column',
-        'align-items': 'center',
+        flexDirection: 'column',
+        alignItems: 'center',
         'height': '100%',
-        'justify-content': 'flex-end'
+        justifyContent: 'flex-end'
       },
       '.bw_bar': {
         'width': '100%',
-        'border-radius': '3px 3px 0 0',
-        'min-height': '4px'
+        borderRadius: '3px 3px 0 0',
+        minHeight: '4px'
       },
       '.bw_bar:hover': {
         'opacity': '0.85'
       },
       '.bw_bar_value': {
-        'font-size': '0.65rem',
-        'font-weight': '600',
-        'margin-bottom': '2px',
-        'text-align': 'center'
+        fontSize: '0.65rem',
+        fontWeight: '600',
+        marginBottom: '2px',
+        textAlign: 'center'
       },
       '.bw_bar_label': {
-        'font-size': '0.7rem',
-        'margin-top': '4px',
-        'text-align': 'center'
+        fontSize: '0.7rem',
+        marginTop: '4px',
+        textAlign: 'center'
       },
       '.bw_bar_chart_title': {
-        'font-size': '1.1rem',
-        'font-weight': '600',
+        fontSize: '1.1rem',
+        fontWeight: '600',
         'margin': '0 0 0.75rem 0'
       }
     },
@@ -1633,24 +1704,24 @@
       '@media (min-width: 1200px)': _gridCols('bw_col_xl'),
       '@media (max-width: 575px)': {
         '.bw_hstack, .bw_hstack': {
-          'flex-direction': 'column'
+          flexDirection: 'column'
         },
         '.bw_bccl_table': {
           'display': 'block',
-          'overflow-x': 'auto',
+          overflowX: 'auto',
           '-webkit-overflow-scrolling': 'touch'
         },
         '.bw_col, .bw_col_1, .bw_col_2, .bw_col_3, .bw_col_4, .bw_col_5, .bw_col_6, .bw_col_7, .bw_col_8, .bw_col_9, .bw_col_10, .bw_col_11, .bw_col_12': {
           'flex': '0 0 100%',
-          'max-width': '100%'
+          maxWidth: '100%'
         },
         '.bw_bccl_container': {
-          'padding-right': '0.5rem',
-          'padding-left': '0.5rem'
+          paddingRight: '0.5rem',
+          paddingLeft: '0.5rem'
         },
         '.bw_bccl_container_fluid': {
-          'padding-right': '0.5rem',
-          'padding-left': '0.5rem'
+          paddingRight: '0.5rem',
+          paddingLeft: '0.5rem'
         }
       }
     }
@@ -1678,62 +1749,62 @@
         'margin': v + ' !important'
       };
       rules['.bw_mt_' + k] = {
-        'margin-top': v + ' !important'
+        marginTop: v + ' !important'
       };
       rules['.bw_mb_' + k] = {
-        'margin-bottom': v + ' !important'
+        marginBottom: v + ' !important'
       };
       rules['.bw_ms_' + k] = {
-        'margin-left': v + ' !important'
+        marginLeft: v + ' !important'
       };
       rules['.bw_me_' + k] = {
-        'margin-right': v + ' !important'
+        marginRight: v + ' !important'
       };
       rules['.bw_p_' + k] = {
         'padding': v + ' !important'
       };
       rules['.bw_pt_' + k] = {
-        'padding-top': v + ' !important'
+        paddingTop: v + ' !important'
       };
       rules['.bw_pb_' + k] = {
-        'padding-bottom': v + ' !important'
+        paddingBottom: v + ' !important'
       };
       rules['.bw_ps_' + k] = {
-        'padding-left': v + ' !important'
+        paddingLeft: v + ' !important'
       };
       rules['.bw_pe_' + k] = {
-        'padding-right': v + ' !important'
+        paddingRight: v + ' !important'
       };
       // Gutter k: half on each side of every column, pulled back by the row
       var h = parseFloat(v) / 2 + 'rem';
       rules['.bw_g_' + k] = {
-        'margin-left': '-' + h,
-        'margin-right': '-' + h,
-        'row-gap': v
+        marginLeft: '-' + h,
+        marginRight: '-' + h,
+        rowGap: v
       };
       rules['.bw_g_' + k + ' > *'] = {
-        'padding-left': h,
-        'padding-right': h
+        paddingLeft: h,
+        paddingRight: h
       };
     }
     rules['.bw_m_auto'] = {
       'margin': 'auto !important'
     };
     rules['.bw_py_3'] = {
-      'padding-top': '1rem !important',
-      'padding-bottom': '1rem !important'
+      paddingTop: '1rem !important',
+      paddingBottom: '1rem !important'
     };
     rules['.bw_py_4'] = {
-      'padding-top': '1.5rem !important',
-      'padding-bottom': '1.5rem !important'
+      paddingTop: '1.5rem !important',
+      paddingBottom: '1.5rem !important'
     };
     rules['.bw_py_5'] = {
-      'padding-top': '3rem !important',
-      'padding-bottom': '3rem !important'
+      paddingTop: '3rem !important',
+      paddingBottom: '3rem !important'
     };
     rules['.bw_py_6'] = {
-      'padding-top': '4rem !important',
-      'padding-bottom': '4rem !important'
+      paddingTop: '4rem !important',
+      paddingBottom: '4rem !important'
     };
 
     // Display
@@ -1755,82 +1826,82 @@
 
     // Text alignment
     rules['.bw_text_left'] = {
-      'text-align': 'left'
+      textAlign: 'left'
     };
     rules['.bw_text_right'] = {
-      'text-align': 'right'
+      textAlign: 'right'
     };
     rules['.bw_text_center'] = {
-      'text-align': 'center'
+      textAlign: 'center'
     };
     rules['.bw_text_justify'] = {
-      'text-align': 'justify'
+      textAlign: 'justify'
     };
 
     // Font weight
     rules['.bw_fw_bold'] = {
-      'font-weight': '700'
+      fontWeight: '700'
     };
     rules['.bw_fw_semibold'] = {
-      'font-weight': '600'
+      fontWeight: '600'
     };
     rules['.bw_fw_normal'] = {
-      'font-weight': '400'
+      fontWeight: '400'
     };
     rules['.bw_fw_light'] = {
-      'font-weight': '300'
+      fontWeight: '300'
     };
 
     // Font style
     rules['.bw_fst_italic'] = {
-      'font-style': 'italic'
+      fontStyle: 'italic'
     };
     rules['.bw_fst_normal'] = {
-      'font-style': 'normal'
+      fontStyle: 'normal'
     };
 
     // Text decoration
     rules['.bw_text_underline'] = {
-      'text-decoration': 'underline'
+      textDecoration: 'underline'
     };
     rules['.bw_text_line_through'] = {
-      'text-decoration': 'line-through'
+      textDecoration: 'line-through'
     };
     rules['.bw_text_decoration_none'] = {
-      'text-decoration': 'none'
+      textDecoration: 'none'
     };
 
     // Text transform
     rules['.bw_text_uppercase'] = {
-      'text-transform': 'uppercase'
+      textTransform: 'uppercase'
     };
     rules['.bw_text_lowercase'] = {
-      'text-transform': 'lowercase'
+      textTransform: 'lowercase'
     };
     rules['.bw_text_capitalize'] = {
-      'text-transform': 'capitalize'
+      textTransform: 'capitalize'
     };
 
     // White-space
     rules['.bw_text_wrap'] = {
-      'white-space': 'normal'
+      whiteSpace: 'normal'
     };
     rules['.bw_text_nowrap'] = {
-      'white-space': 'nowrap'
+      whiteSpace: 'nowrap'
     };
 
     // Font size
     rules['.bw_fs_sm'] = {
-      'font-size': '0.875rem'
+      fontSize: '0.875rem'
     };
     rules['.bw_fs_base'] = {
-      'font-size': '1rem'
+      fontSize: '1rem'
     };
     rules['.bw_fs_lg'] = {
-      'font-size': '1.25rem'
+      fontSize: '1.25rem'
     };
     rules['.bw_fs_xl'] = {
-      'font-size': '1.5rem'
+      fontSize: '1.5rem'
     };
 
     // Flexbox
@@ -1843,7 +1914,7 @@
     };
     for (var jk in jc) {
       rules['.bw_justify_content_' + jk] = {
-        'justify-content': jc[jk]
+        justifyContent: jc[jk]
       };
     }
     var ai = {
@@ -1853,7 +1924,7 @@
     };
     for (var ak in ai) {
       rules['.bw_align_items_' + ak] = {
-        'align-items': ai[ak]
+        alignItems: ai[ak]
       };
     }
 
@@ -1865,53 +1936,53 @@
       'border': '0 !important'
     };
     rules['.bw_border_top_0'] = {
-      'border-top': '0 !important'
+      borderTop: '0 !important'
     };
     rules['.bw_border_end_0'] = {
-      'border-right': '0 !important'
+      borderRight: '0 !important'
     };
     rules['.bw_border_bottom_0'] = {
-      'border-bottom': '0 !important'
+      borderBottom: '0 !important'
     };
     rules['.bw_border_start_0'] = {
-      'border-left': '0 !important'
+      borderLeft: '0 !important'
     };
 
     // Rounded
     rules['.bw_rounded'] = {
-      'border-radius': '.375rem !important'
+      borderRadius: '.375rem !important'
     };
     rules['.bw_rounded_0'] = {
-      'border-radius': '0 !important'
+      borderRadius: '0 !important'
     };
     rules['.bw_rounded_1'] = {
-      'border-radius': '.25rem !important'
+      borderRadius: '.25rem !important'
     };
     rules['.bw_rounded_2'] = {
-      'border-radius': '.375rem !important'
+      borderRadius: '.375rem !important'
     };
     rules['.bw_rounded_3'] = {
-      'border-radius': '.5rem !important'
+      borderRadius: '.5rem !important'
     };
     rules['.bw_rounded_circle'] = {
-      'border-radius': '50% !important'
+      borderRadius: '50% !important'
     };
     rules['.bw_rounded_pill'] = {
-      'border-radius': '50rem !important'
+      borderRadius: '50rem !important'
     };
 
     // Shadows
     rules['.bw_shadow'] = {
-      'box-shadow': '0 .5rem 1rem rgba(0,0,0,.15) !important'
+      boxShadow: '0 .5rem 1rem rgba(0,0,0,.15) !important'
     };
     rules['.bw_shadow_sm'] = {
-      'box-shadow': '0 .125rem .25rem rgba(0,0,0,.075) !important'
+      boxShadow: '0 .125rem .25rem rgba(0,0,0,.075) !important'
     };
     rules['.bw_shadow_lg'] = {
-      'box-shadow': '0 1rem 3rem rgba(0,0,0,.175) !important'
+      boxShadow: '0 1rem 3rem rgba(0,0,0,.175) !important'
     };
     rules['.bw_shadow_none'] = {
-      'box-shadow': 'none !important'
+      boxShadow: 'none !important'
     };
 
     // Width/Height
@@ -1930,10 +2001,10 @@
       'height': 'auto !important'
     };
     rules['.bw_mw_100'] = {
-      'max-width': '100% !important'
+      maxWidth: '100% !important'
     };
     rules['.bw_mh_100'] = {
-      'max-height': '100% !important'
+      maxHeight: '100% !important'
     };
 
     // Positioning
@@ -2018,18 +2089,18 @@
 
     // List utilities
     rules['.bw_list_unstyled'] = {
-      'padding-left': '0',
-      'list-style': 'none'
+      paddingLeft: '0',
+      listStyle: 'none'
     };
     rules['.bw_list_inline'] = {
-      'padding-left': '0',
-      'list-style': 'none'
+      paddingLeft: '0',
+      listStyle: 'none'
     };
     rules['.bw_list_inline_item'] = {
       'display': 'inline-block'
     };
     rules['.bw_list_inline_item:not(:last-child)'] = {
-      'margin-right': '.5rem'
+      marginRight: '.5rem'
     };
 
     // Flex utilities
@@ -2037,15 +2108,15 @@
       'display': 'flex'
     };
     rules['.bw_flex_column'] = {
-      'flex-direction': 'column'
+      flexDirection: 'column'
     };
     rules['.bw_flex_wrap'] = {
-      'flex-wrap': 'wrap'
+      flexWrap: 'wrap'
     };
     rules['.bw_flex_center'] = {
       'display': 'flex',
-      'align-items': 'center',
-      'justify-content': 'center'
+      alignItems: 'center',
+      justifyContent: 'center'
     };
     for (var gk in spacingValues) rules['.bw_gap_' + gk] = {
       'gap': spacingValues[gk] + ' !important'
@@ -2062,16 +2133,16 @@
     // User select
     ['all', 'auto', 'none'].forEach(function (u) {
       rules['.bw_user_select_' + u] = {
-        'user-select': u + ' !important'
+        userSelect: u + ' !important'
       };
     });
 
     // Pointer events
     rules['.bw_pe_none'] = {
-      'pointer-events': 'none !important'
+      pointerEvents: 'none !important'
     };
     rules['.bw_pe_auto'] = {
-      'pointer-events': 'auto !important'
+      pointerEvents: 'auto !important'
     };
 
     // Opacity
@@ -2127,10 +2198,10 @@
     // Accessibility: reduce motion
     result['@media (prefers-reduced-motion: reduce)'] = {
       '*, *::before, *::after': {
-        'animation-duration': '0.01ms !important',
-        'animation-iteration-count': '1 !important',
-        'transition-duration': '0.01ms !important',
-        'scroll-behavior': 'auto !important'
+        animationDuration: '0.01ms !important',
+        animationIterationCount: '1 !important',
+        transitionDuration: '0.01ms !important',
+        scrollBehavior: 'auto !important'
       }
     };
     return result;
@@ -2159,10 +2230,10 @@
     // Include reduced-motion preference
     rules['@media (prefers-reduced-motion: reduce)'] = {
       '*, *::before, *::after': {
-        'animation-duration': '0.01ms !important',
-        'animation-iteration-count': '1 !important',
-        'transition-duration': '0.01ms !important',
-        'scroll-behavior': 'auto !important'
+        animationDuration: '0.01ms !important',
+        animationIterationCount: '1 !important',
+        transitionDuration: '0.01ms !important',
+        scrollBehavior: 'auto !important'
       }
     };
     return rules;
@@ -2183,7 +2254,7 @@
     reset: structuralRules.base,
     tableResponsive: {
       '.bw_bccl_table_responsive': {
-        'overflow-x': 'auto',
+        overflowX: 'auto',
         '-webkit-overflow-scrolling': 'touch'
       }
     },
@@ -3509,6 +3580,17 @@
   bw.debug = false;
 
   /**
+   * Strict targets. When true, a verb that acts on one target and cannot
+   * resolve it throws `Error("bw.<verb>: target not found")` instead of
+   * warning and returning null. Queries (`bw.el`, `bw.$`) and set verbs
+   * (`bw.addClass`, `bw.toggleClass`) are unchanged: a miss is a legitimate
+   * answer there. Off by default in 2.x; the throwing form is the 3.0
+   * default (#127).
+   * @type {boolean}
+   */
+  bw.strictTargets = false;
+
+  /**
    * Lazy-resolve Node.js `fs` module.
    * Tries require('fs') first (available in CJS/UMD Node.js builds),
    * then falls back to dynamic import('fs') for ESM.
@@ -3728,6 +3810,76 @@
   };
 
   /**
+   * Internal: remember what the user is doing inside `container` before a verb
+   * replaces its children, so the verb can put it back (#108). The focused
+   * element is kept as the node itself (a keyed sync or a table sort moves
+   * nodes and keeps them) and, when it has no id, as its child-index path from
+   * the container (a rebuilt tree has new nodes; an id finds the stand-in
+   * directly). A text caret is kept as its selection range, and the container's
+   * scroll offset, which collapses to 0 the moment the children go, is kept
+   * too. Two property reads when nothing inside has focus.
+   * @private
+   */
+  function _focusSnap(container) {
+    if (!container || typeof document === 'undefined') return null;
+    var a = document.activeElement;
+    var snap = {
+      top: container.scrollTop,
+      node: null,
+      path: null,
+      sel: null
+    };
+    if (a && a !== container && container.contains(a)) {
+      snap.node = a;
+      if (!a.id) {
+        var path = [],
+          n = a,
+          p;
+        while (n !== container && (p = n.parentNode)) {
+          path.unshift(Array.prototype.indexOf.call(p.children, n));
+          n = p;
+        }
+        snap.path = path;
+      }
+      if (typeof a.selectionStart === 'number') snap.sel = [a.selectionStart, a.selectionEnd];
+    }
+    return snap;
+  }
+
+  /**
+   * Internal: the other half of _focusSnap. Refocuses the same node if it is
+   * still in the container, else the element with the same id, else the element
+   * at the same path; nothing happens when none resolves. The scroll offset goes
+   * back last, because focus() scrolls its element into view (preventScroll asks
+   * it not to; a browser without the option ignores the argument).
+   * @private
+   */
+  function _focusRestore(container, snap) {
+    if (!snap) return;
+    var el = snap.node,
+      i;
+    if (el && !container.contains(el)) {
+      if (el.id) el = document.getElementById(el.id);else for (el = container, i = 0; el && i < snap.path.length; i++) el = el.children[snap.path[i]];
+      if (el && !container.contains(el)) el = null;
+    }
+    if (el && el !== document.activeElement) {
+      try {
+        el.focus({
+          preventScroll: true
+        });
+      } catch (e) {
+        el = null;
+      }
+      if (el && snap.sel && typeof el.selectionStart === 'number') {
+        try {
+          el.setSelectionRange(snap.sel[0], snap.sel[1]);
+        } catch (e2) {/* not a text control */}
+      }
+    }
+    if (snap.top) container.scrollTop = snap.top;
+  }
+
+  /**
    * Internal: apply content or function to a DOM element.
    * Shared by bw.el() and bw.$().
    * @private
@@ -3743,18 +3895,16 @@
     };
     if (_is(apply, 'function')) {
       apply(el);
-    } else if (_isA(apply)) {
+    } else if (_isA(apply) || _is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
+      // One TACO is a one-item list; the array path handles both.
+      var snap = _focusSnap(el);
       bw.unmountChildren(el);
       el.innerHTML = '';
-      _flat2(apply).forEach(function (item) {
+      _flat2(_isA(apply) ? apply : [apply]).forEach(function (item) {
         if (item != null) el.appendChild(bw.create(item, _nsOptsFor(el)));
       });
       mountNow();
-    } else if (_is(apply, 'object') && apply !== null && (apply.t || apply.__bw_raw)) {
-      bw.unmountChildren(el);
-      el.innerHTML = '';
-      el.appendChild(bw.create(apply, _nsOptsFor(el)));
-      mountNow();
+      _focusRestore(el, snap);
     } else {
       var text = apply == null || typeof apply === 'boolean' ? '' : String(apply);
       // Same string as the one text node already there: no write (#129). A
@@ -3794,7 +3944,11 @@
       }
       if (!el) el = bw.el(target);
     }
-    if (!el && verb) _cw('bw.' + verb + ': target not found');
+    if (!el && verb) {
+      var msg = 'bw.' + verb + ': target not found';
+      if (bw.strictTargets) throw new Error(msg);
+      _cw(msg);
+    }
     return el;
   }
 
@@ -4561,7 +4715,7 @@
       bodyEndParts.push('for(var i=0;i<els.length;i++){');
       bodyEndParts.push('(function(el,entry){el.addEventListener(entry.event,function(event){');
       bodyEndParts.push('try{entry.fn.call(el,event);}catch(e){');
-      bodyEndParts.push('console.error("bw_act handler error — if this is a ReferenceError from a closure, use bw_act_* class tokens instead:",e);}');
+      bodyEndParts.push('console.error("bw_act handler error (a closure cannot be serialized; use bw_act_* class tokens):",e);}');
       bodyEndParts.push('});})(els[i],r[k]);}}}})();');
     }
     if (runtime === 'inline' || runtime === 'cdn') {
@@ -5604,31 +5758,29 @@
     var container = _resolveTarget(target, 'mount');
     if (!container) return null;
 
-    // Teardown existing children (compound calls atomic)
+    // Teardown existing children (compound calls atomic). What the user was doing
+    // inside -- focus, caret, scroll -- comes back after the rebuild (#108).
+    var snap = _focusSnap(container);
     bw.unmountChildren(container);
     container.innerHTML = '';
     if (taco == null) return null;
     var firstEl = null;
     var created = [];
-    if (_isA(taco)) {
-      for (var i = 0; i < taco.length; i++) {
-        if (taco[i] != null) {
-          var child = bw.create(taco[i], _nsOptsFor(container, options));
-          container.appendChild(child);
-          created.push(child);
-          if (!firstEl) firstEl = child;
-        }
+    var list = _isA(taco) ? taco : [taco];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] != null) {
+        var child = bw.create(list[i], _nsOptsFor(container, options));
+        container.appendChild(child);
+        created.push(child);
+        if (!firstEl) firstEl = child;
       }
-    } else {
-      firstEl = bw.create(taco, _nsOptsFor(container, options));
-      container.appendChild(firstEl);
-      created.push(firstEl);
     }
 
     // Walk each created child to register and fire mounted (not the container itself)
     for (var ci = 0; ci < created.length; ci++) {
       bw.mountTree(created[ci]);
     }
+    _focusRestore(container, snap);
     return firstEl;
   };
 
@@ -5693,6 +5845,7 @@
     if (!ref) return null;
     var parent = ref.parentNode;
     var next = ref.nextSibling;
+    var snap = _focusSnap(parent);
     bw.unmount(ref);
     if (ref.parentNode) ref.parentNode.removeChild(ref);
     if (taco == null) return null;
@@ -5701,6 +5854,7 @@
       if (next) parent.insertBefore(neo, next);else parent.appendChild(neo);
     }
     bw.mountTree(neo);
+    _focusRestore(parent, snap);
     return neo;
   };
 
@@ -5715,6 +5869,7 @@
   bw.refresh = function (ref) {
     var el = _resolveTarget(ref, 'refresh');
     if (!el) return null;
+    var snap = _focusSnap(el);
     bw.unmountChildren(el);
     el.innerHTML = '';
     // Invalidate slot cache so slots re-resolve after rebuild
@@ -5725,6 +5880,7 @@
       // Walk newly created children
       bw.mountTree(el);
     }
+    _focusRestore(el, snap);
 
     // Emit bw:refresh
     try {
@@ -5897,10 +6053,9 @@
     var createFn = opts.create;
     var updateFn = opts.update;
 
-    // Save focus to restore after reorder (insertBefore can blur in some environments)
-    /* c8 ignore next -- document is always defined in jsdom test env */
-    var focused = typeof document !== 'undefined' ? document.activeElement : null;
-    if (focused && !parentEl.contains(focused)) focused = null;
+    // insertBefore blurs the moved node in some environments; the shared snapshot
+    // puts focus back on the same node (#108).
+    var snap = _focusSnap(parentEl);
 
     // Build map of existing keyed children
     var existingByKey = {};
@@ -5960,14 +6115,7 @@
         prevNode = neo;
       }
     }
-
-    // Restore focus if it was lost during reorder
-    /* c8 ignore next 2 -- focus management not exercised in jsdom */
-    if (focused && focused.isConnected && document.activeElement !== focused) {
-      try {
-        focused.focus();
-      } catch (e) {}
-    }
+    _focusRestore(parentEl, snap);
   };
 
   /**
@@ -7038,6 +7186,22 @@
   bw.registerRemote = function (name, fn) {
     bw._clientRemotes[name] = fn;
   };
+
+  /**
+   * Capture hook for `client.screenshot()`. Null by default, so the builtin
+   * loads the vendored html2canvas. A page may set it to a function
+   * `(el, { scale }) => Promise<HTMLCanvasElement>` and the screenshot path
+   * uses that instead; `domToCanvas` from modern-screenshot and `toCanvas`
+   * from html-to-image fit as they are. Added because html2canvas 1.4.1 cannot
+   * parse CSS Color 4 functions such as `color-mix()` (#125).
+   * @type {?function(Element, {scale: number}): Promise<HTMLCanvasElement>}
+   * @category Server (bwserve)
+   * @see bw.registerRemote
+   * @example
+   * // domToCanvas is modern-screenshot, loaded by the page
+   * bw.capture = function(el, o) { return window.domToCanvas(el, { scale: o.scale }); };
+   */
+  bw.capture = null;
 
   /**
    * Connect this page to a bwserve endpoint over Server-Sent Events.
@@ -8660,10 +8824,9 @@
         }
       }
 
-      // Reattaching rows blurs whatever had focus inside them (bw.syncChildren
-      // restores focus for the same reason).
-      var focused = document.activeElement;
-      if (focused && !tbodyEl.contains(focused)) focused = null;
+      // Reattaching rows blurs whatever had focus inside them; the shared
+      // snapshot puts it back on the same (moved) node (#108).
+      var snap = _focusSnap(tbodyEl);
 
       // Detach reused rows first so unmountChildren only tears down dropped ones
       for (var n = 0; n < nextRows.length; n++) {
@@ -8673,11 +8836,7 @@
       while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
       for (var m = 0; m < nextRows.length; m++) tbodyEl.appendChild(nextRows[m]);
       bw.mountTree(tbodyEl);
-      if (focused && focused.isConnected && document.activeElement !== focused) {
-        try {
-          focused.focus();
-        } catch (e) {/* not focusable any more */}
-      }
+      _focusRestore(tbodyEl, snap);
       if (rowKey) {
         state.rowKeys = rows.map(function (row) {
           return String(row[rowKey]);

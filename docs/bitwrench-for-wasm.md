@@ -823,7 +823,7 @@ These are the most direct alternatives. They run a component framework inside WA
 | Accessibility | Manual | Browser-native (real HTML) |
 | Server rendering | Framework-specific SSR | bw.html() or bwserve |
 | Learning curve | Rust + framework | Rust + TACO (4 keys) |
-| Bundle size | ~200KB+ (framework + app) | ~45KB (bitwrench) + app WASM |
+| Bundle size | ~200KB+ (framework + app) | ~47KB (bitwrench) + app WASM |
 
 The fundamental difference is where the component model lives. Yew/Leptos/Dioxus place it in WASM (Rust macros, reactive primitives, virtual DOM). The bitwrench approach places it in JS (TACO rendering, CSS generation, component handles) and uses JSON as the interface between the application language and the renderer.
 
@@ -831,7 +831,7 @@ The fundamental difference is where the component model lives. Yew/Leptos/Dioxus
 
 | Concern | Blazor | bitwrench + WASM |
 |---------|--------|------------------|
-| Runtime payload | 2-5MB (.NET in WASM) | ~45KB (bitwrench) |
+| Runtime payload | 2-5MB (.NET in WASM) | ~47KB (bitwrench) |
 | Component model | Razor templates (.NET) | TACO JSON |
 | DOM access | JS interop bridge | Batched via bw.apply() |
 | Language | C# only | Any (Rust, C, C++, Go, ...) |
@@ -847,7 +847,7 @@ Blazor bundles a language runtime in WASM. The bitwrench approach does not requi
 | Backend | Native process (Rust/Node) | WASM (in-browser or server) |
 | Frontend | You write JS/React/Vue | TACO from any language |
 | Distribution | App store / download | Link sharing |
-| Bundle size | 10-100MB+ | Page weight (~45KB + WASM) |
+| Bundle size | 10-100MB+ | Page weight (~47KB + WASM) |
 
 Tauri and Electron are designed for desktop application distribution. If the UI can be served as a web page, the packaging and distribution step is not needed -- the tradeoff is losing native OS integration (system tray, menus, file system access without permissions).
 
@@ -873,7 +873,7 @@ Canvas-based approaches bypass the browser's built-in UI capabilities. Generatin
 - Browser-native UI (real HTML/CSS) from any language that produces JSON
 - Batched boundary crossing -- one message per render, not one per DOM op
 - Structured protocol (bwserve, v:1 stamped) for remote UI control including screenshots
-- ~45KB client library with 51 components (`bw.catalog()`), CSS generation, theming
+- ~47KB client library with 51 components (`bw.catalog()`), CSS generation, theming
 - No build step on the JS side
 - Same application code can target in-page WASM, Worker, or native server
 - Browser capabilities preserved: accessibility, text selection, CSS layout, forms
