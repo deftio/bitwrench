@@ -392,6 +392,52 @@ describe("BwServeClient", function() {
     });
   });
 
+  // The wire has had replace, refresh and update since 2.1 and bw.apply()
+  // handles all three, but the server client had no method for them, so a
+  // server author hand-built the message and pushed it through batch().
+  describe("#replace() / #refresh() / #update() -- the three wire verbs the client lacked", function() {
+    it("replace() sends {type:'replace', ref, taco}", function() {
+      var client = new BwServeClient('c1', null);
+      client.replace('#old', { t: 'section', c: 'New' });
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'replace',
+        ref: '#old',
+        taco: { t: 'section', c: 'New' },
+        v: 1
+      });
+    });
+
+    it("refresh() sends {type:'refresh', ref}", function() {
+      var client = new BwServeClient('c1', null);
+      client.refresh('widget');
+      assert.deepStrictEqual(client._sent[0], { type: 'refresh', ref: 'widget', v: 1 });
+    });
+
+    it("update() sends {type:'update', ref, data}", function() {
+      var client = new BwServeClient('c1', null);
+      client.update('gauge', { value: 42 });
+      assert.deepStrictEqual(client._sent[0], {
+        type: 'update',
+        ref: 'gauge',
+        data: { value: 42 },
+        v: 1
+      });
+    });
+
+    it("every message type bw.apply() handles has a client method or is the handshake", function() {
+      // The 13 wire types, as bw.apply() names them. hello is sent by the
+      // transport on connect and unlisten goes through app.broadcast().
+      var wire = ['hello', 'mount', 'patch', 'append', 'replace', 'remove', 'refresh',
+                  'update', 'message', 'batch', 'call', 'listen', 'unlisten'];
+      var exempt = { hello: true, unlisten: true };
+      wire.forEach(function(type) {
+        if (exempt[type]) return;
+        assert.strictEqual(typeof BwServeClient.prototype[type], 'function',
+          'BwServeClient has no method for wire type "' + type + '"');
+      });
+    });
+  });
+
   describe("#remove()", function() {
     it("should send a remove message with ref field", function() {
       var client = new BwServeClient('c1', null);
@@ -2103,6 +2149,9 @@ describe("BwServeClient 2.1 branch coverage", function() {
     client.mount('#a', { t: 'div' });
     client.patch('#b', { text: 'hi' });
     client.append('#c', { t: 'li' });
+    client.replace('#c2', { t: 'li' });
+    client.refresh('#c3');
+    client.update('#c4', { n: 1 });
     client.remove('#d');
     client.batch([]);
     client.call('fn');
@@ -2352,6 +2401,34 @@ describe("bw.apply() malformed inputs", function() {
   });
 });
 
+
+// =========================================================================
+// bwserve/index.js — bare-directory redirect keeps a single leading slash
+// =========================================================================
+
+describe("BwServeApp static server — directory redirect is a path, not a host", function() {
+  it("GET //sub redirects to /sub/, never to //sub/ (protocol-relative)", async function() {
+    var os = await import('os');
+    var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bwserve-redir-'));
+    fs.mkdirSync(path.join(tmpDir, 'sub'));
+    var status = 0, headers = null;
+    var fakeRes = {
+      writeHead: function(s, h) { status = s; headers = h || {}; },
+      end: function() {}
+    };
+    try {
+      var app = new BwServeApp({ static: tmpDir });
+      app._handleRequest({ url: '//sub', method: 'GET' }, fakeRes);
+      assert.strictEqual(status, 301);
+      assert.strictEqual(headers.Location, '/sub/');
+      app._handleRequest({ url: '/sub?x=1', method: 'GET' }, fakeRes);
+      assert.strictEqual(headers.Location, '/sub/?x=1', 'the query string survives');
+    } finally {
+      fs.rmdirSync(path.join(tmpDir, 'sub'));
+      fs.rmdirSync(tmpDir);
+    }
+  });
+});
 
 // =========================================================================
 // bwserve/index.js — _handleRequest URL/method defaults (lines 219-220)

@@ -47,7 +47,8 @@ const server = http.createServer((req, res) => {
   // Check if file exists
   fs.stat(filePath, (err, stats) => {
     if (err) {
-      res.writeHead(404);
+      // Plain text, so the echoed path is never parsed as HTML.
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
       res.end(`File not found: ${requestPath}`);
       console.error(`404: ${requestPath}`);
       return;

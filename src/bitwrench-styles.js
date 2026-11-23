@@ -1095,6 +1095,9 @@ function _prefixSelector(sel, prefix) {
 
 export function deepMerge(target, source) {
   for (const key of Object.keys(source)) {
+    // A config parsed from JSON can carry these as plain keys; merging them
+    // would write onto Object.prototype (CodeQL js/prototype-pollution-utility).
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
     if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])
         && target[key] && typeof target[key] === 'object' && !Array.isArray(target[key])) {
       deepMerge(target[key], source[key]);

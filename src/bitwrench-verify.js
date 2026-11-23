@@ -86,8 +86,12 @@ var SVG_ATTRS = 'd r x y z cx cy rx ry x1 y1 x2 y2 dx dy fx fy fr in in2 k1 k2 k
 REAL_ATTRS = REAL_ATTRS.concat(SVG_ATTRS);
 
 // Raw content that executes. Not a safety guarantee -- see rawFindings().
-var RAW_HANDLER = /<[^>]+\s+on[a-z]+\s*=/i;
-var RAW_JS_URL = /(?:href|src|action|formaction)\s*=\s*["']?\s*javascript:/i;
+// Both patterns avoid two adjacent quantifiers that can match the same
+// character (`[^>]+\s+`, `\s*["']?\s*`): on a long run of spaces those
+// backtrack quadratically (CodeQL js/polynomial-redos). The handler must still
+// sit at an attribute boundary: whitespace or a closing quote before `on`.
+var RAW_HANDLER = /<[^>]*[\s"']on[a-z]+\s*=/i;
+var RAW_JS_URL = /(?:href|src|action|formaction)\s*=\s*(?:["']\s*)?javascript:/i;
 var RAW_SCRIPT = /<\s*script\b/i;
 var RAW_SRCDOC = /\bsrcdoc\s*=/i;
 

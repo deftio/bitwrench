@@ -85,6 +85,39 @@ export class BwServeClient {
     }
 
     /**
+     * Replace an element with a new TACO (the element itself, not its content;
+     * for the content use mount()). The wire form of bw.replace().
+     *
+     * @param {string} selector - CSS selector or UUID of the element to replace
+     * @param {Object} taco - TACO object that takes its place
+     */
+    replace(selector, taco) {
+        this._send({ type: 'replace', ref: selector, taco: taco });
+    }
+
+    /**
+     * Re-run a component's own render function (o.render) in place. The wire
+     * form of bw.refresh(); the browser reports `refresh_no_render` on
+     * `bw:diag` when the element has none.
+     *
+     * @param {string} selector - CSS selector or UUID of the component root
+     */
+    refresh(selector) {
+        this._send({ type: 'refresh', ref: selector });
+    }
+
+    /**
+     * Deliver data to a component: the wire form of bw.update(), which
+     * dispatches to the component's own el.bw.update(data) handler.
+     *
+     * @param {string} selector - CSS selector or UUID of the component root
+     * @param {*} data - Payload handed to el.bw.update()
+     */
+    update(selector, data) {
+        this._send({ type: 'update', ref: selector, data: data });
+    }
+
+    /**
      * Remove an element from the DOM (with cleanup).
      *
      * @param {string} selector - CSS selector or UUID of element to remove

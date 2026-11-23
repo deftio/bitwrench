@@ -303,7 +303,7 @@ The same protocol works from Python, Go, Rust, or a shell script with `curl`. Se
 > making them a first-class library is in
 > [`dev/bw-embedded-release-plan-2.1.x.md`](dev/bw-embedded-release-plan-2.1.x.md).
 
-The library is 172 KB on disk (47KB gzipped). A lean build without the component library (BCCL) and its stylesheet is 88KB (30KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
+The library is 171 KB on disk (47KB gzipped). A lean build without the component library (BCCL) and its stylesheet is 87KB (30KB gzipped). Both work entirely self-hosted from a microcontroller's flash -- no CDN and no internet required.
 
 ## CLI
 
@@ -481,7 +481,7 @@ Every release is gated at 48KB gzipped for the UMD and ESM builds, and 30KB for 
 
 ## FAQ
 
-**Is this a framework?** -- No. It is a library (172 KB on disk, 47KB gzipped). No lifecycle ceremony, no project structure. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
+**Is this a framework?** -- No. It is a library (171 KB on disk, 47KB gzipped). No lifecycle ceremony, no project structure. Import it, call functions, done. Lifecycle hooks (`o.mounted`, `o.unmount`) are opt-in.
 
 **How does bitwrench compare to React/Vue?** -- They solve different problems at different scales. React and Vue provide a component model, virtual DOM, and ecosystem for large team-built SPAs. Bitwrench provides rendering and state primitives in a single file with no build step, aimed at single-page tools, dashboards, embedded devices, and server-driven UIs. They coexist fine.
 

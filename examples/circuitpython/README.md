@@ -99,7 +99,7 @@ Example 6 additionally needs `embedded_python/bwserve.py` copied to `/lib/`.
 ## Notes
 
 **Why not inline the library in the page?** `Response` holds its whole body in
-memory. The Pico 2 W has 520KB of RAM and no PSRAM, so a 172KB string plus HTTP
+memory. The Pico 2 W has 520KB of RAM and no PSRAM, so a 171KB string plus HTTP
 buffers is enough to run out. `FileResponse` streams from disk in 1KB chunks
 instead, which is why every example from 1b on serves it from `/www`.
 

@@ -1,4 +1,4 @@
-/*! bitwrench-lean v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-lean v2.1.16 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 var _documentCurrentScript = typeof document !== 'undefined' ? document.currentScript : null;
@@ -8,10 +8,10 @@ var _documentCurrentScript = typeof document !== 'undefined' ? document.currentS
  */
 
 const VERSION_INFO = {
-  version: '2.1.15',
+  version: '2.1.16',
   name: 'bitwrench',
   license: 'BSD-2-Clause',
-  buildDate: '2026-11-21'
+  buildDate: '2026-11-23'
 };
 
 /**
@@ -7640,7 +7640,7 @@ bw.makeTable = function(config) {
     onPageChange
   } = config;
 
-  // Build class list: always include bw_bccl_table, add striped/hover/selectable, append user className
+  // Class list: always bw_bccl_table, then striped/hover/selectable, then the caller's
   let cls = 'bw_bccl_table';
   if (striped) cls += ' bw_bccl_table_striped';
   if (hover || selectable) cls += ' bw_bccl_table_hover';
@@ -7652,6 +7652,7 @@ bw.makeTable = function(config) {
   const cols = columns || (data.length > 0
     ? _keys(data[0]).map(key => ({ key, label: key }))
     : []);
+  const clickable = selectable || onRowClick;
 
   // Only null/undefined are empty -- 0 and false are real values (#102)
   function _cellText(v) { return v == null ? '' : String(v); }
@@ -7685,39 +7686,34 @@ bw.makeTable = function(config) {
   }
 
   const first = _view(data, sortColumn || null, sortDirection);
-  const totalPages = first.pages;
-  const page = first.offset / (pageSize || 1) + 1;
 
-  // Header cell content: the label, plus the glyph on the sorted column.
-  // Used at first paint and by the sort handle, so the glyph follows the sort.
-  function _thContent(col, column, dir) {
-    return sortable && col.key === column
-      ? [col.label, { t: 'span', a: { style: { marginLeft: '5px' } }, c: dir === 'asc' ? '▲' : '▼' }]
-      : col.label;
-  }
-
-  // Build table header with scope="col" and aria-sort support
-  const thead = {
-    t: 'thead',
-    c: {
+  // The header row for one sort state: scope="col", aria-sort and the glyph on
+  // the sorted column. First paint and the sort handle both build it, so the
+  // header always describes the body.
+  function _headRow(column, dir) {
+    return {
       t: 'tr',
-      c: cols.map(col => {
-        var thAttrs = { scope: 'col' };
+      c: cols.map(function(col) {
+        var a = { scope: 'col' }, on = col.key === column;
         if (sortable) {
-          thAttrs.style = { cursor: 'pointer', userSelect: 'none' };
+          a.style = 'cursor:pointer;user-select:none;';
           // th -> tr -> thead -> table, which carries the sort handle
-          thAttrs.onclick = function(e) {
+          a.onclick = function(e) {
             var tableEl = e.currentTarget.parentNode.parentNode.parentNode;
             if (tableEl && tableEl.bw) tableEl.bw.sort(col.key);
           };
         }
-        if (sortColumn === col.key) {
-          thAttrs['aria-sort'] = sortDirection === 'asc' ? 'ascending' : 'descending';
-        }
-        return { t: 'th', a: thAttrs, c: _thContent(col, sortColumn, sortDirection) };
+        if (on) a['aria-sort'] = dir === 'asc' ? 'ascending' : 'descending';
+        return {
+          t: 'th',
+          a: a,
+          c: sortable && on
+            ? [col.label, { t: 'span', a: { style: 'margin-left:5px;' }, c: dir === 'asc' ? '▲' : '▼' }]
+            : col.label
+        };
       })
-    }
-  };
+    };
+  }
 
   // What was last rendered into a cell, as a comparable value. render() builds a
   // fresh TACO every call, so identity says nothing; this says whether the result
@@ -7726,23 +7722,37 @@ bw.makeTable = function(config) {
   function _cellSig(v) {
     if (v == null) return '';
     if (typeof v !== 'object') return 's:' + String(v);
-    return 'o:' + JSON.stringify(v, function(k, val) { return typeof val === 'function' ? '\u0192' : val; });
+    return 'o:' + JSON.stringify(v, function(k, val) { return typeof val === 'function' ? 'ƒ' : val; });
   }
 
   // Signatures of the cells currently rendered, by row key (keyed tables only).
   var _sigs = {};
+  function _key(row) { return String(row[rowKey]); }
 
   // Rows carry no handlers. One onclick on <tbody> resolves the row and its
   // index from the current view at click time, so a row reused across sort or
   // setData never reports the record it was first painted with.
   function _rowTaco(row) {
     var contents = cols.map(function(col) { return _cellContent(col, row); });
-    if (rowKey) _sigs[String(row[rowKey])] = contents.map(_cellSig);
+    if (rowKey) _sigs[_key(row)] = contents.map(_cellSig);
     return {
       t: 'tr',
-      a: (selectable || onRowClick) ? { style: 'cursor:pointer;' } : {},
+      a: clickable ? { style: 'cursor:pointer;' } : {},
       c: contents.map(function(c) { return { t: 'td', c: c }; })
     };
+  }
+
+  // A kept row gets only the cells whose rendered content changed. An unchanged
+  // cell keeps its nodes (focus, caret, scroll); a changed one goes through
+  // bw.patch, so a component it replaces still unmounts (#108).
+  function _rowUpdate(tr, row) {
+    var k = _key(row), was = _sigs[k] || [], now = [], cells = tr.children;
+    for (var i = 0; i < cols.length; i++) {
+      var cell = _cellContent(cols[i], row);
+      now.push(_cellSig(cell));
+      if (cells[i] && was[i] !== now[i]) bw.patch(cells[i], cell);
+    }
+    _sigs[k] = now;
   }
 
   function _onBodyClick(e) {
@@ -7757,116 +7767,68 @@ bw.makeTable = function(config) {
     }
   }
 
-  const tbody = {
-    t: 'tbody',
-    a: (selectable || onRowClick) ? { onclick: _onBodyClick } : {},
-    c: first.rows.map(_rowTaco)
-  };
-
-  // Header cells line up with cols by position, so no per-cell key is needed
-  function _sortTableDOM(el, column, direction) {
-    var ths = el.querySelectorAll('thead th');
-    for (var h = 0; h < ths.length && h < cols.length; h++) {
-      if (cols[h].key === column) ths[h].setAttribute('aria-sort', direction === 'asc' ? 'ascending' : 'descending');
-      else ths[h].removeAttribute('aria-sort');
-      bw.patch(ths[h], _thContent(cols[h], column, direction));
-    }
-  }
-
-  // Rebuild tbody rows to match `rows`. Keyed rows are reused (selection
-  // class and focus survive); cells are patched, which unmounts old content.
-  function _rebuildTbody(el, rows) {
-    var tbodyEl = el.querySelector('tbody');
-    if (!tbodyEl) return;
-
-    // Rendered row keys live in state, in tbody order -- no data-* on the rows
-    var state = el._bw_state || {};
-    var existingRows = {};
-    if (rowKey && state.rowKeys) {
-      var trs = tbodyEl.children;
-      for (var r = 0; r < trs.length; r++) existingRows[state.rowKeys[r]] = trs[r];
-    }
-
-    var nextRows = [];
-    for (var d = 0; d < rows.length; d++) {
-      var tr = rowKey ? existingRows[String(rows[d][rowKey])] : null;
-      if (tr) {
-        // Patch only the cells whose rendered content changed. An unchanged cell
-        // keeps its nodes (focus, caret, scroll); a changed one goes through
-        // bw.patch, so a component it replaces still unmounts.
-        var cells = tr.children;
-        var key = String(rows[d][rowKey]);
-        var was = _sigs[key] || [];
-        var now = [];
-        for (var ci = 0; ci < cols.length; ci++) {
-          var cell = _cellContent(cols[ci], rows[d]);
-          now.push(_cellSig(cell));
-          if (cells[ci] && was[ci] !== now[ci]) bw.patch(cells[ci], cell);
-        }
-        _sigs[key] = now;
-        nextRows.push(tr);
-      } else {
-        nextRows.push(bw.create(_rowTaco(rows[d])));
-      }
-    }
-
-    // Reattaching rows blurs whatever had focus inside them; the shared
-    // snapshot puts it back on the same (moved) node (#108).
-    var snap = _focusSnap(tbodyEl);
-
-    // Detach reused rows first so unmountChildren only tears down dropped ones
-    for (var n = 0; n < nextRows.length; n++) {
-      if (nextRows[n].parentNode === tbodyEl) tbodyEl.removeChild(nextRows[n]);
-    }
-    bw.unmountChildren(tbodyEl);
-    while (tbodyEl.firstChild) tbodyEl.removeChild(tbodyEl.firstChild);
-    for (var m = 0; m < nextRows.length; m++) tbodyEl.appendChild(nextRows[m]);
-    bw.mountTree(tbodyEl);
-    _focusRestore(tbodyEl, snap);
-    if (rowKey) {
-      state.rowKeys = rows.map(function(row) { return String(row[rowKey]); });
-      var live = {};
-      state.rowKeys.forEach(function(k) { live[k] = _sigs[k]; });
-      _sigs = live;   // drop signatures for rows no longer shown
-    }
-  }
-
   // Prev / "Page N of M" / Next for one computed view. Built at first paint and
-  // rebuilt by _render, so the label, the disabled states and the page asked of
+  // by _render, so the label, the disabled states and the page asked of
   // onPageChange always describe the slice the tbody is showing.
-  function _pagerContent(pageNum, pages) {
+  function _pagerContent(p, pages) {
+    function btn(label, to, off) {
+      return { t: 'button', a: {
+        class: 'bw_bccl_btn bw_bccl_btn_sm',
+        disabled: off ? 'disabled' : undefined,
+        onclick: !off && onPageChange ? function() { onPageChange(to); } : undefined
+      }, c: label };
+    }
     return [
-      { t: 'button', a: {
-        class: 'bw_bccl_btn bw_bccl_btn_sm',
-        disabled: pageNum <= 1 ? 'disabled' : undefined,
-        onclick: pageNum > 1 && onPageChange ? function() { onPageChange(pageNum - 1); } : undefined
-      }, c: 'Prev' },
-      { t: 'span', a: { style: 'margin:0 0.5rem;font-size:0.875rem;' }, c: 'Page ' + pageNum + ' of ' + pages },
-      { t: 'button', a: {
-        class: 'bw_bccl_btn bw_bccl_btn_sm',
-        disabled: pageNum >= pages ? 'disabled' : undefined,
-        onclick: pageNum < pages && onPageChange ? function() { onPageChange(pageNum + 1); } : undefined
-      }, c: 'Next' }
+      btn('Prev', p - 1, p <= 1),
+      { t: 'span', a: { style: 'margin:0 0.5rem;font-size:0.875rem;' }, c: 'Page ' + p + ' of ' + pages },
+      btn('Next', p + 1, p >= pages)
     ];
   }
 
-  // Recompute the view from state (data, sort, page) and repaint body + pager
+  // Recompute the view from state (data, sort, page) and repaint body + pager.
+  // Keyed rows go through bw.syncChildren: the same DOM nodes move, rows that
+  // left unmount, rows that stay get _rowUpdate, and focus survives the move.
+  // Rows without a key have no identity and are rebuilt.
   function _render(el) {
     var st = el._bw_state;
     var v = _view(st.data || [], st.sortColumn, st.sortDirection);
     st.view = v.rows;
     st.offset = v.offset;
-    _rebuildTbody(el, v.rows);
+    var tb = el.querySelector('tbody');
+    if (tb) {
+      if (rowKey) {
+        // First-paint rows came from bw.create, not syncChildren: give them their keys once
+        var tr0 = tb.firstElementChild;
+        if (tr0 && tr0._bw_key == null) {
+          for (var r = 0; r < tb.children.length; r++) tb.children[r]._bw_key = st.rowKeys[r];
+        }
+        bw.syncChildren(tb, v.rows, { key: _key, create: _rowTaco, update: _rowUpdate });
+        var live = {};
+        v.rows.forEach(function(row) { live[_key(row)] = _sigs[_key(row)]; });
+        _sigs = live;   // drop signatures for rows no longer shown
+        st.rowKeys = v.rows.map(_key);
+      } else {
+        bw.patch(tb, v.rows.map(_rowTaco));
+      }
+    }
     if (!pageSize || !el.parentNode) return;
     var pager = el.parentNode.querySelector('.bw_bccl_table_pagination');
     if (pager) bw.patch(pager, _pagerContent(v.offset / pageSize + 1, v.pages));
+  }
+
+  function _setData(el, rows) {
+    el._bw_state.data = rows;
+    _render(el);
   }
 
   const table = {
     t: 'table',
     // id names the root: the table itself, or the paginated wrapper below
     a: { id: pageSize ? undefined : id, class: cls },
-    c: [thead, tbody],
+    c: [
+      { t: 'thead', c: _headRow(sortColumn, sortDirection) },
+      { t: 'tbody', a: clickable ? { onclick: _onBodyClick } : {}, c: first.rows.map(_rowTaco) }
+    ],
     o: {
       type: 'table',
       state: {
@@ -7875,27 +7837,23 @@ bw.makeTable = function(config) {
         sortDirection: sortDirection,
         view: first.rows,
         offset: first.offset,
-        rowKeys: rowKey ? first.rows.map(row => String(row[rowKey])) : null
+        rowKeys: rowKey ? first.rows.map(_key) : null
       },
       handle: {
         sort: function(el, column, dir) {
-          var state = el._bw_state;
-          if (!dir) dir = state.sortColumn === column && state.sortDirection === 'asc' ? 'desc' : 'asc';
-          state.sortColumn = column;
-          state.sortDirection = dir;
-          _sortTableDOM(el, column, dir);
+          var st = el._bw_state;
+          if (!dir) dir = st.sortColumn === column && st.sortDirection === 'asc' ? 'desc' : 'asc';
+          st.sortColumn = column;
+          st.sortDirection = dir;
+          var head = el.querySelector('thead');
+          if (head) bw.patch(head, _headRow(column, dir));
           _render(el);
           if (onSort) onSort(column, dir);
         },
         update: function(el, newConfig) {
-          if (!newConfig || !newConfig.data) return;
-          el._bw_state.data = newConfig.data;
-          _render(el);
+          if (newConfig && newConfig.data) _setData(el, newConfig.data);
         },
-        setData: function(el, newData) {
-          el._bw_state.data = newData;
-          _render(el);
-        },
+        setData: _setData,
         getData: function(el) {
           return (el._bw_state && el._bw_state.data) || [];
         }
@@ -7914,7 +7872,7 @@ bw.makeTable = function(config) {
       {
         t: 'div',
         a: { class: 'bw_bccl_table_pagination', style: 'display:flex;align-items:center;justify-content:flex-end;padding:0.5rem 0;gap:0.25rem;' },
-        c: _pagerContent(page, totalPages)
+        c: _pagerContent(first.offset / pageSize + 1, first.pages)
       }
     ]
   };

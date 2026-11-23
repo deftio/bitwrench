@@ -1,4 +1,4 @@
-/*! bwserve v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bwserve v2.1.16 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 import { fileURLToPath } from 'url';
 import { dirname, resolve, sep, extname, join } from 'path';
 import { createServer } from 'http';
@@ -9,7 +9,7 @@ import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
  * DO NOT EDIT DIRECTLY - Use npm run generate-version
  */
 
-const VERSION = '2.1.15';
+const VERSION = '2.1.16';
 
 /**
  * BwServeClient — per-client connection for bwserve.
@@ -94,6 +94,39 @@ class BwServeClient {
      */
     append(selector, taco) {
         this._send({ type: 'append', ref: selector, taco: taco });
+    }
+
+    /**
+     * Replace an element with a new TACO (the element itself, not its content;
+     * for the content use mount()). The wire form of bw.replace().
+     *
+     * @param {string} selector - CSS selector or UUID of the element to replace
+     * @param {Object} taco - TACO object that takes its place
+     */
+    replace(selector, taco) {
+        this._send({ type: 'replace', ref: selector, taco: taco });
+    }
+
+    /**
+     * Re-run a component's own render function (o.render) in place. The wire
+     * form of bw.refresh(); the browser reports `refresh_no_render` on
+     * `bw:diag` when the element has none.
+     *
+     * @param {string} selector - CSS selector or UUID of the component root
+     */
+    refresh(selector) {
+        this._send({ type: 'refresh', ref: selector });
+    }
+
+    /**
+     * Deliver data to a component: the wire form of bw.update(), which
+     * dispatches to the component's own el.bw.update(data) handler.
+     *
+     * @param {string} selector - CSS selector or UUID of the component root
+     * @param {*} data - Payload handed to el.bw.update()
+     */
+    update(selector, data) {
+        this._send({ type: 'update', ref: selector, data: data });
     }
 
     /**
@@ -1077,7 +1110,10 @@ class BwServeApp {
       // Bare directory without trailing slash: /foo => 301 to /foo/
       if (!path.endsWith('/') && existsSync(resolvedPath) && statSync(resolvedPath).isDirectory()) {
         var qs = url.split('?')[1];
-        var location = path + '/' + (qs ? '?' + qs : '');
+        // One leading slash: a request for "//sub" would otherwise redirect to
+        // "//sub/", which a browser reads as a host, not a path (CodeQL
+        // js/server-side-unvalidated-url-redirection).
+        var location = '/' + path.replace(/^\/+/, '') + '/' + (qs ? '?' + qs : '');
         res.writeHead(301, { 'Location': location });
         res.end();
         return;

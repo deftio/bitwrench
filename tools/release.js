@@ -556,14 +556,34 @@ if (DRY_RUN) {
 
 step('9. Git commit and push');
 
+// The CHANGELOG heading for this version is written as "## vX.Y.Z (unreleased)"
+// during the cycle. The release owns the date: v2.1.15 shipped with the word
+// still in place because nothing here stamped it (drift-lint's
+// changelog-unreleased rule now refuses a stale one in the next cycle).
+function stampChangelogDate(v) {
+  const file = join(root, 'CHANGELOG.md');
+  const src = readFileSync(file, 'utf8');
+  const re = new RegExp(`^## v${v.replace(/\./g, '\\.')}\\s*\\(unreleased\\)\\s*$`, 'm');
+  if (!re.test(src)) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  if (!DRY_RUN) writeFileSync(file, src.replace(re, `## v${v} (${today})`));
+  return today;
+}
+const stampedDate = stampChangelogDate(version);
+if (stampedDate) {
+  console.log(`  ${DRY_RUN ? 'Would stamp' : 'Stamped'} CHANGELOG heading: ## v${version} (${stampedDate})`);
+} else {
+  console.log('  CHANGELOG heading already carries a date');
+}
+
 if (DRY_RUN) {
   const wouldStage = runQuiet('git status --porcelain')
     .split('\n').filter(l => l.trim() !== '');
   console.log(`  Would stage ${wouldStage.length} file(s) and commit "v${version} release"`);
   skipped('git add . && git commit');
 } else {
-  // Stage all build outputs — tree was verified clean in step 1,
-  // so everything modified since then is a build artifact.
+  // Stage all build outputs and the stamped CHANGELOG — tree was verified
+  // clean in step 1, so everything modified since then is a release artifact.
   run('git add .');
 
   // Check if there's anything to commit

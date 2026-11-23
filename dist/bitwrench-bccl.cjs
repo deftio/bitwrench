@@ -1,4 +1,4 @@
-/*! bitwrench-bccl v2.1.15 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
+/*! bitwrench-bccl v2.1.16 | BSD-2-Clause | https://deftio.github.io/bitwrench/pages */
 'use strict';
 
 /**
@@ -5824,11 +5824,16 @@ function registerBCCL(bw) {
   // until this runs, so load lean, then this script, then call loadStyles().
   if (typeof bw._installStyleSheet === 'function') bw._installStyleSheet(bcclStyles);
 
-  // Create functions that return DOM elements
+  // Create functions that return DOM elements: makeCard -> bw.createCard.
+  // The export named `make` also starts with "make" and has nothing after the
+  // prefix, so until 2.1.16 this loop installed its helper as `bw.create`
+  // itself, and every bw.create() and bw.mount() on a two-file page then threw
+  // `bw.make: unknown component type "[object Object]"`. Only the factories
+  // get a helper.
   if (typeof bw.create === 'function') {
     Object.entries(components).forEach(function(entry) {
       var name = entry[0], fn = entry[1];
-      if (name.indexOf('make') === 0) {
+      if (name.indexOf('make') === 0 && name.length > 4) {
         var createName = 'create' + name.substring(4);
         bw[createName] = function(props) {
           return bw.create(fn(props));

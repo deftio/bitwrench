@@ -679,8 +679,9 @@
           }
           if (e.data && e.data.action) {
             logMessage({ type: 'action', action: e.data.action, data: e.data }, 'client');
-            var handler = actionHandlers[e.data.action];
-            if (handler) handler(e.data);
+            var handler = Object.prototype.hasOwnProperty.call(actionHandlers, e.data.action)
+              ? actionHandlers[e.data.action] : null;
+            if (typeof handler === 'function') handler(e.data);
           }
         };
         window.addEventListener('message', window._bwSandboxMsgHandler);

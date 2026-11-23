@@ -1233,4 +1233,47 @@ describe('CSS split across the shipped bundles (2.1.14)', function () {
     const css = w.bw.makeStyles({ primary: '#336699' }).css;
     assert.ok(css.includes('.bw_bccl_btn_outline.bw_primary'), 'widget CSS available after both scripts');
   });
+
+  // The two-file page has to be able to render. registerBCCL() turns every
+  // export whose name starts with "make" into a bw.createX helper; the export
+  // named `make` has nothing after the prefix, so its helper was installed as
+  // bw.create itself, and from then on every bw.create and bw.mount on the page
+  // threw `bw.make: unknown component type "[object Object]"`. Present in every
+  // published 2.1.x; the earlier test above only checked that makeButton exists.
+  function twoFilePage(first, second) {
+    const dom = new JSDOM('<!DOCTYPE html><div id="app"></div>', { runScripts: 'outside-only', url: 'http://localhost/' });
+    const w = dom.window;
+    w.eval(readFileSync(resolve(ROOT, first), 'utf8'));
+    w.eval(readFileSync(resolve(ROOT, second), 'utf8'));
+    return w;
+  }
+
+  it('lean then BCCL (UMD): bw.create and bw.mount still render after the second file loads', function () {
+    const w = twoFilePage(LEAN_BUNDLES.umdMin, BCCL_BUNDLES.umdMin);
+    const plain = w.bw.create({ t: 'div', c: 'x' });
+    assert.strictEqual(plain.tagName, 'DIV', 'bw.create renders a plain TACO');
+    const el = w.bw.mount('#app', w.bw.makeButton({ text: 'hi' }));
+    assert.strictEqual(el.tagName, 'BUTTON', 'bw.mount renders a factory TACO');
+    assert.strictEqual(w.document.querySelector('#app button').textContent, 'hi');
+    assert.strictEqual(typeof w.bw.createButton, 'function', 'the createX helpers are still installed');
+    assert.strictEqual(w.bw.createButton({ text: 'b' }).tagName, 'BUTTON');
+  });
+
+  it('full then BCCL (UMD): loading the component file over the full build is harmless', function () {
+    const w = twoFilePage(MAIN_BUNDLES.umdMin, BCCL_BUNDLES.umdMin);
+    assert.strictEqual(w.bw.create({ t: 'p', c: 'x' }).tagName, 'P');
+    assert.strictEqual(w.bw.mount('#app', w.bw.makeCard({ title: 't' })).tagName, 'DIV');
+  });
+
+  it('lean + BCCL (ESM): registerBCCL(bw) leaves bw.create alone and installs only factory helpers', async function () {
+    // No DOM in this process, so the check is on the function itself: the
+    // broken loop replaced bw.create with a wrapper around make().
+    const bw = (await loadESM(LEAN_BUNDLES.esmMin)).default;
+    const create = bw.create;
+    const bccl = await loadESM(BCCL_BUNDLES.esmMin);
+    bccl.registerBCCL(bw);
+    assert.strictEqual(bw.create, create, 'registerBCCL must not replace bw.create');
+    assert.strictEqual(typeof bw.createBadge, 'function', 'factories get a createX helper');
+    assert.ok(bw.html(bw.makeBadge({ text: 'n' })).includes('bw_bccl_badge'), 'the factories render');
+  });
 });

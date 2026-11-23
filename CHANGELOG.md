@@ -3,7 +3,108 @@
 All notable changes to bitwrench are documented here.
 Versions correspond to git tags and npm releases.
 
-## v2.1.15 (unreleased)
+## v2.1.16 (2026-11-23)
+The two-file page (lean plus the component file) renders, which it had not
+done in any published 2.1.x; the server client gains the three wire verbs it
+lacked; and the four open Dependabot alerts are closed. The code, tests and
+these notes were written with Claude Code; the review and the release are the
+maintainer's.
+
+### Fixed
+
+- **Loading `bitwrench-bccl` after `bitwrench-lean` broke every `bw.create()`
+  and `bw.mount()` on the page.** `registerBCCL()` wraps each export whose
+  name starts with `make` as a `bw.createX()` helper. The export named `make`
+  has nothing after the prefix, so its helper was installed as `bw.create`
+  itself, and from then on any TACO handed to `bw.create` or `bw.mount` went
+  through `bw.make()` and threw `bw.make: unknown component type "[object
+  Object]"`. The same loop runs for `registerBCCL(bw)` from ESM, and for the
+  component file loaded over the full build. Present in every published 2.1.x
+  (the loop dates to 2.0.16); the only test of the two-file page checked that
+  `makeButton` existed. Only the factories get a helper now. Three tests in
+  `test/bitwrench_test_bundles.js` load the shipped lean and BCCL files into
+  one jsdom page, UMD and ESM, and render; all three failed on the 2.1.15
+  artifacts.
+
+### Added
+
+- **`client.replace(ref, taco)`, `client.refresh(ref)` and
+  `client.update(ref, data)`** on the bwserve server client. The wire has
+  carried all three since 2.1 and `bw.apply()` handles them, but the server
+  side had no method, so a server author hand-built the message and pushed it
+  through `batch()` or `app.broadcast()`. `docs/bwserve.md` and the protocol
+  page list them with the other DOM verbs, with schemas; the "ten of
+  thirteen have a method" caveat is gone. A test holds every wire type
+  `bw.apply()` handles to a client method, the handshake and `unlisten`
+  excepted.
+
+### Changed
+
+- **`bw.makeTable` refreshes keyed rows through `bw.syncChildren`.** The
+  table carried its own keyed reconciler: a row map, detach and reattach,
+  unmount of dropped rows and the #108 focus snapshot, all of which
+  `bw.syncChildren` already does, and nothing in the library called
+  `syncChildren` except its tests. The table now hands the engine the rows and
+  a per-row update that patches only the cells whose rendered content changed,
+  so the kept rows are the same nodes and focus and caret survive as before.
+  One builder produces the header row for first paint and for the sort handle,
+  and the pager buttons come from one function. Rows without a `rowKey` still
+  have no identity and are rebuilt through the shared sink. Behaviour is
+  unchanged under the existing table tests; two new tests hold the keyed path
+  to `syncChildren` and the unkeyed path away from it. `makeTable` goes from
+  4,540 to 3,938 bytes minified; full UMD 48,360 -> 48,155 gz, lean UMD
+  30,392 -> 30,216 gz, which moves the minified sizes quoted in the README,
+  the downloads page and the embedded headers from 172/88 KB to 171/87 KB.
+
+### Tooling
+
+- **The four open Dependabot alerts are closed, all in dev dependencies.**
+  minimatch (GHSA-g3hv-75wg-m249, moderate), brace-expansion
+  (GHSA-q2hr-2g5m-vwhr, moderate) and two in serialize-javascript
+  (GHSA-m5mm-p8h7-m29v, GHSA-gfhx-hw2g-v5hg, low), plus glob
+  (GHSA-3g3m-2fjr-6pw4) which `npm audit` reported and Dependabot had not yet.
+  mocha, eslint, c8 and test-exclude pin minimatch `^10` and glob `^13`, so
+  the patched majors (minimatch 11.0.1, glob 14.0.2) do not install on their
+  own; `package.json` overrides pull them in (minimatch 11.0.9,
+  brace-expansion 5.0.13, glob 14.0.6, serialize-javascript 7.1.4). Lint,
+  the unit suite and the bundle suite pass on the new tree. `npm audit`: 0.
+  Nothing in `dist/` changes; the shipped bundles have no dependencies.
+- **CodeQL alerts in shipped code are fixed; test code is out of the scan.**
+  The first push-triggered scan on `main` (2.1.15 pointed the workflow at the
+  right branch) reported 56 open alerts, 24 of them in `src/`. Fixed:
+  `deepMerge` in the stylesheet source skips `__proto__`, `constructor` and
+  `prototype` keys (prototype pollution from a JSON config); the bwserve
+  static server's bare-directory redirect keeps one leading slash, so
+  `GET //sub` answers `Location: /sub/` and not the protocol-relative
+  `//sub/` (a test holds both forms, and failed on the old line); the two
+  `bitwrench-verify` patterns for inline handlers and `javascript:` URLs no
+  longer have adjacent quantifiers that backtrack quadratically on a run of
+  spaces; the dev `server.js` 404 answers as plain text; the sandbox page
+  dispatches actions only to its own handler table; drift-lint's pragma parser
+  accepts `--!>` and escapes every `$` in an API name, and `analyze-bccl`
+  escapes backslashes before quotes. `test/` and `tests/` are excluded from
+  the scan (16 alerts, all shell-outs to the CLI and URL-substring assertions
+  in test code). The remaining `src/` alerts are the 12 path-injection
+  reports on the static server, which sits behind a resolve-and-prefix
+  containment check the query does not recognise, and 7 on `bw.uuid()`'s
+  `Math.random`, which mints DOM addressing classes, not secrets. Those, the
+  template-binding regex and the escaping heuristics on version strings and
+  Markdown output are dismissed with a written reason each.
+- **The changelog heading gets its date from the release.** v2.1.15 shipped
+  with its heading still reading "(unreleased)" because nothing in
+  `tools/release.js` owned the date. The release stamps `## vX.Y.Z
+  (YYYY-MM-DD)` before it commits the artifacts, and drift-lint's new
+  `changelog-unreleased` rule refuses an "(unreleased)" heading whose version
+  is not the one in `package.json`. The rule reported the 2.1.15 heading
+  before it was corrected below.
+- **The `esp32-adafruitST25DV16` example downloads from the `@2.1` channel.**
+  Its README and page pinned the CDN URL to `bitwrench@2.1.14`, so a board
+  flashed from the instructions would have carried a build with the two-file
+  defect above after the fix shipped. drift-lint's `stale-cdn-pin` rule
+  reported the pin; the example now follows the 2.1 line like the other
+  embedded examples.
+
+## v2.1.15 (2026-11-21)
 
 Three documentation defects filed after 2.1.14, and four consumer follow-ups
 that had been waiting on a release. Each has a check so it stays fixed.

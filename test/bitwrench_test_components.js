@@ -5011,6 +5011,51 @@ describe('makeTable: header, view and handlers agree after sort/setData', functi
     assert.ok(html.indexOf('mb-3') < 0, html);
     assert.ok(html.indexOf('bw_mb_3') > 0, html);
   });
+
+  // 2.1.16: the keyed body goes through the engine's reconciler instead of a
+  // private copy of it. Rows that stay are the same nodes; rows without a key
+  // have no identity and are rebuilt by the shared sink.
+  it('keyed setData goes through bw.syncChildren and keeps the row nodes (A7)', function() {
+    var real = bw.syncChildren, calls = [];
+    bw.syncChildren = function(parentEl, items, opts) { calls.push([parentEl, items.length]); return real.apply(this, arguments); };
+    try {
+      var el = bw.mount('#app', bw.makeTable({
+        data: [{ id: 1, v: 'a' }, { id: 2, v: 'b' }],
+        rowKey: 'id',
+        columns: [{ key: 'id', label: 'Id' }, { key: 'v', label: 'V' }]
+      }));
+      var tbody = el.querySelector('tbody');
+      var row2 = tbody.children[1];
+      el.bw.setData([{ id: 2, v: 'B' }, { id: 3, v: 'c' }]);
+      assert.strictEqual(calls.length, 1, 'one syncChildren call per refresh');
+      assert.strictEqual(calls[0][0], tbody);
+      assert.strictEqual(calls[0][1], 2);
+      assert.strictEqual(tbody.children[0], row2, 'the kept row is the same node');
+      assert.strictEqual(row2.children[1].textContent, 'B', 'and its changed cell was patched');
+      assert.deepStrictEqual(texts(el, 'tbody tr td:first-child'), ['2', '3']);
+      assert.deepStrictEqual(el._bw_state.rowKeys, ['2', '3']);
+    } finally {
+      bw.syncChildren = real;
+    }
+  });
+
+  it('an unkeyed table rebuilds its rows and never calls bw.syncChildren (A8)', function() {
+    var real = bw.syncChildren, calls = 0;
+    bw.syncChildren = function() { calls++; return real.apply(this, arguments); };
+    try {
+      var el = bw.mount('#app', bw.makeTable({
+        data: [{ v: 'a' }, { v: 'b' }],
+        columns: [{ key: 'v', label: 'V' }]
+      }));
+      var before = el.querySelector('tbody tr');
+      el.bw.setData([{ v: 'x' }, { v: 'y' }, { v: 'z' }]);
+      assert.strictEqual(calls, 0);
+      assert.notStrictEqual(el.querySelector('tbody tr'), before, 'rows are new nodes');
+      assert.deepStrictEqual(texts(el, 'tbody td'), ['x', 'y', 'z']);
+    } finally {
+      bw.syncChildren = real;
+    }
+  });
 });
 
 describe('makeFeatureGrid columns snap to a 12-grid span (B, contract lock)', function() {

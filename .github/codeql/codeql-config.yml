@@ -4,9 +4,16 @@
 # every finding there is a duplicate of a finding in src/, and the minified
 # copies drowned the signal: of 157 open alerts on 2026-11-21, 64 were in dist/
 # and 39 in releases/, against 21 in src/. dev/archive/ is retired code that is not shipped.
+#
+# test/ and tests/ are the unit and Playwright suites: they shell out to the
+# CLI with paths from the test environment and assert on URL substrings,
+# which CodeQL reads as injection and sanitization defects. Of the 56 open
+# alerts on 2026-11-22, 16 were in test/. The suites never ship.
 name: "bitwrench"
 paths-ignore:
   - dist
   - releases
   - dev/archive
   - node_modules
+  - test
+  - tests

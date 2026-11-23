@@ -440,6 +440,7 @@ if (LIST_RULES) {
   console.log('    undocumented-api          [api]       a public bw.* with no JSDoc at its assignment');
   console.log('    stale-size                [api]       a KB claim in prose with no matching artifact in dist/builds.json');
   console.log('    stale-count               [api]       an "NN components" claim that is not bw.catalog().length');
+  console.log('    changelog-unreleased      [api]       a "## vX.Y.Z (unreleased)" heading for a version other than package.json');
   console.log('    taco-options-drift        [api]       a TacoOptions key in bitwrench.d.ts that no renderer path reads');
   console.log('\n  API rules:');
   console.log('    stale-api                 [api]       bw.XXX() in docs must match a real public API name');
@@ -511,7 +512,7 @@ function computeIgnores(lines, relPath) {
     // Single-line pragma: ignores the NEXT line only
     var nextLineMatch = lines[i].match(PRAGMA_NEXT_LINE);
     if (nextLineMatch) {
-      var nlReason = nextLineMatch[1].replace(/-->.*$|\*\/.*$/, '').trim();
+      var nlReason = nextLineMatch[1].replace(/--!?>.*$|\*\/.*$/, '').trim();
       if (!nlReason) {
         warnings.push(relPath + ':L' + (i + 1) + ' — ignore-next-line has no reason; add one so future readers know what was intended');
       }
@@ -529,7 +530,7 @@ function computeIgnores(lines, relPath) {
         errors.push(relPath + ':L' + (i + 1) + ' — ignore-start inside an open ignore block (started L' + (openLine + 1) + ')');
         continue;
       }
-      var reason = startMatch[1].replace(/-->.*$|\*\/.*$/, '').trim();
+      var reason = startMatch[1].replace(/--!?>.*$|\*\/.*$/, '').trim();
       if (!reason) {
         warnings.push(relPath + ':L' + (i + 1) + ' — ignore block has no reason; add one (drift-lint:ignore-start: <why>) so future readers know what was intended');
       }
@@ -754,7 +755,7 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
       if (!existsSync(full)) continue;
       var lines = readFileSync(full, 'utf8').split('\n');
       for (var l = 0; l < lines.length; l++) {
-        if (new RegExp('^\\s*bw\\.' + name.replace('$', '\\$') + '\\s*=').test(lines[l])) {
+        if (new RegExp('^\\s*bw\\.' + name.replace(/\$/g, '\\$') + '\\s*=').test(lines[l])) {
           where = { file: 'src/' + files[i], line: l + 1 };
           break;
         }
@@ -1066,6 +1067,39 @@ for (var di = 0; di < SCAN_DIRS.length; di++) {
           text: line.trim().substring(0, 120)
         });
       }
+    });
+  });
+})();
+
+// 4. changelog-unreleased -- a "## vX.Y.Z (unreleased)" heading may name only
+// the version in package.json, and only once. v2.1.15 shipped with its heading
+// still reading "(unreleased)": nothing stamped the date and nothing noticed.
+// tools/release.js now stamps the heading at release time; this catches the
+// heading that was left behind, which is how the miss would show up again.
+(function checkChangelogHeadings() {
+  var rule = { id: 'changelog-unreleased', fileFilter: null, fileExclude: null };
+  if (!ruleApplies(rule, 'CHANGELOG.md')) return;
+  var lines;
+  try { lines = readFileSync(resolve(ROOT, 'CHANGELOG.md'), 'utf8').split('\n'); } catch (_) { return; }
+  var HEADING = /^## v(\d+\.\d+\.\d+)\s*\((unreleased)\)/i;
+  var seen = 0;
+  lines.forEach(function(line, i) {
+    var m = HEADING.exec(line);
+    if (!m) return;
+    seen++;
+    var why = null;
+    if (m[1] !== PKG_VERSION) {
+      why = 'v' + m[1] + ' is marked (unreleased) but package.json is at ' + PKG_VERSION + ': the heading shipped without its date';
+    } else if (seen > 1) {
+      why = 'more than one (unreleased) heading';
+    }
+    if (!why) return;
+    allHits.push({
+      file: 'CHANGELOG.md',
+      line: i + 1,
+      rule: 'changelog-unreleased',
+      message: why,
+      text: line.trim().substring(0, 120)
     });
   });
 })();

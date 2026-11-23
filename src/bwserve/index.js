@@ -324,7 +324,10 @@ class BwServeApp {
       // Bare directory without trailing slash: /foo => 301 to /foo/
       if (!path.endsWith('/') && existsSync(resolvedPath) && statSync(resolvedPath).isDirectory()) {
         var qs = url.split('?')[1];
-        var location = path + '/' + (qs ? '?' + qs : '');
+        // One leading slash: a request for "//sub" would otherwise redirect to
+        // "//sub/", which a browser reads as a host, not a path (CodeQL
+        // js/server-side-unvalidated-url-redirection).
+        var location = '/' + path.replace(/^\/+/, '') + '/' + (qs ? '?' + qs : '');
         res.writeHead(301, { 'Location': location });
         res.end();
         return;

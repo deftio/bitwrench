@@ -11,7 +11,6 @@ This is the same pattern as Streamlit (Python), Phoenix LiveView (Elixir), and h
 - Auto-generates the client page (loads bitwrench, opens SSE, wires actions)
 - Same protocol works for Node.js servers and ESP32/Arduino embedded devices
 - 13 protocol message types (hello, mount, patch, append, replace, remove, refresh, update, message, batch, call, listen, unlisten)
-  -- ten have a schema below; `replace`, `refresh` and `update` are broadcast-only
 
 ## Architecture
 
@@ -93,13 +92,7 @@ Save as `server.js`, run `node server.js`, open `http://localhost:7902`.
 
 bwserve uses 13 message types. All messages are stamped with `v: 1` (wire protocol version) and use `ref` for target references and `taco` for TACO payloads. `bw.apply()` rejects a non-`batch` message whose `v` is not `1`, and rejects any message carrying the pre-v1 field names `target` or `node`.
 
-Ten of the thirteen are grouped below. The other three -- `replace`, `refresh`
-and `update` -- have no `BwServeClient` method and no schema section: they are
-applied by `bw.apply()` but only ever reach the browser through
-`app.broadcast()` or inside a `batch`, so they are documented with
-[`bw.apply()`](#bwapplymsg) instead.
-
-### DOM Operations (5 types)
+### DOM Operations (8 types)
 
 These modify the browser's DOM tree:
 
@@ -108,8 +101,16 @@ These modify the browser's DOM tree:
 | `mount` | Mount TACO at selector | `client.mount(ref, taco)` | `bw.DOM(ref, taco)` |
 | `patch` | Update text/attributes | `client.patch(ref, fields)` | `bw.patch(ref, fields)` |
 | `append` | Add child element | `client.append(ref, taco)` | `bw.append(ref, taco)` |
+| `replace` | Replace the element itself | `client.replace(ref, taco)` | `bw.replace(ref, taco)` |
 | `remove` | Remove element | `client.remove(ref)` | `bw.remove(ref)` |
+| `refresh` | Re-run the component's own `o.render` | `client.refresh(ref)` | `bw.refresh(ref)` |
+| `update` | Deliver data to `el.bw.update(data)` | `client.update(ref, data)` | `bw.update(ref, data)` |
 | `batch` | Multiple operations | `client.batch(ops)` | Execute each op in sequence, independently |
+
+`replace`, `refresh` and `update` had no `BwServeClient` method until 2.1.16;
+a server had to hand-build the message and send it through `app.broadcast()`
+or inside a `batch`. `refresh` on an element with no `o.render` is reported on
+the `bw:diag` topic as `refresh_no_render` and applies nothing.
 
 ### Communication Operations (5 types)
 
@@ -147,8 +148,17 @@ All messages include `v: 1` (wire protocol version).
 // append — add a child
 { "v": 1, "type": "append", "ref": "#list", "taco": {"t":"li","c":"New item"} }
 
+// replace -- swap the element itself for a new TACO
+{ "v": 1, "type": "replace", "ref": "#old-card", "taco": {"t":"section","c":"New"} }
+
 // remove — delete from DOM
 { "v": 1, "type": "remove", "ref": "#old-item" }
+
+// refresh -- re-run the component's own o.render in place
+{ "v": 1, "type": "refresh", "ref": "clock" }
+
+// update -- hand data to the component's el.bw.update(data)
+{ "v": 1, "type": "update", "ref": "gauge", "data": {"value": 42} }
 
 // batch -- multi-update. Every op carries its own "v": 1: bw.apply()
 // version-checks each op it unpacks, and drops an unstamped one silently.
@@ -297,7 +307,10 @@ app.broadcast({
 | `client.mount(ref, taco)` | `mount` | Mount TACO tree at ref |
 | `client.patch(ref, fields)` | `patch` | Update element with discriminated fields (e.g. `{text:'...'}`, `{attrs:{...}}`) |
 | `client.append(ref, taco)` | `append` | Add TACO as child of ref |
+| `client.replace(ref, taco)` | `replace` | Replace the element itself with a TACO (2.1.16) |
 | `client.remove(ref)` | `remove` | Remove element from DOM |
+| `client.refresh(ref)` | `refresh` | Re-run the component's own `o.render` in place (2.1.16) |
+| `client.update(ref, data)` | `update` | Deliver data to the component's `el.bw.update(data)` (2.1.16) |
 | `client.batch(ops)` | `batch` | Send an array of operations in one SSE frame (not atomic -- see below) |
 
 `batch` is a framing optimization, not a transaction. `client.batch(ops)` takes

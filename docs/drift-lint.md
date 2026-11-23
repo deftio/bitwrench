@@ -85,6 +85,11 @@ cannot do:
 - **`stale-count`** compares every `NN components` claim against
   `bw.catalog().length`, in the same files `stale-size` scans. Added in 2.1.15
   after three documents disagreed with each other and with the catalog.
+- **`changelog-unreleased`** reads the `## vX.Y.Z (unreleased)` headings in
+  `CHANGELOG.md`: at most one, and only for the version in `package.json`.
+  Added in 2.1.16 after the 2.1.15 heading shipped with the word still in
+  place; `tools/release.js` now stamps the date, and this catches a heading
+  that was left behind.
 - **`taco-options-drift`** compares the `TacoOptions` keys declared in
   `src/bitwrench.d.ts` against the keys the renderer actually reads
   (`opts.x` / `o.x` in `src/bitwrench.js`). Added in 2.1.12 after review found
@@ -299,6 +304,7 @@ When you remove, rename, or re-decide something user-facing:
 | `undocumented-api` | a public `bw.*` with no JSDoc block at its assignment, so it never reaches `docs/bitwrench_api.md` | write the block (`@param`, `@returns`, `@category`), or allowlist it with a reason |
 | `stale-size` | a `NN KB` claim about a bitwrench artifact that matches nothing in `dist/builds.json` | quote a real size; a number next to another library's name is skipped, the rest of the line is not |
 | `stale-count` | an `NN components` claim that is not `bw.catalog().length` | quote the catalog's count, or drop the number |
+| `changelog-unreleased` | a `## vX.Y.Z (unreleased)` heading for a version other than `package.json`, or a second one | date the shipped heading; the release stamps the current one |
 | `taco-options-drift` | a `TacoOptions` key in `bitwrench.d.ts` that no renderer path reads | wire it in `_createNode`/`_hydrateElement`, or remove it from the interface |
 | `bw_list_item` | a class that never existed | `bw_list_group_item` |
 | `src-data-attr` | `data-*` attributes read or written by library source (`src/` only) | `bw_*` class, closure, DOM property, or `o.state` |

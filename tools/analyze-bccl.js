@@ -178,7 +178,7 @@ function formatRules(rules, indent) {
         // Quote values that contain special chars
         if (typeof val === 'string' && (val.indexOf(':') !== -1 || val.indexOf('#') !== -1 ||
             val.indexOf(',') !== -1 || val.indexOf('{') !== -1)) {
-          val = '"' + val.replace(/"/g, '\\"') + '"';
+          val = '"' + val.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
         }
         lines.push(indent + '  ' + prop + ': ' + val);
       });
@@ -309,7 +309,7 @@ components.forEach(function(comp) {
     taco = comp.fn(comp.args);
   } catch (e) {
     output.push('  ' + comp.name + ':');
-    output.push('    error: "' + e.message.replace(/"/g, '\\"') + '"');
+    output.push('    error: "' + e.message.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"');
     output.push('');
     return;
   }

@@ -85,6 +85,15 @@ export declare class BwServeClient {
   /** Append TACO as child of target element */
   append(selector: string, taco: Taco): void;
 
+  /** Replace the element itself with a TACO (wire form of bw.replace) */
+  replace(selector: string, taco: Taco): void;
+
+  /** Re-run the component's own o.render in place (wire form of bw.refresh) */
+  refresh(selector: string): void;
+
+  /** Deliver data to the component's el.bw.update(data) (wire form of bw.update) */
+  update(selector: string, data?: any): void;
+
   /** Remove element from DOM with cleanup */
   remove(selector: string): void;
 
